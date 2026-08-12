@@ -62,3 +62,38 @@ fn refuses_owned_generation_when_context_is_replaced_by_symlink_or_extra_file() 
     drop(root);
     fs::remove_dir_all(path).unwrap();
 }
+
+#[test]
+fn refuses_symlinked_runtime_ancestor_and_missing_ownership_receipt() {
+    use std::os::unix::fs::symlink;
+    let (path, root, manifest) = project();
+    root.create_dir_all(".taskseal").unwrap();
+    let outside = path.join("outside");
+    fs::create_dir(&outside).unwrap();
+    symlink(&outside, path.join(".taskseal/runtime")).unwrap();
+    assert!(place_context(&root, &manifest, &declaration()).unwrap_err().to_string().contains("PLACEMENT"));
+    fs::remove_file(path.join(".taskseal/runtime")).unwrap();
+    let placed = place_context(&root, &manifest, &declaration()).unwrap();
+    fs::remove_file(path.join(&placed.target).join("placement.json")).unwrap();
+    assert!(place_context(&root, &manifest, &declaration()).unwrap_err().to_string().contains("PLACEMENT"));
+    drop(root);
+    fs::remove_dir_all(path).unwrap();
+}
+
+#[test]
+fn refuses_stale_generated_context_before_staging() {
+    let (path, root, manifest) = project();
+    root.write(
+        format!(".taskseal/out/generations/{}/context.md", manifest.digest),
+        b"tampered generated context",
+    )
+    .unwrap();
+
+    assert!(place_context(&root, &manifest, &declaration())
+        .unwrap_err()
+        .to_string()
+        .contains("PLACEMENT"));
+
+    drop(root);
+    fs::remove_dir_all(path).unwrap();
+}
