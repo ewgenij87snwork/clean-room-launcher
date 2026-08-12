@@ -33,3 +33,7 @@ path = "tests/contracts/schema_vectors.rs"
 [[test]]
 name = "canonical_vectors"
 path = "tests/contracts/canonical_vectors.rs"
+
+[[test]]
+name = "error_receipt_vectors"
+path = "tests/contracts/error_receipt_vectors.rs"
