@@ -1,9 +1,20 @@
+use super::level_a::LevelAEntry;
 use super::level_b::{BodyDecision, DecisionRecord};
 use super::manifest::{CatalogManifest, ManifestError};
+fn entry(id: &str) -> LevelAEntry {
+    LevelAEntry {
+        id: id.into(),
+        name: id.into(),
+        capability: "c".into(),
+        trigger_summary: "s".into(),
+        source_id: "src".into(),
+        body_digest: "a".repeat(64),
+    }
+}
 #[test]
-fn census_is_closed_and_explain_matches_inspect() {
+fn census_categories_and_evidence_are_closed() {
     let m = CatalogManifest::new(
-        2,
+        vec![entry("a"), entry("b")],
         vec![
             DecisionRecord {
                 id: "a".into(),
@@ -13,22 +24,24 @@ fn census_is_closed_and_explain_matches_inspect() {
             DecisionRecord {
                 id: "b".into(),
                 decision: BodyDecision::LoadOnInvoke,
-                reason: "DEFERRED_NATIVE",
+                reason: "DEFERRED",
             },
         ],
         vec![],
     )
     .unwrap();
-    assert_eq!(
-        m.explain("a").unwrap().reason,
-        m.inspect("a").unwrap().reason
-    );
-    assert_eq!(m.accounted(), 2)
+    assert_eq!(m.counts.loaded_now, 1);
+    assert_eq!(m.counts.load_on_invoke, 1);
+    assert_eq!(m.counts.total, 2);
+    let view = m.inspect("a").unwrap();
+    assert_eq!(view.reason, "PROTECTED");
+    assert_eq!(view.body_digest, "a".repeat(64));
+    assert_eq!(view.source_id, "src")
 }
 #[test]
-fn wrong_denominator_refuses() {
+fn missing_or_duplicate_decision_refuses() {
     assert_eq!(
-        CatalogManifest::new(2, vec![], vec![]).unwrap_err(),
+        CatalogManifest::new(vec![entry("a")], vec![], vec![]).unwrap_err(),
         ManifestError::CensusMismatch
     )
 }

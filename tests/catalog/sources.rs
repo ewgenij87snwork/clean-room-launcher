@@ -86,3 +86,20 @@ fn poisoned_home_is_not_an_implicit_source() {
     assert_eq!(sources.len(), 1);
     assert!(sources.iter().all(|source| source.root != poisoned_home));
 }
+
+#[cfg(unix)]
+#[test]
+fn refuses_symlink_in_any_parent_component() {
+    use std::os::unix::fs::symlink;
+    let scratch = std::env::temp_dir().join(format!("taskseal-p04-parent-{}", std::process::id()));
+    let _ = fs::remove_dir_all(&scratch);
+    fs::create_dir_all(scratch.join("real/root")).unwrap();
+    symlink(scratch.join("real"), scratch.join("alias")).unwrap();
+    let root = scratch.join("alias/root");
+    let config = SkillSourceConfig::new(vec![(root.clone(), SkillSourceAuthority::Project)]);
+    assert_eq!(
+        enumerate_sources(&config, std::slice::from_ref(&root)).unwrap_err(),
+        CatalogError::SymlinkRoot
+    );
+    fs::remove_dir_all(scratch).unwrap();
+}

@@ -81,6 +81,7 @@ pub fn enumerate_sources(
 }
 
 fn normalize_root(root: &Path) -> Result<PathBuf, CatalogError> {
+    refuse_symlink_components(root)?;
     let metadata = fs::symlink_metadata(root).map_err(|_| CatalogError::MissingRoot)?;
     if metadata.file_type().is_symlink() {
         return Err(CatalogError::SymlinkRoot);
@@ -89,6 +90,21 @@ fn normalize_root(root: &Path) -> Result<PathBuf, CatalogError> {
         return Err(CatalogError::InvalidPath);
     }
     root.canonicalize().map_err(|_| CatalogError::InvalidPath)
+}
+
+fn refuse_symlink_components(path: &Path) -> Result<(), CatalogError> {
+    let mut current = PathBuf::new();
+    for component in path.components() {
+        current.push(component.as_os_str());
+        if current.as_os_str().is_empty() {
+            continue;
+        }
+        let metadata = fs::symlink_metadata(&current).map_err(|_| CatalogError::MissingRoot)?;
+        if metadata.file_type().is_symlink() {
+            return Err(CatalogError::SymlinkRoot);
+        }
+    }
+    Ok(())
 }
 
 fn is_within(candidate: &Path, capability: &Path) -> bool {

@@ -53,3 +53,21 @@ fn missing_nodes_and_cycles_refuse_deterministically() {
         ]))
     );
 }
+
+#[test]
+fn protected_dependency_is_promoted_before_budgeting() {
+    let decisions = vec![
+        decision("protected", BodyDecision::LoadNow),
+        decision("large-dep", BodyDecision::LoadOnInvoke),
+    ];
+    let graph = DependencyGraph::new([("protected", vec!["large-dep"]), ("large-dep", vec![])]);
+    let closed = close_dependencies(&decisions, &graph).unwrap();
+    assert_eq!(
+        closed
+            .iter()
+            .find(|r| r.id == "large-dep")
+            .unwrap()
+            .decision,
+        BodyDecision::LoadNow
+    );
+}
