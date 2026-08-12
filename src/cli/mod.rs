@@ -2,6 +2,7 @@ mod dispatch;
 mod doctor;
 mod help;
 mod parser;
+mod process;
 mod screen;
 
 use std::process::ExitCode;

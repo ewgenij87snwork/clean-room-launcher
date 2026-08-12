@@ -1,6 +1,7 @@
-use std::process::{Command as ProcessCommand, ExitCode};
+use std::process::ExitCode;
 
 use super::help::Command;
+use super::process::{self, ProviderExit};
 
 pub fn run(command: Command, args: &[String]) -> Result<ExitCode, String> {
     let (program, tail) = match command {
@@ -16,9 +17,11 @@ pub fn run(command: Command, args: &[String]) -> Result<ExitCode, String> {
         _ => unreachable!("dispatch only accepts provider or generic commands"),
     };
 
-    let status = ProcessCommand::new(program)
-        .args(tail)
-        .status()
-        .map_err(|_| format!("PROVIDER_SPAWN_FAILED: {program}"))?;
-    Ok(ExitCode::from(status.code().unwrap_or(1) as u8))
+    match process::run_foreground(program, tail)? {
+        ProviderExit::Code(exit) => Ok(exit),
+        ProviderExit::TerminatedBySignal => {
+            eprintln!("PROVIDER_TERMINATED_BY_SIGNAL: {program}");
+            Ok(ExitCode::from(1))
+        }
+    }
 }

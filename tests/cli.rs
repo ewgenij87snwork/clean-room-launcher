@@ -6,5 +6,7 @@ mod doctor;
 mod entrypoint_parity;
 #[path = "cli/first_screen.rs"]
 mod first_screen;
+#[path = "cli/foreground_process.rs"]
+mod foreground_process;
 #[path = "cli/help.rs"]
 mod help;
