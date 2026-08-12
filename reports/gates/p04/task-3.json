@@ -1,0 +1,12 @@
+{
+  "schema_version":"taskseal.task-receipt.v1","plan":"P04","task":3,
+  "acceptance_id":"ACC-P04-T3","evidence_id":"EVD-P04-T3",
+  "input_head":"9da0b3849b787e2035c0c88cce8c7e67c9974768","result_head":"9df9d1e24f6e8c1f11904b43d8c956a71a6d21e1",
+  "branch":"feat/p04-catalog","worktree":"$TASKSEAL_WORKTREE",
+  "checkpoint_sha256":"eff62290f54f56bbb1396395b8bf7f2e90e3b6c90a770de96bfa7a4cd7aaaed6",
+  "accepted_at":"2026-08-12T11:36:23+02:00","result":"accepted",
+  "commands":[{"command":"cargo test --locked --offline --lib catalog::level_a_tests","phase":"red_missing_level_a_then_green","exit":0,"tests":3},{"command":"cargo fmt --all -- --check && cargo clippy --all-targets --locked --offline -- -D warnings && cargo test --all-targets --locked --offline && public boundary","exit":0}],
+  "coverage":{"all_names_present":true,"stable_name_order":true,"body_path_absent":true,"body_text_absent":true,"body_digest_present":true,"missing_summary_refused":true,"overlong_summary_refused":true,"unsafe_summary_refused":true,"single_entry_bytes":214,"single_entry_budget":256},
+  "subjects":{"src/catalog/level_a.rs":"323d65ede89c6f3b313c0158bd562ea7688eaa43836c02711594ecf071755ed3","tests/catalog/level_a.rs":"807dc8f17d777e7f5ffe07ddbd362073eb19a998b27264506ba7fb46d95552e3"},
+  "controls":["SKL-01","SKL-02"],"skips_counted_as_pass":0
+}
