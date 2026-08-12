@@ -5,6 +5,8 @@ mod output;
 mod parser;
 mod process;
 mod screen;
+#[allow(dead_code)] // T8 is the first user-flow consumer; T7 seals the store and its TDD contract.
+pub(crate) mod state;
 
 use std::process::ExitCode;
 
