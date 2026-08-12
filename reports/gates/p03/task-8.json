@@ -1,0 +1,39 @@
+{
+  "schema_version": "taskseal.task-receipt.v1",
+  "plan": "P03",
+  "task": 8,
+  "acceptance_id": "ACC-P03-T8",
+  "evidence_id": "EVD-P03-T8",
+  "input_head": "85d7d41b43b07e4ee1e1fde65afdd30e868fa36a",
+  "result_head": "3cc1b2507e9cac3ddd8d871f557373d4cb2ff459",
+  "branch": "feat/p03-core",
+  "worktree": "$TASKSEAL_WORKTREE",
+  "checkpoint_sha256": "eff62290f54f56bbb1396395b8bf7f2e90e3b6c90a770de96bfa7a4cd7aaaed6",
+  "accepted_at": "2026-08-12T11:12:00+02:00",
+  "result": "accepted",
+  "commands": [
+    {
+      "command": "HOME=/definitely-not-admitted/taskseal-home-trap NO_PROXY=* cargo test --lib core::operations::tests --locked --offline",
+      "exit": 0,
+      "tests": 3
+    },
+    {
+      "command": "cargo fmt --all -- --check && cargo clippy --all-targets --locked --offline -- -D warnings && poisoned HOME/proxy cargo test --all-targets --locked --offline && public boundary",
+      "exit": 0
+    }
+  ],
+  "coverage": {
+    "typed_audit": true,
+    "typed_compile": true,
+    "typed_verify": true,
+    "typed_inspect": true,
+    "typed_doctor": true,
+    "shared_decision_record": true,
+    "stable_error_mapping": true,
+    "audit_inspect_doctor_no_write": true,
+    "tamper_verify_refusal": true,
+    "network_model_home_calls": 0,
+    "terminal_rendering": false
+  },
+  "skips_counted_as_pass": 0
+}
