@@ -4,7 +4,7 @@
   "result": "PASS",
   "result_head": "1fd06aaf9a40d84d80be509fb29fcc7377d5e9ba",
   "branch": "feat/p02-contracts",
-  "worktree": "/Users/ysorokin/taskseal-wt/p02-contracts",
+  "worktree": "$TASKSEAL_WORKTREE",
   "commands": [
     {
       "name": "fmt",
