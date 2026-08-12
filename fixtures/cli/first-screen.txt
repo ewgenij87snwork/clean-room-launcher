@@ -1,0 +1,13 @@
+TaskSeal · ready to prepare a clean start for Codex 0.xx
+
+Project  /Users/alex/work/offerstream
+Preview  18 KB at start · 43 KB less (read-only measurement)
+Skills   5 summaries now · 38 load on use · 4 unavailable  Review
+Writes   .taskseal/project.json + .taskseal/out/ · nothing yet
+Leaves   ~/.codex · ~/.claude · Git/provider settings unchanged
+
+› Start Codex with clean context  Recommended
+  Review or change setup
+  Exit
+
+↑↓ select · Enter confirm · Esc exit
