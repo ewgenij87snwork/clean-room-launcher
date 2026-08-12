@@ -1,0 +1,7 @@
+command: verified-codex-artifact --version
+environment: empty; HOME=/tmp; network denied by sandbox-exec
+stdout: codex-cli 0.147.0
+result: LOCAL_IDENTITY_ONLY
+provider_launch: false
+provider_network: false
+auth_or_config_mutation: false
