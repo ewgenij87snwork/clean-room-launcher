@@ -15,14 +15,19 @@ fn git(root: &Path, args: &[&str]) -> String {
 #[test]
 fn repository_is_an_independent_non_main_sibling() {
     let worktree = std::env::current_dir().expect("current worktree");
-    let repository = PathBuf::from("/Users/ysorokin/taskseal");
-    let wisdom = PathBuf::from("/Users/ysorokin/Documents/it");
+    let authority: serde_json::Value = serde_json::from_slice(
+        &std::fs::read(".taskseal-dev/execution-authority.json").expect("private authority"),
+    )
+    .expect("valid authority JSON");
+    let repository = PathBuf::from(authority["repository_realpath"].as_str().unwrap());
+    let checkpoint = PathBuf::from(authority["plan_checkpoint_path"].as_str().unwrap());
+    let owner_taskseal_root = checkpoint.parent().unwrap().parent().unwrap();
 
     assert_eq!(git(&worktree, &["rev-parse", "--show-toplevel"]), worktree.display().to_string());
     assert_ne!(git(&worktree, &["branch", "--show-current"]), "main");
-    assert!(!repository.starts_with(&wisdom));
-    assert!(!wisdom.starts_with(&repository));
-    assert_ne!(git(&worktree, &["rev-parse", "--git-common-dir"]), wisdom.display().to_string());
+    assert!(!repository.starts_with(owner_taskseal_root));
+    assert!(!owner_taskseal_root.starts_with(&repository));
+    assert_ne!(git(&worktree, &["rev-parse", "--git-common-dir"]), owner_taskseal_root.display().to_string());
 }
 
 #[test]

@@ -1,22 +1,31 @@
 use std::fs;
 use std::path::Path;
+use std::process::Command;
 
 #[test]
 fn checked_in_authority_schema_accepts_only_the_exact_private_receipt() {
     let authority = fs::read(".taskseal-dev/execution-authority.json").expect("private authority exists");
     let schema = fs::read("schemas/contracts/execution-authority.schema.json").expect("schema exists");
+    let command_output = |args: &[&str]| {
+        let output = Command::new("git").args(args).output().unwrap();
+        assert!(output.status.success());
+        String::from_utf8(output.stdout).unwrap().trim().to_owned()
+    };
+    let worktree = std::env::current_dir().unwrap();
+    let branch = command_output(&["branch", "--show-current"]);
+    let head = command_output(&["rev-parse", "HEAD"]);
     let subject = taskseal::contracts::execution::ExecutionSubject {
-        worktree: "/Users/ysorokin/taskseal-wt/p02-contracts",
-        branch: "feat/p02-contracts",
-        head: "3e3f543629c834270440023d3c030a9891031684",
+        worktree: worktree.to_str().unwrap(),
+        branch: &branch,
+        head: &head,
     };
     assert!(taskseal::contracts::execution::validate_authority(&schema, &authority, &subject).is_ok());
 
     for poison in [
         ("missing worktree", authority_without(&authority, "worktree_realpath")),
-        ("main branch", replace_value(&authority, "feat/p02-contracts", "main")),
+        ("main branch", replace_value(&authority, &branch, "main")),
         ("wrong worktree", replace_value(&authority, subject.worktree, "/tmp/wrong-worktree")),
-        ("stale head", replace_value(&authority, &"3e3f543629c834270440023d3c030a9891031684", &"0".repeat(40))),
+        ("stale head", replace_value(&authority, &head, &"0".repeat(40))),
         ("unknown field", add_unknown_field(&authority)),
     ] {
         assert!(
@@ -30,10 +39,13 @@ fn checked_in_authority_schema_accepts_only_the_exact_private_receipt() {
 #[test]
 fn root_instructions_match_the_sealed_template() {
     let local = fs::read("AGENTS.md").expect("root AGENTS exists");
-    let sealed = fs::read(
-        "/Users/ysorokin/Documents/it/5-LVL - 2026/Temp in Projects/wisdom/taskseal/templates/taskseal-root-AGENTS.md",
+    let authority: serde_json::Value = serde_json::from_slice(
+        &fs::read(".taskseal-dev/execution-authority.json").expect("private authority exists"),
     )
-    .expect("sealed root AGENTS exists");
+    .unwrap();
+    let checkpoint = Path::new(authority["plan_checkpoint_path"].as_str().unwrap());
+    let sealed_path = checkpoint.parent().unwrap().parent().unwrap().join("templates/taskseal-root-AGENTS.md");
+    let sealed = fs::read(sealed_path).expect("sealed root AGENTS exists");
     assert_eq!(local, sealed);
     assert!(fs::read_to_string(".gitignore").unwrap().lines().any(|line| line == ".taskseal-dev/"));
     assert!(!Path::new(".taskseal-dev/execution-authority.json").metadata().unwrap().permissions().readonly());

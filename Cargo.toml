@@ -21,3 +21,7 @@ path = "tests/contracts/repository_boundary.rs"
 [[test]]
 name = "execution_bootstrap"
 path = "tests/contracts/execution_bootstrap.rs"
+
+[[test]]
+name = "public_boundary"
+path = "tests/contracts/public_boundary.rs"
