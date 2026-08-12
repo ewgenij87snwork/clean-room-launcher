@@ -1,0 +1,58 @@
+{
+  "schema_version": "taskseal.task-receipt.v1",
+  "plan": "P02",
+  "task": 4,
+  "acceptance_id": "ACC-P02-T4",
+  "evidence_id": "EVD-P02-T4",
+  "input_head": "807bab6c3addde0e4e41bd354521fa1f136539cc",
+  "result_head": "e5e78863caab0e4756972c0d7abdcbf4d14fc768",
+  "branch": "feat/p02-contracts",
+  "worktree": "$TASKSEAL_WORKTREE",
+  "path_binding": "exact private execution authority",
+  "checkpoint_sha256": "eff62290f54f56bbb1396395b8bf7f2e90e3b6c90a770de96bfa7a4cd7aaaed6",
+  "accepted_at": "2026-08-12T08:34:36+02:00",
+  "result": "accepted",
+  "commands": [
+    {
+      "command": "cargo test --locked --offline --test schema_vectors",
+      "phase": "red_missing_schema_module",
+      "exit": 101,
+      "expected": true
+    },
+    {
+      "command": "cargo test --locked --offline --test schema_vectors",
+      "phase": "red_validator_api_type_mismatch",
+      "exit": 101,
+      "expected": true
+    },
+    {
+      "command": "cargo test --locked --offline --test schema_vectors",
+      "phase": "red_pointer_normalization",
+      "exit": 101,
+      "expected": true
+    },
+    {
+      "command": "cargo test --locked --offline --test schema_vectors; cargo test --locked --offline --all-targets",
+      "phase": "green_and_regression",
+      "exit": 0,
+      "expected": true
+    }
+  ],
+  "controls": ["SCH-01", "SCH-02", "SCH-03", "SCH-04", "SCH-05", "SCH-06", "SCH-07", "SCH-08", "SCH-09", "SCH-10", "TSK-01"],
+  "subjects": {
+    "schemas/contracts/l2.schema.json": "22cd47fe110e9ce2a94a4817096c67129486ff47b18b2c6abd6e75a3a8ec232f",
+    "schemas/contracts/task-packet-v2.schema.json": "9b63898fc13af6768afe9b7982be673628bae9fe51fbf8d0a62a1ae543bade8c",
+    "schemas/contracts/catalog.schema.json": "cd804d50122335b17479e58aba640dfbcb5b0a21b183c7d8944d9d7793854ce4",
+    "schemas/contracts/manifest.schema.json": "b14322d8329e1ecbe2dbf1ac5c82b9dfe100b402c03850000a53d79ef030e822",
+    "src/contracts/schema.rs": "a04bb8ee22c889fabafd225e7b63c9705710de20ec2495b50fc30d7aa8f7f8fe",
+    "tests/contracts/schema_vectors.rs": "ebbaf6a0724036fc291382bdf316c67c59fbcda456e4fae174921ec632d622b7"
+  },
+  "vectors": {
+    "valid": 4,
+    "invalid": 4,
+    "invalid_classes": ["required", "unknown-properties", "enum", "bounds"],
+    "error_paths_sorted": true,
+    "owned_schema_ids": true
+  },
+  "skips_counted_as_pass": 0
+}
