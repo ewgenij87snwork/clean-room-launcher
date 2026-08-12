@@ -1,6 +1,7 @@
 mod dispatch;
 mod doctor;
 mod help;
+mod output;
 mod parser;
 mod process;
 mod screen;
@@ -9,6 +10,24 @@ use std::process::ExitCode;
 
 pub fn run(invoked_as: &str, args: impl IntoIterator<Item = String>) -> ExitCode {
     let args = args.into_iter().collect::<Vec<_>>();
+    let (output_mode, args) = match output::select(args) {
+        Ok(selection) => selection,
+        Err(message) => {
+            eprintln!("{message}");
+            return ExitCode::from(2);
+        }
+    };
+    if matches!(output_mode, output::Mode::Json) {
+        if args.is_empty() {
+            println!("{}", output::guided_json());
+            return ExitCode::SUCCESS;
+        }
+        eprintln!(
+            "OUTPUT_UNSUPPORTED_FOR_COMMAND: {}; use human output",
+            args[0]
+        );
+        return ExitCode::from(2);
+    }
     match help::respond(&args, invoked_as) {
         Ok(Some(output)) => {
             println!("{output}");
@@ -46,6 +65,10 @@ pub fn run(invoked_as: &str, args: impl IntoIterator<Item = String>) -> ExitCode
                 return ExitCode::from(2);
             }
         },
+        parser::Command::Init if !output::stdin_is_terminal() => {
+            eprintln!("NON_INTERACTIVE_INPUT_REQUIRED: rerun init interactively");
+            return ExitCode::from(2);
+        }
         parser::Command::Provider | parser::Command::Generic => {
             return match dispatch::run(command, &args) {
                 Ok(exit) => exit,

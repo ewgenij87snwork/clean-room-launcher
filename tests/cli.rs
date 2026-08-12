@@ -10,3 +10,5 @@ mod first_screen;
 mod foreground_process;
 #[path = "cli/help.rs"]
 mod help;
+#[path = "cli/non_tty_json.rs"]
+mod non_tty_json;
