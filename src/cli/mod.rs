@@ -1,3 +1,4 @@
+mod dispatch;
 mod doctor;
 mod help;
 mod parser;
@@ -44,6 +45,15 @@ pub fn run(invoked_as: &str, args: impl IntoIterator<Item = String>) -> ExitCode
                 return ExitCode::from(2);
             }
         },
+        parser::Command::Provider | parser::Command::Generic => {
+            return match dispatch::run(command, &args) {
+                Ok(exit) => exit,
+                Err(message) => {
+                    eprintln!("{message}");
+                    ExitCode::from(2)
+                }
+            };
+        }
         _ => println!("{invoked_as}: command accepted"),
     }
 

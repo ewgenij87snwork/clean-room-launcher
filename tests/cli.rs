@@ -1,3 +1,5 @@
+#[path = "cli/argv_passthrough.rs"]
+mod argv_passthrough;
 #[path = "cli/doctor.rs"]
 mod doctor;
 #[path = "cli/entrypoint_parity.rs"]
