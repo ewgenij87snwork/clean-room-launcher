@@ -2,7 +2,7 @@
 
 pub mod contracts;
 
-pub mod core {}
+pub mod core;
 pub mod catalog {}
 pub mod cli {}
 pub mod adapters {}
