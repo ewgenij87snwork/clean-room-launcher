@@ -29,3 +29,7 @@ path = "tests/contracts/public_boundary.rs"
 [[test]]
 name = "schema_vectors"
 path = "tests/contracts/schema_vectors.rs"
+
+[[test]]
+name = "canonical_vectors"
+path = "tests/contracts/canonical_vectors.rs"

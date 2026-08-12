@@ -28,7 +28,7 @@ find "$root" \( -name .git -o -name target -o -name .taskseal-dev \) -prune -o -
 while IFS= read -r file; do
   relative=${file#"$root"/}
   case "$relative" in
-    AGENTS.md|README.md|Cargo.toml|Cargo.lock|rust-toolchain.toml|LICENSE|SECURITY.md|GOVERNANCE.md|CHANGELOG.md|deny.toml|.gitignore) ;;
+    AGENTS.md|README.md|Cargo.toml|Cargo.lock|rust-toolchain.toml|LICENSE|SECURITY.md|GOVERNANCE.md|CHANGELOG.md|deny.toml|.gitignore|schemas/canonical-json-profile.md) ;;
     src/*|schemas/contracts/*|fixtures/contracts/*|adapters/declarations/*|tests/contracts/*|tests/fixtures/*|controls/*|scripts/check-public-boundary.sh|scripts/probe/*|scripts/gates/p02/*|reports/contracts/*|reports/gates/p02/*) ;;
     *) echo "UNALLOWLISTED_PUBLIC_PATH:$relative" >&2; exit 11 ;;
   esac
