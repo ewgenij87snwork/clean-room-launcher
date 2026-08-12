@@ -1,0 +1,1 @@
+{"schema_version":"task-packet.v2","task_id":"P02-T4","targets":["src/lib.rs"],"write_set":["schemas/contracts"],"budget":{"bytes":1024,"tokens":256},"mode":"compile"}

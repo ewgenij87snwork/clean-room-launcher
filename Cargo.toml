@@ -25,3 +25,7 @@ path = "tests/contracts/execution_bootstrap.rs"
 [[test]]
 name = "public_boundary"
 path = "tests/contracts/public_boundary.rs"
+
+[[test]]
+name = "schema_vectors"
+path = "tests/contracts/schema_vectors.rs"

@@ -1,0 +1,1 @@
+{"schema_version":"task-packet.v2","task_id":"P02-T4","targets":[],"write_set":["schemas/contracts"],"budget":{"bytes":0,"tokens":0},"mode":"compile"}
