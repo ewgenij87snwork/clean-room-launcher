@@ -1,0 +1,2 @@
+P06_T1_RED: production provider qualification boundary is unavailable.
+TASKSEAL_EXIT=101

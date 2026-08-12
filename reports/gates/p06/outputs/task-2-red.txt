@@ -1,0 +1,2 @@
+P06_T2_RED: identity-bound environment policy is unavailable.
+TASKSEAL_EXIT=101

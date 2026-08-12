@@ -1,0 +1,11 @@
+Finished `test` profile [unoptimized + debuginfo] target(s) in 0.44s
+Running tests/adapters.rs (target/debug/deps/adapters-e08c729b4fe206b0)
+
+running 4 tests
+test environment::typed_policy_refuses_missing_required_auth_and_invalid_requirement ... ok
+test environment::typed_policy_admits_only_required_auth_and_binds_exact_identity ... ok
+test identity::identity_binds_exact_numeric_tuple ... ok
+test identity::identity_refuses_out_of_range_and_post_check_replacement ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.82s
+TASKSEAL_EXIT=0
