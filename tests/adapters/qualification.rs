@@ -121,12 +121,9 @@ fn portable_receipt_is_canonical_bound_and_rejects_tampering() {
         Err(QualificationReason::RefusedEvidence)
     );
 
-    let unknown = format!(
-        "{}",
-        String::from_utf8(bytes)
-            .unwrap()
-            .replace('}', ",\"unknown\":true}")
-    );
+    let unknown = String::from_utf8(bytes)
+        .unwrap()
+        .replace('}', ",\"unknown\":true}");
     assert_eq!(
         verify_receipt_bytes(unknown.as_bytes()),
         Err(QualificationReason::InvalidClaim)
