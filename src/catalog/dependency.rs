@@ -13,6 +13,11 @@ impl DependencyGraph {
             .collect();
         Self { edges }
     }
+    pub fn from_ids(ids: impl IntoIterator<Item = String>) -> Self {
+        Self {
+            edges: ids.into_iter().map(|id| (id, Vec::new())).collect(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

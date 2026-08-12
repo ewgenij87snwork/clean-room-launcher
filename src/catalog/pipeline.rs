@@ -6,20 +6,31 @@ use super::level_b::{DecisionRecord, SkillSignals, decide_bodies};
 use super::manifest::CatalogManifest;
 use super::sources::SkillSource;
 use std::collections::BTreeMap;
+use std::path::{Path, PathBuf};
 
 #[derive(Debug)]
 pub struct ValidatedCatalog {
     manifest: CatalogManifest,
+    body_paths: BTreeMap<String, PathBuf>,
 }
 
 impl ValidatedCatalog {
     pub fn manifest(&self) -> &CatalogManifest {
         &self.manifest
     }
+    pub(crate) fn body_path(&self, id: &str) -> Option<&Path> {
+        self.body_paths.get(id).map(PathBuf::as_path)
+    }
 
     #[cfg(test)]
-    pub(crate) fn from_manifest_for_test(manifest: CatalogManifest) -> Self {
-        Self { manifest }
+    pub(crate) fn from_manifest_for_test(
+        manifest: CatalogManifest,
+        body_paths: BTreeMap<String, PathBuf>,
+    ) -> Self {
+        Self {
+            manifest,
+            body_paths,
+        }
     }
 }
 
@@ -40,6 +51,23 @@ pub fn build_validated_catalog(
     limits: CatalogLimits,
 ) -> Result<ValidatedCatalog, PipelineError> {
     let records = inventory_skills(sources).map_err(|_| PipelineError::Inventory)?;
+    let source_roots: BTreeMap<_, _> = sources
+        .iter()
+        .map(|source| (source.id.as_str(), source.root.as_path()))
+        .collect();
+    let body_paths = records
+        .iter()
+        .map(|record| {
+            let relative = record
+                .body_path
+                .strip_prefix(&format!("{}/", record.source_id))
+                .ok_or(PipelineError::Inventory)?;
+            let root = source_roots
+                .get(record.source_id.as_str())
+                .ok_or(PipelineError::Inventory)?;
+            Ok((record.id.clone(), root.join(relative)))
+        })
+        .collect::<Result<_, _>>()?;
     let level_a = build_level_a(&records).map_err(|_| PipelineError::LevelA)?;
     let measurements: Vec<_> = records
         .iter()
@@ -77,5 +105,8 @@ pub fn build_validated_catalog(
         .collect();
     let manifest = CatalogManifest::new(budgeted.level_a, budgeted.decisions, unavailable_sources)
         .map_err(|_| PipelineError::Manifest)?;
-    Ok(ValidatedCatalog { manifest })
+    Ok(ValidatedCatalog {
+        manifest,
+        body_paths,
+    })
 }

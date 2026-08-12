@@ -220,27 +220,48 @@ fn metadata_for(
 fn yaml_scalar(frontmatter: &str, key: &str) -> Option<String> {
     let lines: Vec<_> = frontmatter.lines().collect();
     let prefix = format!("{key}:");
-    let index = lines.iter().position(|line| line.starts_with(&prefix))?;
+    let matches: Vec<_> = lines
+        .iter()
+        .enumerate()
+        .filter(|(_, line)| line.starts_with(&prefix))
+        .collect();
+    if matches.len() != 1 {
+        return None;
+    }
+    let index = matches[0].0;
     let raw = lines[index].split_once(':')?.1.trim();
-    if raw == "|" || raw == ">" {
+    if matches!(raw, "|" | ">" | "|-" | ">-" | "|+" | ">+") {
         let values: Vec<_> = lines[index + 1..]
             .iter()
             .take_while(|line| line.starts_with(' ') || line.is_empty())
             .map(|line| line.trim())
             .collect();
-        let value = values.join(if raw == "|" { "\n" } else { " " });
+        let value = values.join(if raw.starts_with('|') { "\n" } else { " " });
         return (!value.trim().is_empty()).then(|| value.trim().to_owned());
     }
-    let unquoted = raw
+    let unquoted = if let Some(value) = raw
         .strip_prefix('"')
         .and_then(|value| value.strip_suffix('"'))
-        .or_else(|| {
-            raw.strip_prefix('\'')
-                .and_then(|value| value.strip_suffix('\''))
-        })
-        .unwrap_or(raw)
-        .trim()
-        .to_owned();
+    {
+        value
+            .replace("\\\"", "\"")
+            .replace("\\n", "\n")
+            .replace("\\\\", "\\")
+    } else if let Some(value) = raw
+        .strip_prefix('\'')
+        .and_then(|value| value.strip_suffix('\''))
+    {
+        value.replace("''", "'")
+    } else {
+        let value = raw.split_once(" #").map_or(raw, |parts| parts.0).trim();
+        if value.starts_with(['[', '{'])
+            || value.parse::<f64>().is_ok()
+            || matches!(value, "true" | "false" | "null" | "~")
+        {
+            return None;
+        }
+        value.to_owned()
+    };
     (!unquoted.is_empty()).then_some(unquoted)
 }
 

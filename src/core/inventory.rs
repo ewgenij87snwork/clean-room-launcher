@@ -284,6 +284,8 @@ fn same_file_state(left: &Metadata, right: &Metadata) -> bool {
         && left.len() == right.len()
         && left.mtime() == right.mtime()
         && left.mtime_nsec() == right.mtime_nsec()
+        && left.ctime() == right.ctime()
+        && left.ctime_nsec() == right.ctime_nsec()
 }
 
 #[cfg(not(unix))]

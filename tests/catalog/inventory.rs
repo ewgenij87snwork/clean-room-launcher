@@ -28,7 +28,7 @@ fn changing_body_during_read_refuses_with_stable_reason() {
     let mut changed = false;
     let error = inventory_skills_with_mutation(&sources[0], &mut |path| {
         if !changed && path.ends_with("alpha/SKILL.md") {
-            std::fs::write(&target, b"changed during read with different length").unwrap();
+            std::fs::write(&target, b"mutate original body").unwrap();
             changed = true
         }
     })
@@ -116,7 +116,7 @@ fn native_frontmatter_handles_quotes_blocks_bom_crlf_and_enforces_directory_name
     std::fs::create_dir_all(&skill).unwrap();
     std::fs::write(
         skill.join("SKILL.md"),
-        "\u{feff}---\r\nname: \"quoted-skill\"\r\ndescription: >\r\n  first line\r\n  second line\r\n---\r\nbody",
+        "\u{feff}---\r\nname: \"quoted-skill\"\r\ndescription: >-\r\n  first line\r\n  second line\r\nallowed-tools: [Read]\r\n---\r\nbody",
     )
     .unwrap();
     let config = SkillSourceConfig::new(vec![(root.clone(), SkillSourceAuthority::Project)]);
@@ -126,6 +126,24 @@ fn native_frontmatter_handles_quotes_blocks_bom_crlf_and_enforces_directory_name
     std::fs::write(
         skill.join("SKILL.md"),
         "---\nname: wrong-name\ndescription: mismatch\n---\nbody",
+    )
+    .unwrap();
+    assert_eq!(
+        inventory_skills(&sources).unwrap_err(),
+        InventoryError::MalformedMetadata
+    );
+    std::fs::write(
+        skill.join("SKILL.md"),
+        "---\nname: quoted-skill\nname: duplicate\ndescription: bad\n---\nbody",
+    )
+    .unwrap();
+    assert_eq!(
+        inventory_skills(&sources).unwrap_err(),
+        InventoryError::MalformedMetadata
+    );
+    std::fs::write(
+        skill.join("SKILL.md"),
+        "---\nname: quoted-skill\ndescription: 42\n---\nbody",
     )
     .unwrap();
     assert_eq!(

@@ -2,7 +2,9 @@ use super::level_a::LevelAEntry;
 use super::level_b::{BodyDecision, DecisionRecord};
 use super::manifest::CatalogManifest;
 use super::pipeline::ValidatedCatalog;
-use super::projection::{ProjectionError, parse_qualification_receipt, project_native};
+use super::projection::{
+    ProjectionError, parse_qualification_receipt, project_native, verify_native_observation,
+};
 use crate::contracts::adapter::parse_declaration;
 use std::process::Command;
 const DIGEST_A: &str = "5f07933adc98d602398359e57783d348658eaa60fa7907da263b53291f8184b1";
@@ -17,24 +19,13 @@ fn entry(id: &str, name: &str, digest: &str) -> LevelAEntry {
         body_digest: digest.to_owned(),
     }
 }
-fn probe_output() -> Vec<u8> {
-    let root = env!("CARGO_MANIFEST_DIR");
-    let output = Command::new("sh")
-        .arg(format!(
-            "{root}/fixtures/catalog/native-projection/provider-native-probe.sh"
-        ))
-        .arg(format!(
-            "a={root}/fixtures/catalog/native-projection/a/SKILL.md"
-        ))
-        .arg(format!(
-            "b={root}/fixtures/catalog/native-projection/b/SKILL.md"
-        ))
-        .output()
-        .unwrap();
-    assert!(output.status.success());
-    output.stdout
-}
 fn catalog(entries: Vec<LevelAEntry>) -> ValidatedCatalog {
+    let root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("fixtures/catalog/native-projection");
+    let body_paths = entries
+        .iter()
+        .map(|entry| (entry.id.clone(), root.join(&entry.id).join("SKILL.md")))
+        .collect();
     let decisions = entries
         .iter()
         .map(|entry| DecisionRecord {
@@ -46,6 +37,7 @@ fn catalog(entries: Vec<LevelAEntry>) -> ValidatedCatalog {
         .collect();
     ValidatedCatalog::from_manifest_for_test(
         CatalogManifest::new(entries, decisions, vec![]).unwrap(),
+        body_paths,
     )
 }
 fn declaration() -> crate::contracts::adapter::AdapterDeclaration {
@@ -81,7 +73,6 @@ fn real_unqualified_declaration_requires_bound_qualification_receipt() {
             ]),
             &d,
             receipt,
-            &probe_output(),
         )
         .unwrap_err(),
         ProjectionError::UnsupportedNativeSeam
@@ -98,17 +89,15 @@ fn multi_skill_projection_is_per_skill_digest_bound_and_body_free() {
         ]),
         &d,
         r,
-        &probe_output(),
     )
     .unwrap();
-    assert_eq!(p.entries[0].native_link, "a");
+    assert!(p.entries[0].native_path.ends_with("a/SKILL.md"));
     assert_eq!(p.entries.len(), 2);
     assert!(p.startup_bytes.windows(5).all(|w| w != b"BODY:"))
 }
 
 #[test]
 fn qualified_native_fixture_executes_canary_and_matches_bound_receipt() {
-    let output = probe_output();
     let projected = project_native(
         &catalog(vec![
             entry("a", "alpha", DIGEST_A),
@@ -116,9 +105,25 @@ fn qualified_native_fixture_executes_canary_and_matches_bound_receipt() {
         ]),
         &declaration(),
         fixture_receipt(),
-        &output,
     )
     .unwrap();
+    let selected = &projected.entries[0];
+    let script = concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/fixtures/catalog/native-projection/provider-native-probe.sh"
+    );
+    let output = Command::new("sh")
+        .arg(script)
+        .arg(format!(
+            "{}={}",
+            selected.id,
+            selected.native_path.display()
+        ))
+        .output()
+        .unwrap();
+    assert!(output.status.success());
+    verify_native_observation(&projected, &selected.id, &output.stdout).unwrap();
+    assert!(!String::from_utf8(output.stdout).unwrap().contains("b="));
     assert_eq!(projected.entries.len(), 2);
 }
 #[test]
@@ -169,7 +174,6 @@ fn tampered_receipt_or_body_digest_refuses() {
             ]),
             &d,
             r,
-            &probe_output(),
         )
         .unwrap_err(),
         ProjectionError::DigestMismatch("a".into())
