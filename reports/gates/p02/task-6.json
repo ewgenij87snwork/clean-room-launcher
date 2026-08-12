@@ -1,0 +1,46 @@
+{
+  "schema_version": "taskseal.task-receipt.v1",
+  "plan": "P02",
+  "task": 6,
+  "acceptance_id": "ACC-P02-T6",
+  "evidence_id": "EVD-P02-T6",
+  "input_head": "c9c1fbdc31057142b61e69bd57d7b604597cd0d5",
+  "result_head": "5282f87ffb55993f0d5fe4aef0cea47e6694574f",
+  "branch": "feat/p02-contracts",
+  "worktree": "$TASKSEAL_WORKTREE",
+  "path_binding": "exact private execution authority",
+  "checkpoint_sha256": "eff62290f54f56bbb1396395b8bf7f2e90e3b6c90a770de96bfa7a4cd7aaaed6",
+  "accepted_at": "2026-08-12T08:38:40+02:00",
+  "result": "accepted",
+  "commands": [
+    {
+      "command": "cargo test --locked --offline --test error_receipt_vectors",
+      "phase": "red_missing_error_receipt_modules",
+      "exit": 101,
+      "expected": true
+    },
+    {
+      "command": "cargo test --locked --offline --test error_receipt_vectors; cargo test --locked --offline --all-targets; public boundary guard",
+      "phase": "green_and_regression",
+      "exit": 0,
+      "expected": true
+    }
+  ],
+  "controls": ["SCH-16", "SCH-17", "SCH-18", "SCH-19"],
+  "subjects": {
+    "src/contracts/error.rs": "b5f5120c0b95313f47ab311744217e66cdd078205f046ad768de8b3a948d7dfa",
+    "src/contracts/receipt.rs": "df3f9269256bb21aeb708f38d402e8e245eab347a640cacfeb82517051319557",
+    "schemas/contracts/error.schema.json": "92e460532eafff884509e6a68ac9a7204e916a9ccd58e2a76712280c13325bfc",
+    "schemas/contracts/receipt-seam.schema.json": "b6ab397d236c058162ca0a897ed8691a4be62c10fe30cf83d8103c446f76f249",
+    "tests/contracts/error_receipt_vectors.rs": "9fc3c8800f7e2d0a1229ac1077b78086db061102ce767c37745e58114fbb8e3a"
+  },
+  "privacy": {
+    "unknown_fields_refused": true,
+    "transcript_field_refused": true,
+    "prompt_payload_present": false,
+    "secret_payload_present": false,
+    "absolute_home_path_present": false
+  },
+  "round_trip_byte_stable": true,
+  "skips_counted_as_pass": 0
+}
