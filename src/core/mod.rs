@@ -1,5 +1,6 @@
 pub mod budget;
 pub mod decode;
+pub mod installation;
 pub mod inventory;
 pub mod manifest;
 pub mod merge;

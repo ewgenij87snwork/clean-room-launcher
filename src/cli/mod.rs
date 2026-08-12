@@ -1,9 +1,11 @@
+mod doctor;
 mod parser;
 
 use std::process::ExitCode;
 
 pub fn run(invoked_as: &str, args: impl IntoIterator<Item = String>) -> ExitCode {
-    let command = match parser::parse(args) {
+    let args = args.into_iter().collect::<Vec<_>>();
+    let command = match parser::parse(args.clone()) {
         Ok(command) => command,
         Err(message) => {
             eprintln!("{message}");
@@ -20,6 +22,13 @@ pub fn run(invoked_as: &str, args: impl IntoIterator<Item = String>) -> ExitCode
         parser::Command::Guided => {
             println!("ready to prepare\n\n[Enter] start   [r] review/change   [Esc] exit");
         }
+        parser::Command::Doctor => match doctor::run(&args[1..]) {
+            Ok(report) => println!("{report}"),
+            Err(message) => {
+                eprintln!("{message}");
+                return ExitCode::from(2);
+            }
+        },
         _ => println!("{invoked_as}: command accepted"),
     }
 
