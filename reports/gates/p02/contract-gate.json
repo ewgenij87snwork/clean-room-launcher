@@ -2,9 +2,9 @@
   "schema_version": "taskseal.p02.contract-gate.v1",
   "plan": "P02",
   "result": "PASS",
-  "result_head": "1fd06aaf9a40d84d80be509fb29fcc7377d5e9ba",
+  "result_head": "dcba8c551ad6f4591619c0fe2015d9f0a1d5832c",
   "branch": "feat/p02-contracts",
-  "worktree": "$TASKSEAL_WORKTREE",
+  "worktree": "\\$TASKSEAL_WORKTREE",
   "commands": [
     {
       "name": "fmt",
