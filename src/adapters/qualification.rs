@@ -24,11 +24,13 @@ pub struct EvidenceRef {
 struct StoredEvidence {
     schema_version: String,
     kind: String,
+    provider_id: String,
     declaration_digest: String,
     artifact_digest: String,
     version: [u64; 3],
     os: String,
     arch: String,
+    interpreter_digest: Option<String>,
     observed_at: u64,
     expires_at: u64,
     output_digest: String,
@@ -46,7 +48,7 @@ pub enum QualificationState { Qualified(ProviderQualificationReceipt), NotQualif
 
 pub fn parse_evidence(bytes: &[u8], claim: &TupleClaim) -> Result<EvidenceRef, QualificationReason> {
     let stored: StoredEvidence = serde_json::from_slice(bytes).map_err(|_| QualificationReason::InvalidClaim)?;
-    if stored.schema_version != "taskseal.provider-evidence.v1" || stored.kind.is_empty() || !valid_digest(&stored.output_digest) || stored.declaration_digest != claim.declaration_digest || stored.artifact_digest != claim.artifact_digest || stored.version != [claim.version.0, claim.version.1, claim.version.2] || stored.os != claim.os || stored.arch != claim.arch || stored.observed_at > stored.expires_at {
+    if stored.schema_version != "taskseal.provider-evidence.v1" || stored.kind.is_empty() || !valid_digest(&stored.output_digest) || stored.provider_id != claim.provider_id || stored.declaration_digest != claim.declaration_digest || stored.artifact_digest != claim.artifact_digest || stored.version != [claim.version.0, claim.version.1, claim.version.2] || stored.os != claim.os || stored.arch != claim.arch || stored.interpreter_digest != claim.interpreter_digest || stored.observed_at > stored.expires_at {
         return Err(QualificationReason::InvalidClaim);
     }
     Ok(EvidenceRef { kind: stored.kind, claim: claim.clone(), observed_at: stored.observed_at, expires_at: stored.expires_at, digest: stored.output_digest, refused: stored.refused })
