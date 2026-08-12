@@ -1,0 +1,22 @@
+{
+  "schema_version": "taskseal.task-receipt.v1",
+  "plan": "P05",
+  "task": 4,
+  "acceptance_id": "ACC-P05-T4",
+  "evidence_id": "EVD-P05-T4",
+  "input_head": "2e0b7b654fd7cb4a28d1e24744f7290a30f27b21",
+  "result_head": "76a6573c6a53a36a44f4226da91cc79a3e62a75d",
+  "branch": "feat/p05-terminal",
+  "worktree": "$TASKSEAL_WORKTREE",
+  "checkpoint_sha256": "6d1372cdb692277152e7d51bbb4f6e36cd5361332939c89ebe26758796ad339b",
+  "accepted_at": "2026-08-12T17:07:09+02:00",
+  "result": "accepted",
+  "commands": [
+    {"command":"cargo test --test cli argv_passthrough --locked --offline","phase":"red_missing_dispatch","exit":101,"tests":2,"failed":2},
+    {"command":"cargo test --test cli argv_passthrough --locked --offline","phase":"green_fake_provider_capture","exit":0,"tests":2},
+    {"command":"cargo fmt --check && cargo test --test cli --locked --offline && cargo clippy --all-targets --all-features --locked --offline -- -D warnings","phase":"full_cli_and_quality_matrix","exit":0,"tests":11}
+  ],
+  "coverage": {"provider_tail_preserved":true,"generic_tail_preserved":true,"spaces_unicode_and_empty_arg":true,"injection_string_is_literal":true,"empty_generic_boundary_refuses":true,"provider_qualification_claimed":false},
+  "controls": ["UX-05", "UX-06"],
+  "skips_counted_as_pass":0
+}
