@@ -89,7 +89,11 @@ pub fn decode(
             let code = message.split(':').next().unwrap_or("SCHEMA_INVALID");
             error(code, &record.logical_path, &message)
         })?;
-        if let Some(id) = value.get("id").and_then(Value::as_str) {
+        if let Some(id) = value
+            .get("scope_id")
+            .or_else(|| value.get("id"))
+            .and_then(Value::as_str)
+        {
             admit_id(&mut ids, id, &record.logical_path)?;
         }
         documents.push(DecodedDocument::Json {

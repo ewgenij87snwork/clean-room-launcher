@@ -1,52 +1,48 @@
 use crate::core::decode::{DecodedDocument, DecodedInputs};
 use serde_json::json;
 
-fn inputs(ids: &[&str]) -> DecodedInputs {
-    DecodedInputs {
-        documents: ids
-            .iter()
-            .map(|id| DecodedDocument::Json {
-                logical_path: format!("{id}.l2.json"),
-                value: json!({"schema_version":"l2.v1","id":id,"content":"x","digest":"0".repeat(64)}),
-            })
-            .collect(),
-    }
+fn inputs(scopes: &[(&str, &[&str])]) -> DecodedInputs {
+    DecodedInputs { documents: scopes.iter().map(|(id, parents)| DecodedDocument::Json {
+        logical_path: format!("{id}.l2.json"),
+        value: json!({"schema_version":"l2.v2","scope_id":id,"scope_kind":"repo","parent_scope_ids":parents,"sections":{"replace":{"x":"y"}},"provenance":[],"approval":{"status":"approved","receipt_id":null},"source_hashes":[]}),
+    }).collect() }
 }
 
 #[test]
-fn resolves_only_explicit_reachable_scopes_in_parent_first_order() {
-    let target = super::Target::new(["child"], [("child", "root")]);
-    let resolved = super::resolve_scopes(&inputs(&["sibling", "child", "root"]), &target).unwrap();
+fn resolves_only_schema_declared_reachable_scopes_parent_first() {
+    let graph = inputs(&[("sibling", &[]), ("child", &["root"]), ("root", &[])]);
+    let resolved = super::resolve_scopes(&graph, &super::Target::new(["child"])).unwrap();
     assert_eq!(resolved.ids, ["root", "child"]);
 }
 
 #[test]
-fn supports_multiple_targets_without_implicit_siblings() {
-    let target = super::Target::new(["b", "a"], Vec::<(&str, &str)>::new());
-    let resolved = super::resolve_scopes(&inputs(&["unused", "a", "b"]), &target).unwrap();
-    assert_eq!(resolved.ids, ["a", "b"]);
+fn supports_multiple_targets_and_multi_parent_dag_without_siblings() {
+    let graph = inputs(&[
+        ("unused", &[]),
+        ("root-a", &[]),
+        ("root-b", &[]),
+        ("child", &["root-b", "root-a"]),
+    ]);
+    let resolved = super::resolve_scopes(&graph, &super::Target::new(["child"])).unwrap();
+    assert_eq!(resolved.ids, ["root-b", "root-a", "child"]);
 }
 
 #[test]
-fn refuses_cycles_missing_parents_and_duplicate_links() {
-    for (name, target, code) in [
+fn refuses_cycles_missing_parents_and_duplicate_scope_ids() {
+    for (name, graph, code) in [
         (
             "cycle",
-            super::Target::new(["a"], [("a", "b"), ("b", "a")]),
+            inputs(&[("a", &["b"]), ("b", &["a"])]),
             "SCOPE_CYCLE",
         ),
+        ("missing", inputs(&[("a", &["missing"])]), "MISSING_SCOPE"),
         (
-            "missing",
-            super::Target::new(["a"], [("a", "missing")]),
-            "MISSING_SCOPE",
-        ),
-        (
-            "ambiguous",
-            super::Target::new(["a"], [("a", "b"), ("a", "c")]),
-            "AMBIGUOUS_PARENT",
+            "duplicate",
+            inputs(&[("a", &[]), ("a", &[])]),
+            "DUPLICATE_SCOPE",
         ),
     ] {
-        let error = super::resolve_scopes(&inputs(&["a", "b", "c"]), &target).unwrap_err();
+        let error = super::resolve_scopes(&graph, &super::Target::new(["a"])).unwrap_err();
         assert!(error.to_string().starts_with(code), "{name}: {error}");
     }
 }

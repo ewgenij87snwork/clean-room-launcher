@@ -5,24 +5,16 @@ use std::fmt;
 #[derive(Debug)]
 pub struct Target {
     roots: BTreeSet<String>,
-    parents: Vec<(String, String)>,
 }
 
 impl Target {
-    pub fn new<I, S, P, C, R>(roots: I, parents: P) -> Self
+    pub fn new<I, S>(roots: I) -> Self
     where
         I: IntoIterator<Item = S>,
         S: Into<String>,
-        P: IntoIterator<Item = (C, R)>,
-        C: Into<String>,
-        R: Into<String>,
     {
         Self {
             roots: roots.into_iter().map(Into::into).collect(),
-            parents: parents
-                .into_iter()
-                .map(|(child, parent)| (child.into(), parent.into()))
-                .collect(),
         }
     }
 }
@@ -34,59 +26,60 @@ pub struct ResolvedScope {
 
 #[derive(Debug)]
 pub struct ScopeError(String);
-
 impl fmt::Display for ScopeError {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         formatter.write_str(&self.0)
     }
 }
-
 impl std::error::Error for ScopeError {}
 
 pub fn resolve_scopes(
     inputs: &DecodedInputs,
     target: &Target,
 ) -> Result<ResolvedScope, ScopeError> {
-    let available: BTreeSet<String> = inputs
-        .documents
-        .iter()
-        .filter_map(|document| match document {
-            DecodedDocument::Json { value, .. } => value
-                .get("id")
-                .and_then(|id| id.as_str())
-                .map(str::to_owned),
-            DecodedDocument::Adapter { .. } => None,
-        })
-        .collect();
-    let mut parent_by_child = BTreeMap::new();
-    for (child, parent) in &target.parents {
-        if parent_by_child
-            .insert(child.clone(), parent.clone())
-            .is_some()
-        {
-            return Err(ScopeError(format!("AMBIGUOUS_PARENT:{child}")));
+    let mut parents = BTreeMap::<String, Vec<String>>::new();
+    for document in &inputs.documents {
+        if let DecodedDocument::Json { value, .. } = document {
+            let Some(id) = value.get("scope_id").and_then(|value| value.as_str()) else {
+                continue;
+            };
+            let parent_ids = value
+                .get("parent_scope_ids")
+                .and_then(|value| value.as_array())
+                .ok_or_else(|| ScopeError(format!("MISSING_PARENT_LINKS:{id}")))?
+                .iter()
+                .map(|parent| {
+                    parent
+                        .as_str()
+                        .map(str::to_owned)
+                        .ok_or_else(|| ScopeError(format!("INVALID_PARENT_LINK:{id}")))
+                })
+                .collect::<Result<Vec<_>, _>>()?;
+            if parents.insert(id.to_owned(), parent_ids).is_some() {
+                return Err(ScopeError(format!("DUPLICATE_SCOPE:{id}")));
+            }
         }
     }
-
-    let mut resolved = Vec::new();
+    let available: BTreeSet<String> = parents.keys().cloned().collect();
+    let mut output = Vec::new();
     let mut complete = BTreeSet::new();
     for root in &target.roots {
         visit(
             root,
             &available,
-            &parent_by_child,
+            &parents,
             &mut BTreeSet::new(),
             &mut complete,
-            &mut resolved,
+            &mut output,
         )?;
     }
-    Ok(ResolvedScope { ids: resolved })
+    Ok(ResolvedScope { ids: output })
 }
 
 fn visit(
     id: &str,
     available: &BTreeSet<String>,
-    parents: &BTreeMap<String, String>,
+    parents: &BTreeMap<String, Vec<String>>,
     visiting: &mut BTreeSet<String>,
     complete: &mut BTreeSet<String>,
     output: &mut Vec<String>,
@@ -100,8 +93,10 @@ fn visit(
     if !visiting.insert(id.to_owned()) {
         return Err(ScopeError(format!("SCOPE_CYCLE:{id}")));
     }
-    if let Some(parent) = parents.get(id) {
-        visit(parent, available, parents, visiting, complete, output)?;
+    if let Some(parent_ids) = parents.get(id) {
+        for parent in parent_ids {
+            visit(parent, available, parents, visiting, complete, output)?;
+        }
     }
     visiting.remove(id);
     complete.insert(id.to_owned());
