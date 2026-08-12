@@ -70,6 +70,8 @@ fn valid_sha256(value: &str) -> bool {
 pub fn parse_qualification_receipt(
     bytes: &[u8],
     declaration: &AdapterDeclaration,
+    executable_bytes: &[u8],
+    probe_artifact_bytes: &[u8],
 ) -> Result<QualificationReceipt, ProjectionError> {
     let receipt: QualificationReceipt =
         serde_json::from_slice(bytes).map_err(|_| ProjectionError::InvalidReceipt)?;
@@ -97,6 +99,11 @@ pub fn parse_qualification_receipt(
     let observed_bytes = serde_json::to_vec(&receipt.observed_digests)
         .map_err(|_| ProjectionError::InvalidReceipt)?;
     if receipt.catalog_digest != sha256_hex(&observed_bytes) {
+        return Err(ProjectionError::ReceiptBindingMismatch);
+    }
+    if receipt.executable_digest != sha256_hex(executable_bytes)
+        || receipt.probe_artifact_digest != sha256_hex(probe_artifact_bytes)
+    {
         return Err(ProjectionError::ReceiptBindingMismatch);
     }
     Ok(receipt)
