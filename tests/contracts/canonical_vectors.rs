@@ -1,5 +1,5 @@
 use serde_json::json;
-use taskseal::contracts::canonical::{canonicalize, merge, MergeOperation};
+use taskseal::contracts::canonical::{MergeOperation, canonicalize, merge};
 
 #[test]
 fn canonical_bytes_are_key_sorted_compact_and_repeatable() {
@@ -7,15 +7,24 @@ fn canonical_bytes_are_key_sorted_compact_and_repeatable() {
     let first = canonicalize(&value).unwrap();
     let second = canonicalize(&value).unwrap();
     assert_eq!(first, second);
-    assert_eq!(first, "{\"a\":\"тест\",\"nested\":{\"a\":null,\"b\":true},\"z\":[2,1]}".as_bytes());
+    assert_eq!(
+        first,
+        "{\"a\":\"тест\",\"nested\":{\"a\":null,\"b\":true},\"z\":[2,1]}".as_bytes()
+    );
 }
 
 #[test]
 fn merge_operations_are_typed_and_recursive_deep_merge_is_not_available() {
     let left = json!({"items":["a"],"mode":"old"});
     let right = json!({"items":["a","b"]});
-    assert_eq!(merge(&left, &right, MergeOperation::Replace).unwrap(), right);
-    assert_eq!(merge(&left, &right, MergeOperation::AppendUnique).unwrap(), json!({"items":["a","b"],"mode":"old"}));
+    assert_eq!(
+        merge(&left, &right, MergeOperation::Replace).unwrap(),
+        right
+    );
+    assert_eq!(
+        merge(&left, &right, MergeOperation::AppendUnique).unwrap(),
+        json!({"items":["a","b"],"mode":"old"})
+    );
     assert!(merge(&left, &right, MergeOperation::NoInherit).is_err());
 }
 

@@ -22,7 +22,10 @@ fn receipt_seam_round_trips_and_contains_no_private_payload_fields() {
         plan: "P02".into(),
         task: 6,
         result: "accepted".into(),
-        subject_digests: vec![("src/lib.rs".into(), "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa".into())],
+        subject_digests: vec![(
+            "src/lib.rs".into(),
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa".into(),
+        )],
     };
     let bytes = serde_json::to_vec(&receipt).unwrap();
     let decoded: ReceiptSeam = serde_json::from_slice(&bytes).unwrap();

@@ -38,14 +38,19 @@ pub fn validate(kind: SchemaKind, bytes: &[u8]) -> Result<Value, ContractError> 
     if errors.is_empty() {
         Ok(value)
     } else {
-        Err(ContractError(format!("SCHEMA_INVALID:{}", errors.join(" | "))))
+        Err(ContractError(format!(
+            "SCHEMA_INVALID:{}",
+            errors.join(" | ")
+        )))
     }
 }
 
 fn schema_for(kind: SchemaKind) -> Value {
     let source = match kind {
         SchemaKind::L2 => include_str!("../../schemas/contracts/l2.schema.json"),
-        SchemaKind::TaskPacketV2 => include_str!("../../schemas/contracts/task-packet-v2.schema.json"),
+        SchemaKind::TaskPacketV2 => {
+            include_str!("../../schemas/contracts/task-packet-v2.schema.json")
+        }
         SchemaKind::Catalog => include_str!("../../schemas/contracts/catalog.schema.json"),
         SchemaKind::Manifest => include_str!("../../schemas/contracts/manifest.schema.json"),
     };

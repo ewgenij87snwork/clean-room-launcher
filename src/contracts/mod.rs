@@ -1,8 +1,8 @@
-pub mod execution;
-pub mod repository;
-pub mod schema;
+pub mod adapter;
 pub mod canonical;
 pub mod error;
+pub mod execution;
 pub mod receipt;
-pub mod adapter;
+pub mod repository;
+pub mod schema;
 pub mod trace;

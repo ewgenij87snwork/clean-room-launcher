@@ -45,3 +45,7 @@ path = "tests/contracts/adapter_registry.rs"
 [[test]]
 name = "trace_metadata"
 path = "tests/contracts/trace_metadata.rs"
+
+[[test]]
+name = "gate_contract"
+path = "tests/contracts/gate_contract.rs"

@@ -2,7 +2,10 @@ use taskseal::contracts::adapter::parse_declaration;
 
 #[test]
 fn valid_unqualified_declarations_parse_without_support_claims() {
-    for path in ["adapters/declarations/codex.toml", "adapters/declarations/claude.toml"] {
+    for path in [
+        "adapters/declarations/codex.toml",
+        "adapters/declarations/claude.toml",
+    ] {
         let text = std::fs::read_to_string(path).unwrap();
         let declaration = parse_declaration(&text).unwrap();
         assert!(!declaration.qualified);
