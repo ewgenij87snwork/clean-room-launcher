@@ -1,0 +1,46 @@
+{
+  "schema_version": "taskseal.task-receipt.v1",
+  "plan": "P02",
+  "task": 8,
+  "acceptance_id": "ACC-P02-T8",
+  "evidence_id": "EVD-P02-T8",
+  "input_head": "d9cc194971341ba92a99377296afcc08d938b42e",
+  "result_head": "f7a3553358f583764e011d4fe6e8a9912fae84ba",
+  "branch": "feat/p02-contracts",
+  "worktree": "$TASKSEAL_WORKTREE",
+  "path_binding": "exact private execution authority",
+  "checkpoint_sha256": "eff62290f54f56bbb1396395b8bf7f2e90e3b6c90a770de96bfa7a4cd7aaaed6",
+  "accepted_at": "2026-08-12T08:43:00+02:00",
+  "result": "accepted",
+  "commands": [
+    {
+      "command": "cargo test --locked --offline --test trace_metadata",
+      "phase": "red_missing_trace_module",
+      "exit": 101,
+      "expected": true
+    },
+    {
+      "command": "cargo test --locked --offline --test trace_metadata; ruby scripts/check-control-coverage.rb; cargo test --locked --offline --all-targets; public boundary guard",
+      "phase": "green_and_regression",
+      "exit": 0,
+      "expected": true
+    }
+  ],
+  "controls": ["all 445 explicit reviewed rows"],
+  "subjects": {
+    "controls/v0.1-execution-map.tsv": "7dbf3c2a4b120f410bcde84b0bda1602052dd7a722bc7ce297e771a0b493d310",
+    "src/contracts/trace.rs": "2db12451ef6ece76642e05059e796610193ca3635655a6aa9662ee1e28a50baa",
+    "scripts/check-control-coverage.rb": "eb1bf152f686dfa6d313c2e38969a6c670e15271290f6809672894a7fa49d2d4",
+    "tests/contracts/trace_metadata.rs": "ff390ce86e19500b0a70158638a36035413bbff0bff820cc217ebf7da70549c3"
+  },
+  "coverage": {
+    "canonical_rows": 445,
+    "passed_rows": 445,
+    "missing_fixture_refused": true,
+    "conflicting_fixture_refused": true,
+    "unreviewed_fixture_refused": true,
+    "stale_fixture_refused": true,
+    "fuzzy_selection": false
+  },
+  "skips_counted_as_pass": 0
+}
