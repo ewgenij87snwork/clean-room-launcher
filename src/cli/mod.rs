@@ -21,9 +21,8 @@ pub fn run(invoked_as: &str, args: impl IntoIterator<Item = String>) -> ExitCode
             );
         }
         parser::Command::Guided => {
-            let screen = screen::render_ready(screen::PrepareReady {
+            let screen = screen::render_unqualified(screen::PrepareReady {
                 provider: "Codex",
-                provider_version: "0.xx",
                 project: "/Users/alex/work/offerstream",
                 preview: "18 KB at start · 43 KB less (read-only measurement)",
                 skills: "5 summaries now · 38 load on use · 4 unavailable",
