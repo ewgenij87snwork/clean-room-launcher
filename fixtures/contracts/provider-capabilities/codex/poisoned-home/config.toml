@@ -1,0 +1,5 @@
+[analytics]
+enabled = false
+
+[features]
+skill_search = true

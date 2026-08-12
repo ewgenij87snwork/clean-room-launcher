@@ -1,0 +1,81 @@
+{
+  "schema_version": "taskseal.provider-capability-truth.v1",
+  "observed_at": "2026-08-12T05:51:18Z",
+  "model_invoked": false,
+  "provider_spend": false,
+  "projection_decision": "refuse clean-room projection until body-on-invocation is reproducibly qualified",
+  "observations": [
+    {
+      "provider": "codex",
+      "fixture": "qualified-home",
+      "executable_digest": "19c4f144c5226a9f17c58e6f0fa854843b0f77a6eb420f40e2745a12f10f5d37",
+      "version": "codex-cli 0.147.0",
+      "os": "Darwin",
+      "arch": "arm64",
+      "discovery_roots": ["$CODEX_HOME/skills"],
+      "native_metadata_lifecycle": {
+        "metadata_at_start": "qualified",
+        "body_on_invocation": "unsupported"
+      },
+      "runtime_filter": "narrowed",
+      "auth_dependencies": "not required for debug prompt-input",
+      "ambient_sources": ["provider-managed system skills may be materialized only in the ephemeral probe home"],
+      "projection_candidate": false,
+      "state": "narrowed",
+      "persistent_state_unchanged": true,
+      "source_fixture_digest": "65118895a3703d3f19d8f2d5b8a8f368e649c81a4a0d5948fec4b189f1e7c388"
+    },
+    {
+      "provider": "codex",
+      "fixture": "wrong-version",
+      "state": "unsupported",
+      "projection_candidate": false,
+      "source_fixture_digest": "9920b6e7effae62fa7550f474b8a5eda38e6c4a8e52e4edd5ee59c5a8f30d6b9"
+    },
+    {
+      "provider": "codex",
+      "fixture": "poisoned-home",
+      "state": "unsupported",
+      "projection_candidate": false,
+      "body_marker_observed": false,
+      "source_fixture_digest": "0f0d267c889b631c8c808a9a65bd6c8afbafa6d5d3b0296d8e1836a36660cb5f"
+    },
+    {
+      "provider": "codex",
+      "fixture": "no-native-isolation",
+      "state": "unsupported",
+      "clean_claim_exit": 78,
+      "clean_claim_error": "UNSUPPORTED_CLEAN_CLAIM"
+    },
+    {
+      "provider": "claude",
+      "fixture": "no-spend",
+      "executable_digest": "fcbe0b8d47570c501302dd1ad31cc26ac2810f022c45fa253936a6961dee32bf",
+      "version": "2.1.223 (Claude Code)",
+      "os": "Darwin",
+      "arch": "arm64",
+      "discovery_roots": [],
+      "native_metadata_lifecycle": {
+        "metadata_at_start": "unsupported",
+        "body_on_invocation": "unsupported"
+      },
+      "runtime_filter": "unsupported",
+      "auth_dependencies": "not inspected; model invocation prohibited",
+      "ambient_sources": ["CLI help only"],
+      "projection_candidate": false,
+      "state": "unsupported",
+      "persistent_state_unchanged": true,
+      "source_fixture_digest": "a8a32fda10e8273027b14892d9640564d3914fa7c64833cf6f753c6034355110"
+    }
+  ],
+  "persistent_subjects": {
+    "codex_config_sha256_before": "2631c0bd3619858155251e47a6968659507bd7b9b29262d926a56421b46d81ba",
+    "codex_config_sha256_after": "2631c0bd3619858155251e47a6968659507bd7b9b29262d926a56421b46d81ba",
+    "codex_auth_sha256_before": "47817d76e216483058efded1ff7f8b0a1c095838858797219ae8013eb43ba241",
+    "codex_auth_sha256_after": "47817d76e216483058efded1ff7f8b0a1c095838858797219ae8013eb43ba241",
+    "source_skill_sha256_before": "7cb8fa1b2a0c635b5c61ffe1da7b8594a7ea0fce5b71e8d523e2025d88b2a05e",
+    "source_skill_sha256_after": "7cb8fa1b2a0c635b5c61ffe1da7b8594a7ea0fce5b71e8d523e2025d88b2a05e",
+    "git_head_before": "ca59f88582cb4f51d2fb16340928f66919ff3195",
+    "git_head_after_probe": "ca59f88582cb4f51d2fb16340928f66919ff3195"
+  }
+}
