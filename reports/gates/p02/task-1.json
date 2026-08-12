@@ -1,0 +1,59 @@
+{
+  "schema_version": "taskseal.task-receipt.v1",
+  "plan": "P02",
+  "task": 1,
+  "acceptance_id": "ACC-P02-T1",
+  "evidence_id": "EVD-P02-T1",
+  "input_head": "ca59f88582cb4f51d2fb16340928f66919ff3195",
+  "result_head": "8f84d12abc0a31955bf009948d85b44b98112982",
+  "branch": "feat/p02-contracts",
+  "worktree": "/Users/ysorokin/taskseal-wt/p02-contracts",
+  "checkpoint_sha256": "eff62290f54f56bbb1396395b8bf7f2e90e3b6c90a770de96bfa7a4cd7aaaed6",
+  "accepted_at": "2026-08-12T07:53:20+02:00",
+  "result": "accepted_narrowed",
+  "provider_claims": {
+    "codex_0_147_0_darwin_arm64": "narrowed",
+    "claude_2_1_223_darwin_arm64": "unsupported_no_spend"
+  },
+  "commands": [
+    {
+      "command": "rustc --edition 2024 --test tests/contracts/provider_capability_truth.rs; provider_capability_truth_test --nocapture",
+      "phase": "red_missing_probe",
+      "exit": 101,
+      "expected": true
+    },
+    {
+      "command": "provider_capability_truth_test codex_fixture_produces_closed_capability_truth_without_a_clean_overclaim --nocapture",
+      "phase": "red_boolean_contract",
+      "exit": 101,
+      "expected": true
+    },
+    {
+      "command": "provider_capability_truth_test codex_fixture_produces_closed_capability_truth_without_a_clean_overclaim --nocapture",
+      "phase": "red_temp_residue",
+      "exit": 101,
+      "expected": true
+    },
+    {
+      "command": "sh -n scripts/probe/provider-capabilities.sh; provider_capability_truth_test --nocapture; persistent subject digest checks; git diff --check",
+      "phase": "green_hardened",
+      "exit": 0,
+      "expected": true
+    }
+  ],
+  "controls": ["SKL-08", "SKL-20", "ADP-01", "ADP-02", "ADP-03"],
+  "subjects": {
+    "reports/contracts/provider-capability-truth.json": "fc79f7813cea234ca46fd20dcd0f56c777f1aeffaa465168dbd8643be118f202",
+    "scripts/probe/provider-capabilities.sh": "8327e85708cda0c620c8f715a185ebec2a6bf2d815446ab1557779e426fd0e1a",
+    "tests/contracts/provider_capability_truth.rs": "30b713fa57385b16d342e4c60deea64113d97a66b6d00f7349a4882891232257"
+  },
+  "persistent_state": {
+    "codex_config_unchanged": true,
+    "codex_auth_unchanged": true,
+    "source_skill_unchanged": true,
+    "model_invoked": false,
+    "provider_spend": false,
+    "temporary_state_removed": true
+  },
+  "skips_counted_as_pass": 0
+}
