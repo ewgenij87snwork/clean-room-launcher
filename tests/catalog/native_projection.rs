@@ -60,9 +60,7 @@ fn immutable_receipt_parser_rejects_unbound_or_unknown_evidence() {
     let bad =
         include_bytes!("../../fixtures/catalog/native-projection/codex-qualified-receipt.json")
             .as_slice()
-            .iter()
-            .copied()
-            .collect::<Vec<_>>();
+            .to_vec();
     let text = String::from_utf8(bad).unwrap();
     let unbound = text.replace("980c03af", "080c03af");
     assert_eq!(
