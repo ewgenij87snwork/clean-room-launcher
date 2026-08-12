@@ -24,6 +24,9 @@ pub enum AdapterError {
     Version,
     VersionOutOfRange,
     UnsupportedInterpreter,
+    PolicyIdentityMismatch,
+    InvalidPolicy,
+    RequiredAuthMissing,
 }
 impl fmt::Display for AdapterError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -34,6 +37,9 @@ impl fmt::Display for AdapterError {
             Self::Version => "UNKNOWN_VERSION",
             Self::VersionOutOfRange => "VERSION_OUT_OF_RANGE",
             Self::UnsupportedInterpreter => "UNSUPPORTED_INTERPRETER",
+            Self::PolicyIdentityMismatch => "POLICY_IDENTITY_MISMATCH",
+            Self::InvalidPolicy => "INVALID_ENVIRONMENT_POLICY",
+            Self::RequiredAuthMissing => "REQUIRED_AUTH_MISSING",
         })
     }
 }
