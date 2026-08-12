@@ -4,6 +4,7 @@ pub mod inventory;
 pub mod level_a;
 pub mod level_b;
 pub mod manifest;
+pub mod projection;
 pub mod protection;
 pub mod sources;
 
@@ -34,3 +35,7 @@ mod manifest_tests;
 #[cfg(test)]
 #[path = "../../tests/catalog/sources.rs"]
 mod sources_tests;
+
+#[cfg(test)]
+#[path = "../../tests/catalog/native_projection.rs"]
+mod native_projection_tests;
