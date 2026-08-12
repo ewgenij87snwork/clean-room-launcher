@@ -1,3 +1,4 @@
+pub mod budget;
 pub mod dependency;
 pub mod inventory;
 pub mod level_a;
@@ -12,6 +13,10 @@ mod inventory_tests;
 #[cfg(test)]
 #[path = "../../tests/catalog/dependency.rs"]
 mod dependency_tests;
+
+#[cfg(test)]
+#[path = "../../tests/catalog/budget.rs"]
+mod budget_tests;
 
 #[cfg(test)]
 #[path = "../../tests/catalog/level_a.rs"]
