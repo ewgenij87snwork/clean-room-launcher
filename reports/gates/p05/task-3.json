@@ -1,0 +1,60 @@
+{
+  "schema_version": "taskseal.task-receipt.v1",
+  "plan": "P05",
+  "task": 3,
+  "acceptance_id": "ACC-P05-T3",
+  "evidence_id": "EVD-P05-T3",
+  "input_head": "12a68b80248d729448d42eea885fda7e778bbfc3",
+  "result_head": "af94ad3e5a23a27c16817a9950e0b67838576bf3",
+  "branch": "feat/p05-terminal",
+  "worktree": "$TASKSEAL_WORKTREE",
+  "checkpoint_sha256": "6d1372cdb692277152e7d51bbb4f6e36cd5361332939c89ebe26758796ad339b",
+  "accepted_at": "2026-08-12T17:02:10+02:00",
+  "result": "accepted",
+  "commands": [
+    {
+      "command": "cargo test --test cli help --locked --offline",
+      "phase": "red_missing_progressive_help",
+      "exit": 101,
+      "tests": 3,
+      "failed": 3
+    },
+    {
+      "command": "cargo test --test cli command_card_uses_its_own_usage_instead_of_a_skill_placeholder --locked --offline",
+      "phase": "red_command_specific_usage",
+      "exit": 101,
+      "tests": 1,
+      "failed": 1
+    },
+    {
+      "command": "cargo test --test cli command_card_uses_its_own_usage_instead_of_a_skill_placeholder --locked --offline",
+      "phase": "green_command_specific_usage",
+      "exit": 0,
+      "tests": 1
+    },
+    {
+      "command": "cargo fmt --check && cargo test --test cli --locked --offline && cargo clippy --all-targets --all-features --locked --offline -- -D warnings",
+      "phase": "full_cli_and_quality_matrix",
+      "exit": 0,
+      "tests": 9
+    },
+    {
+      "command": "target/debug/tseal help; target/debug/tseal inspect --help; unknown-topic stdout/stderr/exit probe",
+      "phase": "runtime_help_contract",
+      "exit": 0
+    }
+  ],
+  "coverage": {
+    "registry_is_parser_source": true,
+    "top_help_aliases": ["help", "--help", "-h"],
+    "command_help_aliases": ["help inspect", "inspect --help", "inspect -h"],
+    "explicit_detail": ["explain", "inspect"],
+    "unknown_topic_stdout_empty": true,
+    "unknown_topic_exit": 2,
+    "unknown_topic_stderr": "UNKNOWN_HELP_TOPIC: <topic>; try \"tseal help\"",
+    "provider_tail_interpreted": false,
+    "provider_qualification_claimed": false
+  },
+  "controls": ["UX-20"],
+  "skips_counted_as_pass": 0
+}
