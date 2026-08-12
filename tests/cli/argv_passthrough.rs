@@ -21,23 +21,8 @@ fn fake_provider(name: &str) -> (PathBuf, PathBuf) {
 }
 
 #[test]
-fn provider_and_generic_boundaries_forward_every_argument_without_shell_evaluation() {
+fn generic_boundary_forwards_every_argument_without_shell_evaluation() {
     // Break caught: joined/shell-evaluated argv loses empty/Unicode values or executes an injection string.
-    let (codex, capture) = fake_provider("codex");
-    let injection_marker = capture.parent().unwrap().join("injection-ran");
-    let args = ["two words", "", "Привіт", "--yolo", ";touch injection-ran"];
-    let output = Command::new(env!("CARGO_BIN_EXE_tseal"))
-        .arg("codex")
-        .args(args)
-        .env("PATH", codex.parent().unwrap())
-        .env("TASKSEAL_CAPTURE_PATH", &capture)
-        .current_dir(capture.parent().unwrap())
-        .output()
-        .expect("tseal must run");
-    assert_eq!(output.status.code(), Some(0));
-    assert_eq!(fs::read_to_string(&capture).unwrap(), args.join("\0"));
-    assert!(!injection_marker.exists());
-
     let (generic, generic_capture) = fake_provider("generic-provider");
     let generic_args = ["--model", "opus", "", "--dangerously-skip-permissions"];
     let output = Command::new(env!("CARGO_BIN_EXE_tseal"))
@@ -52,6 +37,24 @@ fn provider_and_generic_boundaries_forward_every_argument_without_shell_evaluati
         fs::read_to_string(generic_capture).unwrap(),
         generic_args.join("\0")
     );
+}
+
+#[test]
+fn unqualified_provider_route_refuses_before_ambient_path_can_spawn() {
+    let (codex, capture) = fake_provider("codex");
+    let output = Command::new(env!("CARGO_BIN_EXE_tseal"))
+        .arg("codex")
+        .arg("--version")
+        .env("PATH", codex.parent().unwrap())
+        .env("TASKSEAL_CAPTURE_PATH", &capture)
+        .output()
+        .expect("tseal must run");
+    assert_eq!(output.status.code(), Some(2));
+    assert_eq!(
+        String::from_utf8(output.stderr).unwrap(),
+        "P06_REQUIRED: provider tuple is not qualified\n"
+    );
+    assert!(!capture.exists());
 }
 
 #[test]

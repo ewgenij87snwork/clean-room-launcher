@@ -5,7 +5,7 @@ use super::process::{self, ProviderExit};
 
 pub fn run(command: Command, args: &[String]) -> Result<ExitCode, String> {
     let (program, tail) = match command {
-        Command::Provider => (args[0].as_str(), &args[1..]),
+        Command::Provider => return Err("P06_REQUIRED: provider tuple is not qualified".to_owned()),
         Command::Generic => {
             let Some(program) = args.get(1) else {
                 return Err(
