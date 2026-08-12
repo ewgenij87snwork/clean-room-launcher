@@ -1,4 +1,5 @@
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct TupleClaim {
     pub provider_id: String,
     pub declaration_digest: String,
@@ -9,7 +10,8 @@ pub struct TupleClaim {
     pub interpreter_digest: Option<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct EvidenceRef {
     pub kind: String,
     pub claim: TupleClaim,
@@ -37,7 +39,8 @@ struct StoredEvidence {
     refused: bool,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct ProviderQualificationReceipt { pub claim: TupleClaim, pub evidence: Vec<EvidenceRef> }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -63,6 +66,11 @@ pub fn qualify(evidence: &[EvidenceRef], claim: &TupleClaim, as_of: u64) -> Qual
     // provider qualification. Only the tuple-specific T12 verifier may construct one.
     let _ = evidence;
     QualificationState::NotQualified { reason: QualificationReason::ProviderLaunchMissing }
+}
+
+pub fn receipt_digest(receipt: &ProviderQualificationReceipt) -> Result<String, QualificationReason> {
+    let bytes = serde_json::to_vec(receipt).map_err(|_| QualificationReason::InvalidClaim)?;
+    Ok(crate::core::inventory::sha256_hex(&bytes))
 }
 
 fn valid_claim(claim: &TupleClaim) -> bool {
