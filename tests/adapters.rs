@@ -1,3 +1,5 @@
+#[path = "adapters/codex/identity.rs"]
+mod codex_identity;
 #[path = "adapters/environment.rs"]
 mod environment;
 #[path = "adapters/identity.rs"]

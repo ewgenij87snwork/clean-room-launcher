@@ -1,0 +1,37 @@
+use crate::adapters::identity::ProviderIdentity;
+
+const INSTALLED_ARTIFACT_DIGEST: &str =
+    "19c4f144c5226a9f17c58e6f0fa854843b0f77a6eb420f40e2745a12f10f5d37";
+const INSTALLED_VERSION: (u64, u64, u64) = (0, 147, 0);
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CodexTuple {
+    pub provider_id: String,
+    pub artifact_digest: String,
+    pub version: (u64, u64, u64),
+    pub os: String,
+    pub arch: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum CodexTupleError {
+    UnqualifiedTuple,
+}
+
+pub fn bind_installed_tuple(identity: &ProviderIdentity) -> Result<CodexTuple, CodexTupleError> {
+    if identity.provider_id != "codex"
+        || identity.artifact_digest != INSTALLED_ARTIFACT_DIGEST
+        || identity.version != INSTALLED_VERSION
+        || identity.os != "macos"
+        || identity.arch != "aarch64"
+    {
+        return Err(CodexTupleError::UnqualifiedTuple);
+    }
+    Ok(CodexTuple {
+        provider_id: identity.provider_id.clone(),
+        artifact_digest: identity.artifact_digest.clone(),
+        version: identity.version,
+        os: identity.os.clone(),
+        arch: identity.arch.clone(),
+    })
+}
