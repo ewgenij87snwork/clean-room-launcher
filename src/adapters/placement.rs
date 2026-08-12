@@ -33,6 +33,13 @@ pub fn place_context(project: &Dir, manifest: &Manifest, declaration: &AdapterDe
     if current != *manifest { return Err(PlacementError("PLACEMENT_MANIFEST_MISMATCH")); }
     let context_path = format!(".taskseal/out/generations/{}/context.md", manifest.digest);
     let context = project.read(&context_path).map_err(|_| PlacementError("PLACEMENT_CONTEXT_UNAVAILABLE"))?;
+    // The source is verified both before and after the byte read; any changed
+    // generation refuses instead of staging an unbound snapshot.
+    if verify_current(project).map_err(|_| PlacementError("PLACEMENT_SOURCE_REPLACED"))? != *manifest
+        || project.read(&context_path).map_err(|_| PlacementError("PLACEMENT_CONTEXT_UNAVAILABLE"))? != context
+    {
+        return Err(PlacementError("PLACEMENT_SOURCE_REPLACED"));
+    }
     let context_digest = sha256_hex(&context);
     let declaration_digest = declaration_digest(declaration);
     let target = format!(".taskseal/runtime/generations/{declaration_digest}/{}", manifest.digest);
