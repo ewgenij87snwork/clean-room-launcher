@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://taskseal.org/schemas/execution-authority/v2.json",
+  "title": "TaskSeal private execution authority",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "plan_id",
+    "allowed_task_first",
+    "allowed_task_last",
+    "plan_checkpoint_path",
+    "plan_checkpoint_sha256",
+    "repository_realpath",
+    "worktree_realpath",
+    "branch",
+    "head",
+    "approved_at",
+    "approved_by",
+    "dashboard_path",
+    "status_path",
+    "worklog_path",
+    "allowed_external_actions",
+    "forbidden_actions",
+    "expires_on_subject_change"
+  ],
+  "properties": {
+    "schema_version": { "const": "taskseal.execution-authority.v2" },
+    "plan_id": { "type": "string", "pattern": "^P[0-9]{2}$" },
+    "allowed_task_first": { "type": "integer", "minimum": 1 },
+    "allowed_task_last": { "type": "integer", "minimum": 1 },
+    "plan_checkpoint_path": { "type": "string", "pattern": "^/" },
+    "plan_checkpoint_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "repository_realpath": { "type": "string", "pattern": "^/[^/]+" },
+    "worktree_realpath": { "type": "string", "pattern": "^/[^/]+" },
+    "branch": { "type": "string", "minLength": 1, "not": { "const": "main" } },
+    "head": { "type": "string", "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$" },
+    "approved_at": { "type": "string", "format": "date-time" },
+    "approved_by": { "const": "owner" },
+    "dashboard_path": { "type": "string", "pattern": "^/" },
+    "status_path": { "type": "string", "pattern": "^/" },
+    "worklog_path": { "type": "string", "pattern": "^/" },
+    "allowed_external_actions": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "forbidden_actions": {
+      "type": "array",
+      "items": { "type": "string" },
+      "allOf": [
+        { "contains": { "const": "main mutation" } },
+        { "contains": { "const": "publication" } },
+        { "contains": { "const": "provider spend" } },
+        { "contains": { "const": "external contact" } }
+      ]
+    },
+    "expires_on_subject_change": { "const": true }
+  }
+}
