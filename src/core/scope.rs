@@ -1,4 +1,5 @@
 use crate::core::decode::{DecodedDocument, DecodedInputs};
+use serde_json::Value;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
 
@@ -22,6 +23,15 @@ impl Target {
 #[derive(Debug, PartialEq, Eq)]
 pub struct ResolvedScope {
     pub ids: Vec<String>,
+    pub layers: Vec<ScopeLayer>,
+    pub targets: BTreeSet<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ScopeLayer {
+    pub id: String,
+    pub parent_ids: Vec<String>,
+    pub sections: Value,
 }
 
 #[derive(Debug)]
@@ -38,6 +48,7 @@ pub fn resolve_scopes(
     target: &Target,
 ) -> Result<ResolvedScope, ScopeError> {
     let mut parents = BTreeMap::<String, Vec<String>>::new();
+    let mut sections = BTreeMap::<String, Value>::new();
     for document in &inputs.documents {
         if let DecodedDocument::Json { value, .. } = document {
             let Some(id) = value.get("scope_id").and_then(|value| value.as_str()) else {
@@ -58,6 +69,10 @@ pub fn resolve_scopes(
             if parents.insert(id.to_owned(), parent_ids).is_some() {
                 return Err(ScopeError(format!("DUPLICATE_SCOPE:{id}")));
             }
+            sections.insert(
+                id.to_owned(),
+                value.get("sections").cloned().unwrap_or(Value::Null),
+            );
         }
     }
     let available: BTreeSet<String> = parents.keys().cloned().collect();
@@ -73,7 +88,19 @@ pub fn resolve_scopes(
             &mut output,
         )?;
     }
-    Ok(ResolvedScope { ids: output })
+    let layers = output
+        .iter()
+        .map(|id| ScopeLayer {
+            id: id.clone(),
+            parent_ids: parents.get(id).cloned().unwrap_or_default(),
+            sections: sections.get(id).cloned().unwrap_or(Value::Null),
+        })
+        .collect();
+    Ok(ResolvedScope {
+        ids: output,
+        layers,
+        targets: target.roots.clone(),
+    })
 }
 
 fn visit(
