@@ -73,7 +73,7 @@ pub enum QualificationReason {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum QualificationState {
-    Qualified(ProviderQualificationReceipt),
+    Qualified(Box<ProviderQualificationReceipt>),
     NotQualified { reason: QualificationReason },
     Refused { reason: QualificationReason },
 }
