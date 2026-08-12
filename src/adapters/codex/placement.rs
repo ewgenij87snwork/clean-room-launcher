@@ -3,6 +3,7 @@ pub enum CodexPlacementState {
     Refused,
 }
 
-pub fn refuse_projection(_ambient_names: &[&str], _target: &str) -> CodexPlacementState {
+pub fn preflight_projection(ambient_names: &[&str], target: &str) -> CodexPlacementState {
+    let _ = (ambient_names, target);
     CodexPlacementState::Refused
 }
