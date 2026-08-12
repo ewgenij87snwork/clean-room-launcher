@@ -1,0 +1,3 @@
+running 2 qualification-focused adapter tests
+result: 2 passed; 0 failed; 0 ignored; 7 filtered out
+TASKSEAL_EXIT=0
