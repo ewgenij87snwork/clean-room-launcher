@@ -1,0 +1,49 @@
+{
+  "schema_version": "taskseal.task-receipt.v1",
+  "plan": "P03",
+  "task": 9,
+  "acceptance_id": "ACC-P03-T9",
+  "evidence_id": "EVD-P03-T9",
+  "input_head": "9dfc7f4dc5a5d6f151fa07406348fa2f5d6dc541",
+  "result_head": "b4544470b034108d6d7af0d2f12413bfc94ff271",
+  "branch": "feat/p03-core",
+  "worktree": "$TASKSEAL_WORKTREE",
+  "checkpoint_sha256": "eff62290f54f56bbb1396395b8bf7f2e90e3b6c90a770de96bfa7a4cd7aaaed6",
+  "accepted_at": "2026-08-12T11:28:00+02:00",
+  "result": "accepted",
+  "gate_report": "reports/gates/p03/core-gate.json",
+  "gate_result_head": "b4544470b034108d6d7af0d2f12413bfc94ff271",
+  "commands": [
+    {
+      "command": "TASKSEAL_PARITY_INJECT_MISMATCH=1 cargo test --lib core::python_parity::privacy_clean_python_reference_matches_rust_bytes_manifests_and_refusals --locked --offline",
+      "exit": 101,
+      "expected": "nonzero sensor proof"
+    },
+    {
+      "command": "scripts/gates/p03/verify.sh",
+      "exit": 0,
+      "result": "P03_CORE_GATE_PASS"
+    }
+  ],
+  "lane_status": {
+    "macos_arm64": "PASS",
+    "linux": "NOT_QUALIFIED",
+    "windows": "NOT_QUALIFIED"
+  },
+  "coverage": {
+    "known_mismatch_observed": true,
+    "fmt": true,
+    "clippy_deny_warnings": true,
+    "all_targets_offline": true,
+    "python_byte_manifest_refusal_parity_repeated": true,
+    "crash_recovery": true,
+    "poisoned_home_and_network": true,
+    "clean_local_clone": true,
+    "privacy_boundary": true,
+    "exact_digests_recorded": true,
+    "missing_lanes_not_mislabeled_pass": true,
+    "python_retired": false,
+    "praxis_changed": false
+  },
+  "skips_counted_as_pass": 0
+}

@@ -1,0 +1,94 @@
+{
+  "schema_version": "taskseal.p03.core-gate.v1",
+  "plan": "P03",
+  "result": "PASS",
+  "result_head": "b4544470b034108d6d7af0d2f12413bfc94ff271",
+  "branch": "feat/p03-core",
+  "worktree": "$TASKSEAL_WORKTREE",
+  "commands": [
+    {
+      "name": "known-mismatch-sensor",
+      "exit": 0,
+      "status": "PASS"
+    },
+    {
+      "name": "fmt",
+      "exit": 0,
+      "status": "PASS"
+    },
+    {
+      "name": "clippy",
+      "exit": 0,
+      "status": "PASS"
+    },
+    {
+      "name": "all-tests",
+      "exit": 0,
+      "status": "PASS"
+    },
+    {
+      "name": "python-parity-repeat",
+      "exit": 0,
+      "status": "PASS"
+    },
+    {
+      "name": "public-boundary",
+      "exit": 0,
+      "status": "PASS"
+    },
+    {
+      "name": "control-coverage",
+      "exit": 0,
+      "status": "PASS"
+    },
+    {
+      "name": "clean-clone-poisoned-home-network",
+      "exit": 0,
+      "status": "PASS"
+    },
+    {
+      "name": "receipts",
+      "exit": 0,
+      "status": "PASS"
+    }
+  ],
+  "accepted_tasks": 8,
+  "claimed_lanes": [
+    {
+      "os": "Darwin",
+      "release": "25.5.0",
+      "arch": "arm64",
+      "status": "PASS"
+    }
+  ],
+  "unclaimed_lanes": [
+    {
+      "os": "Linux",
+      "status": "NOT_QUALIFIED"
+    },
+    {
+      "os": "Windows",
+      "status": "NOT_QUALIFIED"
+    }
+  ],
+  "digests": {
+    "python_reference_sha256": "4407d5ca2ddacd1aa2d1582f503a07d6f5bd0a2b30bf1944f265fda628163e8c",
+    "cargo_lock_sha256": "4e06acb6110787f96ee15005f387a78396a7a29a13b1312cda7afdf83aaac8c8",
+    "sample_generation_digest": "5866bd69f4680b05462344b252253d2276a3d50ad641857178a0b827dd4d7902",
+    "sample_context_sha256": "55b5193726121163ed3ba69c2fae100d7dbc8fda2b14ed71f9deaa7a3dcf3b85"
+  },
+  "toolchain": {
+    "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
+    "python_reference": "stdlib-python3"
+  },
+  "controls": [
+    "E-TS-06",
+    "COR-01",
+    "COR-19",
+    "LAB-06"
+  ],
+  "skips_counted_as_pass": 0,
+  "network_or_provider_spend": false,
+  "python_retired": false,
+  "praxis_changed": false
+}
