@@ -1,0 +1,2 @@
+control_id	disposition	target	execution_owner	coverage_status	acceptance	evidence_destination	requirement	source_file	source_line
+TEST-01	ADOPT	P02	manual	EXECUTABLE_V0_1	a	reports/gates/p02/task-8.json	x	fixture	1

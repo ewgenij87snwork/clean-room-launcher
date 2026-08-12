@@ -41,3 +41,7 @@ path = "tests/contracts/error_receipt_vectors.rs"
 [[test]]
 name = "adapter_registry"
 path = "tests/contracts/adapter_registry.rs"
+
+[[test]]
+name = "trace_metadata"
+path = "tests/contracts/trace_metadata.rs"
