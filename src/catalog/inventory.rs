@@ -1,5 +1,5 @@
 use super::sources::SkillSource;
-use crate::core::inventory::{AdmittedRoot, SourceRecord, inventory, sha256_hex};
+use crate::core::inventory::{SourceRecord, sha256_hex};
 use serde::Deserialize;
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -38,8 +38,16 @@ pub(crate) fn inventory_skills_with_mutation(
     source: &SkillSource,
     observer: &mut dyn FnMut(&std::path::Path),
 ) -> Result<Vec<SkillRecord>, InventoryError> {
-    let records = crate::core::inventory::inventory_with_observer(
-        &[AdmittedRoot::new(&source.root, &source.id)],
+    let records = crate::core::inventory::inventory_capability_with_observer(
+        source
+            .capability_root
+            .as_deref()
+            .ok_or(InventoryError::SourceRefused)?,
+        source
+            .relative_root
+            .as_deref()
+            .ok_or(InventoryError::SourceRefused)?,
+        &source.id,
         observer,
     )
     .map_err(|error| match error {
@@ -112,8 +120,18 @@ pub fn inventory_skills(sources: &[SkillSource]) -> Result<Vec<SkillRecord>, Inv
     let mut names = BTreeSet::new();
 
     for source in sources.iter().filter(|source| source.admitted) {
-        let source_records = inventory(&[AdmittedRoot::new(&source.root, &source.id)])
-            .map_err(|_| InventoryError::SourceRefused)?;
+        let source_records = crate::core::inventory::inventory_capability(
+            source
+                .capability_root
+                .as_deref()
+                .ok_or(InventoryError::SourceRefused)?,
+            source
+                .relative_root
+                .as_deref()
+                .ok_or(InventoryError::SourceRefused)?,
+            &source.id,
+        )
+        .map_err(|_| InventoryError::SourceRefused)?;
         let mut groups: BTreeMap<String, SkillFiles> = BTreeMap::new();
         for record in source_records {
             let (directory, file_name) = split_logical_path(&record.logical_path);

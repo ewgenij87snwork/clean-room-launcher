@@ -24,6 +24,8 @@ pub struct SkillSource {
     pub authority: SkillSourceAuthority,
     pub admitted: bool,
     pub visibility: SkillSourceVisibility,
+    pub capability_root: Option<PathBuf>,
+    pub relative_root: Option<PathBuf>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -62,10 +64,18 @@ pub fn enumerate_sources(
             return Err(CatalogError::DuplicateRoot);
         }
         let mut admitted = false;
+        let mut binding = None;
         for capability in &admitted_roots {
             match descriptor_admits(&normalized, capability) {
                 Ok(true) => {
                     admitted = true;
+                    binding = Some((
+                        capability.clone(),
+                        normalized
+                            .strip_prefix(capability)
+                            .map_err(|_| CatalogError::InvalidPath)?
+                            .to_path_buf(),
+                    ));
                     break;
                 }
                 Ok(false) => {}
@@ -83,6 +93,8 @@ pub fn enumerate_sources(
             authority: *authority,
             admitted,
             visibility,
+            capability_root: binding.as_ref().map(|value| value.0.clone()),
+            relative_root: binding.map(|value| value.1),
         });
     }
 

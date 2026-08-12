@@ -61,6 +61,54 @@ pub fn inventory(admitted: &[AdmittedRoot]) -> Result<Vec<SourceRecord>, CoreErr
     inventory_impl(admitted, &mut |_| {})
 }
 
+pub(crate) fn inventory_capability(
+    capability_root: &Path,
+    relative_root: &Path,
+    logical_prefix: &str,
+) -> Result<Vec<SourceRecord>, CoreError> {
+    inventory_capability_impl(capability_root, relative_root, logical_prefix, &mut |_| {})
+}
+
+fn inventory_capability_impl(
+    capability_root: &Path,
+    relative_root: &Path,
+    logical_prefix: &str,
+    observer: &mut dyn FnMut(&Path),
+) -> Result<Vec<SourceRecord>, CoreError> {
+    validate_prefix(logical_prefix)?;
+    let mut dir = Dir::open_ambient_dir(capability_root, ambient_authority())
+        .map_err(|source| classify_open_error(capability_root, source))?;
+    for component in relative_root.components() {
+        let name = component.as_os_str();
+        let metadata = dir
+            .symlink_metadata(name)
+            .map_err(|source| classify_open_error(relative_root, source))?;
+        if metadata.file_type().is_symlink() {
+            return Err(CoreError::Refused {
+                code: "SYMLINK_ESCAPE",
+                path: relative_root.to_owned(),
+            });
+        }
+        dir = dir
+            .open_dir(name)
+            .map_err(|source| classify_open_error(relative_root, source))?;
+    }
+    let mut records = Vec::new();
+    walk(&dir, Path::new(""), logical_prefix, &mut records, observer)?;
+    records.sort_by(|a, b| a.logical_path.as_bytes().cmp(b.logical_path.as_bytes()));
+    Ok(records)
+}
+
+#[cfg(test)]
+pub(crate) fn inventory_capability_with_observer(
+    capability_root: &Path,
+    relative_root: &Path,
+    logical_prefix: &str,
+    observer: &mut dyn FnMut(&Path),
+) -> Result<Vec<SourceRecord>, CoreError> {
+    inventory_capability_impl(capability_root, relative_root, logical_prefix, observer)
+}
+
 #[cfg(test)]
 pub(crate) fn inventory_with_observer(
     admitted: &[AdmittedRoot],
