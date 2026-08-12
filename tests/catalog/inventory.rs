@@ -50,14 +50,21 @@ fn unreadable_body_refuses_instead_of_disappearing() {
     )
     .unwrap();
     let body = skill.join("SKILL.md");
-    std::fs::write(&body, b"secret").unwrap();
+    std::fs::write(
+        &body,
+        b"---\nname: x\ndescription: unreadable canary\n---\nsecret",
+    )
+    .unwrap();
     std::fs::set_permissions(&body, std::fs::Permissions::from_mode(0o000)).unwrap();
     let config = SkillSourceConfig::new(vec![(scratch.clone(), SkillSourceAuthority::Project)]);
     let sources = enumerate_sources(&config, std::slice::from_ref(&scratch)).unwrap();
     let result = inventory_skills(&sources);
     std::fs::set_permissions(&body, std::fs::Permissions::from_mode(0o600)).unwrap();
     std::fs::remove_dir_all(scratch).unwrap();
-    assert!(matches!(result, Err(InventoryError::SourceRefused)))
+    assert!(
+        matches!(result, Err(InventoryError::SourceRefused)),
+        "unexpected unreadable result: {result:?}"
+    )
 }
 
 fn admitted(name: &str) -> Vec<super::sources::SkillSource> {

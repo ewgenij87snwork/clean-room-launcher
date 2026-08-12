@@ -121,7 +121,7 @@ pub fn inventory_skills(sources: &[SkillSource]) -> Result<Vec<SkillRecord>, Inv
                 .ok_or(InventoryError::SourceRefused)?,
             &source.id,
         )
-        .map_err(|_| InventoryError::SourceRefused)?;
+        .map_err(map_core_error)?;
         let mut groups: BTreeMap<String, SkillFiles> = BTreeMap::new();
         for record in source_records {
             let (directory, file_name) = split_logical_path(&record.logical_path);
@@ -165,6 +165,15 @@ pub fn inventory_skills(sources: &[SkillSource]) -> Result<Vec<SkillRecord>, Inv
 
     records.sort_by(|left, right| left.name.as_bytes().cmp(right.name.as_bytes()));
     Ok(records)
+}
+
+fn map_core_error(error: crate::core::inventory::CoreError) -> InventoryError {
+    match error {
+        crate::core::inventory::CoreError::Refused {
+            code: "PATH_RACE", ..
+        } => InventoryError::ChangedDuringRead,
+        _ => InventoryError::SourceRefused,
+    }
 }
 
 fn metadata_for(

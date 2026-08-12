@@ -180,6 +180,13 @@ fn walk(
             let metadata = child
                 .metadata()
                 .map_err(|source| io_error(&relative, source))?;
+            #[cfg(unix)]
+            if metadata.mode() & 0o444 == 0 {
+                return Err(CoreError::Refused {
+                    code: "UNREADABLE_FILE",
+                    path: relative,
+                });
+            }
             records.push(read_record(
                 child,
                 &relative,
@@ -259,9 +266,13 @@ fn refuse_symlink(path: &Path) -> Result<(), CoreError> {
 }
 
 fn classify_open_error(path: &Path, source: io::Error) -> CoreError {
-    let _ = source;
+    let code = if source.kind() == io::ErrorKind::PermissionDenied {
+        "UNREADABLE_FILE"
+    } else {
+        "PATH_RACE"
+    };
     CoreError::Refused {
-        code: "PATH_RACE",
+        code,
         path: path.to_owned(),
     }
 }

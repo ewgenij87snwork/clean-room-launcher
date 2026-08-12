@@ -1,4 +1,4 @@
-use super::level_a::LevelAEntry;
+use super::pipeline::ValidatedCatalog;
 use crate::contracts::adapter::AdapterDeclaration;
 use crate::core::inventory::sha256_hex;
 use serde::de::{MapAccess, Visitor};
@@ -9,13 +9,20 @@ use std::fmt;
 #[derive(Debug, Clone, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct QualificationReceipt {
-    pub schema_version: String,
-    pub provider_id: String,
-    pub declaration_digest: String,
-    pub native_progressive_disclosure: bool,
-    pub projection_candidate: bool,
+    schema_version: String,
+    provider_id: String,
+    provider_version: String,
+    executable_digest: String,
+    declaration_digest: String,
+    catalog_digest: String,
+    probe_artifact_digest: String,
+    observed_at: String,
+    producer: String,
+    probe_result: String,
+    native_progressive_disclosure: bool,
+    projection_candidate: bool,
     #[serde(deserialize_with = "deserialize_digest_map")]
-    pub observed_digests: BTreeMap<String, String>,
+    observed_digests: BTreeMap<String, String>,
 }
 #[derive(Debug, PartialEq, Eq)]
 pub enum ProjectionError {
@@ -77,8 +84,20 @@ pub fn parse_qualification_receipt(
             .observed_digests
             .values()
             .any(|digest| !valid_sha256(digest))
+        || !valid_sha256(&receipt.executable_digest)
+        || !valid_sha256(&receipt.catalog_digest)
+        || !valid_sha256(&receipt.probe_artifact_digest)
+        || receipt.provider_version.is_empty()
+        || receipt.observed_at.is_empty()
+        || receipt.producer.is_empty()
+        || receipt.probe_result != "canary_body_digest_observed"
     {
         return Err(ProjectionError::InvalidReceipt);
+    }
+    let observed_bytes = serde_json::to_vec(&receipt.observed_digests)
+        .map_err(|_| ProjectionError::InvalidReceipt)?;
+    if receipt.catalog_digest != sha256_hex(&observed_bytes) {
+        return Err(ProjectionError::ReceiptBindingMismatch);
     }
     Ok(receipt)
 }
@@ -110,7 +129,7 @@ pub fn declaration_digest(d: &AdapterDeclaration) -> String {
     )
 }
 pub fn project_native(
-    level_a: &[LevelAEntry],
+    catalog: &ValidatedCatalog,
     d: &AdapterDeclaration,
     r: QualificationReceipt,
 ) -> Result<NativeProjection, ProjectionError> {
@@ -126,13 +145,18 @@ pub fn project_native(
     {
         return Err(ProjectionError::UnsupportedNativeSeam);
     }
-    let expected_ids: BTreeSet<_> = level_a.iter().map(|entry| entry.id.as_str()).collect();
+    let expected_ids: BTreeSet<_> = catalog
+        .manifest()
+        .level_a
+        .iter()
+        .map(|entry| entry.id.as_str())
+        .collect();
     let observed_ids: BTreeSet<_> = r.observed_digests.keys().map(String::as_str).collect();
     if expected_ids != observed_ids {
         return Err(ProjectionError::ReceiptBindingMismatch);
     }
     let mut entries = Vec::new();
-    for e in level_a {
+    for e in &catalog.manifest().level_a {
         if r.observed_digests.get(&e.id) != Some(&e.body_digest) {
             return Err(ProjectionError::DigestMismatch(e.id.clone()));
         }
@@ -143,8 +167,8 @@ pub fn project_native(
             native_link: format!("skill://{}/{}", d.provider_id, e.id),
         })
     }
-    let startup_bytes =
-        serde_json::to_vec(level_a).map_err(|_| ProjectionError::UnsupportedNativeSeam)?;
+    let startup_bytes = serde_json::to_vec(&catalog.manifest().level_a)
+        .map_err(|_| ProjectionError::UnsupportedNativeSeam)?;
     Ok(NativeProjection {
         provider_id: d.provider_id.clone(),
         entries,
