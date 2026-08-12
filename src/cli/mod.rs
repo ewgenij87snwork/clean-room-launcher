@@ -7,6 +7,7 @@ mod output;
 mod parser;
 mod process;
 mod screen;
+mod starts;
 #[allow(dead_code)] // T8 is the first user-flow consumer; T7 seals the store and its TDD contract.
 pub(crate) mod state;
 
@@ -64,6 +65,13 @@ pub fn run(invoked_as: &str, args: impl IntoIterator<Item = String>) -> ExitCode
         }
         parser::Command::Doctor => match doctor::run(&args[1..]) {
             Ok(report) => println!("{report}"),
+            Err(message) => {
+                eprintln!("{message}");
+                return ExitCode::from(2);
+            }
+        },
+        parser::Command::Starts => match starts::run(&args) {
+            Ok(output) => println!("{output}"),
             Err(message) => {
                 eprintln!("{message}");
                 return ExitCode::from(2);
