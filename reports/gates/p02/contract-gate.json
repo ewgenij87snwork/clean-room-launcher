@@ -2,8 +2,8 @@
   "schema_version": "taskseal.p02.contract-gate.v1",
   "plan": "P02",
   "result": "PASS",
-  "result_head": "dcba8c551ad6f4591619c0fe2015d9f0a1d5832c",
-  "branch": "feat/p02-contracts",
+  "result_head": "842f636d99f9cd2cfb006b192b48fa99b8bc3745",
+  "branch": "feat/p03-core",
   "worktree": "\\$TASKSEAL_WORKTREE",
   "commands": [
     {
