@@ -1,0 +1,23 @@
+{
+  "schema_version":"taskseal.task-receipt.v1",
+  "plan":"P05",
+  "task":6,
+  "acceptance_id":"ACC-P05-T6",
+  "evidence_id":"EVD-P05-T6",
+  "input_head":"02b37f8c62097573c45032e24fe3b0e45a9a4460",
+  "result_head":"992e25d9e8d41e52d879d8e4ec0262948bcbb45a",
+  "branch":"feat/p05-terminal",
+  "worktree":"$TASKSEAL_WORKTREE",
+  "checkpoint_sha256":"3cad65e01f48227c6bcaabccd1c1fcfd8f4e0eb98b83fbf38d24f94ec917bc62",
+  "accepted_at":"2026-08-12T17:39:42+02:00",
+  "result":"accepted",
+  "commands":[
+    {"command":"cargo test --test cli non_tty_json --locked --offline","phase":"red_output_state","exit":101,"tests":3,"failed":2},
+    {"command":"cargo test --test cli non_tty_json --locked --offline","phase":"green_output_state","exit":0,"tests":3},
+    {"command":"cargo fmt --check && cargo test --test cli --locked --offline && cargo clippy --all-targets --all-features --locked --offline -- -D warnings","phase":"full_cli_and_quality_matrix","exit":0,"tests":15},
+    {"command":"TERM=dumb JSON parse, ANSI scan and exact fixture diff; non-interactive init stdout/stderr/exit probe","phase":"runtime_non_tty_contract","exit":0}
+  ],
+  "coverage":{"machine_selector":"--output json","json_schema_version":"taskseal.output.v1","json_stdout_single_object":true,"json_ansi_free":true,"deprecated_selector":"--json refuses exit 2","non_tty_init":"NON_INTERACTIVE_INPUT_REQUIRED exit 2","state_written":false,"provider_tail_selector_consumed":false,"terminal_tuples":"macOS implementation-tested; T9 qualification required"},
+  "controls":["UX-11","SCH-20"],
+  "skips_counted_as_pass":0
+}
