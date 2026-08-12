@@ -2,14 +2,17 @@
 set -eu
 root=$(CDPATH= cd -- "$(dirname -- "$0")/../../.." && pwd -P)
 cd "$root"
-subject='bdd28fd1317526e424dfd32cb9c9398536d2be3a'
-jq -e --arg subject "$subject" '
+jq -e '
   keys == ["gate","provider_launch","qualification","receipts","result","schema_version","subject"] and
-  .schema_version == "taskseal.foundation-v6-report.v1" and .subject == $subject and
+  .schema_version == "taskseal.foundation-v6-report.v1" and (.subject|test("^[0-9a-f]{40}$")) and
   .gate == "foundation-v6-verify.sh" and .result == "FOUNDATION_4_OF_4_CANDIDATE" and
   .provider_launch == false and .qualification == "NOT_QUALIFIED" and
   ([.receipts[].path] == ["task-3.json","task-4.json"]) and all(.receipts[]; keys == ["path","sha256"] and (.sha256|test("^[0-9a-f]{64}$")))
 ' reports/gates/p06/foundation-v6.json >/dev/null || { echo 'P06_FOUNDATION_REPORT_INVALID' >&2; exit 2; }
+subject=$(jq -r '.subject' reports/gates/p06/foundation-v6.json)
+git rev-parse --verify "$subject^{commit}" >/dev/null 2>&1 || { echo 'P06_FOUNDATION_SUBJECT_UNKNOWN' >&2; exit 2; }
+git merge-base --is-ancestor "$subject" HEAD || { echo 'P06_FOUNDATION_SUBJECT_NOT_ANCESTOR' >&2; exit 2; }
+git diff --quiet "$subject" -- src/adapters/placement.rs tests/adapters/placement.rs src/adapters/qualification.rs tests/adapters/qualification.rs || { echo 'P06_FOUNDATION_SOURCE_CHANGED_AFTER_SUBJECT' >&2; exit 2; }
 for receipt in task-3.json task-4.json; do
   expected=$(jq -r --arg receipt "$receipt" '.receipts[] | select(.path == $receipt) | .sha256' reports/gates/p06/foundation-v6.json)
   actual=$(shasum -a 256 "reports/gates/p06/$receipt" | awk '{print $1}')
@@ -30,7 +33,7 @@ for task in 3 4; do
   fi
   test "$(jq -r '.output.path' "$receipt")" = "$expected_output" || { echo "P06_FOUNDATION_OUTPUT_PATH_MISMATCH:$task" >&2; exit 2; }
   jq -r '.sources[] | [.path,.sha256] | @tsv' "$receipt" | while IFS='	' read -r path expected; do
-    actual=$(shasum -a 256 "$path" | awk '{print $1}')
+    actual=$(git show "$subject:$path" | shasum -a 256 | awk '{print $1}')
     test "$actual" = "$expected" || { echo "P06_FOUNDATION_SOURCE_MISMATCH:$task:$path" >&2; exit 2; }
   done
   artifact=$(jq -r '.output.path' "$receipt")
