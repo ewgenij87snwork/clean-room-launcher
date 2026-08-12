@@ -1,0 +1,21 @@
+{
+  "schema_version":"taskseal.task-receipt.v1",
+  "plan":"P04",
+  "task":2,
+  "acceptance_id":"ACC-P04-T2",
+  "evidence_id":"EVD-P04-T2",
+  "input_head":"42110e960400e7287c76484e004fde5eefa059bd",
+  "result_head":"fa92a4550f56e39872f79c3f25639f935aeed9bc",
+  "branch":"feat/p04-catalog",
+  "worktree":"$TASKSEAL_WORKTREE",
+  "checkpoint_sha256":"eff62290f54f56bbb1396395b8bf7f2e90e3b6c90a770de96bfa7a4cd7aaaed6",
+  "accepted_at":"2026-08-12T11:34:48+02:00",
+  "result":"accepted",
+  "commands":[
+    {"command":"cargo test --locked --offline --lib catalog::inventory_tests","phase":"red_missing_inventory_then_green","exit":0,"tests":3},
+    {"command":"cargo fmt --all -- --check && cargo clippy --all-targets --locked --offline -- -D warnings && cargo test --all-targets --locked --offline && public boundary","exit":0}
+  ],
+  "coverage":{"sorted_records":true,"metadata_digest":true,"body_digest":true,"body_text_in_record":false,"duplicate_name_refused":true,"malformed_metadata_refused":true,"missing_body_refused":true,"p03_race_safe_inventory_consumed":true},
+  "subjects":{"src/catalog/inventory.rs":"de9aa3e703495525206d66fadc2b66286f93a831e4d3ded53ac4a85ec2d298da","tests/catalog/inventory.rs":"1753a39a168ea1c0bed326db0fcf2170e221d2b1995e7e4f8061124d5cb1979d"},
+  "skips_counted_as_pass":0
+}
