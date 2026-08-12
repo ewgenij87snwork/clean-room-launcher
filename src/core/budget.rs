@@ -3,6 +3,7 @@ use std::fmt;
 #[derive(Debug, Clone)]
 pub struct BudgetInput {
     bytes: Vec<u8>,
+    layers: Option<[Vec<u8>; 3]>,
     records: u64,
     protected: bool,
 }
@@ -10,6 +11,28 @@ impl BudgetInput {
     pub fn new(content: impl AsRef<[u8]>, records: u64, protected: bool) -> Self {
         Self {
             bytes: content.as_ref().to_vec(),
+            layers: None,
+            records,
+            protected,
+        }
+    }
+
+    pub fn from_layers(
+        l0: impl AsRef<[u8]>,
+        l2: impl AsRef<[u8]>,
+        l3: impl AsRef<[u8]>,
+        records: u64,
+        protected: bool,
+    ) -> Self {
+        let layers = [
+            l0.as_ref().to_vec(),
+            l2.as_ref().to_vec(),
+            l3.as_ref().to_vec(),
+        ];
+        let bytes = layers.iter().flatten().copied().collect();
+        Self {
+            bytes,
+            layers: Some(layers),
             records,
             protected,
         }
@@ -53,6 +76,7 @@ pub struct BudgetMeasurement {
 pub struct BudgetedContext {
     pub bytes: Vec<u8>,
     pub measured: BudgetMeasurement,
+    pub(crate) layers: Option<[Vec<u8>; 3]>,
 }
 
 #[derive(Debug)]
@@ -92,6 +116,7 @@ pub fn enforce_budgets(
     Ok(BudgetedContext {
         bytes: input.bytes,
         measured,
+        layers: input.layers,
     })
 }
 
