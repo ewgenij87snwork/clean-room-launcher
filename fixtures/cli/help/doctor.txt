@@ -1,0 +1,10 @@
+TaskSeal doctor
+
+Check installation safely without changing state.
+
+Usage: tseal doctor --root <path>
+
+Example:
+  tseal doctor --root .
+
+For more: tseal help

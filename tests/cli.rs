@@ -4,3 +4,5 @@ mod doctor;
 mod entrypoint_parity;
 #[path = "cli/first_screen.rs"]
 mod first_screen;
+#[path = "cli/help.rs"]
+mod help;

@@ -1,4 +1,5 @@
 mod doctor;
+mod help;
 mod parser;
 mod screen;
 
@@ -6,6 +7,17 @@ use std::process::ExitCode;
 
 pub fn run(invoked_as: &str, args: impl IntoIterator<Item = String>) -> ExitCode {
     let args = args.into_iter().collect::<Vec<_>>();
+    match help::respond(&args, invoked_as) {
+        Ok(Some(output)) => {
+            println!("{output}");
+            return ExitCode::SUCCESS;
+        }
+        Ok(None) => {}
+        Err(message) => {
+            eprintln!("{message}");
+            return ExitCode::from(2);
+        }
+    }
     let command = match parser::parse(args.clone()) {
         Ok(command) => command,
         Err(message) => {
@@ -15,11 +27,7 @@ pub fn run(invoked_as: &str, args: impl IntoIterator<Item = String>) -> ExitCode
     };
 
     match command {
-        parser::Command::Help => {
-            println!(
-                "TaskSeal — guided AI CLI launcher\n\nUsage: {invoked_as} [COMMAND]\n\nTry: {invoked_as} help"
-            );
-        }
+        parser::Command::Help => unreachable!("help is handled before parsing"),
         parser::Command::Guided => {
             let screen = screen::render_unqualified(screen::PrepareReady {
                 provider: "Codex",

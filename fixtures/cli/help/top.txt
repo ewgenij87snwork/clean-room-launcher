@@ -1,0 +1,15 @@
+TaskSeal — guided AI CLI launcher
+
+Usage: tseal [COMMAND]
+
+Start with:
+  tseal                 Review setup before a provider launch
+  tseal doctor --root . Check installation safely
+
+Learn:
+  tseal help inspect    Explain an available skill decision
+
+Commands:
+  help [COMMAND]        Show concise help
+  inspect <skill>       Inspect a skill decision
+  explain <skill>       Explain a skill decision
