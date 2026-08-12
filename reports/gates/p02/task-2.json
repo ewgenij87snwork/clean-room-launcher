@@ -1,0 +1,76 @@
+{
+  "schema_version": "taskseal.task-receipt.v1",
+  "plan": "P02",
+  "task": 2,
+  "acceptance_id": "ACC-P02-T2",
+  "evidence_id": "EVD-P02-T2",
+  "input_head": "3e3f543629c834270440023d3c030a9891031684",
+  "result_head": "9755944c70166be57561bd51972815925e2a4f27",
+  "branch": "feat/p02-contracts",
+  "worktree": "/Users/ysorokin/taskseal-wt/p02-contracts",
+  "repository": "/Users/ysorokin/taskseal",
+  "checkpoint_sha256": "eff62290f54f56bbb1396395b8bf7f2e90e3b6c90a770de96bfa7a4cd7aaaed6",
+  "accepted_at": "2026-08-12T08:10:54+02:00",
+  "result": "accepted",
+  "commands": [
+    {
+      "command": "cargo test --test repository_boundary",
+      "phase": "red_missing_manifest",
+      "exit": 101,
+      "expected": true
+    },
+    {
+      "command": "cargo test --test repository_boundary",
+      "phase": "red_missing_explicit_test_target",
+      "exit": 101,
+      "expected": true
+    },
+    {
+      "command": "cargo test --locked --offline --test execution_bootstrap",
+      "phase": "red_stale_head_accepted",
+      "exit": 101,
+      "expected": true
+    },
+    {
+      "command": "cargo test --locked --offline --test repository_boundary",
+      "phase": "green_repository_boundary",
+      "exit": 0,
+      "expected": true
+    },
+    {
+      "command": "cargo test --locked --offline --test execution_bootstrap",
+      "phase": "green_execution_bootstrap",
+      "exit": 0,
+      "expected": true
+    },
+    {
+      "command": "cargo test --locked --offline --test provider_capability_truth",
+      "phase": "regression",
+      "exit": 0,
+      "expected": true
+    }
+  ],
+  "controls": ["BND-15", "GOV-01"],
+  "subjects": {
+    "Cargo.toml": "2dc408c226f344fed83c8c449aedc3044e803ae8ce46d00bee272788f8e36331",
+    "Cargo.lock": "b996d41cf9d9b598c50c1704abca597b8db890c545a64771a0c70200c17a7cfa",
+    "rust-toolchain.toml": "1c988e42aa6014cf173d2ab4b5c411819099fbde4951a468eeb23c9ead742eea",
+    "schemas/contracts/execution-authority.schema.json": "92bda58c0135dfe44532ea4f6531c2b0d88fb6dfbc7fe91f8b201e1d00566c84",
+    "src/lib.rs": "b4328fc4d0701a6fe324db13506f9d157b5e60bddd23796f0d0b321bcc386ad9",
+    "src/contracts/execution.rs": "bda9fa1d10d98683a50dbdbf4bcac8dc1f520cd6900635fdddeaecc0e950e6e8",
+    "src/contracts/repository.rs": "61edafcc27b248f7f80730c2650d9a7417021193200b9e9ff06eb69e70b387c7",
+    "tests/contracts/repository_boundary.rs": "49f30fc6feafab07294d366d927106ea3ce2b4853242fa82eb7053979e4a2e02",
+    "tests/contracts/execution_bootstrap.rs": "7282a687d5a2758a8ebd3a61b7139f5d5ec30ce933202bd670890c205b01634f"
+  },
+  "boundary": {
+    "independent_sibling": true,
+    "non_main": true,
+    "nested_fixture_refused": true,
+    "gitlink_fixture_refused": true,
+    "private_authority_ignored": true,
+    "root_agents_byte_identical": true,
+    "dirty_state_after_result_commit": [],
+    "stash_inventory": []
+  },
+  "skips_counted_as_pass": 0
+}
