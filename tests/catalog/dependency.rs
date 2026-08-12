@@ -6,6 +6,7 @@ fn decision(id: &str, kind: BodyDecision) -> DecisionRecord {
         id: id.to_owned(),
         decision: kind,
         reason: "ROOT",
+        reason_chain: vec![id.to_owned()],
     }
 }
 

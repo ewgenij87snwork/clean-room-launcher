@@ -12,6 +12,7 @@ pub struct SkillRecord {
     pub source_id: String,
     pub body_path: String,
     pub body_digest: String,
+    pub body_bytes: u64,
     pub metadata_digest: String,
 }
 
@@ -77,7 +78,7 @@ fn inventory_records(
             continue;
         }
         let body_record = files.body.ok_or(InventoryError::MissingBody)?;
-        let (metadata, metadata_digest) = metadata_for(&files.metadata, &body_record)?;
+        let (metadata, metadata_digest) = metadata_for(&files.metadata, &body_record, &directory)?;
         if metadata.name.is_empty()
             || metadata.capability.is_empty()
             || metadata.trigger_summary.is_empty()
@@ -97,6 +98,7 @@ fn inventory_records(
             source_id: source.id.clone(),
             body_path: body_record.logical_path,
             body_digest: body_record.sha256,
+            body_bytes: body_record.byte_len,
             metadata_digest,
         })
     }
@@ -138,7 +140,8 @@ pub fn inventory_skills(sources: &[SkillSource]) -> Result<Vec<SkillRecord>, Inv
                 continue;
             }
             let body_record = files.body.ok_or(InventoryError::MissingBody)?;
-            let (metadata, metadata_digest) = metadata_for(&files.metadata, &body_record)?;
+            let (metadata, metadata_digest) =
+                metadata_for(&files.metadata, &body_record, &directory)?;
             if metadata.name.is_empty()
                 || metadata.capability.is_empty()
                 || metadata.trigger_summary.is_empty()
@@ -158,6 +161,7 @@ pub fn inventory_skills(sources: &[SkillSource]) -> Result<Vec<SkillRecord>, Inv
                 source_id: source.id.clone(),
                 body_path: body_record.logical_path,
                 body_digest: body_record.sha256,
+                body_bytes: body_record.byte_len,
                 metadata_digest,
             });
         }
@@ -179,6 +183,7 @@ fn map_core_error(error: crate::core::inventory::CoreError) -> InventoryError {
 fn metadata_for(
     sidecar: &Option<SourceRecord>,
     body: &SourceRecord,
+    directory: &str,
 ) -> Result<(SkillMetadata, String), InventoryError> {
     if let Some(record) = sidecar {
         let metadata = serde_json::from_slice(record.content())
@@ -187,29 +192,67 @@ fn metadata_for(
     }
     let text =
         std::str::from_utf8(body.content()).map_err(|_| InventoryError::MalformedMetadata)?;
-    let frontmatter = text
+    let normalized = text
+        .strip_prefix('\u{feff}')
+        .unwrap_or(text)
+        .replace("\r\n", "\n");
+    let frontmatter = normalized
         .strip_prefix("---\n")
         .and_then(|rest| rest.split_once("\n---\n").map(|parts| parts.0))
         .ok_or(InventoryError::MissingMetadata)?;
-    let field = |name: &str| {
-        frontmatter.lines().find_map(|line| {
-            line.strip_prefix(name)
-                .and_then(|value| value.strip_prefix(':'))
-                .map(str::trim)
-                .filter(|value| !value.is_empty())
-                .map(str::to_owned)
-        })
-    };
-    let name = field("name").ok_or(InventoryError::MalformedMetadata)?;
-    let description = field("description").ok_or(InventoryError::MalformedMetadata)?;
+    let name = yaml_scalar(frontmatter, "name").ok_or(InventoryError::MalformedMetadata)?;
+    let description =
+        yaml_scalar(frontmatter, "description").ok_or(InventoryError::MalformedMetadata)?;
+    let directory_name = directory.rsplit('/').next().unwrap_or(directory);
+    if !valid_native_name(&name) || name != directory_name || description.chars().count() > 1024 {
+        return Err(InventoryError::MalformedMetadata);
+    }
     Ok((
         SkillMetadata {
             name,
             capability: description.clone(),
-            trigger_summary: description,
+            trigger_summary: description.split_whitespace().collect::<Vec<_>>().join(" "),
         },
         sha256_hex(frontmatter.as_bytes()),
     ))
+}
+
+fn yaml_scalar(frontmatter: &str, key: &str) -> Option<String> {
+    let lines: Vec<_> = frontmatter.lines().collect();
+    let prefix = format!("{key}:");
+    let index = lines.iter().position(|line| line.starts_with(&prefix))?;
+    let raw = lines[index].split_once(':')?.1.trim();
+    if raw == "|" || raw == ">" {
+        let values: Vec<_> = lines[index + 1..]
+            .iter()
+            .take_while(|line| line.starts_with(' ') || line.is_empty())
+            .map(|line| line.trim())
+            .collect();
+        let value = values.join(if raw == "|" { "\n" } else { " " });
+        return (!value.trim().is_empty()).then(|| value.trim().to_owned());
+    }
+    let unquoted = raw
+        .strip_prefix('"')
+        .and_then(|value| value.strip_suffix('"'))
+        .or_else(|| {
+            raw.strip_prefix('\'')
+                .and_then(|value| value.strip_suffix('\''))
+        })
+        .unwrap_or(raw)
+        .trim()
+        .to_owned();
+    (!unquoted.is_empty()).then_some(unquoted)
+}
+
+fn valid_native_name(name: &str) -> bool {
+    !name.is_empty()
+        && name.len() <= 64
+        && !name.starts_with('-')
+        && !name.ends_with('-')
+        && !name.contains("--")
+        && name
+            .bytes()
+            .all(|byte| byte.is_ascii_lowercase() || byte.is_ascii_digit() || byte == b'-')
 }
 
 fn split_logical_path(path: &str) -> (String, &str) {

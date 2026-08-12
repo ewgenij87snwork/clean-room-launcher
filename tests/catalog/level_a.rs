@@ -10,6 +10,7 @@ fn record(name: &str, summary: &str) -> SkillRecord {
         source_id: "skill-source-test".to_owned(),
         body_path: format!("skill-source-test/{name}/SKILL.md"),
         body_digest: "a".repeat(64),
+        body_bytes: 1,
         metadata_digest: "b".repeat(64),
     }
 }
@@ -38,7 +39,7 @@ fn refuses_missing_overlong_and_unsafe_static_summaries() {
         LevelAError::MissingSummary
     );
     assert_eq!(
-        build_level_a(&[record("long", &"x".repeat(161))]).unwrap_err(),
+        build_level_a(&[record("long", &"x".repeat(1025))]).unwrap_err(),
         LevelAError::SummaryTooLong
     );
     assert_eq!(

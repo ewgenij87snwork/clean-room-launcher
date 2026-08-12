@@ -1,4 +1,4 @@
-use super::budget::{BodyMeasurement, CatalogLimits};
+use super::budget::CatalogLimits;
 use super::dependency::DependencyGraph;
 use super::inventory::inventory_skills;
 use super::level_b::SkillSignals;
@@ -21,17 +21,11 @@ fn production_pipeline_enforces_every_catalog_stage_before_projection() {
         &sources,
         &[SkillSignals::new(&record.id)],
         &graph,
-        &[BodyMeasurement {
-            id: record.id,
-            bytes: 128,
-            token_upper_bound: 128,
-        }],
         CatalogLimits {
             index_bytes: 4096,
             detail_bytes: 4096,
             detail_tokens: 4096,
         },
-        vec![],
     )
     .unwrap();
     assert_eq!(validated.manifest().counts.total, 1);

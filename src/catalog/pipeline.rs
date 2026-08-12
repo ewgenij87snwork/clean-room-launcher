@@ -37,12 +37,18 @@ pub fn build_validated_catalog(
     sources: &[SkillSource],
     signals: &[SkillSignals],
     graph: &DependencyGraph,
-    measurements: &[BodyMeasurement],
     limits: CatalogLimits,
-    unavailable_sources: Vec<String>,
 ) -> Result<ValidatedCatalog, PipelineError> {
     let records = inventory_skills(sources).map_err(|_| PipelineError::Inventory)?;
     let level_a = build_level_a(&records).map_err(|_| PipelineError::LevelA)?;
+    let measurements: Vec<_> = records
+        .iter()
+        .map(|record| BodyMeasurement {
+            id: record.id.clone(),
+            bytes: record.body_bytes,
+            token_upper_bound: record.body_bytes,
+        })
+        .collect();
     let decisions = decide_bodies(signals).map_err(|_| PipelineError::Decisions)?;
     let original: BTreeMap<_, _> = decisions.iter().map(|d| (d.id.as_str(), d)).collect();
     let closed = close_dependencies(&decisions, graph).map_err(|_| PipelineError::Dependencies)?;
@@ -59,10 +65,16 @@ pub fn build_validated_catalog(
             } else {
                 "REQUIRED_DEPENDENCY"
             },
+            reason_chain: item.reason_chain,
         })
         .collect();
-    let budgeted = budget_catalog(&level_a, &closed_decisions, measurements, limits)
+    let budgeted = budget_catalog(&level_a, &closed_decisions, &measurements, limits)
         .map_err(|_| PipelineError::Budget)?;
+    let unavailable_sources = sources
+        .iter()
+        .filter(|source| !source.admitted)
+        .map(|source| source.id.clone())
+        .collect();
     let manifest = CatalogManifest::new(budgeted.level_a, budgeted.decisions, unavailable_sources)
         .map_err(|_| PipelineError::Manifest)?;
     Ok(ValidatedCatalog { manifest })

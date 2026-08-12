@@ -20,11 +20,13 @@ fn census_categories_and_evidence_are_closed() {
                 id: "a".into(),
                 decision: BodyDecision::LoadNow,
                 reason: "PROTECTED",
+                reason_chain: vec!["a".into()],
             },
             DecisionRecord {
                 id: "b".into(),
                 decision: BodyDecision::LoadOnInvoke,
                 reason: "DEFERRED",
+                reason_chain: vec!["b".into()],
             },
         ],
         vec![],
@@ -54,6 +56,7 @@ fn unavailable_sources_do_not_corrupt_skill_denominator() {
             id: "a".into(),
             decision: BodyDecision::LoadOnInvoke,
             reason: "D",
+            reason_chain: vec!["a".into()],
         }],
         vec!["outside".into()],
     )

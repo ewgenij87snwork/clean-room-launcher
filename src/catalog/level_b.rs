@@ -13,6 +13,7 @@ pub struct DecisionRecord {
     pub id: String,
     pub decision: BodyDecision,
     pub reason: &'static str,
+    pub reason_chain: Vec<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -95,6 +96,7 @@ pub fn decide_bodies(items: &[SkillSignals]) -> Result<Vec<DecisionRecord>, Deci
             id: item.id.clone(),
             decision,
             reason,
+            reason_chain: vec![item.id.clone()],
         });
     }
     output.sort_by(|a, b| a.id.as_bytes().cmp(b.id.as_bytes()));

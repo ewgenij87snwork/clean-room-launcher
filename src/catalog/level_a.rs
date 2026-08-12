@@ -1,7 +1,7 @@
 use super::inventory::SkillRecord;
 use serde::Serialize;
 
-const MAX_SUMMARY_BYTES: usize = 160;
+const MAX_SUMMARY_CHARS: usize = 1024;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct LevelAEntry {
@@ -41,7 +41,7 @@ fn validate_summary(summary: &str) -> Result<(), LevelAError> {
     if summary.is_empty() {
         return Err(LevelAError::MissingSummary);
     }
-    if summary.len() > MAX_SUMMARY_BYTES {
+    if summary.chars().count() > MAX_SUMMARY_CHARS {
         return Err(LevelAError::SummaryTooLong);
     }
     if summary.chars().any(char::is_control) {

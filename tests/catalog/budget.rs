@@ -16,6 +16,7 @@ fn decision(kind: BodyDecision) -> DecisionRecord {
         id: "a".into(),
         decision: kind,
         reason: "R",
+        reason_chain: vec!["a".into()],
     }
 }
 #[test]

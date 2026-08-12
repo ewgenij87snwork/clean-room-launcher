@@ -110,6 +110,32 @@ fn inventories_provider_native_skill_md_frontmatter_without_sidecar() {
 }
 
 #[test]
+fn native_frontmatter_handles_quotes_blocks_bom_crlf_and_enforces_directory_name() {
+    let root = std::env::temp_dir().join(format!("taskseal-frontmatter-{}", std::process::id()));
+    let skill = root.join("quoted-skill");
+    std::fs::create_dir_all(&skill).unwrap();
+    std::fs::write(
+        skill.join("SKILL.md"),
+        "\u{feff}---\r\nname: \"quoted-skill\"\r\ndescription: >\r\n  first line\r\n  second line\r\n---\r\nbody",
+    )
+    .unwrap();
+    let config = SkillSourceConfig::new(vec![(root.clone(), SkillSourceAuthority::Project)]);
+    let sources = enumerate_sources(&config, std::slice::from_ref(&root)).unwrap();
+    let records = inventory_skills(&sources).unwrap();
+    assert_eq!(records[0].trigger_summary, "first line second line");
+    std::fs::write(
+        skill.join("SKILL.md"),
+        "---\nname: wrong-name\ndescription: mismatch\n---\nbody",
+    )
+    .unwrap();
+    assert_eq!(
+        inventory_skills(&sources).unwrap_err(),
+        InventoryError::MalformedMetadata
+    );
+    std::fs::remove_dir_all(root).unwrap();
+}
+
+#[test]
 fn refuses_duplicate_names_with_stable_reason() {
     let error = inventory_skills(&admitted("duplicate-names")).unwrap_err();
     assert_eq!(error, InventoryError::DuplicateName("same".to_owned()));

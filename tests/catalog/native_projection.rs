@@ -5,15 +5,34 @@ use super::pipeline::ValidatedCatalog;
 use super::projection::{ProjectionError, parse_qualification_receipt, project_native};
 use crate::contracts::adapter::parse_declaration;
 use std::process::Command;
-fn entry(id: &str, name: &str, digest: char) -> LevelAEntry {
+const DIGEST_A: &str = "5f07933adc98d602398359e57783d348658eaa60fa7907da263b53291f8184b1";
+const DIGEST_B: &str = "32eea1ee666999e53a16feb944d355ef49bcff8ec379a3e02ee690172752f55e";
+fn entry(id: &str, name: &str, digest: &str) -> LevelAEntry {
     LevelAEntry {
         id: id.into(),
         name: name.into(),
         capability: "c".into(),
         trigger_summary: format!("use {name}"),
         source_id: "src".into(),
-        body_digest: digest.to_string().repeat(64),
+        body_digest: digest.to_owned(),
     }
+}
+fn probe_output() -> Vec<u8> {
+    let root = env!("CARGO_MANIFEST_DIR");
+    let output = Command::new("sh")
+        .arg(format!(
+            "{root}/fixtures/catalog/native-projection/provider-native-probe.sh"
+        ))
+        .arg(format!(
+            "a={root}/fixtures/catalog/native-projection/a/SKILL.md"
+        ))
+        .arg(format!(
+            "b={root}/fixtures/catalog/native-projection/b/SKILL.md"
+        ))
+        .output()
+        .unwrap();
+    assert!(output.status.success());
+    output.stdout
 }
 fn catalog(entries: Vec<LevelAEntry>) -> ValidatedCatalog {
     let decisions = entries
@@ -22,6 +41,7 @@ fn catalog(entries: Vec<LevelAEntry>) -> ValidatedCatalog {
             id: entry.id.clone(),
             decision: BodyDecision::LoadOnInvoke,
             reason: "DEFERRED_NATIVE",
+            reason_chain: vec![entry.id.clone()],
         })
         .collect();
     ValidatedCatalog::from_manifest_for_test(
@@ -55,9 +75,13 @@ fn real_unqualified_declaration_requires_bound_qualification_receipt() {
     let receipt = parse_qualification_receipt(bytes.as_bytes(), &d, probe, probe).unwrap();
     assert_eq!(
         project_native(
-            &catalog(vec![entry("a", "alpha", 'a'), entry("b", "beta", 'b')]),
+            &catalog(vec![
+                entry("a", "alpha", DIGEST_A),
+                entry("b", "beta", DIGEST_B)
+            ]),
             &d,
-            receipt
+            receipt,
+            &probe_output(),
         )
         .unwrap_err(),
         ProjectionError::UnsupportedNativeSeam
@@ -68,35 +92,31 @@ fn multi_skill_projection_is_per_skill_digest_bound_and_body_free() {
     let d = declaration();
     let r = fixture_receipt();
     let p = project_native(
-        &catalog(vec![entry("a", "alpha", 'a'), entry("b", "beta", 'b')]),
+        &catalog(vec![
+            entry("a", "alpha", DIGEST_A),
+            entry("b", "beta", DIGEST_B),
+        ]),
         &d,
         r,
+        &probe_output(),
     )
     .unwrap();
-    assert_eq!(p.entries[0].native_link, "skill://codex/a");
+    assert_eq!(p.entries[0].native_link, "a");
     assert_eq!(p.entries.len(), 2);
     assert!(p.startup_bytes.windows(5).all(|w| w != b"BODY:"))
 }
 
 #[test]
 fn qualified_native_fixture_executes_canary_and_matches_bound_receipt() {
-    let probe = concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "/fixtures/catalog/native-projection/provider-native-probe.sh"
-    );
-    let output = Command::new("sh").arg(probe).output().unwrap();
-    assert!(output.status.success());
-    assert_eq!(
-        String::from_utf8(output.stdout).unwrap(),
-        concat!(
-            "a=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n",
-            "b=bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n"
-        )
-    );
+    let output = probe_output();
     let projected = project_native(
-        &catalog(vec![entry("a", "alpha", 'a'), entry("b", "beta", 'b')]),
+        &catalog(vec![
+            entry("a", "alpha", DIGEST_A),
+            entry("b", "beta", DIGEST_B),
+        ]),
         &declaration(),
         fixture_receipt(),
+        &output,
     )
     .unwrap();
     assert_eq!(projected.entries.len(), 2);
@@ -121,8 +141,8 @@ fn immutable_receipt_parser_rejects_unbound_or_unknown_evidence() {
         ProjectionError::InvalidReceipt
     );
     let duplicate = text.replace(
-        "\"a\": \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"",
-        "\"a\": \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\n    \"a\": \"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\"",
+        &format!("\"a\": \"{DIGEST_A}\""),
+        &format!("\"a\": \"{DIGEST_A}\",\n    \"a\": \"{DIGEST_B}\""),
     );
     assert_eq!(
         parse_qualification_receipt(duplicate.as_bytes(), &d, probe, probe).unwrap_err(),
@@ -140,20 +160,16 @@ fn tampered_receipt_or_body_digest_refuses() {
         parse_qualification_receipt(bad_binding.as_bytes(), &d, probe, probe).unwrap_err(),
         ProjectionError::ReceiptBindingMismatch
     );
-    let bad_body = fixture.replace(
-        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-        "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
-    );
-    let bad_body = bad_body.replace(
-        "a22932d6dd21d960a6ed4837c1b486536ebb4415c024bca16024ec1e581c69a8",
-        "a2f6abba8cbb51691b0a094cc60024b5aee08df6ef821878cfee4fd1cddd7108",
-    );
-    let r = parse_qualification_receipt(bad_body.as_bytes(), &d, probe, probe).unwrap();
+    let r = fixture_receipt();
     assert_eq!(
         project_native(
-            &catalog(vec![entry("a", "alpha", 'a'), entry("b", "beta", 'b')]),
+            &catalog(vec![
+                entry("a", "alpha", &"c".repeat(64)),
+                entry("b", "beta", DIGEST_B),
+            ]),
             &d,
-            r
+            r,
+            &probe_output(),
         )
         .unwrap_err(),
         ProjectionError::DigestMismatch("a".into())

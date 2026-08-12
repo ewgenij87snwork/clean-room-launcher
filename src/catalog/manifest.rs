@@ -7,6 +7,7 @@ pub struct ReasonView {
     pub reason: &'static str,
     pub body_digest: String,
     pub source_id: String,
+    pub reason_chain: Vec<String>,
 }
 #[derive(Debug, PartialEq, Eq)]
 pub enum ManifestError {
@@ -85,6 +86,7 @@ impl CatalogManifest {
             reason: d.reason,
             body_digest: e.body_digest.clone(),
             source_id: e.source_id.clone(),
+            reason_chain: d.reason_chain.clone(),
         })
     }
 }

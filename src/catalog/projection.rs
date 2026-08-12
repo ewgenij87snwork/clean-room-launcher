@@ -139,6 +139,7 @@ pub fn project_native(
     catalog: &ValidatedCatalog,
     d: &AdapterDeclaration,
     r: QualificationReceipt,
+    probe_output: &[u8],
 ) -> Result<NativeProjection, ProjectionError> {
     if r.schema_version != "taskseal.native-projection-qualification.v1"
         || r.provider_id != d.provider_id
@@ -162,6 +163,19 @@ pub fn project_native(
     if expected_ids != observed_ids {
         return Err(ProjectionError::ReceiptBindingMismatch);
     }
+    let observed_output =
+        std::str::from_utf8(probe_output).map_err(|_| ProjectionError::InvalidReceipt)?;
+    let parsed_output: BTreeMap<_, _> = observed_output
+        .lines()
+        .map(|line| line.split_once('=').ok_or(ProjectionError::InvalidReceipt))
+        .collect::<Result<_, _>>()?;
+    if parsed_output.len() != r.observed_digests.len()
+        || r.observed_digests
+            .iter()
+            .any(|(id, digest)| parsed_output.get(id.as_str()).copied() != Some(digest.as_str()))
+    {
+        return Err(ProjectionError::ReceiptBindingMismatch);
+    }
     let mut entries = Vec::new();
     for e in &catalog.manifest().level_a {
         if r.observed_digests.get(&e.id) != Some(&e.body_digest) {
@@ -171,7 +185,7 @@ pub fn project_native(
             id: e.id.clone(),
             name: e.name.clone(),
             body_digest: e.body_digest.clone(),
-            native_link: format!("skill://{}/{}", d.provider_id, e.id),
+            native_link: e.id.clone(),
         })
     }
     let startup_bytes = serde_json::to_vec(&catalog.manifest().level_a)
