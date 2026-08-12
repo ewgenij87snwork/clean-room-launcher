@@ -1,0 +1,48 @@
+{
+  "schema_version": "taskseal.p02.contract-gate.v1",
+  "plan": "P02",
+  "result": "PASS",
+  "result_head": "1fd06aaf9a40d84d80be509fb29fcc7377d5e9ba",
+  "branch": "feat/p02-contracts",
+  "worktree": "/Users/ysorokin/taskseal-wt/p02-contracts",
+  "commands": [
+    {
+      "name": "fmt",
+      "exit": 0,
+      "status": "PASS"
+    },
+    {
+      "name": "clippy",
+      "exit": 0,
+      "status": "PASS"
+    },
+    {
+      "name": "contract-tests",
+      "exit": 0,
+      "status": "PASS"
+    },
+    {
+      "name": "public-boundary",
+      "exit": 0,
+      "status": "PASS"
+    },
+    {
+      "name": "control-coverage",
+      "exit": 0,
+      "status": "PASS"
+    },
+    {
+      "name": "clean-local-clone",
+      "exit": 0,
+      "status": "PASS"
+    },
+    {
+      "name": "receipts",
+      "exit": 0,
+      "status": "PASS"
+    }
+  ],
+  "accepted_tasks": 8,
+  "skips_counted_as_pass": 0,
+  "network_or_provider_spend": false
+}

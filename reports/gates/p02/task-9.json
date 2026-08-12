@@ -1,0 +1,35 @@
+{
+  "schema_version": "taskseal.task-receipt.v1",
+  "plan": "P02",
+  "task": 9,
+  "acceptance_id": "ACC-P02-T9",
+  "evidence_id": "EVD-P02-T9",
+  "input_head": "1fd06aaf9a40d84d80be509fb29fcc7377d5e9ba",
+  "result_head": "1fd06aaf9a40d84d80be509fb29fcc7377d5e9ba",
+  "branch": "feat/p02-contracts",
+  "worktree": "$TASKSEAL_WORKTREE",
+  "path_binding": "exact private execution authority",
+  "checkpoint_sha256": "eff62290f54f56bbb1396395b8bf7f2e90e3b6c90a770de96bfa7a4cd7aaaed6",
+  "accepted_at": "2026-08-12T09:04:41+02:00",
+  "result": "accepted",
+  "commands": [
+    {
+      "command": "scripts/gates/p02/verify.sh",
+      "phase": "sole_consolidated_gate",
+      "exit": 0,
+      "expected": true
+    }
+  ],
+  "controls": ["all P02 controls through the consolidated gate"],
+  "coverage": {
+    "focused_tasks": 8,
+    "fmt": "PASS",
+    "clippy": "PASS",
+    "contract_tests": "PASS",
+    "public_boundary": "PASS",
+    "control_coverage": "PASS",
+    "clean_local_clone": "PASS",
+    "network_or_provider_spend": false
+  },
+  "skips_counted_as_pass": 0
+}
