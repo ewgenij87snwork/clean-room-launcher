@@ -4,3 +4,5 @@ mod environment;
 mod identity;
 #[path = "adapters/placement.rs"]
 mod placement;
+#[path = "adapters/qualification.rs"]
+mod qualification;
