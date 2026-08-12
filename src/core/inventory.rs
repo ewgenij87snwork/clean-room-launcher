@@ -29,6 +29,13 @@ pub struct SourceRecord {
     pub sha256: String,
     pub byte_len: u64,
     pub provenance: String,
+    content: Vec<u8>,
+}
+
+impl SourceRecord {
+    pub(crate) fn content(&self) -> &[u8] {
+        &self.content
+    }
 }
 
 #[derive(Debug)]
@@ -197,6 +204,7 @@ fn read_record(
         sha256: sha256_hex(&bytes),
         byte_len: bytes.len() as u64,
         provenance: "admitted-root".to_owned(),
+        content: bytes,
     })
 }
 
