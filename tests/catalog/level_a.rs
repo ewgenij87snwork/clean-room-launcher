@@ -12,6 +12,7 @@ fn record(name: &str, summary: &str) -> SkillRecord {
         body_digest: "a".repeat(64),
         body_bytes: 1,
         metadata_digest: "b".repeat(64),
+        native_frontmatter: true,
     }
 }
 

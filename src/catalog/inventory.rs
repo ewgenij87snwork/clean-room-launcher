@@ -14,6 +14,7 @@ pub struct SkillRecord {
     pub body_digest: String,
     pub body_bytes: u64,
     pub metadata_digest: String,
+    pub native_frontmatter: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -33,6 +34,7 @@ struct SkillMetadata {
     capability: String,
     trigger_summary: String,
 }
+
 
 #[cfg(test)]
 pub(crate) fn inventory_skills_with_mutation(
@@ -78,7 +80,8 @@ fn inventory_records(
             continue;
         }
         let body_record = files.body.ok_or(InventoryError::MissingBody)?;
-        let (metadata, metadata_digest) = metadata_for(&files.metadata, &body_record, &directory)?;
+        let (metadata, metadata_digest, native_frontmatter) =
+            metadata_for(&files.metadata, &body_record, &directory)?;
         if metadata.name.is_empty()
             || metadata.capability.is_empty()
             || metadata.trigger_summary.is_empty()
@@ -100,6 +103,7 @@ fn inventory_records(
             body_digest: body_record.sha256,
             body_bytes: body_record.byte_len,
             metadata_digest,
+            native_frontmatter,
         })
     }
     Ok(records)
@@ -140,7 +144,7 @@ pub fn inventory_skills(sources: &[SkillSource]) -> Result<Vec<SkillRecord>, Inv
                 continue;
             }
             let body_record = files.body.ok_or(InventoryError::MissingBody)?;
-            let (metadata, metadata_digest) =
+            let (metadata, metadata_digest, native_frontmatter) =
                 metadata_for(&files.metadata, &body_record, &directory)?;
             if metadata.name.is_empty()
                 || metadata.capability.is_empty()
@@ -163,6 +167,7 @@ pub fn inventory_skills(sources: &[SkillSource]) -> Result<Vec<SkillRecord>, Inv
                 body_digest: body_record.sha256,
                 body_bytes: body_record.byte_len,
                 metadata_digest,
+                native_frontmatter,
             });
         }
     }
@@ -184,11 +189,11 @@ fn metadata_for(
     sidecar: &Option<SourceRecord>,
     body: &SourceRecord,
     directory: &str,
-) -> Result<(SkillMetadata, String), InventoryError> {
+) -> Result<(SkillMetadata, String, bool), InventoryError> {
     if let Some(record) = sidecar {
         let metadata = serde_json::from_slice(record.content())
             .map_err(|_| InventoryError::MalformedMetadata)?;
-        return Ok((metadata, record.sha256.clone()));
+        return Ok((metadata, record.sha256.clone(), false));
     }
     let text =
         std::str::from_utf8(body.content()).map_err(|_| InventoryError::MalformedMetadata)?;
@@ -200,9 +205,18 @@ fn metadata_for(
         .strip_prefix("---\n")
         .and_then(|rest| rest.split_once("\n---\n").map(|parts| parts.0))
         .ok_or(InventoryError::MissingMetadata)?;
-    let name = yaml_scalar(frontmatter, "name").ok_or(InventoryError::MalformedMetadata)?;
-    let description =
-        yaml_scalar(frontmatter, "description").ok_or(InventoryError::MalformedMetadata)?;
+    let parsed: std::collections::BTreeMap<String, serde_yaml::Value> =
+        serde_yaml::from_str(frontmatter).map_err(|_| InventoryError::MalformedMetadata)?;
+    let name = parsed
+        .get("name")
+        .and_then(serde_yaml::Value::as_str)
+        .map(str::to_owned)
+        .ok_or(InventoryError::MalformedMetadata)?;
+    let description = parsed
+        .get("description")
+        .and_then(serde_yaml::Value::as_str)
+        .map(str::to_owned)
+        .ok_or(InventoryError::MalformedMetadata)?;
     let directory_name = directory.rsplit('/').next().unwrap_or(directory);
     if !valid_native_name(&name) || name != directory_name || description.chars().count() > 1024 {
         return Err(InventoryError::MalformedMetadata);
@@ -214,55 +228,8 @@ fn metadata_for(
             trigger_summary: description.split_whitespace().collect::<Vec<_>>().join(" "),
         },
         sha256_hex(frontmatter.as_bytes()),
+        true,
     ))
-}
-
-fn yaml_scalar(frontmatter: &str, key: &str) -> Option<String> {
-    let lines: Vec<_> = frontmatter.lines().collect();
-    let prefix = format!("{key}:");
-    let matches: Vec<_> = lines
-        .iter()
-        .enumerate()
-        .filter(|(_, line)| line.starts_with(&prefix))
-        .collect();
-    if matches.len() != 1 {
-        return None;
-    }
-    let index = matches[0].0;
-    let raw = lines[index].split_once(':')?.1.trim();
-    if matches!(raw, "|" | ">" | "|-" | ">-" | "|+" | ">+") {
-        let values: Vec<_> = lines[index + 1..]
-            .iter()
-            .take_while(|line| line.starts_with(' ') || line.is_empty())
-            .map(|line| line.trim())
-            .collect();
-        let value = values.join(if raw.starts_with('|') { "\n" } else { " " });
-        return (!value.trim().is_empty()).then(|| value.trim().to_owned());
-    }
-    let unquoted = if let Some(value) = raw
-        .strip_prefix('"')
-        .and_then(|value| value.strip_suffix('"'))
-    {
-        value
-            .replace("\\\"", "\"")
-            .replace("\\n", "\n")
-            .replace("\\\\", "\\")
-    } else if let Some(value) = raw
-        .strip_prefix('\'')
-        .and_then(|value| value.strip_suffix('\''))
-    {
-        value.replace("''", "'")
-    } else {
-        let value = raw.split_once(" #").map_or(raw, |parts| parts.0).trim();
-        if value.starts_with(['[', '{'])
-            || value.parse::<f64>().is_ok()
-            || matches!(value, "true" | "false" | "null" | "~")
-        {
-            return None;
-        }
-        value.to_owned()
-    };
-    (!unquoted.is_empty()).then_some(unquoted)
 }
 
 fn valid_native_name(name: &str) -> bool {

@@ -154,6 +154,26 @@ fn native_frontmatter_handles_quotes_blocks_bom_crlf_and_enforces_directory_name
 }
 
 #[test]
+fn native_frontmatter_uses_yaml_escaped_scalars_and_comments() {
+    let root = std::env::temp_dir().join(format!("taskseal-yaml-{}", std::process::id()));
+    let skill = root.join("yaml-skill");
+    std::fs::create_dir_all(&skill).unwrap();
+    std::fs::write(
+        skill.join("SKILL.md"),
+        "---\nname: yaml-skill\ndescription: \"Use: now \\u263A\" # native comment\n---\nbody",
+    )
+    .unwrap();
+    let sources = enumerate_sources(
+        &SkillSourceConfig::new(vec![(root.clone(), SkillSourceAuthority::Project)]),
+        std::slice::from_ref(&root),
+    )
+    .unwrap();
+    let records = inventory_skills(&sources).unwrap();
+    assert_eq!(records[0].capability, "Use: now ☺");
+    std::fs::remove_dir_all(root).unwrap();
+}
+
+#[test]
 fn refuses_duplicate_names_with_stable_reason() {
     let error = inventory_skills(&admitted("duplicate-names")).unwrap_err();
     assert_eq!(error, InventoryError::DuplicateName("same".to_owned()));

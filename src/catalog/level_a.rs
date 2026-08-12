@@ -11,6 +11,7 @@ pub struct LevelAEntry {
     pub trigger_summary: String,
     pub source_id: String,
     pub body_digest: String,
+    pub native_frontmatter: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -31,6 +32,7 @@ pub fn build_level_a(records: &[SkillRecord]) -> Result<Vec<LevelAEntry>, LevelA
             trigger_summary: record.trigger_summary.clone(),
             source_id: record.source_id.clone(),
             body_digest: record.body_digest.clone(),
+            native_frontmatter: record.native_frontmatter,
         });
     }
     entries.sort_by(|left, right| left.name.as_bytes().cmp(right.name.as_bytes()));

@@ -9,6 +9,7 @@ fn entry(id: &str) -> LevelAEntry {
         trigger_summary: "s".into(),
         source_id: "src".into(),
         body_digest: "a".repeat(64),
+        native_frontmatter: true,
     }
 }
 #[test]

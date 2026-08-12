@@ -17,6 +17,7 @@ fn entry(id: &str, name: &str, digest: &str) -> LevelAEntry {
         trigger_summary: format!("use {name}"),
         source_id: "src".into(),
         body_digest: digest.to_owned(),
+        native_frontmatter: true,
     }
 }
 fn catalog(entries: Vec<LevelAEntry>) -> ValidatedCatalog {

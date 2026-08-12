@@ -164,6 +164,9 @@ pub fn project_native(
     }
     let mut entries = Vec::new();
     for e in &catalog.manifest().level_a {
+        if !e.native_frontmatter {
+            return Err(ProjectionError::UnsupportedNativeSeam);
+        }
         if r.observed_digests.get(&e.id) != Some(&e.body_digest) {
             return Err(ProjectionError::DigestMismatch(e.id.clone()));
         }
