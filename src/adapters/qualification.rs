@@ -170,6 +170,19 @@ pub fn verify_receipt(receipt: &ProviderQualificationReceipt) -> Result<(), Qual
     Ok(())
 }
 
+pub fn verify_receipt_bytes(
+    bytes: &[u8],
+) -> Result<ProviderQualificationReceipt, QualificationReason> {
+    let receipt: ProviderQualificationReceipt =
+        serde_json::from_slice(bytes).map_err(|_| QualificationReason::InvalidClaim)?;
+    let canonical = serde_json::to_vec(&receipt).map_err(|_| QualificationReason::InvalidClaim)?;
+    if canonical != bytes {
+        return Err(QualificationReason::ReceiptMismatch);
+    }
+    verify_receipt(&receipt)?;
+    Ok(receipt)
+}
+
 pub fn receipt_digest(
     receipt: &ProviderQualificationReceipt,
 ) -> Result<String, QualificationReason> {

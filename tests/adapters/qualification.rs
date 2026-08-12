@@ -1,6 +1,6 @@
 use taskseal::adapters::qualification::{
     EvidenceRef, QualificationReason, QualificationState, TupleClaim, parse_evidence, qualify,
-    seal_receipt, verify_receipt,
+    seal_receipt, verify_receipt, verify_receipt_bytes,
 };
 
 fn claim() -> TupleClaim {
@@ -98,6 +98,8 @@ fn portable_receipt_is_canonical_bound_and_rejects_tampering() {
     ];
     let receipt = seal_receipt(expected.clone(), evidence, 100, 200).unwrap();
     verify_receipt(&receipt).unwrap();
+    let bytes = serde_json::to_vec(&receipt).unwrap();
+    assert_eq!(verify_receipt_bytes(&bytes).unwrap(), receipt);
     assert_eq!(
         receipt.schema_version,
         "taskseal.provider-qualification-receipt.v1"
@@ -117,5 +119,16 @@ fn portable_receipt_is_canonical_bound_and_rejects_tampering() {
     assert_eq!(
         verify_receipt(&rejected),
         Err(QualificationReason::RefusedEvidence)
+    );
+
+    let unknown = format!(
+        "{}",
+        String::from_utf8(bytes)
+            .unwrap()
+            .replace('}', ",\"unknown\":true}")
+    );
+    assert_eq!(
+        verify_receipt_bytes(unknown.as_bytes()),
+        Err(QualificationReason::InvalidClaim)
     );
 }

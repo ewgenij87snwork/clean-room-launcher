@@ -149,3 +149,27 @@ fn refuses_stale_generated_context_before_staging() {
     drop(root);
     fs::remove_dir_all(path).unwrap();
 }
+
+#[test]
+fn refuses_preexisting_exact_generation_target_without_changing_user_bytes() {
+    let (path, root, manifest) = project();
+    let placed = place_context(&root, &manifest, &declaration()).unwrap();
+    let target = path.join(&placed.target);
+    fs::remove_dir_all(&target).unwrap();
+    fs::create_dir(&target).unwrap();
+    fs::write(target.join("user-owned"), b"do not replace\n").unwrap();
+
+    assert!(
+        place_context(&root, &manifest, &declaration())
+            .unwrap_err()
+            .to_string()
+            .contains("PLACEMENT")
+    );
+    assert_eq!(
+        fs::read(target.join("user-owned")).unwrap(),
+        b"do not replace\n"
+    );
+
+    drop(root);
+    fs::remove_dir_all(path).unwrap();
+}

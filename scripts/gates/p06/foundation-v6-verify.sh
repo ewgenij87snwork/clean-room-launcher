@@ -1,6 +1,7 @@
 #!/bin/sh
 set -eu
-root=$(CDPATH= cd -- "$(dirname -- "$0")/../../.." && pwd -P)
+root=${P06_GATE_ROOT:-$(CDPATH= cd -- "$(dirname -- "$0")/../../.." && pwd -P)}
+root=$(CDPATH= cd -- "$root" && pwd -P)
 cd "$root"
 jq -e '
   keys == ["gate","provider_launch","qualification","receipts","result","schema_version","subject"] and
