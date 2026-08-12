@@ -1,0 +1,45 @@
+{
+  "schema_version": "taskseal.task-receipt.v1",
+  "plan": "P02",
+  "task": 7,
+  "acceptance_id": "ACC-P02-T7",
+  "evidence_id": "EVD-P02-T7",
+  "input_head": "a5ed1736589c2b0bf7399e42263d426b480ac496",
+  "result_head": "1df9e2904f0ebebd5714dff1e380aa8cfcf93458",
+  "branch": "feat/p02-contracts",
+  "worktree": "$TASKSEAL_WORKTREE",
+  "path_binding": "exact private execution authority",
+  "checkpoint_sha256": "eff62290f54f56bbb1396395b8bf7f2e90e3b6c90a770de96bfa7a4cd7aaaed6",
+  "accepted_at": "2026-08-12T08:40:48+02:00",
+  "result": "accepted_unqualified_declarations",
+  "commands": [
+    {
+      "command": "cargo test --locked --offline --test adapter_registry",
+      "phase": "red_missing_adapter_module",
+      "exit": 101,
+      "expected": true
+    },
+    {
+      "command": "cargo test --locked --offline --all-targets; scripts/check-public-boundary.sh --root $TASKSEAL_WORKTREE",
+      "phase": "green_and_regression",
+      "exit": 0,
+      "expected": true
+    }
+  ],
+  "controls": ["ADP-01", "ADP-18"],
+  "subjects": {
+    "schemas/contracts/adapter-declaration.schema.json": "a4be97a95a158998cab4f17a71445a682f82b3efbe60a8c85741bf2fbb53504d",
+    "src/contracts/adapter.rs": "cd9a61ffeddc26ef0eb33aa4f1c29c0f5402b13534cedf2527732d05604ba65a",
+    "tests/contracts/adapter_registry.rs": "1c9eb537bf9280cc9f7da6121a946a3ef60d75f6e15acd76e1f74881c6da3b6f",
+    "adapters/declarations/codex.toml": "8e059011d9d20acfa0cc2d329abac57633eaac97e9e88192087e71dca21bc4ad",
+    "adapters/declarations/claude.toml": "a75cb1e7769d543cbfdf6e35e5715da93f9ef167c3f5a61be17dcdb9ea7cf2ba"
+  },
+  "registry": {
+    "source_count": 1,
+    "codex_state": "unqualified",
+    "claude_state": "unqualified",
+    "mutable_pass_state": false,
+    "negative_fixtures_refused": 4
+  },
+  "skips_counted_as_pass": 0
+}
