@@ -67,3 +67,21 @@ fn poisoned_public_inventory_fails_with_a_stable_reason() {
         "SYMLINK_ESCAPE"
     );
 }
+
+#[test]
+fn accepted_p05_surface_is_allowlisted_but_adjacent_surface_is_not() {
+    let root = std::env::temp_dir().join(format!("taskseal-p05-public-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&root);
+    std::fs::create_dir_all(root.join("fixtures/cli")).unwrap();
+    std::fs::write(root.join("fixtures/cli/fake-provider.rs"), "fn main() {}\n").unwrap();
+    assert!(guard(&root).status.success());
+    std::fs::create_dir_all(root.join("fixtures/cli-extra")).unwrap();
+    std::fs::write(root.join("fixtures/cli-extra/unowned.rs"), "fn main() {}\n").unwrap();
+    let output = guard(&root);
+    std::fs::remove_dir_all(&root).unwrap();
+    assert!(!output.status.success());
+    assert_eq!(
+        String::from_utf8_lossy(&output.stderr).trim(),
+        "UNALLOWLISTED_PUBLIC_PATH:fixtures/cli-extra/unowned.rs"
+    );
+}

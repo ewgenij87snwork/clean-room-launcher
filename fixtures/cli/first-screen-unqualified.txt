@@ -1,6 +1,6 @@
 TaskSeal · provider qualification required
 
-Project  /Users/alex/work/offerstream
+Project  project://offerstream
 Preview  18 KB at start · 43 KB less (read-only measurement)
 Skills   5 summaries now · 38 load on use · 4 unavailable  Review
 Provider Codex · P06_REQUIRED · nothing launched

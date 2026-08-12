@@ -26,7 +26,7 @@ fn bare_tseal_stacks_labels_without_horizontal_overflow_when_narrow() {
     assert_eq!(output.status.code(), Some(0));
     let screen = String::from_utf8(output.stdout).unwrap();
     assert!(screen.contains("Provider\nCodex · P06_REQUIRED · nothing launched"));
-    assert!(screen.contains("Project\n/Users/alex/work/offerstream"));
+    assert!(screen.contains("Project\nproject://offerstream"));
     assert!(screen.contains("Writes\n.taskseal/project.json + .taskseal/out/"));
     assert!(screen.contains("Leaves\n~/.codex · ~/.claude · Git/provider"));
     assert!(screen.lines().all(|line| line.chars().count() <= 40));

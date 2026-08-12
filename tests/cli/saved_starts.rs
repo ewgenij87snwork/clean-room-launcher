@@ -73,7 +73,7 @@ fn record_requires_a_closed_provider_and_digest_fields() {
     );
 
     let mut digest = start("safe", AccessClass::Standard);
-    digest.project_digest = "/Users/alex/project".to_owned();
+    digest.project_digest = "not-a-digest".to_owned();
     assert_eq!(
         store.save(digest).unwrap_err().code(),
         "STATE_RECORD_REFUSED"
