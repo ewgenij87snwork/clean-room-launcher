@@ -15,15 +15,40 @@ fn tuple() -> CodexTuple {
 
 #[test]
 fn unavailable_policy_refuses_without_reading_auth_values() {
-    let policy = CodexAuthPolicy::unavailable(tuple(), "d".repeat(64));
+    let policy = CodexAuthPolicy::unavailable(
+        tuple(),
+        "980c03af9c28ddbb7280a52fd72a39790544e8a649ccd2442e078e95e9db6337".into(),
+    );
     assert_eq!(evaluate_auth(&policy, &[]), CodexAuthState::Unavailable);
 }
 
 #[test]
 fn unavailable_policy_refuses_any_requested_auth_name() {
-    let policy = CodexAuthPolicy::unavailable(tuple(), "d".repeat(64));
+    let policy = CodexAuthPolicy::unavailable(
+        tuple(),
+        "980c03af9c28ddbb7280a52fd72a39790544e8a649ccd2442e078e95e9db6337".into(),
+    );
     assert_eq!(
         evaluate_auth(&policy, &["OPENAI_API_KEY"]),
+        CodexAuthState::Refused
+    );
+}
+
+#[test]
+fn unavailable_policy_refuses_wrong_tuple_and_malformed_reference_name() {
+    let mut wrong = tuple();
+    wrong.version = (0, 148, 0);
+    let policy = CodexAuthPolicy::unavailable(
+        wrong,
+        "980c03af9c28ddbb7280a52fd72a39790544e8a649ccd2442e078e95e9db6337".into(),
+    );
+    assert_eq!(evaluate_auth(&policy, &[]), CodexAuthState::Refused);
+    let policy = CodexAuthPolicy::unavailable(
+        tuple(),
+        "980c03af9c28ddbb7280a52fd72a39790544e8a649ccd2442e078e95e9db6337".into(),
+    );
+    assert_eq!(
+        evaluate_auth(&policy, &["bad-name"]),
         CodexAuthState::Refused
     );
 }
