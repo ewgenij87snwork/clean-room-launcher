@@ -1,0 +1,21 @@
+{
+  "schema_version":"taskseal.task-receipt.v1",
+  "plan":"P03",
+  "task":2,
+  "acceptance_id":"ACC-P03-T2",
+  "evidence_id":"EVD-P03-T2",
+  "input_head":"7dc539ff10d40011614b5b3b7aed71d88131f0b0",
+  "result_head":"46be8cff06c9d0071cb58dccbc9be589efe8c3c0",
+  "branch":"feat/p03-core",
+  "worktree":"$TASKSEAL_WORKTREE",
+  "checkpoint_sha256":"eff62290f54f56bbb1396395b8bf7f2e90e3b6c90a770de96bfa7a4cd7aaaed6",
+  "accepted_at":"2026-08-12T10:40:00+02:00",
+  "result":"accepted",
+  "commands":[
+    {"command":"cargo test --locked --offline --lib core::decode::tests","exit":0,"tests":3},
+    {"command":"cargo fmt --all -- --check && cargo clippy --all-targets --locked --offline -- -D warnings && cargo test --all-targets --locked --offline && public boundary","exit":0}
+  ],
+  "coverage":{"bounded_bytes":1048576,"invalid_utf8_refused":true,"malformed_json_refused":true,"malformed_adapter_toml_refused":true,"unknown_version_or_field_refused":true,"duplicate_id_refused":true,"stable_record_order":true},
+  "subjects":{"src/core/decode.rs":"1185c011a31b0675cec902758e66a381f804c930b29c5c9a4f78c6bcd0b03a34","tests/core/decode.rs":"e6599e8e0f576198e9d86ad01bfa5814e2a778e3838a2ba809d277cced70d077"},
+  "skips_counted_as_pass":0
+}
