@@ -30,6 +30,10 @@ mod level_a_tests;
 mod level_b_tests;
 
 #[cfg(test)]
+#[path = "../../tests/catalog/protection.rs"]
+mod protection_tests;
+
+#[cfg(test)]
 #[path = "../../tests/catalog/manifest.rs"]
 mod manifest_tests;
 

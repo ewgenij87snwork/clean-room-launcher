@@ -14,11 +14,17 @@ pub struct CatalogLimits {
     pub detail_tokens: u64,
 }
 #[derive(Debug, PartialEq, Eq)]
+pub struct BudgetRefusal {
+    pub dimension: &'static str,
+    pub observed: u64,
+    pub limit: u64,
+    pub preserved_names: Vec<String>,
+    pub search_path: &'static str,
+}
+#[derive(Debug, PartialEq, Eq)]
 pub enum CatalogBudgetError {
-    IndexExceeded,
+    Exceeded(BudgetRefusal),
     MissingMeasurement(String),
-    ProtectedDetailBytesExceeded,
-    ProtectedDetailTokensExceeded,
     CounterOverflow,
 }
 #[derive(Debug)]
@@ -36,10 +42,16 @@ pub fn budget_catalog(
     limits: CatalogLimits,
 ) -> Result<CatalogOutput, CatalogBudgetError> {
     let index_bytes = serde_json::to_vec(level_a)
-        .map_err(|_| CatalogBudgetError::IndexExceeded)?
+        .map_err(|_| CatalogBudgetError::CounterOverflow)?
         .len() as u64;
     if index_bytes > limits.index_bytes {
-        return Err(CatalogBudgetError::IndexExceeded);
+        return Err(refusal(
+            "index_bytes",
+            index_bytes,
+            limits.index_bytes,
+            level_a,
+            "catalog/index",
+        ));
     }
     let by_id: BTreeMap<_, _> = measurements.iter().map(|m| (m.id.as_str(), m)).collect();
     let mut detail_bytes: u64 = 0;
@@ -59,10 +71,22 @@ pub fn budget_catalog(
             .ok_or(CatalogBudgetError::CounterOverflow)?;
     }
     if detail_bytes > limits.detail_bytes {
-        return Err(CatalogBudgetError::ProtectedDetailBytesExceeded);
+        return Err(refusal(
+            "detail_bytes",
+            detail_bytes,
+            limits.detail_bytes,
+            level_a,
+            "catalog/detail",
+        ));
     }
     if detail_tokens > limits.detail_tokens {
-        return Err(CatalogBudgetError::ProtectedDetailTokensExceeded);
+        return Err(refusal(
+            "detail_tokens",
+            detail_tokens,
+            limits.detail_tokens,
+            level_a,
+            "catalog/detail",
+        ));
     }
     Ok(CatalogOutput {
         level_a: level_a.to_vec(),
@@ -70,5 +94,21 @@ pub fn budget_catalog(
         index_bytes,
         detail_bytes,
         detail_tokens,
+    })
+}
+
+fn refusal(
+    dimension: &'static str,
+    observed: u64,
+    limit: u64,
+    level_a: &[LevelAEntry],
+    search_path: &'static str,
+) -> CatalogBudgetError {
+    CatalogBudgetError::Exceeded(BudgetRefusal {
+        dimension,
+        observed,
+        limit,
+        preserved_names: level_a.iter().map(|entry| entry.name.clone()).collect(),
+        search_path,
     })
 }

@@ -141,6 +141,21 @@ fn multi_skill_projection_is_per_skill_digest_bound_and_body_free() {
 }
 
 #[test]
+fn sidecar_only_skill_is_not_projected_to_the_native_skill_md_seam() {
+    let mut sidecar = entry("a", "alpha", DIGEST_A);
+    sidecar.native_frontmatter = false;
+    assert_eq!(
+        project_native(
+            &catalog(vec![sidecar, entry("b", "beta", DIGEST_B)]),
+            &declaration(),
+            fixture_receipt(),
+        )
+        .unwrap_err(),
+        ProjectionError::UnsupportedNativeSeam
+    );
+}
+
+#[test]
 fn qualified_native_fixture_executes_canary_and_matches_bound_receipt() {
     let projected = project_native(
         &catalog(vec![

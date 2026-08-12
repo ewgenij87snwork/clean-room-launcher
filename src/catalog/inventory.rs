@@ -35,7 +35,6 @@ struct SkillMetadata {
     trigger_summary: String,
 }
 
-
 #[cfg(test)]
 pub(crate) fn inventory_skills_with_mutation(
     source: &SkillSource,

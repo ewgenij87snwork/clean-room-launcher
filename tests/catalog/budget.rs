@@ -47,24 +47,31 @@ fn exact_independent_byte_and_token_limits_pass() {
 fn huge_protected_body_refuses_even_when_record_count_is_one() {
     let a = vec![entry()];
     let d = vec![decision(BodyDecision::LoadNow)];
-    assert_eq!(
-        budget_catalog(
-            &a,
-            &d,
-            &[BodyMeasurement {
-                id: "a".into(),
-                bytes: 50_000_000,
-                token_upper_bound: 50_000_000
-            }],
-            CatalogLimits {
-                index_bytes: 999,
-                detail_bytes: 1024,
-                detail_tokens: 1024
-            }
-        )
-        .unwrap_err(),
-        CatalogBudgetError::ProtectedDetailBytesExceeded
+    let error = budget_catalog(
+        &a,
+        &d,
+        &[BodyMeasurement {
+            id: "a".into(),
+            bytes: 50_000_000,
+            token_upper_bound: 50_000_000,
+        }],
+        CatalogLimits {
+            index_bytes: 999,
+            detail_bytes: 1024,
+            detail_tokens: 1024,
+        },
     )
+    .unwrap_err();
+    match error {
+        CatalogBudgetError::Exceeded(refusal) => {
+            assert_eq!(refusal.dimension, "detail_bytes");
+            assert_eq!(refusal.observed, 50_000_000);
+            assert_eq!(refusal.limit, 1024);
+            assert_eq!(refusal.preserved_names, vec!["a"]);
+            assert_eq!(refusal.search_path, "catalog/detail");
+        }
+        other => panic!("expected structured refusal, got {other:?}"),
+    }
 }
 
 #[test]

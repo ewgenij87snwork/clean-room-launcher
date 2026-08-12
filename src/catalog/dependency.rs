@@ -39,6 +39,7 @@ pub fn close_dependencies(
     graph: &DependencyGraph,
 ) -> Result<Vec<ClosedDecision>, DependencyError> {
     let known: BTreeSet<_> = decisions.iter().map(|r| r.id.as_str()).collect();
+    validate_graph(graph, &known)?;
     let mut output: BTreeMap<String, ClosedDecision> = decisions
         .iter()
         .map(|r| {
@@ -60,6 +61,40 @@ pub fn close_dependencies(
         visit(&root.id, &root.id, graph, &known, &mut path, &mut output)?;
     }
     Ok(output.into_values().collect())
+}
+
+fn validate_graph(graph: &DependencyGraph, known: &BTreeSet<&str>) -> Result<(), DependencyError> {
+    for id in known {
+        let mut path = Vec::new();
+        validate_visit(id, graph, known, &mut path)?;
+    }
+    Ok(())
+}
+
+fn validate_visit(
+    current: &str,
+    graph: &DependencyGraph,
+    known: &BTreeSet<&str>,
+    path: &mut Vec<String>,
+) -> Result<(), DependencyError> {
+    if let Some(index) = path.iter().position(|id| id == current) {
+        let mut cycle = path[index..].to_vec();
+        cycle.push(current.to_owned());
+        return Err(DependencyError::Cycle(cycle));
+    }
+    let deps = graph
+        .edges
+        .get(current)
+        .ok_or_else(|| DependencyError::MissingNode(current.to_owned()))?;
+    path.push(current.to_owned());
+    for dep in deps {
+        if !known.contains(dep.as_str()) {
+            return Err(DependencyError::MissingNode(dep.clone()));
+        }
+        validate_visit(dep, graph, known, path)?;
+    }
+    path.pop();
+    Ok(())
 }
 
 fn visit(

@@ -85,3 +85,20 @@ fn required_dependency_that_is_already_refused_fails_closed() {
         Err(DependencyError::RequiredDependencyRefused("blocked".into()))
     );
 }
+
+#[test]
+fn deferred_graph_cycle_refuses_before_any_body_is_selected() {
+    let decisions = vec![
+        decision("a", BodyDecision::LoadOnInvoke),
+        decision("b", BodyDecision::LoadOnInvoke),
+    ];
+    let graph = DependencyGraph::new([("a", vec!["b"]), ("b", vec!["a"])]);
+    assert_eq!(
+        close_dependencies(&decisions, &graph),
+        Err(DependencyError::Cycle(vec![
+            "a".into(),
+            "b".into(),
+            "a".into()
+        ]))
+    );
+}

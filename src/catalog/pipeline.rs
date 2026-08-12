@@ -4,9 +4,15 @@ use super::inventory::inventory_skills;
 use super::level_a::build_level_a;
 use super::level_b::{DecisionRecord, SkillSignals, decide_bodies};
 use super::manifest::CatalogManifest;
+use super::protection::apply_baseline_protection;
 use super::sources::SkillSource;
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
+
+pub const P04_ACCEPTANCE_CONTROLS: [&str; 11] = [
+    "SKL-01", "SKL-02", "SKL-03", "SKL-04", "SKL-05", "SKL-06", "SKL-07", "SKL-09", "SKL-12",
+    "SKL-14", "SKL-15",
+];
 
 #[derive(Debug)]
 pub struct ValidatedCatalog {
@@ -77,7 +83,9 @@ pub fn build_validated_catalog(
             token_upper_bound: record.body_bytes,
         })
         .collect();
-    let decisions = decide_bodies(signals).map_err(|_| PipelineError::Decisions)?;
+    let mut effective_signals = signals.to_vec();
+    apply_baseline_protection(&mut effective_signals, &records);
+    let decisions = decide_bodies(&effective_signals).map_err(|_| PipelineError::Decisions)?;
     let original: BTreeMap<_, _> = decisions.iter().map(|d| (d.id.as_str(), d)).collect();
     let closed = close_dependencies(&decisions, graph).map_err(|_| PipelineError::Dependencies)?;
     let closed_decisions: Vec<_> = closed
