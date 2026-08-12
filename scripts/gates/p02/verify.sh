@@ -90,7 +90,7 @@ jq -n \
   --arg plan "P02" \
   --arg result_head "$head" \
   --arg branch "$(git branch --show-current)" \
-  --arg worktree "$root" \
+  --arg worktree '\$TASKSEAL_WORKTREE' \
   --argjson commands "$commands" \
   '{schema_version:$schema,plan:$plan,result:"PASS",result_head:$result_head,branch:$branch,worktree:$worktree,commands:$commands,accepted_tasks:8,skips_counted_as_pass:0,network_or_provider_spend:false}' > "$report"
 printf 'P02_CONTRACT_GATE_PASS 8/8 focused tasks; Task 9 gate itself is the next receipt\n'
