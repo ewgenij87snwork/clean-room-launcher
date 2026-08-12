@@ -1,0 +1,7 @@
+provider_id = "claude"
+executable = "claude"
+version_range = ">=2.1.223"
+context_target = "provider_native_context"
+collision_policy = "deny"
+capability_evidence = "unsupported_no_spend_only"
+qualified = false

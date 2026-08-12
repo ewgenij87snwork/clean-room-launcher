@@ -1,0 +1,7 @@
+provider_id = "codex"
+executable = "codex"
+version_range = ">=0.147.0"
+context_target = "provider_native_context"
+collision_policy = "deny"
+capability_evidence = "PASS"
+qualified = false

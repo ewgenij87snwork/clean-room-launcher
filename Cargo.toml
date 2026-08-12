@@ -37,3 +37,7 @@ path = "tests/contracts/canonical_vectors.rs"
 [[test]]
 name = "error_receipt_vectors"
 path = "tests/contracts/error_receipt_vectors.rs"
+
+[[test]]
+name = "adapter_registry"
+path = "tests/contracts/adapter_registry.rs"
