@@ -3,6 +3,7 @@ pub mod dependency;
 pub mod inventory;
 pub mod level_a;
 pub mod level_b;
+pub mod manifest;
 pub mod protection;
 pub mod sources;
 
@@ -25,6 +26,10 @@ mod level_a_tests;
 #[cfg(test)]
 #[path = "../../tests/catalog/level_b.rs"]
 mod level_b_tests;
+
+#[cfg(test)]
+#[path = "../../tests/catalog/manifest.rs"]
+mod manifest_tests;
 
 #[cfg(test)]
 #[path = "../../tests/catalog/sources.rs"]
