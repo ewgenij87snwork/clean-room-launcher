@@ -29,7 +29,7 @@ while IFS= read -r file; do
   relative=${file#"$root"/}
   case "$relative" in
     AGENTS.md|README.md|Cargo.toml|Cargo.lock|rust-toolchain.toml|LICENSE|SECURITY.md|GOVERNANCE.md|CHANGELOG.md|deny.toml|.gitignore|schemas/canonical-json-profile.md) ;;
-    src/*|schemas/contracts/*|fixtures/contracts/*|fixtures/core/*|adapters/declarations/*|tests/contracts/*|tests/core/*|tests/fixtures/*|controls/*|scripts/check-public-boundary.sh|scripts/check-control-coverage.rb|scripts/probe/*|scripts/gates/p02/*|scripts/gates/p03/*|reports/contracts/*|reports/gates/p02/*|reports/gates/p03/*) ;;
+    src/*|schemas/contracts/*|fixtures/contracts/*|fixtures/core/*|fixtures/catalog/*|adapters/declarations/*|tests/contracts/*|tests/core/*|tests/catalog/*|tests/fixtures/*|controls/*|scripts/check-public-boundary.sh|scripts/check-control-coverage.rb|scripts/probe/*|scripts/gates/p02/*|scripts/gates/p03/*|scripts/gates/p04/*|reports/contracts/*|reports/gates/p02/*|reports/gates/p03/*|reports/gates/p04/*) ;;
     *) echo "UNALLOWLISTED_PUBLIC_PATH:$relative" >&2; exit 11 ;;
   esac
 
