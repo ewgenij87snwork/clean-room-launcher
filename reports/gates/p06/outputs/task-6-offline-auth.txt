@@ -1,0 +1,6 @@
+auth_state=UNAVAILABLE
+credential_values=not-read
+config=not-read
+network=not-attempted
+provider_launch=false
+qualification=NOT_QUALIFIED
