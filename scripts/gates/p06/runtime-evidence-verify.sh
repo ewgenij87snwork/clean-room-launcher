@@ -12,14 +12,14 @@ if [ "$#" -gt 0 ]; then
 fi
 
 previous='2f7a97f405f3c79793e7c97ad725ff6f6b4ee72e'
-for task in 1 2; do
+for task in 1 2 3; do
   receipt="$receipt_dir/task-$task-v5.json"
   jq -e --argjson task "$task" --arg checkpoint "$checkpoint" --arg branch "$branch" '
     keys == ["branch","checkpoint_sha256","commands","input_head","plan","result","result_head","schema_version","skips_counted_as_pass","subjects","task"] and
     .schema_version == "taskseal.task-receipt.v1" and .plan == "P06" and .task == $task and .branch == $branch and .checkpoint_sha256 == $checkpoint and .result == "accepted" and .skips_counted_as_pass == 0 and
     (.input_head|test("^[0-9a-f]{40}$")) and (.result_head|test("^[0-9a-f]{40}$")) and
     (.subjects|type == "array" and length > 0 and ([.[].path]|unique|length) == length and all(.[]; keys == ["path","sha256"] and (.path|test("^[A-Za-z0-9_./-]+$") and startswith("/")|not) and (.sha256|test("^[0-9a-f]{64}$")))) and
-    (.commands|type == "array" and length == 3 and ([.[].phase] == ["red","green","quality"]) and ([.[].exit] == [101,0,0]) and all(.[]; keys == ["argv","cwd","exit","output_path","output_sha256","phase"] and (.argv|type == "array" and length > 0 and all(.[]; type == "string" and test("^[A-Za-z0-9_.:/=-]+$"))) and .cwd == "." and (.output_path|test("^outputs/task-[12]-(red|green|quality)\\.txt$")) and (.output_sha256|test("^[0-9a-f]{64}$"))))
+    (.commands|type == "array" and length == 3 and ([.[].phase] == ["red","green","quality"]) and (if $task == 3 then [.[].exit] == [1,0,0] else [.[].exit] == [101,0,0] end) and all(.[]; keys == ["argv","cwd","exit","output_path","output_sha256","phase"] and (.argv|type == "array" and length > 0 and all(.[]; type == "string" and test("^[A-Za-z0-9_.:/=-]+$"))) and .cwd == "." and (.output_path|test("^outputs/task-[123]-(red|green|quality)\\.txt$")) and (.output_sha256|test("^[0-9a-f]{64}$"))))
   ' "$receipt" >/dev/null || { echo "INVALID_RECEIPT:$task" >&2; exit 2; }
   head=$(jq -r '.result_head' "$receipt")
   input=$(jq -r '.input_head' "$receipt")

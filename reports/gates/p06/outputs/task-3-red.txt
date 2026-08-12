@@ -1,0 +1,2 @@
+tampered receipt accepted
+TASKSEAL_EXIT=1
