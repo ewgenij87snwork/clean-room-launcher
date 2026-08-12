@@ -25,8 +25,12 @@ actual=$(shasum -a 256 reports/gates/p06/outputs/task-5-local-preflight.txt | aw
 test "$actual" = "$expected" || { echo P06_T5_OUTPUT_MISMATCH >&2; exit 2; }
 command=${P06_CODEX_BIN:?P06_CODEX_BIN is required}
 test -x "$command" || { echo P06_T5_CODEX_UNAVAILABLE >&2; exit 2; }
-test "$(shasum -a 256 "$command" | awk '{print $1}')" = "19c4f144c5226a9f17c58e6f0fa854843b0f77a6eb420f40e2745a12f10f5d37" || { echo P06_T5_ARTIFACT_MISMATCH >&2; exit 2; }
+command=$(realpath "$command")
+before=$(shasum -a 256 "$command" | awk '{print $1}')
+test "$before" = "19c4f144c5226a9f17c58e6f0fa854843b0f77a6eb420f40e2745a12f10f5d37" || { echo P06_T5_ARTIFACT_MISMATCH >&2; exit 2; }
 test "$(env -i PATH=/usr/bin:/bin "$command" --version)" = "codex-cli 0.147.0" || { echo P06_T5_VERSION_MISMATCH >&2; exit 2; }
+after=$(shasum -a 256 "$command" | awk '{print $1}')
+test "$after" = "$before" || { echo P06_T5_ARTIFACT_REPLACED >&2; exit 2; }
 test "$(uname -s)" = Darwin && test "$(uname -m)" = arm64 || { echo P06_T5_PLATFORM_MISMATCH >&2; exit 2; }
 ! rg -n -i 'secret|token|password|api[_-]?key|credential|authorization|bearer|/Users/|/home/' "$receipt" reports/gates/p06/outputs/task-5-local-preflight.txt
 timeout 120 cargo test --test adapters codex_identity --locked --offline
