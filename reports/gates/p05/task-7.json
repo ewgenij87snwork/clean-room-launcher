@@ -1,0 +1,39 @@
+{
+  "schema_version":"taskseal.task-receipt.v1",
+  "plan":"P05",
+  "task":7,
+  "acceptance_id":"ACC-P05-T7",
+  "evidence_id":"EVD-P05-T7",
+  "input_head":"bfc02d7f3cfa1106f545cb5e48c330b57433e270",
+  "result_head":"322a04b67b48f93f2bbf0339203c158d79a525eb",
+  "branch":"feat/p05-terminal",
+  "worktree":"$TASKSEAL_WORKTREE",
+  "checkpoint_sha256":"23b91c65d48ab82c5dfa901ae1694179a77fd6b8fca1e22ecffc90bd6af57297",
+  "accepted_at":"2026-08-12T18:02:00+02:00",
+  "result":"accepted",
+  "commands":[
+    {"command":"cargo test --test cli saved_starts --locked --offline","phase":"red_missing_state_api","exit":101,"tests":0},
+    {"command":"cargo test --test cli saved_starts --locked --offline","phase":"green_private_state","exit":0,"tests":5},
+    {"command":"cargo test --test cli record_requires_a_closed_provider_and_digest_fields --locked --offline","phase":"red_closed_record","exit":101,"tests":1},
+    {"command":"cargo test --test cli record_requires_a_closed_provider_and_digest_fields --locked --offline","phase":"green_closed_record","exit":0,"tests":1},
+    {"command":"cargo fmt --check && cargo test --test cli --locked --offline && cargo clippy --all-targets --all-features --locked --offline -- -D warnings","phase":"full_cli_and_quality_matrix","exit":0,"tests":21}
+  ],
+  "subjects":{
+    "src/cli/mod.rs":"339b0d4d13951cc447d374a844528ee6d1716e9ed4887183c9517d6c8b0d91c3",
+    "src/cli/state.rs":"d5837ad16e9353c83de59bc0fda565623b248c2798d5a5dba167008569cedffe",
+    "tests/cli.rs":"65bcb5a8cc234567f50be15a163fd6afb5eac495e5094afe0cc4b3bbff4bf6ec",
+    "tests/cli/saved_starts.rs":"2e04299a1f4387d8cb9faa19feb855cfdb012ec3d3a822989acb547d06bac571"
+  },
+  "coverage":{
+    "platform":"macOS implementation-tested; other OS tuples STATE_PLATFORM_UNSUPPORTED",
+    "production_override":"none; tests inject StateStore root directly",
+    "records":"bounded MRU of three; closed provider and lower-hex 64 digest fields; literal ordered argv",
+    "privacy":"secret-like argv refuses the entire save; no HOME or absolute project path field",
+    "unsafe_state":"corrupt, symlink, permissive-mode and orphan temp refuse without replacement",
+    "durability":"exclusive advisory lock; same-directory 0600 temp; file and directory sync; atomic rename",
+    "concurrency":"four concurrent saves yield valid bounded state",
+    "deferred":"no provider launch, automatic save, consent, chooser collapse, or non-macOS support claim"
+  },
+  "controls":["MOD-09","UX-12","UX-13","UX-14"],
+  "skips_counted_as_pass":0
+}
