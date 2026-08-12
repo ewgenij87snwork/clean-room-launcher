@@ -1,7 +1,4 @@
-#[path = "../../src/cli/state.rs"]
-mod state;
-
-use state::{AccessClass, SavedStart, StateStore};
+use super::state::{AccessClass, SavedStart, StateStore};
 use std::{
     fs,
     os::unix::fs::{PermissionsExt, symlink},
