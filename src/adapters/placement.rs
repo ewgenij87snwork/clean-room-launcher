@@ -1,5 +1,6 @@
 use crate::{
     contracts::adapter::AdapterDeclaration,
+    catalog::projection::declaration_digest,
     core::{inventory::sha256_hex, manifest::Manifest, publish::verify_current},
 };
 use cap_std::fs::{Dir, OpenOptions};
@@ -33,7 +34,7 @@ pub fn place_context(project: &Dir, manifest: &Manifest, declaration: &AdapterDe
     let context_path = format!(".taskseal/out/generations/{}/context.md", manifest.digest);
     let context = project.read(&context_path).map_err(|_| PlacementError("PLACEMENT_CONTEXT_UNAVAILABLE"))?;
     let context_digest = sha256_hex(&context);
-    let declaration_digest = sha256_hex(format!("{}\0{}\0{}\0{}", declaration.provider_id, declaration.executable, declaration.version_range, declaration.context_target).as_bytes());
+    let declaration_digest = declaration_digest(declaration);
     let target = format!(".taskseal/runtime/generations/{declaration_digest}/{}", manifest.digest);
     ensure_dir(project, ".taskseal")?;
     ensure_dir(project, ".taskseal/runtime")?;
@@ -70,8 +71,20 @@ fn write_new(project: &Dir, path: &str, bytes: &[u8]) -> Result<(), PlacementErr
 }
 
 fn verify_owned(project: &Dir, target: &str, declaration_digest: &str, manifest: &Manifest, context_digest: &str) -> Result<PlacementReceipt, PlacementError> {
-    let stored: StoredReceipt = serde_json::from_slice(&project.read(format!("{target}/placement.json")).map_err(|_| PlacementError("PLACEMENT_OWNERSHIP_MISSING"))?).map_err(|_| PlacementError("PLACEMENT_OWNERSHIP_CORRUPT"))?;
-    let context = project.read(format!("{target}/context.md")).map_err(|_| PlacementError("PLACEMENT_CONTEXT_MISSING"))?;
+    let entries = project.read_dir(target).map_err(|_| PlacementError("PLACEMENT_OWNERSHIP_CORRUPT"))?
+        .map(|entry| entry.map_err(|_| PlacementError("PLACEMENT_OWNERSHIP_CORRUPT")))
+        .collect::<Result<Vec<_>, _>>()?;
+    if entries.len() != 2 || entries.iter().any(|entry| !matches!(entry.file_name().to_str(), Some("context.md" | "placement.json"))) {
+        return Err(PlacementError("PLACEMENT_OWNERSHIP_MISMATCH"));
+    }
+    let receipt_path = format!("{target}/placement.json");
+    let context_path = format!("{target}/context.md");
+    for path in [&receipt_path, &context_path] {
+        let metadata = project.symlink_metadata(path).map_err(|_| PlacementError("PLACEMENT_OWNERSHIP_MISSING"))?;
+        if metadata.is_symlink() || !metadata.is_file() { return Err(PlacementError("PLACEMENT_OWNERSHIP_MISMATCH")); }
+    }
+    let stored: StoredReceipt = serde_json::from_slice(&project.read(&receipt_path).map_err(|_| PlacementError("PLACEMENT_OWNERSHIP_MISSING"))?).map_err(|_| PlacementError("PLACEMENT_OWNERSHIP_CORRUPT"))?;
+    let context = project.read(&context_path).map_err(|_| PlacementError("PLACEMENT_CONTEXT_MISSING"))?;
     if stored.schema_version != "taskseal-placement.v1" || stored.outcome != "STAGED_NOT_APPLIED" || stored.declaration_digest != declaration_digest || stored.manifest_digest != manifest.digest || stored.context_digest != context_digest || sha256_hex(&context) != *context_digest { return Err(PlacementError("PLACEMENT_OWNERSHIP_MISMATCH")); }
     Ok(PlacementReceipt { declaration_digest: declaration_digest.into(), manifest_digest: manifest.digest.clone(), context_digest: context_digest.into(), target: target.into(), outcome: PlacementOutcome::OwnedIdentical })
 }

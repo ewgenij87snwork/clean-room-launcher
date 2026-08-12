@@ -33,8 +33,10 @@ pub fn qualify(evidence: &[EvidenceRef], claim: &TupleClaim, as_of: u64) -> Qual
     if evidence.iter().any(|item| item.claim != *claim) { return QualificationState::Refused { reason: QualificationReason::TupleMismatch }; }
     if evidence.iter().any(|item| item.refused) { return QualificationState::Refused { reason: QualificationReason::RefusedEvidence }; }
     if evidence.iter().any(|item| item.observed_at > item.expires_at || item.expires_at < as_of) { return QualificationState::NotQualified { reason: QualificationReason::StaleEvidence }; }
-    if !evidence.iter().any(|item| item.kind == "provider-launch-observed") { return QualificationState::NotQualified { reason: QualificationReason::ProviderLaunchMissing }; }
-    QualificationState::Qualified(ProviderQualificationReceipt { claim: claim.clone(), evidence: evidence.to_vec() })
+    // Generic foundation may validate that launch evidence is absent, but never creates a
+    // provider qualification. Only the tuple-specific T12 verifier may construct one.
+    let _ = evidence;
+    QualificationState::NotQualified { reason: QualificationReason::ProviderLaunchMissing }
 }
 
 fn valid_claim(claim: &TupleClaim) -> bool {

@@ -45,3 +45,20 @@ fn refuses_unowned_preexisting_target_without_overwrite() {
     drop(root);
     fs::remove_dir_all(path).unwrap();
 }
+
+#[test]
+fn refuses_owned_generation_when_context_is_replaced_by_symlink_or_extra_file() {
+    use std::os::unix::fs::symlink;
+    let (path, root, manifest) = project();
+    let placed = place_context(&root, &manifest, &declaration()).unwrap();
+    let absolute = path.join(&placed.target);
+    fs::remove_file(absolute.join("context.md")).unwrap();
+    symlink("/dev/null", absolute.join("context.md")).unwrap();
+    assert!(place_context(&root, &manifest, &declaration()).unwrap_err().to_string().contains("PLACEMENT"));
+    fs::remove_file(absolute.join("context.md")).unwrap();
+    fs::write(absolute.join("context.md"), b"safe\n").unwrap();
+    fs::write(absolute.join("extra"), b"x").unwrap();
+    assert!(place_context(&root, &manifest, &declaration()).unwrap_err().to_string().contains("PLACEMENT"));
+    drop(root);
+    fs::remove_dir_all(path).unwrap();
+}
