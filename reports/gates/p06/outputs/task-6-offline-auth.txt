@@ -1,5 +1,5 @@
 auth_state=UNAVAILABLE
-credential_values=not-read
+auth_values=not-read
 config=not-read
 network=not-attempted
 provider_launch=false
