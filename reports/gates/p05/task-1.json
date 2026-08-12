@@ -1,0 +1,45 @@
+{
+  "schema_version": "taskseal.task-receipt.v1",
+  "plan": "P05",
+  "task": 1,
+  "acceptance_id": "ACC-P05-T1",
+  "evidence_id": "EVD-P05-T1",
+  "input_head": "7f69d7a5872cd3d4d226a35e97b880c229c51bc7",
+  "result_head": "2ffe1139ff70582ea1dd32e01e6a69cc4a65ef79",
+  "branch": "feat/p05-terminal",
+  "worktree": "$TASKSEAL_WORKTREE",
+  "checkpoint_sha256": "98c4a486c4e7398eb1b0379f69034d2a1369e13153a75d43631803f6638d8124",
+  "accepted_at": "2026-08-12T16:08:00+02:00",
+  "result": "accepted",
+  "commands": [
+    {
+      "command": "cargo test --test cli doctor --locked --offline",
+      "phase": "red_missing_doctor_then_green",
+      "exit": 0,
+      "tests": 2
+    },
+    {
+      "command": "cargo test --test cli --locked --offline",
+      "phase": "full_entrypoint_and_doctor_matrix",
+      "exit": 0,
+      "tests": 3
+    },
+    {
+      "command": "cargo fmt --check && cargo clippy --all-targets --locked --offline -- -D warnings",
+      "phase": "quality",
+      "exit": 0
+    }
+  ],
+  "coverage": {
+    "equal_entrypoints": true,
+    "aliases": true,
+    "unknown_command_refusal": true,
+    "doctor_read_only": true,
+    "schema_refusal": true,
+    "config_refusal": true,
+    "artifact_integrity_refusal": true,
+    "unqualified_provider_claim": "P06_REQUIRED"
+  },
+  "controls": ["UX-01", "UX-19"],
+  "skips_counted_as_pass": 0
+}
