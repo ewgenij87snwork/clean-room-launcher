@@ -4,6 +4,7 @@ use cap_std::fs::Dir;
 use std::collections::BTreeSet;
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum SkillSourceAuthority {
@@ -17,15 +18,14 @@ pub enum SkillSourceVisibility {
     OutsideBoundary,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct SkillSource {
     pub id: String,
     pub root: PathBuf,
     pub authority: SkillSourceAuthority,
     pub admitted: bool,
     pub visibility: SkillSourceVisibility,
-    pub capability_root: Option<PathBuf>,
-    pub relative_root: Option<PathBuf>,
+    pub(crate) root_capability: Option<Arc<Dir>>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -64,21 +64,15 @@ pub fn enumerate_sources(
             return Err(CatalogError::DuplicateRoot);
         }
         let mut admitted = false;
-        let mut binding = None;
+        let mut root_capability = None;
         for capability in &admitted_roots {
             match descriptor_admits(&normalized, capability) {
-                Ok(true) => {
+                Ok(Some(handle)) => {
                     admitted = true;
-                    binding = Some((
-                        capability.clone(),
-                        normalized
-                            .strip_prefix(capability)
-                            .map_err(|_| CatalogError::InvalidPath)?
-                            .to_path_buf(),
-                    ));
+                    root_capability = Some(Arc::new(handle));
                     break;
                 }
-                Ok(false) => {}
+                Ok(None) => {}
                 Err(error) => return Err(error),
             }
         }
@@ -93,8 +87,7 @@ pub fn enumerate_sources(
             authority: *authority,
             admitted,
             visibility,
-            capability_root: binding.as_ref().map(|value| value.0.clone()),
-            relative_root: binding.map(|value| value.1),
+            root_capability,
         });
     }
 
@@ -116,10 +109,10 @@ fn normalize_root(root: &Path) -> Result<PathBuf, CatalogError> {
     Ok(root.to_path_buf())
 }
 
-fn descriptor_admits(candidate: &Path, capability: &Path) -> Result<bool, CatalogError> {
+fn descriptor_admits(candidate: &Path, capability: &Path) -> Result<Option<Dir>, CatalogError> {
     let relative = match candidate.strip_prefix(capability) {
         Ok(r) => r,
-        Err(_) => return Ok(false),
+        Err(_) => return Ok(None),
     };
     let mut dir = Dir::open_ambient_dir(capability, ambient_authority())
         .map_err(|_| CatalogError::InvalidPath)?;
@@ -133,7 +126,7 @@ fn descriptor_admits(candidate: &Path, capability: &Path) -> Result<bool, Catalo
         }
         dir = dir.open_dir(name).map_err(|_| CatalogError::InvalidPath)?
     }
-    Ok(true)
+    Ok(Some(dir))
 }
 
 fn stable_id(root: &Path, authority: SkillSourceAuthority) -> Result<String, CatalogError> {

@@ -19,6 +19,7 @@ pub enum CatalogBudgetError {
     MissingMeasurement(String),
     ProtectedDetailBytesExceeded,
     ProtectedDetailTokensExceeded,
+    CounterOverflow,
 }
 #[derive(Debug)]
 pub struct CatalogOutput {
@@ -41,8 +42,8 @@ pub fn budget_catalog(
         return Err(CatalogBudgetError::IndexExceeded);
     }
     let by_id: BTreeMap<_, _> = measurements.iter().map(|m| (m.id.as_str(), m)).collect();
-    let mut detail_bytes = 0;
-    let mut detail_tokens = 0;
+    let mut detail_bytes: u64 = 0;
+    let mut detail_tokens: u64 = 0;
     for decision in decisions
         .iter()
         .filter(|d| d.decision == BodyDecision::LoadNow)
@@ -50,8 +51,12 @@ pub fn budget_catalog(
         let m = by_id
             .get(decision.id.as_str())
             .ok_or_else(|| CatalogBudgetError::MissingMeasurement(decision.id.clone()))?;
-        detail_bytes += m.bytes;
-        detail_tokens += m.token_upper_bound;
+        detail_bytes = detail_bytes
+            .checked_add(m.bytes)
+            .ok_or(CatalogBudgetError::CounterOverflow)?;
+        detail_tokens = detail_tokens
+            .checked_add(m.token_upper_bound)
+            .ok_or(CatalogBudgetError::CounterOverflow)?;
     }
     if detail_bytes > limits.detail_bytes {
         return Err(CatalogBudgetError::ProtectedDetailBytesExceeded);

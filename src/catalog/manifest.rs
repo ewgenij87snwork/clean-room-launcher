@@ -21,6 +21,7 @@ pub struct CensusCounts {
     pub unavailable: u64,
     pub refused: u64,
     pub total: u64,
+    pub unavailable_source_count: u64,
 }
 #[derive(Debug, Clone)]
 pub struct CatalogManifest {
@@ -55,7 +56,7 @@ impl CatalogManifest {
                 BodyDecision::Refuse => counts.refused += 1,
             }
         }
-        counts.unavailable += unavailable_sources.len() as u64;
+        counts.unavailable_source_count = unavailable_sources.len() as u64;
         counts.total =
             counts.loaded_now + counts.load_on_invoke + counts.unavailable + counts.refused;
         Ok(Self {

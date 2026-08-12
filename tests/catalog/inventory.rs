@@ -10,10 +10,21 @@ fn fixture(name: &str) -> PathBuf {
 
 #[test]
 fn changing_body_during_read_refuses_with_stable_reason() {
-    let root = fixture("stable-multi-source");
-    let sources = admitted("stable-multi-source");
+    let root = std::env::temp_dir().join(format!("taskseal-changing-{}", std::process::id()));
+    let skill = root.join("alpha");
+    std::fs::create_dir_all(&skill).unwrap();
+    std::fs::write(
+        skill.join("skill.json"),
+        br#"{"name":"alpha","capability":"c","trigger_summary":"s"}"#,
+    )
+    .unwrap();
+    std::fs::write(skill.join("SKILL.md"), b"stable original body").unwrap();
+    let sources = enumerate_sources(
+        &SkillSourceConfig::new(vec![(root.clone(), SkillSourceAuthority::Project)]),
+        std::slice::from_ref(&root),
+    )
+    .unwrap();
     let target = root.join("alpha/SKILL.md");
-    let original = std::fs::read(&target).unwrap();
     let mut changed = false;
     let error = inventory_skills_with_mutation(&sources[0], &mut |path| {
         if !changed && path.ends_with("alpha/SKILL.md") {
@@ -22,7 +33,7 @@ fn changing_body_during_read_refuses_with_stable_reason() {
         }
     })
     .unwrap_err();
-    std::fs::write(target, original).unwrap();
+    std::fs::remove_dir_all(root).unwrap();
     assert_eq!(error, InventoryError::ChangedDuringRead)
 }
 
@@ -78,6 +89,17 @@ fn inventories_sorted_metadata_and_body_digests_without_body_text() {
     );
     let debug = format!("{records:?}");
     assert!(!debug.contains("SECRET_BODY_CANARY"));
+}
+
+#[test]
+fn inventories_provider_native_skill_md_frontmatter_without_sidecar() {
+    let records = inventory_skills(&admitted("native-frontmatter")).unwrap();
+    assert_eq!(records.len(), 1);
+    assert_eq!(records[0].name, "native-example");
+    assert_eq!(records[0].capability, "Use for native provider discovery.");
+    assert_eq!(records[0].trigger_summary, records[0].capability);
+    assert_eq!(records[0].body_digest.len(), 64);
+    assert_eq!(records[0].metadata_digest.len(), 64);
 }
 
 #[test]

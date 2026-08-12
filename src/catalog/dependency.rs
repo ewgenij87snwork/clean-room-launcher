@@ -26,6 +26,7 @@ pub struct ClosedDecision {
 pub enum DependencyError {
     MissingNode(String),
     Cycle(Vec<String>),
+    RequiredDependencyRefused(String),
 }
 
 pub fn close_dependencies(
@@ -79,10 +80,11 @@ fn visit(
         }
         path.push(dep.clone());
         let record = output.get_mut(dep).expect("known decision");
-        if record.decision != BodyDecision::Refuse {
-            record.decision = BodyDecision::LoadNow;
-            record.reason_chain = path.clone();
+        if record.decision == BodyDecision::Refuse {
+            return Err(DependencyError::RequiredDependencyRefused(dep.clone()));
         }
+        record.decision = BodyDecision::LoadNow;
+        record.reason_chain = path.clone();
         visit(dep, root, graph, known, path, output)?;
         path.pop();
     }

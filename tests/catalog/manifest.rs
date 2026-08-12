@@ -45,3 +45,20 @@ fn missing_or_duplicate_decision_refuses() {
         ManifestError::CensusMismatch
     )
 }
+
+#[test]
+fn unavailable_sources_do_not_corrupt_skill_denominator() {
+    let m = CatalogManifest::new(
+        vec![entry("a")],
+        vec![DecisionRecord {
+            id: "a".into(),
+            decision: BodyDecision::LoadOnInvoke,
+            reason: "D",
+        }],
+        vec!["outside".into()],
+    )
+    .unwrap();
+    assert_eq!(m.counts.total, 1);
+    assert_eq!(m.counts.unavailable, 0);
+    assert_eq!(m.counts.unavailable_source_count, 1);
+}

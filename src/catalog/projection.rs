@@ -1,8 +1,10 @@
 use super::level_a::LevelAEntry;
 use crate::contracts::adapter::AdapterDeclaration;
 use crate::core::inventory::sha256_hex;
-use serde::Deserialize;
-use std::collections::BTreeMap;
+use serde::de::{MapAccess, Visitor};
+use serde::{Deserialize, Deserializer};
+use std::collections::{BTreeMap, BTreeSet};
+use std::fmt;
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -12,6 +14,7 @@ pub struct QualificationReceipt {
     pub declaration_digest: String,
     pub native_progressive_disclosure: bool,
     pub projection_candidate: bool,
+    #[serde(deserialize_with = "deserialize_digest_map")]
     pub observed_digests: BTreeMap<String, String>,
 }
 #[derive(Debug, PartialEq, Eq)]
@@ -20,6 +23,41 @@ pub enum ProjectionError {
     UnsupportedNativeSeam,
     ReceiptBindingMismatch,
     DigestMismatch(String),
+}
+
+fn deserialize_digest_map<'de, D>(deserializer: D) -> Result<BTreeMap<String, String>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    struct DigestMapVisitor;
+    impl<'de> Visitor<'de> for DigestMapVisitor {
+        type Value = BTreeMap<String, String>;
+        fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+            formatter.write_str("a map of unique skill IDs to SHA-256 digests")
+        }
+        fn visit_map<A>(self, mut access: A) -> Result<Self::Value, A::Error>
+        where
+            A: MapAccess<'de>,
+        {
+            let mut values = BTreeMap::new();
+            while let Some((key, value)) = access.next_entry::<String, String>()? {
+                if values.insert(key.clone(), value).is_some() {
+                    return Err(serde::de::Error::custom(format!(
+                        "duplicate skill ID: {key}"
+                    )));
+                }
+            }
+            Ok(values)
+        }
+    }
+    deserializer.deserialize_map(DigestMapVisitor)
+}
+
+fn valid_sha256(value: &str) -> bool {
+    value.len() == 64
+        && value
+            .bytes()
+            .all(|byte| byte.is_ascii_hexdigit() && !byte.is_ascii_uppercase())
 }
 
 pub fn parse_qualification_receipt(
@@ -33,6 +71,14 @@ pub fn parse_qualification_receipt(
         || receipt.declaration_digest != declaration_digest(declaration)
     {
         return Err(ProjectionError::ReceiptBindingMismatch);
+    }
+    if receipt.observed_digests.is_empty()
+        || receipt
+            .observed_digests
+            .values()
+            .any(|digest| !valid_sha256(digest))
+    {
+        return Err(ProjectionError::InvalidReceipt);
     }
     Ok(receipt)
 }
@@ -79,6 +125,11 @@ pub fn project_native(
         || !r.projection_candidate
     {
         return Err(ProjectionError::UnsupportedNativeSeam);
+    }
+    let expected_ids: BTreeSet<_> = level_a.iter().map(|entry| entry.id.as_str()).collect();
+    let observed_ids: BTreeSet<_> = r.observed_digests.keys().map(String::as_str).collect();
+    if expected_ids != observed_ids {
+        return Err(ProjectionError::ReceiptBindingMismatch);
     }
     let mut entries = Vec::new();
     for e in level_a {

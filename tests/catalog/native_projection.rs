@@ -72,6 +72,14 @@ fn immutable_receipt_parser_rejects_unbound_or_unknown_evidence() {
         parse_qualification_receipt(unknown.as_bytes(), &d).unwrap_err(),
         ProjectionError::InvalidReceipt
     );
+    let duplicate = text.replace(
+        "\"a\": \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"",
+        "\"a\": \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\n    \"a\": \"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\"",
+    );
+    assert_eq!(
+        parse_qualification_receipt(duplicate.as_bytes(), &d).unwrap_err(),
+        ProjectionError::InvalidReceipt
+    );
 }
 #[test]
 fn tampered_receipt_or_body_digest_refuses() {

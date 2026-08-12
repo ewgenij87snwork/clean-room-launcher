@@ -71,3 +71,16 @@ fn protected_dependency_is_promoted_before_budgeting() {
         BodyDecision::LoadNow
     );
 }
+
+#[test]
+fn required_dependency_that_is_already_refused_fails_closed() {
+    let decisions = vec![
+        decision("root", BodyDecision::LoadNow),
+        decision("blocked", BodyDecision::Refuse),
+    ];
+    let graph = DependencyGraph::new([("root", vec!["blocked"]), ("blocked", vec![])]);
+    assert_eq!(
+        close_dependencies(&decisions, &graph),
+        Err(DependencyError::RequiredDependencyRefused("blocked".into()))
+    );
+}

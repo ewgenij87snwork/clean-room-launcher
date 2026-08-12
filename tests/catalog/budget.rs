@@ -64,3 +64,36 @@ fn huge_protected_body_refuses_even_when_record_count_is_one() {
         CatalogBudgetError::ProtectedDetailBytesExceeded
     )
 }
+
+#[test]
+fn aggregate_overflow_refuses_deterministically() {
+    let mut second = entry();
+    second.id = "b".into();
+    let mut second_decision = decision(BodyDecision::LoadNow);
+    second_decision.id = "b".into();
+    assert_eq!(
+        budget_catalog(
+            &[entry(), second],
+            &[decision(BodyDecision::LoadNow), second_decision],
+            &[
+                BodyMeasurement {
+                    id: "a".into(),
+                    bytes: u64::MAX,
+                    token_upper_bound: 1
+                },
+                BodyMeasurement {
+                    id: "b".into(),
+                    bytes: 1,
+                    token_upper_bound: 1
+                },
+            ],
+            CatalogLimits {
+                index_bytes: u64::MAX,
+                detail_bytes: u64::MAX,
+                detail_tokens: u64::MAX
+            },
+        )
+        .unwrap_err(),
+        CatalogBudgetError::CounterOverflow
+    );
+}

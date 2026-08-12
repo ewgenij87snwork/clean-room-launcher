@@ -40,11 +40,7 @@ pub(crate) fn inventory_skills_with_mutation(
 ) -> Result<Vec<SkillRecord>, InventoryError> {
     let records = crate::core::inventory::inventory_capability_with_observer(
         source
-            .capability_root
-            .as_deref()
-            .ok_or(InventoryError::SourceRefused)?,
-        source
-            .relative_root
+            .root_capability
             .as_deref()
             .ok_or(InventoryError::SourceRefused)?,
         &source.id,
@@ -80,10 +76,8 @@ fn inventory_records(
         if files.metadata.is_none() && files.body.is_none() {
             continue;
         }
-        let metadata_record = files.metadata.ok_or(InventoryError::MissingMetadata)?;
         let body_record = files.body.ok_or(InventoryError::MissingBody)?;
-        let metadata: SkillMetadata = serde_json::from_slice(metadata_record.content())
-            .map_err(|_| InventoryError::MalformedMetadata)?;
+        let (metadata, metadata_digest) = metadata_for(&files.metadata, &body_record)?;
         if metadata.name.is_empty()
             || metadata.capability.is_empty()
             || metadata.trigger_summary.is_empty()
@@ -103,7 +97,7 @@ fn inventory_records(
             source_id: source.id.clone(),
             body_path: body_record.logical_path,
             body_digest: body_record.sha256,
-            metadata_digest: metadata_record.sha256,
+            metadata_digest,
         })
     }
     Ok(records)
@@ -122,11 +116,7 @@ pub fn inventory_skills(sources: &[SkillSource]) -> Result<Vec<SkillRecord>, Inv
     for source in sources.iter().filter(|source| source.admitted) {
         let source_records = crate::core::inventory::inventory_capability(
             source
-                .capability_root
-                .as_deref()
-                .ok_or(InventoryError::SourceRefused)?,
-            source
-                .relative_root
+                .root_capability
                 .as_deref()
                 .ok_or(InventoryError::SourceRefused)?,
             &source.id,
@@ -147,10 +137,8 @@ pub fn inventory_skills(sources: &[SkillSource]) -> Result<Vec<SkillRecord>, Inv
             if files.metadata.is_none() && files.body.is_none() {
                 continue;
             }
-            let metadata_record = files.metadata.ok_or(InventoryError::MissingMetadata)?;
             let body_record = files.body.ok_or(InventoryError::MissingBody)?;
-            let metadata: SkillMetadata = serde_json::from_slice(metadata_record.content())
-                .map_err(|_| InventoryError::MalformedMetadata)?;
+            let (metadata, metadata_digest) = metadata_for(&files.metadata, &body_record)?;
             if metadata.name.is_empty()
                 || metadata.capability.is_empty()
                 || metadata.trigger_summary.is_empty()
@@ -170,13 +158,49 @@ pub fn inventory_skills(sources: &[SkillSource]) -> Result<Vec<SkillRecord>, Inv
                 source_id: source.id.clone(),
                 body_path: body_record.logical_path,
                 body_digest: body_record.sha256,
-                metadata_digest: metadata_record.sha256,
+                metadata_digest,
             });
         }
     }
 
     records.sort_by(|left, right| left.name.as_bytes().cmp(right.name.as_bytes()));
     Ok(records)
+}
+
+fn metadata_for(
+    sidecar: &Option<SourceRecord>,
+    body: &SourceRecord,
+) -> Result<(SkillMetadata, String), InventoryError> {
+    if let Some(record) = sidecar {
+        let metadata = serde_json::from_slice(record.content())
+            .map_err(|_| InventoryError::MalformedMetadata)?;
+        return Ok((metadata, record.sha256.clone()));
+    }
+    let text =
+        std::str::from_utf8(body.content()).map_err(|_| InventoryError::MalformedMetadata)?;
+    let frontmatter = text
+        .strip_prefix("---\n")
+        .and_then(|rest| rest.split_once("\n---\n").map(|parts| parts.0))
+        .ok_or(InventoryError::MissingMetadata)?;
+    let field = |name: &str| {
+        frontmatter.lines().find_map(|line| {
+            line.strip_prefix(name)
+                .and_then(|value| value.strip_prefix(':'))
+                .map(str::trim)
+                .filter(|value| !value.is_empty())
+                .map(str::to_owned)
+        })
+    };
+    let name = field("name").ok_or(InventoryError::MalformedMetadata)?;
+    let description = field("description").ok_or(InventoryError::MalformedMetadata)?;
+    Ok((
+        SkillMetadata {
+            name,
+            capability: description.clone(),
+            trigger_summary: description,
+        },
+        sha256_hex(frontmatter.as_bytes()),
+    ))
 }
 
 fn split_logical_path(path: &str) -> (String, &str) {
