@@ -1,9 +1,13 @@
 use super::level_a::LevelAEntry;
 use crate::contracts::adapter::AdapterDeclaration;
 use crate::core::inventory::sha256_hex;
+use serde::Deserialize;
 use std::collections::BTreeMap;
-#[derive(Debug, Clone)]
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct QualificationReceipt {
+    pub schema_version: String,
     pub provider_id: String,
     pub declaration_digest: String,
     pub native_progressive_disclosure: bool,
@@ -12,9 +16,25 @@ pub struct QualificationReceipt {
 }
 #[derive(Debug, PartialEq, Eq)]
 pub enum ProjectionError {
+    InvalidReceipt,
     UnsupportedNativeSeam,
     ReceiptBindingMismatch,
     DigestMismatch(String),
+}
+
+pub fn parse_qualification_receipt(
+    bytes: &[u8],
+    declaration: &AdapterDeclaration,
+) -> Result<QualificationReceipt, ProjectionError> {
+    let receipt: QualificationReceipt =
+        serde_json::from_slice(bytes).map_err(|_| ProjectionError::InvalidReceipt)?;
+    if receipt.schema_version != "taskseal.native-projection-qualification.v1"
+        || receipt.provider_id != declaration.provider_id
+        || receipt.declaration_digest != declaration_digest(declaration)
+    {
+        return Err(ProjectionError::ReceiptBindingMismatch);
+    }
+    Ok(receipt)
 }
 #[derive(Debug)]
 pub struct NativeEntry {
@@ -48,7 +68,10 @@ pub fn project_native(
     d: &AdapterDeclaration,
     r: QualificationReceipt,
 ) -> Result<NativeProjection, ProjectionError> {
-    if r.provider_id != d.provider_id || r.declaration_digest != declaration_digest(d) {
+    if r.schema_version != "taskseal.native-projection-qualification.v1"
+        || r.provider_id != d.provider_id
+        || r.declaration_digest != declaration_digest(d)
+    {
         return Err(ProjectionError::ReceiptBindingMismatch);
     }
     if d.context_target != "provider_native_context"

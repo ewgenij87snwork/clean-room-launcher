@@ -1,0 +1,11 @@
+{
+  "schema_version": "taskseal.native-projection-qualification.v1",
+  "provider_id": "codex",
+  "declaration_digest": "980c03af9c28ddbb7280a52fd72a39790544e8a649ccd2442e078e95e9db6337",
+  "native_progressive_disclosure": true,
+  "projection_candidate": true,
+  "observed_digests": {
+    "a": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "b": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  }
+}
