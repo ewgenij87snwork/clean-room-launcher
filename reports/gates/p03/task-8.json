@@ -9,7 +9,8 @@
   "branch": "feat/p03-core",
   "worktree": "$TASKSEAL_WORKTREE",
   "checkpoint_sha256": "eff62290f54f56bbb1396395b8bf7f2e90e3b6c90a770de96bfa7a4cd7aaaed6",
-  "accepted_at": "2026-08-12T11:12:00+02:00",
+  "accepted_at": null,
+  "time_note": "Exact acceptance timestamp was not captured by an append-only start/stop event; it is intentionally not reconstructed.",
   "result": "accepted",
   "commands": [
     {
