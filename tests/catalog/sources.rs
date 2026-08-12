@@ -98,7 +98,7 @@ fn refuses_symlink_in_any_parent_component() {
     let root = scratch.join("alias/root");
     let config = SkillSourceConfig::new(vec![(root.clone(), SkillSourceAuthority::Project)]);
     assert_eq!(
-        enumerate_sources(&config, std::slice::from_ref(&root)).unwrap_err(),
+        enumerate_sources(&config, std::slice::from_ref(&scratch)).unwrap_err(),
         CatalogError::SymlinkRoot
     );
     fs::remove_dir_all(scratch).unwrap();

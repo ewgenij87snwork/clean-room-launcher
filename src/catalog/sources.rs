@@ -1,4 +1,6 @@
 use crate::core::inventory::sha256_hex;
+use cap_std::ambient_authority;
+use cap_std::fs::Dir;
 use std::collections::BTreeSet;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -59,9 +61,17 @@ pub fn enumerate_sources(
         if !seen.insert(normalized.clone()) {
             return Err(CatalogError::DuplicateRoot);
         }
-        let admitted = admitted_roots
-            .iter()
-            .any(|capability| is_within(&normalized, capability));
+        let mut admitted = false;
+        for capability in &admitted_roots {
+            match descriptor_admits(&normalized, capability) {
+                Ok(true) => {
+                    admitted = true;
+                    break;
+                }
+                Ok(false) => {}
+                Err(error) => return Err(error),
+            }
+        }
         let visibility = if admitted {
             SkillSourceVisibility::Admitted
         } else {
@@ -81,7 +91,6 @@ pub fn enumerate_sources(
 }
 
 fn normalize_root(root: &Path) -> Result<PathBuf, CatalogError> {
-    refuse_symlink_components(root)?;
     let metadata = fs::symlink_metadata(root).map_err(|_| CatalogError::MissingRoot)?;
     if metadata.file_type().is_symlink() {
         return Err(CatalogError::SymlinkRoot);
@@ -89,26 +98,30 @@ fn normalize_root(root: &Path) -> Result<PathBuf, CatalogError> {
     if !metadata.is_dir() {
         return Err(CatalogError::InvalidPath);
     }
-    root.canonicalize().map_err(|_| CatalogError::InvalidPath)
+    if !root.is_absolute() {
+        return Err(CatalogError::InvalidPath);
+    }
+    Ok(root.to_path_buf())
 }
 
-fn refuse_symlink_components(path: &Path) -> Result<(), CatalogError> {
-    let mut current = PathBuf::new();
-    for component in path.components() {
-        current.push(component.as_os_str());
-        if current.as_os_str().is_empty() {
-            continue;
-        }
-        let metadata = fs::symlink_metadata(&current).map_err(|_| CatalogError::MissingRoot)?;
+fn descriptor_admits(candidate: &Path, capability: &Path) -> Result<bool, CatalogError> {
+    let relative = match candidate.strip_prefix(capability) {
+        Ok(r) => r,
+        Err(_) => return Ok(false),
+    };
+    let mut dir = Dir::open_ambient_dir(capability, ambient_authority())
+        .map_err(|_| CatalogError::InvalidPath)?;
+    for component in relative.components() {
+        let name = component.as_os_str();
+        let metadata = dir
+            .symlink_metadata(name)
+            .map_err(|_| CatalogError::MissingRoot)?;
         if metadata.file_type().is_symlink() {
             return Err(CatalogError::SymlinkRoot);
         }
+        dir = dir.open_dir(name).map_err(|_| CatalogError::InvalidPath)?
     }
-    Ok(())
-}
-
-fn is_within(candidate: &Path, capability: &Path) -> bool {
-    candidate == capability || candidate.starts_with(capability)
+    Ok(true)
 }
 
 fn stable_id(root: &Path, authority: SkillSourceAuthority) -> Result<String, CatalogError> {

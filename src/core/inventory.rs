@@ -62,7 +62,7 @@ pub fn inventory(admitted: &[AdmittedRoot]) -> Result<Vec<SourceRecord>, CoreErr
 }
 
 #[cfg(test)]
-fn inventory_with_observer(
+pub(crate) fn inventory_with_observer(
     admitted: &[AdmittedRoot],
     observer: &mut dyn FnMut(&Path),
 ) -> Result<Vec<SourceRecord>, CoreError> {

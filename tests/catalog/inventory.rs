@@ -1,4 +1,4 @@
-use super::inventory::{InventoryError, inventory_skills};
+use super::inventory::{InventoryError, inventory_skills, inventory_skills_with_mutation};
 use super::sources::{SkillSourceAuthority, SkillSourceConfig, enumerate_sources};
 use std::path::PathBuf;
 
@@ -6,6 +6,47 @@ fn fixture(name: &str) -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("fixtures/catalog/inventory")
         .join(name)
+}
+
+#[test]
+fn changing_body_during_read_refuses_with_stable_reason() {
+    let root = fixture("stable-multi-source");
+    let sources = admitted("stable-multi-source");
+    let target = root.join("alpha/SKILL.md");
+    let original = std::fs::read(&target).unwrap();
+    let mut changed = false;
+    let error = inventory_skills_with_mutation(&sources[0], &mut |path| {
+        if !changed && path.ends_with("alpha/SKILL.md") {
+            std::fs::write(&target, b"changed during read with different length").unwrap();
+            changed = true
+        }
+    })
+    .unwrap_err();
+    std::fs::write(target, original).unwrap();
+    assert_eq!(error, InventoryError::ChangedDuringRead)
+}
+
+#[cfg(unix)]
+#[test]
+fn unreadable_body_refuses_instead_of_disappearing() {
+    use std::os::unix::fs::PermissionsExt;
+    let scratch = std::env::temp_dir().join(format!("taskseal-unreadable-{}", std::process::id()));
+    let skill = scratch.join("skill");
+    std::fs::create_dir_all(&skill).unwrap();
+    std::fs::write(
+        skill.join("skill.json"),
+        br#"{"name":"x","capability":"x","trigger_summary":"x"}"#,
+    )
+    .unwrap();
+    let body = skill.join("SKILL.md");
+    std::fs::write(&body, b"secret").unwrap();
+    std::fs::set_permissions(&body, std::fs::Permissions::from_mode(0o000)).unwrap();
+    let config = SkillSourceConfig::new(vec![(scratch.clone(), SkillSourceAuthority::Project)]);
+    let sources = enumerate_sources(&config, std::slice::from_ref(&scratch)).unwrap();
+    let result = inventory_skills(&sources);
+    std::fs::set_permissions(&body, std::fs::Permissions::from_mode(0o600)).unwrap();
+    std::fs::remove_dir_all(scratch).unwrap();
+    assert!(matches!(result, Err(InventoryError::SourceRefused)))
 }
 
 fn admitted(name: &str) -> Vec<super::sources::SkillSource> {

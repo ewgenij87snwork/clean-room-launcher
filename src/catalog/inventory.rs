@@ -22,6 +22,7 @@ pub enum InventoryError {
     MissingMetadata,
     MissingBody,
     DuplicateName(String),
+    ChangedDuringRead,
 }
 
 #[derive(Debug, Deserialize)]
@@ -30,6 +31,74 @@ struct SkillMetadata {
     name: String,
     capability: String,
     trigger_summary: String,
+}
+
+#[cfg(test)]
+pub(crate) fn inventory_skills_with_mutation(
+    source: &SkillSource,
+    observer: &mut dyn FnMut(&std::path::Path),
+) -> Result<Vec<SkillRecord>, InventoryError> {
+    let records = crate::core::inventory::inventory_with_observer(
+        &[AdmittedRoot::new(&source.root, &source.id)],
+        observer,
+    )
+    .map_err(|error| match error {
+        crate::core::inventory::CoreError::Refused {
+            code: "PATH_RACE", ..
+        } => InventoryError::ChangedDuringRead,
+        _ => InventoryError::SourceRefused,
+    })?;
+    inventory_records(source, records)
+}
+
+#[cfg(test)]
+fn inventory_records(
+    source: &SkillSource,
+    source_records: Vec<SourceRecord>,
+) -> Result<Vec<SkillRecord>, InventoryError> {
+    let mut groups: BTreeMap<String, SkillFiles> = BTreeMap::new();
+    for record in source_records {
+        let (directory, file_name) = split_logical_path(&record.logical_path);
+        let files = groups.entry(directory).or_default();
+        match file_name {
+            "skill.json" => files.metadata = Some(record),
+            "SKILL.md" => files.body = Some(record),
+            _ => {}
+        }
+    }
+    let mut records = Vec::new();
+    let mut names = BTreeSet::new();
+    for (directory, files) in groups {
+        if files.metadata.is_none() && files.body.is_none() {
+            continue;
+        }
+        let metadata_record = files.metadata.ok_or(InventoryError::MissingMetadata)?;
+        let body_record = files.body.ok_or(InventoryError::MissingBody)?;
+        let metadata: SkillMetadata = serde_json::from_slice(metadata_record.content())
+            .map_err(|_| InventoryError::MalformedMetadata)?;
+        if metadata.name.is_empty()
+            || metadata.capability.is_empty()
+            || metadata.trigger_summary.is_empty()
+        {
+            return Err(InventoryError::MalformedMetadata);
+        }
+        if !names.insert(metadata.name.clone()) {
+            return Err(InventoryError::DuplicateName(metadata.name));
+        }
+        let id_digest =
+            sha256_hex(format!("{}\0{}\0{}", source.id, directory, metadata.name).as_bytes());
+        records.push(SkillRecord {
+            id: format!("skill-{}", &id_digest[..16]),
+            name: metadata.name,
+            capability: metadata.capability,
+            trigger_summary: metadata.trigger_summary,
+            source_id: source.id.clone(),
+            body_path: body_record.logical_path,
+            body_digest: body_record.sha256,
+            metadata_digest: metadata_record.sha256,
+        })
+    }
+    Ok(records)
 }
 
 #[derive(Default)]
