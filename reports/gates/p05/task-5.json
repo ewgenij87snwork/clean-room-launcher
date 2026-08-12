@@ -1,0 +1,22 @@
+{
+  "schema_version": "taskseal.task-receipt.v1",
+  "plan": "P05",
+  "task": 5,
+  "acceptance_id": "ACC-P05-T5",
+  "evidence_id": "EVD-P05-T5",
+  "input_head": "ac7c5ad2148de4132fd10ca300ae04e66dcfb480",
+  "result_head": "8dc666b16f7386cb884e7e2c89aaba787cc65573",
+  "branch": "feat/p05-terminal",
+  "worktree": "$TASKSEAL_WORKTREE",
+  "checkpoint_sha256": "1b29c30825c7393a4b07f7575953ab6afe41c987553bcd5055dae9891b30f2ef",
+  "accepted_at": "2026-08-12T17:23:29+02:00",
+  "result": "accepted",
+  "commands": [
+    {"command":"cargo test --test cli foreground_provider_preserves_normal_exit_and_reports_signal_termination --locked --offline","phase":"red_missing_signal_state","exit":101,"tests":1,"failed":1},
+    {"command":"cargo test --test cli foreground_provider_preserves_normal_exit_and_reports_signal_termination --locked --offline","phase":"green_foreground_exit_state","exit":0,"tests":1},
+    {"command":"cargo fmt --check && cargo test --test cli --locked --offline && cargo clippy --all-targets --all-features --locked --offline -- -D warnings","phase":"full_cli_and_quality_matrix","exit":0,"tests":12}
+  ],
+  "coverage": {"stdio":"inherited","normal_exit_42_preserved":true,"signal_termination_stderr":"PROVIDER_TERMINATED_BY_SIGNAL: <program>","signal_termination_exit":1,"spawn_failure":"PROVIDER_SPAWN_FAILED: <program>","pty_created":false,"process_group_created":false,"windows_console_claim":"NOT_QUALIFIED","live_ctrl_c_resize":"T9_REQUIRED"},
+  "controls": ["UX-08"],
+  "skips_counted_as_pass":0
+}
