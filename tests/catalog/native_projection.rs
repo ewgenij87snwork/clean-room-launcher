@@ -21,25 +21,68 @@ fn entry(id: &str, name: &str, digest: &str) -> LevelAEntry {
     }
 }
 fn catalog(entries: Vec<LevelAEntry>) -> ValidatedCatalog {
+    let decisions = entries
+        .iter()
+        .map(|entry| (entry.id.clone(), BodyDecision::LoadOnInvoke))
+        .collect();
+    catalog_with_decisions(entries, decisions)
+}
+fn catalog_with_decisions(
+    entries: Vec<LevelAEntry>,
+    decisions: Vec<(String, BodyDecision)>,
+) -> ValidatedCatalog {
     let root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("fixtures/catalog/native-projection");
     let body_paths = entries
         .iter()
         .map(|entry| (entry.id.clone(), root.join(&entry.id).join("SKILL.md")))
         .collect();
-    let decisions = entries
-        .iter()
-        .map(|entry| DecisionRecord {
-            id: entry.id.clone(),
-            decision: BodyDecision::LoadOnInvoke,
-            reason: "DEFERRED_NATIVE",
-            reason_chain: vec![entry.id.clone()],
+    let decisions = decisions
+        .into_iter()
+        .map(|(id, decision)| DecisionRecord {
+            id: id.clone(),
+            decision,
+            reason: "TEST",
+            reason_chain: vec![id],
         })
         .collect();
     ValidatedCatalog::from_manifest_for_test(
         CatalogManifest::new(entries, decisions, vec![]).unwrap(),
         body_paths,
     )
+}
+#[test]
+fn refused_skills_remain_discoverable_but_have_no_native_body_path() {
+    let entries = vec![entry("a", "alpha", DIGEST_A), entry("b", "beta", DIGEST_B)];
+    let catalog = catalog_with_decisions(
+        entries,
+        vec![
+            ("a".into(), BodyDecision::Refuse),
+            ("b".into(), BodyDecision::LoadNow),
+        ],
+    );
+    let fixture =
+        include_str!("../../fixtures/catalog/native-projection/codex-qualified-receipt.json");
+    let receipt = fixture
+        .replace(
+            "\"catalog_digest\": \"5b6eecee06e584ba621fb7d7286cc41f04bda4f90e02ca26c9272170a6d66031\"",
+            "\"catalog_digest\": \"9bc52e36d121fcdde786d9905d4f68ed416a4aff3bc4c02093ce975531fb7f12\"",
+        )
+        .replace(
+            &format!("\"a\": \"{DIGEST_A}\",\n    "),
+            "",
+        );
+    let probe = include_bytes!("../../fixtures/catalog/native-projection/provider-native-probe.sh");
+    let projection = project_native(
+        &catalog,
+        &declaration(),
+        parse_qualification_receipt(receipt.as_bytes(), &declaration(), probe, probe).unwrap(),
+    )
+    .unwrap();
+    assert_eq!(catalog.manifest().counts.refused, 1);
+    assert_eq!(projection.entries.len(), 1);
+    assert_eq!(projection.entries[0].id, "b");
+    assert!(projection.entries[0].load_at_start);
 }
 fn declaration() -> crate::contracts::adapter::AdapterDeclaration {
     parse_declaration(include_str!("../../adapters/declarations/codex.toml")).unwrap()

@@ -1,3 +1,4 @@
+use super::level_b::BodyDecision;
 use super::pipeline::ValidatedCatalog;
 use crate::contracts::adapter::AdapterDeclaration;
 use crate::core::inventory::sha256_hex;
@@ -114,6 +115,7 @@ pub struct NativeEntry {
     pub name: String,
     pub body_digest: String,
     pub native_path: std::path::PathBuf,
+    pub load_at_start: bool,
 }
 #[derive(Debug)]
 pub struct NativeProjection {
@@ -152,10 +154,22 @@ pub fn project_native(
     {
         return Err(ProjectionError::UnsupportedNativeSeam);
     }
+    let decisions: BTreeMap<_, _> = catalog
+        .manifest()
+        .decisions
+        .iter()
+        .map(|decision| (decision.id.as_str(), decision.decision))
+        .collect();
     let expected_ids: BTreeSet<_> = catalog
         .manifest()
         .level_a
         .iter()
+        .filter(|entry| {
+            matches!(
+                decisions.get(entry.id.as_str()),
+                Some(BodyDecision::LoadNow | BodyDecision::LoadOnInvoke)
+            )
+        })
         .map(|entry| entry.id.as_str())
         .collect();
     let observed_ids: BTreeSet<_> = r.observed_digests.keys().map(String::as_str).collect();
@@ -164,6 +178,13 @@ pub fn project_native(
     }
     let mut entries = Vec::new();
     for e in &catalog.manifest().level_a {
+        let decision = decisions
+            .get(e.id.as_str())
+            .copied()
+            .ok_or_else(|| ProjectionError::DigestMismatch(e.id.clone()))?;
+        if matches!(decision, BodyDecision::Unavailable | BodyDecision::Refuse) {
+            continue;
+        }
         if !e.native_frontmatter {
             return Err(ProjectionError::UnsupportedNativeSeam);
         }
@@ -178,6 +199,7 @@ pub fn project_native(
                 .body_path(&e.id)
                 .ok_or_else(|| ProjectionError::DigestMismatch(e.id.clone()))?
                 .to_path_buf(),
+            load_at_start: decision == BodyDecision::LoadNow,
         })
     }
     let startup_bytes = serde_json::to_vec(&catalog.manifest().level_a)
