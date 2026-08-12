@@ -3,6 +3,7 @@ pub mod decode;
 pub mod inventory;
 pub mod manifest;
 pub mod merge;
+pub mod operations;
 pub mod policy;
 pub mod publish;
 pub mod render;
