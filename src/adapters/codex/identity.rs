@@ -1,4 +1,8 @@
-use crate::adapters::identity::ProviderIdentity;
+use crate::{
+    adapters::identity::{AdapterError, ProviderIdentity, resolve_identity, revalidate_identity},
+    contracts::adapter::AdapterDeclaration,
+};
+use std::path::Path;
 
 const INSTALLED_ARTIFACT_DIGEST: &str =
     "19c4f144c5226a9f17c58e6f0fa854843b0f77a6eb420f40e2745a12f10f5d37";
@@ -13,12 +17,36 @@ pub struct CodexTuple {
     pub arch: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum CodexTupleError {
+    Identity(AdapterError),
+    DeclarationMismatch,
     UnqualifiedTuple,
 }
 
-pub fn bind_installed_tuple(identity: &ProviderIdentity) -> Result<CodexTuple, CodexTupleError> {
+pub fn resolve_installed_tuple(
+    declaration: &AdapterDeclaration,
+    command: &Path,
+) -> Result<CodexTuple, CodexTupleError> {
+    let identity = resolve_identity(declaration, command).map_err(CodexTupleError::Identity)?;
+    revalidate_identity(&identity).map_err(CodexTupleError::Identity)?;
+    bind_resolved_tuple(declaration, &identity)
+}
+
+pub fn bind_resolved_tuple(
+    declaration: &AdapterDeclaration,
+    identity: &ProviderIdentity,
+) -> Result<CodexTuple, CodexTupleError> {
+    if declaration.provider_id != "codex"
+        || declaration.executable != "codex"
+        || declaration.version_range != ">=0.147.0"
+        || declaration.context_target != "provider_native_context"
+        || declaration.collision_policy != "deny"
+        || declaration.capability_evidence != "narrowed_metadata_only"
+        || declaration.qualified
+    {
+        return Err(CodexTupleError::DeclarationMismatch);
+    }
     if identity.provider_id != "codex"
         || identity.artifact_digest != INSTALLED_ARTIFACT_DIGEST
         || identity.version != INSTALLED_VERSION
