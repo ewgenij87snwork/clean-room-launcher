@@ -1,0 +1,57 @@
+{
+  "schema_version": "taskseal.task-receipt.v1",
+  "plan": "P02",
+  "task": 5,
+  "acceptance_id": "ACC-P02-T5",
+  "evidence_id": "EVD-P02-T5",
+  "input_head": "6f7d6936edad28a2a3bb08f257e8d2669e037783",
+  "result_head": "c9c1fbdc31057142b61e69bd57d7b604597cd0d5",
+  "branch": "feat/p02-contracts",
+  "worktree": "$TASKSEAL_WORKTREE",
+  "path_binding": "exact private execution authority",
+  "checkpoint_sha256": "eff62290f54f56bbb1396395b8bf7f2e90e3b6c90a770de96bfa7a4cd7aaaed6",
+  "accepted_at": "2026-08-12T08:36:51+02:00",
+  "result": "accepted_restricted_profile",
+  "commands": [
+    {
+      "command": "cargo test --locked --offline --test canonical_vectors",
+      "phase": "red_missing_canonical_api",
+      "exit": 101,
+      "expected": true
+    },
+    {
+      "command": "cargo test --locked --offline --test canonical_vectors",
+      "phase": "red_unicode_byte_literal",
+      "exit": 101,
+      "expected": true
+    },
+    {
+      "command": "cargo test --locked --offline --test canonical_vectors",
+      "phase": "red_append_unique_scalar_collision",
+      "exit": 101,
+      "expected": true
+    },
+    {
+      "command": "cargo test --locked --offline --all-targets; scripts/check-public-boundary.sh --root $TASKSEAL_WORKTREE",
+      "phase": "green_and_regression",
+      "exit": 0,
+      "expected": true
+    }
+  ],
+  "controls": ["SCH-04", "SCH-05", "SCH-11", "ATT-03"],
+  "subjects": {
+    "scripts/check-public-boundary.sh": "85fc62ef455583b5fd5bc8dbdfea3a06068be8c805e1109437a27b29b9e17eb2",
+    "src/contracts/canonical.rs": "20609a7c0cd1cd92fbc46f56f5bdf1eab2392be7ea76d6ac8e760cbe2396b205",
+    "schemas/canonical-json-profile.md": "cea4ac9fdf1b6a0c1eecfa24d852118ca2efd31c9b6751378b5708aa4b0052cf",
+    "tests/contracts/canonical_vectors.rs": "e6e4c5acb2a22297d1dcc176539f4aa78c2880dea04084d4adfdf6e209b3c81e"
+  },
+  "vectors": {
+    "canonical_repeat_digest_equal": true,
+    "key_order_recursive": true,
+    "compact_utf8_json": true,
+    "typed_merge_operations": true,
+    "recursive_implicit_deep_merge": "refused"
+  },
+  "scope_note": "The accepted profile canonicalizes typed serde_json::Value inputs; raw duplicate-key and lexical -0 rejection remain a later byte-parser hardening concern before a broad RFC 8785 claim.",
+  "skips_counted_as_pass": 0
+}
