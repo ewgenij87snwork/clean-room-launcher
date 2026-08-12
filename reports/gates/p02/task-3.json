@@ -1,0 +1,61 @@
+{
+  "schema_version": "taskseal.task-receipt.v1",
+  "plan": "P02",
+  "task": 3,
+  "acceptance_id": "ACC-P02-T3",
+  "evidence_id": "EVD-P02-T3",
+  "input_head": "218e9c454d0f917012ad81821103d0807cf09a5b",
+  "result_head": "72800334c6274d5805f2a177fa78cea43a543c56",
+  "branch": "feat/p02-contracts",
+  "worktree": "$TASKSEAL_WORKTREE",
+  "path_binding": "exact private execution authority",
+  "checkpoint_sha256": "eff62290f54f56bbb1396395b8bf7f2e90e3b6c90a770de96bfa7a4cd7aaaed6",
+  "accepted_at": "2026-08-12T08:29:33+02:00",
+  "result": "accepted",
+  "commands": [
+    {
+      "command": "cargo test --locked --offline --test public_boundary",
+      "phase": "red_missing_guard",
+      "exit": 101,
+      "expected": true
+    },
+    {
+      "command": "cargo test --locked --offline --test public_boundary clean_public_inventory_passes -- --nocapture",
+      "phase": "red_repository_symlink_fixture",
+      "exit": 101,
+      "expected": true
+    },
+    {
+      "command": "cargo test --locked --offline --test public_boundary clean_public_inventory_passes -- --nocapture",
+      "phase": "red_absolute_home_paths",
+      "exit": 101,
+      "expected": true
+    },
+    {
+      "command": "cargo test --locked --offline --test public_boundary; scripts/check-public-boundary.sh --root $TASKSEAL_WORKTREE; cargo test --locked --offline --all-targets",
+      "phase": "green_and_regression",
+      "exit": 0,
+      "expected": true
+    }
+  ],
+  "controls": ["PRV-*", "SEC-*", "BND-16", "REL-25"],
+  "subjects": {
+    "LICENSE": "3f3d9e0024b1921b067d6f7f88deb4a60cbe7a78e76c64e3f1d7fc3b779b9d04",
+    "SECURITY.md": "c1be97abc621a52d254c0d208cd3131cc7f4b53f0300fa07e5472f23e09b1592",
+    "GOVERNANCE.md": "377990c3b84d1bc49b97b7b5668280094030140d8524b5f77f53a2b501724665",
+    "CHANGELOG.md": "3ededae7691adba18ba2cfe9734919833b073eb061ec0266e9703686bef768d4",
+    "deny.toml": "961e6f471721b1f517cbb7cf54c8f67a7782119fe1913149026663e17b34c5f5",
+    "scripts/check-public-boundary.sh": "fbd83b465b67d90891a3a6f97ce6d410f009a43c5fa8997771a558b4c7de98cf",
+    "tests/contracts/public_boundary.rs": "fd56159c0dd0aa179557d7e82b26ac25ef1676ca097c46617ef8ba15e34eed3d"
+  },
+  "poison_results": {
+    "praxis_role": "PRIVATE_PRAXIS_ROLE",
+    "absolute_home_path": "ABSOLUTE_HOME_PATH",
+    "credential_token": "CREDENTIAL_TOKEN",
+    "transcript_fragment": "TRANSCRIPT_FRAGMENT",
+    "symlink_escape": "SYMLINK_ESCAPE"
+  },
+  "public_inventory_passed": true,
+  "historical_path_leak_corrected": true,
+  "skips_counted_as_pass": 0
+}
