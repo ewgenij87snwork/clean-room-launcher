@@ -1,0 +1,43 @@
+{
+  "schema_version": "taskseal.task-receipt.v1",
+  "plan": "P04",
+  "task": 1,
+  "acceptance_id": "ACC-P04-T1",
+  "evidence_id": "EVD-P04-T1",
+  "input_head": "6c02c514db8f0350fe55360bf01d696da8c20f38",
+  "result_head": "460af5c23ce07060ffc83e207aae47f5f79b667c",
+  "branch": "feat/p04-catalog",
+  "worktree": "$TASKSEAL_WORKTREE",
+  "checkpoint_sha256": "eff62290f54f56bbb1396395b8bf7f2e90e3b6c90a770de96bfa7a4cd7aaaed6",
+  "accepted_at": "2026-08-12T11:32:55+02:00",
+  "result": "accepted",
+  "commands": [
+    {
+      "command": "cargo test --locked --offline --lib catalog::sources_tests",
+      "phase": "red_missing_sources_then_green",
+      "exit": 0,
+      "tests": 4
+    },
+    {
+      "command": "cargo fmt --all -- --check && cargo clippy --all-targets --locked --offline -- -D warnings && cargo test --all-targets --locked --offline && scripts/check-public-boundary.sh --root $TASKSEAL_WORKTREE",
+      "exit": 0
+    }
+  ],
+  "coverage": {
+    "explicit_roots_only": true,
+    "project_source": true,
+    "explicit_user_import": true,
+    "outside_boundary_visible": true,
+    "symlink_escape_refused": true,
+    "duplicate_normalized_root_refused": true,
+    "implicit_home_scan": false,
+    "stable_ids": true
+  },
+  "subjects": {
+    "src/catalog/sources.rs": "d2b06af2e84065eacfeba3f87a130a5ceca0dc32fcd04eaebe5dab6058c13a35",
+    "tests/catalog/sources.rs": "4f8d68a4c249bd29c8b99ba5dcdcf8441dcccee9815385e3d5a0507b62d2be77",
+    "scripts/check-public-boundary.sh": "9fd54643afdca62a34093686144be804f54d6d91f58e440977bec7a1b893d91a"
+  },
+  "controls": ["SKL-03"],
+  "skips_counted_as_pass": 0
+}
