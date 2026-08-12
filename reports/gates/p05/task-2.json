@@ -1,0 +1,47 @@
+{
+  "schema_version": "taskseal.task-receipt.v1",
+  "plan": "P05",
+  "task": 2,
+  "acceptance_id": "ACC-P05-T2",
+  "evidence_id": "EVD-P05-T2",
+  "input_head": "d5659688d055af2ed73916658934612fa34262cf",
+  "result_head": "b7c9126198845f8df84e8b9b122ad8b6cf299bbb",
+  "branch": "feat/p05-terminal",
+  "worktree": "$TASKSEAL_WORKTREE",
+  "checkpoint_sha256": "6d1372cdb692277152e7d51bbb4f6e36cd5361332939c89ebe26758796ad339b",
+  "accepted_at": "2026-08-12T16:32:43+02:00",
+  "result": "accepted",
+  "commands": [
+    {
+      "command": "cargo test --test cli --locked --offline",
+      "phase": "red_unqualified_narrow_provider_layout",
+      "exit": 101,
+      "tests": 5,
+      "failed": 1
+    },
+    {
+      "command": "cargo fmt --check && cargo test --test cli --locked --offline && cargo clippy --all-targets --all-features --locked --offline -- -D warnings",
+      "phase": "green_renderer_and_quality",
+      "exit": 0,
+      "tests": 5
+    },
+    {
+      "command": "diff -u fixtures/cli/first-screen-unqualified.txt <(COLUMNS=80 target/debug/tseal) && diff -u fixtures/cli/first-screen-unqualified.txt <(COLUMNS=120 NO_COLOR=1 TERM=dumb target/debug/tseal) && status-before-after comparison",
+      "phase": "runtime_snapshot_and_read_only_startup",
+      "exit": 0
+    }
+  ],
+  "coverage": {
+    "compact_bare_screen": true,
+    "exact_80_column_transcript": true,
+    "plain_120_column_transcript": true,
+    "narrow_width_no_overflow": true,
+    "provider_state": "P06_REQUIRED",
+    "provider_launched": false,
+    "clean_qualification_claimed": false,
+    "worktree_mutated_on_start": false,
+    "animation_delay_or_update_check": false
+  },
+  "controls": ["UX-02", "UX-04", "UX-16", "UX-17"],
+  "skips_counted_as_pass": 0
+}
