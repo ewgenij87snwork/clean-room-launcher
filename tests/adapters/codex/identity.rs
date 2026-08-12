@@ -64,3 +64,13 @@ fn binder_refuses_an_altered_approved_declaration() {
         CodexTupleError::DeclarationMismatch
     );
 }
+
+#[test]
+fn resolver_rejects_an_altered_declaration_before_touching_the_command() {
+    let mut altered = declaration();
+    altered.version_range = ">=0.148.0".into();
+    assert_eq!(
+        resolve_installed_tuple(&altered, std::path::Path::new("missing-codex")).unwrap_err(),
+        CodexTupleError::DeclarationMismatch
+    );
+}

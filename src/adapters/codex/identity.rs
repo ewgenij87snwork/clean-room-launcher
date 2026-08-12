@@ -28,6 +28,7 @@ pub fn resolve_installed_tuple(
     declaration: &AdapterDeclaration,
     command: &Path,
 ) -> Result<CodexTuple, CodexTupleError> {
+    validate_approved_declaration(declaration)?;
     let identity = resolve_identity(declaration, command).map_err(CodexTupleError::Identity)?;
     revalidate_identity(&identity).map_err(CodexTupleError::Identity)?;
     bind_resolved_tuple(declaration, &identity)
@@ -37,16 +38,7 @@ pub fn bind_resolved_tuple(
     declaration: &AdapterDeclaration,
     identity: &ProviderIdentity,
 ) -> Result<CodexTuple, CodexTupleError> {
-    if declaration.provider_id != "codex"
-        || declaration.executable != "codex"
-        || declaration.version_range != ">=0.147.0"
-        || declaration.context_target != "provider_native_context"
-        || declaration.collision_policy != "deny"
-        || declaration.capability_evidence != "narrowed_metadata_only"
-        || declaration.qualified
-    {
-        return Err(CodexTupleError::DeclarationMismatch);
-    }
+    validate_approved_declaration(declaration)?;
     if identity.provider_id != "codex"
         || identity.artifact_digest != INSTALLED_ARTIFACT_DIGEST
         || identity.version != INSTALLED_VERSION
@@ -62,4 +54,18 @@ pub fn bind_resolved_tuple(
         os: identity.os.clone(),
         arch: identity.arch.clone(),
     })
+}
+
+fn validate_approved_declaration(declaration: &AdapterDeclaration) -> Result<(), CodexTupleError> {
+    if declaration.provider_id != "codex"
+        || declaration.executable != "codex"
+        || declaration.version_range != ">=0.147.0"
+        || declaration.context_target != "provider_native_context"
+        || declaration.collision_policy != "deny"
+        || declaration.capability_evidence != "narrowed_metadata_only"
+        || declaration.qualified
+    {
+        return Err(CodexTupleError::DeclarationMismatch);
+    }
+    Ok(())
 }
