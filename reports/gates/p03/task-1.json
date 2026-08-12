@@ -1,0 +1,47 @@
+{
+  "schema_version": "taskseal.task-receipt.v1",
+  "plan": "P03",
+  "task": 1,
+  "acceptance_id": "ACC-P03-T1",
+  "evidence_id": "EVD-P03-T1",
+  "input_head": "2831868ba84d04595666001675f823b7698a53d0",
+  "result_head": "ea6895ba06bbccec083c881ae4a2886b388880bb",
+  "branch": "feat/p03-core",
+  "worktree": "$TASKSEAL_WORKTREE",
+  "checkpoint_sha256": "eff62290f54f56bbb1396395b8bf7f2e90e3b6c90a770de96bfa7a4cd7aaaed6",
+  "accepted_at": "2026-08-12T10:32:41+02:00",
+  "result": "accepted",
+  "commands": [
+    {
+      "command": "cargo test --locked --offline --lib core::inventory::tests",
+      "phase": "red_missing_race_safe_inventory_then_green",
+      "exit": 0,
+      "expected": true,
+      "tests": 5
+    },
+    {
+      "command": "cargo fmt --all -- --check && cargo clippy --all-targets --locked --offline -- -D warnings && cargo test --all-targets --locked --offline && scripts/check-public-boundary.sh --root $TASKSEAL_WORKTREE",
+      "phase": "full_regression_and_public_boundary",
+      "exit": 0,
+      "expected": true
+    }
+  ],
+  "coverage": {
+    "explicit_roots_only": true,
+    "descriptor_relative_traversal": "cap-std 4.0.2",
+    "sorted_raw_path_bytes": true,
+    "opened_bytes_hashed": true,
+    "symlink_root_and_entry_refused": true,
+    "post_open_file_mutation_refused": true,
+    "invalid_utf8_refused": true,
+    "ambient_home_read": false,
+    "skips_counted_as_pass": 0
+  },
+  "subjects": {
+    "src/core/inventory.rs": "aff48482521b1b745188f411ffc54dd24f9f044be0527e7ca927b2634bc5d52d",
+    "tests/core/inventory.rs": "12a82179bd99b8a79e7bd0a19305252999a6abf2541897bb1027460167c8d667",
+    "Cargo.lock": "4e06acb6110787f96ee15005f387a78396a7a29a13b1312cda7afdf83aaac8c8"
+  },
+  "network_or_provider_spend": false,
+  "skips_counted_as_pass": 0
+}
