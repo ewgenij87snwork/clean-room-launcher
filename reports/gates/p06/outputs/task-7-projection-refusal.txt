@@ -1,0 +1,6 @@
+projection_state=REFUSED
+ambient_values=not-read
+target_state=unchanged
+network=not-attempted
+provider_launch=false
+qualification=NOT_QUALIFIED
