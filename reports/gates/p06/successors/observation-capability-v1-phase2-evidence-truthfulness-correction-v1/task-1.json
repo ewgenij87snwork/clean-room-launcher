@@ -1,11 +1,11 @@
 {
-  "schema_version": "taskseal.p06.phase2-evidence-truthfulness-correction-v1.task-receipt.v2",
+  "schema_version": "taskseal.p06.phase2-evidence-truthfulness-correction-v1.task-receipt.v3",
   "plan_id": "P06-PHASE2-EVIDENCE-TRUTHFULNESS-CORRECTION-V1",
   "task": 1,
   "result": "accepted",
   "acceptance": {
-    "id": "P06-PHASE2-TRUTH-CORRECTION-T1-SHARED-BOUNDARY-V2",
-    "operator_result": "A guarded invented runner fixture reaches the real shared-predicate call path, both extraction sites consume the validated canonical field, broad read/write policy grants refuse, and exact provider-equivalence evidence is executable from this receipt.",
+    "id": "P06-PHASE2-TRUTH-CORRECTION-T1-SHARED-BOUNDARY-V3",
+    "operator_result": "A guarded invented runner fixture reaches the real shared-predicate call path, both extraction sites consume the validated canonical field, all four policies exactly match their permitted read/write targets, and exact provider-equivalence evidence is executable from this receipt.",
     "evidence_ids": [
       "P06-PHASE2-TRUTH-CORRECTION-T1-RED-REAL-RUNNER-MISSING-IMPORT-V1",
       "P06-PHASE2-TRUTH-CORRECTION-T1-FIX1-RED-BROAD-POLICY-V1",
@@ -14,6 +14,8 @@
       "P06-PHASE2-TRUTH-CORRECTION-T1-FIX1-GREEN-FIELD-BINDING-V1",
       "P06-PHASE2-TRUTH-CORRECTION-T1-FIX1-RED-PROVIDER-COMMAND-V1",
       "P06-PHASE2-TRUTH-CORRECTION-T1-FIX1-GREEN-SHARED-VALIDATOR-V1",
+      "P06-PHASE2-TRUTH-CORRECTION-T1-FIX2-RED-COUNT-PRESERVING-READ-V1",
+      "P06-PHASE2-TRUTH-CORRECTION-T1-FIX2-GREEN-EXACT-POLICY-TARGETS-V1",
       "P06-PHASE2-TRUTH-CORRECTION-T1-PROVIDER-BLOCK-EQUIVALENCE-V1"
     ],
     "real_runner_calls_proven_before_guard": [
@@ -39,13 +41,13 @@
     ]
   },
   "binding": {
-    "scheme": "parent-bound-receipt.v2",
-    "input_head": "4eab2ba1008a4e1af77c21b1c7f62cf63a9b91bd",
-    "implementation_result_head": "c532fb6b2ed18c542160723084c88f6baa2ea0e3",
-    "implementation_tree": "46275ae1b85d5e6b26a5c93396f8610a37ed3854",
-    "receipt_commit_parent": "c532fb6b2ed18c542160723084c88f6baa2ea0e3",
-    "replaces_receipt_commit": "4eab2ba1008a4e1af77c21b1c7f62cf63a9b91bd",
-    "resolution": "The containing receipt-only child of implementation_result_head replaces the reviewed V1 receipt while preserving its exact commit and avoiding self-reference."
+    "scheme": "parent-bound-receipt.v3",
+    "input_head": "a7aabf0215b5130ff9d6e4b6782c92a8628a2802",
+    "implementation_result_head": "29c5da46d80b79e91c548aaacc44958e95e37bcb",
+    "implementation_tree": "4ca81b482ef017f3392a81ba43dd327be786b8c5",
+    "receipt_commit_parent": "29c5da46d80b79e91c548aaacc44958e95e37bcb",
+    "replaces_receipt_commit": "a7aabf0215b5130ff9d6e4b6782c92a8628a2802",
+    "resolution": "The containing receipt-only child of implementation_result_head replaces the reviewed V2 receipt while preserving both prior seals and avoiding self-reference."
   },
   "inputs": {
     "original_input_head": "c54284cb3c2a2cfb7fb8508c5eef35204fd8ed71",
@@ -54,30 +56,31 @@
     "predecessor_checkpoint": "c54284cb3c2a2cfb7fb8508c5eef35204fd8ed71",
     "predecessor_receipt_path": "reports/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/task-3.json",
     "predecessor_receipt_sha256": "968779a627cd65d69f27edfa39293fd5f998f50029904ba52a1347463578b2e2",
-    "superseded_task_1_receipt_sha256": "0443949c4e1bba27ca2464d2235eac221318b682ebccbb2db93fad508a24dfd4",
+    "first_superseded_task_1_receipt_sha256": "0443949c4e1bba27ca2464d2235eac221318b682ebccbb2db93fad508a24dfd4",
+    "superseded_task_1_receipt_sha256": "3cc10459ca774973df0fcdac4150891058edb96e23d7e3e657b9a9590eb25251",
     "historical_runner_baseline_sha256": "568a73855e26c836d70cdf739b0818b3b421291d1a5fdd76ad029ad6cc3c6497"
   },
   "subject": {
     "algorithm": "sha256 of sorted path, tab, sha256, newline source records",
-    "sha256": "2ce0fb6437f9a630e5eb6edfe8277d8fea510c4b1896b8687392a747bc57126a",
+    "sha256": "96e47838ad7e7243e4fe7bb96b8a7ce3e02bb6cd2d1add02f5b532291519884e",
     "sources": [
       {
         "path": "scripts/gates/p06/successors/observation-capability-v1-phase2/run-once.sh",
-        "sha256": "a17aeff1c009da9f070b5353a1d0064642e6a0f1aba09551c87e8b798b8f6f66"
+        "sha256": "d340b6a04510b89f279f354aad3fd94ef221f1b4a2847262868c2dc8592baadc"
       },
       {
         "path": "scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/boundary-validator.sh",
-        "sha256": "d04eb733405e45a5c3bf318687302f66a6fb68df708d3c5973060ba5d8907a44"
+        "sha256": "e59d975c03cfcbc1d69d71aa1c691effe15051be755576aa17943eb063bfb40d"
       },
       {
         "path": "scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/test-boundary-validator.sh",
-        "sha256": "2d52417b255200ae906526fc1c26c72a386f0375090d9b3673b8200042d1958a"
+        "sha256": "6344fec80da8dc7ce4e2e5a89b1d61984bdd113d4f36e825a181420238067edf"
       }
     ]
   },
   "provider_equivalence": {
     "baseline_object": "c54284cb3c2a2cfb7fb8508c5eef35204fd8ed71",
-    "current_object": "c532fb6b2ed18c542160723084c88f6baa2ea0e3",
+    "current_object": "29c5da46d80b79e91c548aaacc44958e95e37bcb",
     "path": "scripts/gates/p06/successors/observation-capability-v1-phase2/run-once.sh",
     "login_region": {
       "start": "# Validate the exact field type and single-line/nonempty shape before consuming the login counter.",
@@ -148,8 +151,24 @@
       "meaning": "The full focused suite accepted the guarded runner call path, field seam, closed policy and replacement receipt."
     },
     {
+      "id": "P06-PHASE2-TRUTH-CORRECTION-T1-FIX2-RED-COUNT-PRESERVING-READ-V1",
+      "command": "sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/test-boundary-validator.sh",
+      "exit": 1,
+      "output": "P06_BOUNDARY_EXPECTED_REFUSAL_MISSING:P06_BOUNDARY_REFUSAL_POLICY_DRIFT",
+      "output_sha256": "f45ca25d1e9c106b62173a76bba10b88dc0b8688644258c2fe7d356be453a978",
+      "meaning": "The count-based V2 policy predicate accepted a count-preserving /Users read-target substitution."
+    },
+    {
+      "id": "P06-PHASE2-TRUTH-CORRECTION-T1-FIX2-GREEN-EXACT-POLICY-TARGETS-V1",
+      "command": "sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/test-boundary-validator.sh",
+      "exit": 0,
+      "output": "P06_PHASE2_TRUTH_BOUNDARY_VALIDATOR_PASS",
+      "output_sha256": "30b7038d598964abdd27804c202161e90c7c5917c590f080950cb09719ee05b6",
+      "meaning": "The full suite accepted exact profile allowlists and refused count-preserving /Users read and write substitutions."
+    },
+    {
       "id": "P06-PHASE2-TRUTH-CORRECTION-T1-PROVIDER-BLOCK-EQUIVALENCE-V1",
-      "command": "P06_BOUNDARY_PROVIDER_CURRENT_OBJECT=c532fb6b2ed18c542160723084c88f6baa2ea0e3 P06_BOUNDARY_TEST_CASE=provider-equivalence sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/test-boundary-validator.sh",
+      "command": "P06_BOUNDARY_PROVIDER_CURRENT_OBJECT=29c5da46d80b79e91c548aaacc44958e95e37bcb P06_BOUNDARY_TEST_CASE=provider-equivalence sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/test-boundary-validator.sh",
       "exit": 0,
       "output": "P06_PROVIDER_LOGIN_SEMANTICS_EQUIVALENT:c0f4d9a1013d16950b2bd9ff232d252f3c06bb196ec7e62d9c3155cda474c7a9\nP06_PROVIDER_MODEL_BLOCK_UNCHANGED:e1e76237c95dff9352dea8a4ef1ff4637493d7139fea55d3bb1c0ae1295fe20e",
       "output_sha256": "bf55870ccf257c0907d2a6bd7c7de09703bc2488987756f6fff061ebf63541f3",
@@ -159,6 +178,7 @@
   "controls": {
     "invented_fixtures_only": true,
     "guard_before_clean_offline": true,
+    "exact_policy_target_allowlist": true,
     "historical_runner_runtime_executed": false,
     "network_access": "not invoked",
     "provider_or_codex_process": "not invoked",
