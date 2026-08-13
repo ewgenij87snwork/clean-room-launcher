@@ -126,13 +126,14 @@ test -f "$auth_source" && test ! -L "$auth_source" && test "$(stat -f %Lp "$auth
 
 # Validate the exact field type and single-line/nonempty shape before consuming the login counter.
 # Only counts leave the anonymous validation pipe; credential bytes remain inside sandboxed processes.
-credential_counts=$( (cd "$temporary_root" && /usr/bin/sandbox-exec -f "$extract_profile" \
+credential_validation=$( (cd "$temporary_root" && /usr/bin/sandbox-exec -f "$extract_profile" \
   /usr/bin/plutil -extract tokens.access_token raw -expect string -n -o - "$auth_source") | \
-  /usr/bin/awk '{ bytes += length($0); lines += 1 } END { printf "%d:%d", bytes, lines }')
-credential_bytes=${credential_counts%%:*}
-credential_lines=${credential_counts##*:}
-test "$credential_bytes" -gt 0
-test "$credential_lines" = 1
+  LC_ALL=C /usr/bin/awk '
+    BEGIN { valid=0 }
+    { if (NR != 1 || length($0) == 0 || $0 ~ /[[:cntrl:]]/) exit 2; valid=1 }
+    END { if (!valid) exit 2; print "VALID" }
+  ')
+test "$credential_validation" = VALID
 
 before_auth_metadata=$(stat -f '%d:%i:%z:%m:%c:%Lp' "$auth_source")
 before_binary=$(shasum -a 256 "$command" | awk '{print $1}')
@@ -145,6 +146,7 @@ set +C
 set +e
 (cd "$temporary_root" && /usr/bin/sandbox-exec -f "$extract_profile" \
   /usr/bin/plutil -extract tokens.access_token raw -expect string -n -o - "$auth_source") | \
+  LC_ALL=C /usr/bin/awk '{ printf "%s\n",$0 }' | \
   env -i HOME="$temporary_root/home" CODEX_HOME="$temporary_root/codex-home" XDG_CONFIG_HOME="$temporary_root/xdg" PATH=/usr/bin:/bin \
   /usr/bin/sandbox-exec -f "$online_profile" "$command" login --with-access-token >"$temporary_root/login.stdout" 2>"$temporary_root/login.stderr"
 login_status=$?
