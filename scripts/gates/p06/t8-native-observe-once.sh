@@ -77,8 +77,9 @@ env -i HOME="$temporary_root/ambient-home" XDG_CONFIG_HOME="$temporary_root/xdg"
 profile="$temporary_root/native.sb"
 offline_profile="$temporary_root/offline.sb"
 escaped_root=$(printf '%s' "$temporary_root" | sed 's/[\\"]/\\&/g')
-printf '(version 1)\n(deny default)\n(import "system.sb")\n(allow file-read*)\n(allow process*)\n(allow sysctl-read)\n(allow file-write* (subpath "%s"))\n(allow network-outbound)\n' "$escaped_root" >"$profile"
-printf '(version 1)\n(deny default)\n(import "system.sb")\n(allow file-read*)\n(allow process*)\n(allow sysctl-read)\n(allow file-write* (subpath "%s"))\n(deny network*)\n' "$escaped_root" >"$offline_profile"
+escaped_command=$(printf '%s' "$command" | sed 's/[\\"]/\\&/g')
+printf '(version 1)\n(deny default)\n(import "system.sb")\n(allow file-read-metadata (subpath "/private"))\n(allow file-read* (subpath "%s") (literal "%s") (subpath "/System") (subpath "/usr") (subpath "/private/etc") (subpath "/private/var/db/timezone") (subpath "/dev"))\n(allow process*)\n(allow sysctl-read)\n(allow file-write* (subpath "%s"))\n(allow network-outbound)\n' "$escaped_root" "$escaped_command" "$escaped_root" >"$profile"
+printf '(version 1)\n(deny default)\n(import "system.sb")\n(allow file-read-metadata (subpath "/private"))\n(allow file-read* (subpath "%s") (literal "%s") (subpath "/System") (subpath "/usr") (subpath "/private/etc") (subpath "/private/var/db/timezone") (subpath "/dev"))\n(allow process*)\n(allow sysctl-read)\n(allow file-write* (subpath "%s"))\n(deny network*)\n' "$escaped_root" "$escaped_command" "$escaped_root" >"$offline_profile"
 
 (cd "$temporary_root/project/task" && env -i HOME="$temporary_root/ambient-home" CODEX_HOME="$temporary_root/codex-home" PATH=/usr/bin:/bin /usr/bin/sandbox-exec -f "$offline_profile" "$command" debug prompt-input "Return only supplied canary codes.") >"$temporary_root/prompt-input.json" 2>"$temporary_root/prompt-input.stderr"
 l0=f7b586cf98ee8c8f2ba2ea22d9a24c4a05f59a5b30ec93b25fbe54c1f1ce3914

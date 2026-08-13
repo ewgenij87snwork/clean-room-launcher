@@ -24,11 +24,12 @@ cp "$root/fixtures/adapters/codex/context-canaries/native/project/AGENTS.md" "$t
 cp "$root/fixtures/adapters/codex/context-canaries/native/project/task/AGENTS.md" "$temporary_root/project/task/AGENTS.md"
 offline_profile="$temporary_root/offline.sb"
 escaped_root=$(printf '%s' "$temporary_root" | sed 's/[\\"]/\\&/g')
-printf '(version 1)\n(deny default)\n(import "system.sb")\n(allow file-read*)\n(allow process*)\n(allow sysctl-read)\n(allow file-write* (subpath "%s"))\n(deny network*)\n' "$escaped_root" >"$offline_profile"
+escaped_command=$(printf '%s' "$command" | sed 's/[\\"]/\\&/g')
+printf '(version 1)\n(deny default)\n(import "system.sb")\n(allow file-read-metadata (subpath "/private"))\n(allow file-read* (subpath "%s") (literal "%s") (subpath "/System") (subpath "/usr") (subpath "/private/etc") (subpath "/private/var/db/timezone") (subpath "/dev"))\n(allow process*)\n(allow sysctl-read)\n(allow file-write* (subpath "%s"))\n(deny network*)\n' "$escaped_root" "$escaped_command" "$escaped_root" >"$offline_profile"
 
 render_prompt() {
   destination=$1
-  (cd "$temporary_root/project/task" && env -i HOME="$temporary_root/ambient-home" CODEX_HOME="$temporary_root/codex-home" PATH=/usr/bin:/bin /usr/bin/sandbox-exec -f "$offline_profile" "$command" debug prompt-input "Return only supplied canary codes.") >"$destination" 2>/dev/null
+  (cd "$temporary_root/project/task" && env -i HOME="$temporary_root/ambient-home" CODEX_HOME="$temporary_root/codex-home" PATH=/usr/bin:/bin /usr/bin/sandbox-exec -f "$offline_profile" "$command" debug prompt-input "Return only supplied canary codes.") >"$destination" 2>"$temporary_root/debug.stderr"
 }
 count_code() {
   code=$1
