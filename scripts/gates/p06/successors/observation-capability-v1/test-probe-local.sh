@@ -27,6 +27,8 @@ OPENAI_API_KEY="$poison_api" CODEX_ACCESS_TOKEN="$poison_access" P06_CODEX_BIN="
 rg -x 'schema_version=taskseal.p06-codex-observation-capability-v1.probe.v1' "$temporary_root/probe.out" >/dev/null
 rg -x 'candidate=codex-0.147.0-macos-aarch64' "$temporary_root/probe.out" >/dev/null
 rg -x 'network_denied=true' "$temporary_root/probe.out" >/dev/null
+rg -x 'network_denial_evidence=EPERM' "$temporary_root/probe.out" >/dev/null
+rg -x 'version_checked_in_network_sandbox=true' "$temporary_root/probe.out" >/dev/null
 rg -x 'owner_auth_read=false' "$temporary_root/probe.out" >/dev/null
 rg -x 'owner_config_mutated=false' "$temporary_root/probe.out" >/dev/null
 rg -x 'temporary_home_removed=true' "$temporary_root/probe.out" >/dev/null

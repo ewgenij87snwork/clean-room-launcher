@@ -15,6 +15,16 @@ trap cleanup EXIT HUP INT TERM
 
 P06_CODEX_BIN=${P06_CODEX_BIN:-/Users/ysorokin/.local/bin/codex} "$verify" >/dev/null
 
+printf '%s\n' \
+  'scripts/gates/p06/successors/observation-capability-v1/verify.sh' \
+  'reports/gates/p06/task-8.json' >"$temporary_root/forbidden-diff.txt"
+set +e
+P06_CODEX_BIN=${P06_CODEX_BIN:-/Users/ysorokin/.local/bin/codex} \
+  P06_CAPABILITY_DIFF_LIST="$temporary_root/forbidden-diff.txt" "$verify" >/dev/null 2>&1
+forbidden_diff_status=$?
+set -e
+test "$forbidden_diff_status" -ne 0
+
 mutation_must_fail() {
   name=$1
   filter=$2
@@ -35,6 +45,7 @@ mutation_must_fail transport '.diagnosis.transport_id="COPIED_STORED_AUTH"'
 mutation_must_fail network '.controls.network_denied=false'
 mutation_must_fail owner_auth '.controls.owner_auth_read=true'
 mutation_must_fail output_digest '.evidence.output_sha256="0000000000000000000000000000000000000000000000000000000000000000"'
+mutation_must_fail task_1_digest '.evidence.task_1_output_sha256="0000000000000000000000000000000000000000000000000000000000000000"'
 mutation_must_fail source_digest '.sources[0].sha256="0000000000000000000000000000000000000000000000000000000000000000"'
 
 echo P06_CODEX_OBSERVATION_CAPABILITY_V1_MUTATIONS_PASS

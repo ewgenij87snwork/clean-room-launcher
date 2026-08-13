@@ -24,7 +24,6 @@ jq -e --arg root "$root" --arg head "$current_head" '
 
 command=$(realpath "$command")
 test "$(shasum -a 256 "$command" | awk '{print $1}')" = "$expected_digest"
-test "$(env -i PATH=/usr/bin:/bin "$command" --version)" = "codex-cli 0.147.0"
 test "$(uname -s)" = Darwin
 test "$(uname -m)" = arm64
 
@@ -49,12 +48,16 @@ set +e
 network_status=$?
 set -e
 test "$network_status" -ne 0
+rg -n 'Operation not permitted|Errno::EPERM' "$temporary_root/network.stderr" >/dev/null
 
 clean_env() {
   env -i HOME="$temporary_root/ambient-home" CODEX_HOME="$temporary_root/codex-home" \
     XDG_CONFIG_HOME="$temporary_root/xdg" PATH=/usr/bin:/bin \
     /usr/bin/sandbox-exec -f "$profile" "$@"
 }
+
+test "$(clean_env "$command" --version)" = "codex-cli 0.147.0"
+version_checked_in_network_sandbox=true
 
 clean_env "$command" --help >"$temporary_root/root-help.txt" 2>"$temporary_root/root-help.stderr"
 clean_env "$command" login --help >"$temporary_root/login-help.txt" 2>"$temporary_root/login-help.stderr"
@@ -95,6 +98,8 @@ printf '%s\n' \
   'candidate=codex-0.147.0-macos-aarch64' \
   "executable_sha256=$expected_digest" \
   'network_denied=true' \
+  'network_denial_evidence=EPERM' \
+  "version_checked_in_network_sandbox=$version_checked_in_network_sandbox" \
   'owner_auth_read=false' \
   'owner_config_mutated=false' \
   'temporary_home_removed=true' \
