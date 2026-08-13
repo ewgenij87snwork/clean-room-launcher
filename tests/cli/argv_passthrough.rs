@@ -42,6 +42,7 @@ fn generic_boundary_forwards_every_argument_without_shell_evaluation() {
 #[test]
 fn unqualified_provider_route_refuses_before_ambient_path_can_spawn() {
     let (codex, capture) = fake_provider("codex");
+    let before = fs::read(&codex).unwrap();
     let output = Command::new(env!("CARGO_BIN_EXE_tseal"))
         .arg("codex")
         .arg("--version")
@@ -55,6 +56,7 @@ fn unqualified_provider_route_refuses_before_ambient_path_can_spawn() {
         "P06_REQUIRED: provider tuple is not qualified\n"
     );
     assert!(!capture.exists());
+    assert_eq!(fs::read(codex).unwrap(), before);
 }
 
 #[test]
