@@ -1,0 +1,6 @@
+canary_state=REFUSED
+exact_tuple_bound=true
+network=NOT_ATTEMPTED
+provider_launch=false
+qualification=NOT_QUALIFIED
+positive_native_observation=UNAVAILABLE
