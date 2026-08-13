@@ -1,0 +1,131 @@
+{
+  "schema_version": "taskseal.p06.zero-auth.source-inventory-allowlist.v1",
+  "entries": [
+    {
+      "path": "scripts/gates/p06/foundation-v6-verify.sh",
+      "sha256": "fda354630d9f9063e6ad1ef994e943ed4f2275ae0252a069d17a47475310914d",
+      "matched_classes": ["CREDENTIAL_EXTRACTION"],
+      "rationale": "Offline foundation verifier: the match is a privacy deny-list over sealed receipt text; it neither extracts credentials nor invokes a provider."
+    },
+    {
+      "path": "scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/test-verify.sh",
+      "sha256": "6545e2f6eb97815c2b29ac9922f301bac4c686f63bb720a7b39d0f244873c23c",
+      "matched_classes": ["CREDENTIAL_COPY"],
+      "rationale": "Offline evidence mutation suite: credential-shaped words occur only in synthetic JSON fixtures and local receipt-copy tests; no provider command is born."
+    },
+    {
+      "path": "scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/boundary-validator.sh",
+      "sha256": "e59d975c03cfcbc1d69d71aa1c691effe15051be755576aa17943eb063bfb40d",
+      "matched_classes": ["AUTH_FILE", "CREDENTIAL_EXTRACTION"],
+      "rationale": "Sourced pure boundary predicates compare caller-supplied historical strings; this file performs no credential read, extraction, copy, or provider execution."
+    },
+    {
+      "path": "scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/test-boundary-validator.sh",
+      "sha256": "6344fec80da8dc7ce4e2e5a89b1d61984bdd113d4f36e825a181420238067edf",
+      "matched_classes": ["AUTH_FILE", "CREDENTIAL_EXTRACTION", "CREDENTIAL_COPY", "PROVIDER_LOGIN"],
+      "rationale": "Offline historical-source regression: it reads committed script text and uses an invented command behind an unconditional guard; it cannot reach auth, network, or provider paths."
+    },
+    {
+      "path": "scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/test-verify.sh",
+      "sha256": "3b9c7640b4b2f7cc1a2b82315d1e915ad7e3f15caa490928d5fdf2079a7a43cf",
+      "matched_classes": ["CREDENTIAL_EXTRACTION", "CREDENTIAL_COPY"],
+      "rationale": "Offline receipt mutation suite: matched terms are JSON claim fixtures and file-copy setup, with no credential source access or provider process invocation."
+    },
+    {
+      "path": "scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/verify.sh",
+      "sha256": "8b10858151d6bccb592ca8e2049e7671f994b0e5d645d7a3c1b04f510b8e70bf",
+      "matched_classes": ["CREDENTIAL_EXTRACTION"],
+      "rationale": "Offline historical receipt/SSOT verifier: matched credential text is parsed claim metadata only; the verifier does not read credentials or invoke a provider."
+    },
+    {
+      "path": "scripts/gates/p06/successors/observation-capability-v1-phase2/test-run-once.sh",
+      "sha256": "b3a05d40729c2924cb01e84495ec4229ac7d7a38506618210ca5afb6247d188f",
+      "matched_classes": ["CREDENTIAL_EXTRACTION", "TOKEN_INPUT"],
+      "rationale": "Historical source assertion suite: its only runner target is now an exact unconditional refusal stub; matched token/extraction forms are expected-text assertions."
+    },
+    {
+      "path": "scripts/gates/p06/successors/observation-capability-v1-phase2/test-verify.sh",
+      "sha256": "2464ad98e4fc708425ea56673b3f5e0073bd587c6312483d55449a0b41d59c41",
+      "matched_classes": ["PROVIDER_LOGIN"],
+      "rationale": "Offline disposition mutation suite: LOGIN_ACCEPTED is a rejected JSON fixture value, not a command or process invocation."
+    },
+    {
+      "path": "scripts/gates/p06/successors/observation-capability-v1-phase2/verify.sh",
+      "sha256": "2e597069bb9fc3287e88ccc18071123e768d488697128c5ff6c9debaa0b3ece9",
+      "matched_classes": ["CREDENTIAL_EXTRACTION"],
+      "rationale": "Offline sealed-receipt verifier: matched credential terms occur in jq assertions and privacy refusal patterns; no credential or provider operation occurs."
+    },
+    {
+      "path": "scripts/gates/p06/successors/observation-capability-v1/test-probe-local.sh",
+      "sha256": "734e632e714fa9e37dba89631fcffdcc217ab6f7bdc5e1aa4076ea700739c211",
+      "matched_classes": ["TOKEN_INPUT"],
+      "rationale": "Historical poison-marker test: its probe target is now an exact unconditional refusal stub, so ambient synthetic token variables are never read or transported."
+    },
+    {
+      "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/control-validator.rb",
+      "sha256": "b1043c13d258e7ee615d45801e330481fd0f70d559f5364e233e4e77f520d9bd",
+      "matched_classes": ["PROVIDER_LOGIN", "BROWSER_AUTH"],
+      "rationale": "Pure offline policy parser: browser/OAuth forms are prohibited-text matchers over supplied documents and cannot launch a browser or provider process."
+    },
+    {
+      "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/source-inventory.rb",
+      "sha256": "e54711f6f11bf3e6ca989583e25c0c8eaad244e5c3f78017cbdd1dccd2530843",
+      "matched_classes": ["CREDENTIAL_COPY", "BROWSER_AUTH"],
+      "rationale": "This offline scanner contains only detection regular expressions for the matched forms; its sole subprocess is git ls-files and it has no provider interface."
+    },
+    {
+      "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-control-validator.sh",
+      "sha256": "4e307db67a2477d01f765c8c8fcb43a6663f473e1bf5e9efea64a881e55527d5",
+      "matched_classes": ["CREDENTIAL_COPY", "PROVIDER_LOGIN", "BROWSER_AUTH"],
+      "rationale": "Offline policy mutation suite: provider-login, browser, and credential phrases are inert document fixtures consumed only by the Ruby validator."
+    },
+    {
+      "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-source-inventory.sh",
+      "sha256": "383e4359d8930ed0469e112c5cc21b41821652f25f9171584e57965a8e6a3b6f",
+      "matched_classes": ["AUTH_FILE", "CREDENTIAL_EXTRACTION", "CREDENTIAL_COPY", "PROVIDER_LOGIN", "BROWSER_AUTH", "TOKEN_INPUT"],
+      "rationale": "Offline scanner mutation suite: every matched form is written as inert source into disposable Git fixtures and is never executed as an auth, browser, or provider command."
+    },
+    {
+      "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-2-receipt.sh",
+      "sha256": "d67aa418aa935883da2de2672d439f8d9d685bea54595476047c96b0157ae620",
+      "matched_classes": ["CREDENTIAL_EXTRACTION", "PROVIDER_LOGIN", "BROWSER_AUTH"],
+      "rationale": "Offline receipt checker: matched terms are sealed evidence labels and JSON equality assertions; it invokes Git/JQ/hash tools only and no provider interface."
+    },
+    {
+      "path": "scripts/gates/p06/t6-codex-auth-verify.sh",
+      "sha256": "4e19dd31b9923e56251cb25a0af7aa4692f576a0b9ea424e763f3038650e0d41",
+      "matched_classes": ["CREDENTIAL_EXTRACTION"],
+      "rationale": "Offline historical receipt verifier: credential terms occur only in a deny-list privacy scan over committed evidence; no auth input or provider process is used."
+    },
+    {
+      "path": "scripts/gates/p06/t7-codex-placement-verify.sh",
+      "sha256": "918edc93defd53def48abb06e7fbd865e601b07f9cbfa989cdbbddaced014748",
+      "matched_classes": ["CREDENTIAL_EXTRACTION"],
+      "rationale": "Offline historical placement verifier: the match is a deny-list privacy scan over sealed evidence and performs no credential extraction or provider login."
+    },
+    {
+      "path": "scripts/gates/p06/t8-codex-context-negative-verify.sh",
+      "sha256": "ecd1db8a793afa08c47d22900de9ce0b923733af85a7b12741fb4140246b2226",
+      "matched_classes": ["CREDENTIAL_EXTRACTION"],
+      "rationale": "Historical negative-context verifier: matched credential text is a privacy deny-list; its provider call is version-only and contains no auth or login route."
+    },
+    {
+      "path": "scripts/gates/p06/t8-codex-context-static-verify.sh",
+      "sha256": "bd14bdb3701a9b5ec7868618be0e7a2607ecc605269a288a8cc1c7a0972695e9",
+      "matched_classes": ["CREDENTIAL_EXTRACTION"],
+      "rationale": "Offline static-context verifier: matched credential terms are privacy deny-list literals over receipts, with no provider or authentication subprocess."
+    },
+    {
+      "path": "scripts/gates/p06/t8-rooted-disposition-verify.sh",
+      "sha256": "63464c0f592e8c9a0c2dd580e0bd6b10f583b4bff685d16adb81e02c1830c341",
+      "matched_classes": ["CREDENTIAL_EXTRACTION"],
+      "rationale": "Historical rooted-disposition verifier: the match is a receipt privacy deny-list and the script exposes no auth-file, token-input, or provider-login route."
+    },
+    {
+      "path": "src/cli/state.rs",
+      "sha256": "d5837ad16e9353c83de59bc0fda565623b248c2798d5a5dba167008569cedffe",
+      "matched_classes": ["TOKEN_INPUT"],
+      "rationale": "Compiled state code contains a deny-list that rejects saved arguments with token/API-key/password spellings; it never reads environment credentials or starts a process."
+    }
+  ]
+}

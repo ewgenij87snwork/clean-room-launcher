@@ -30,25 +30,30 @@ jq -e \
   --arg input_head "$input_head" \
   --arg implementation_head "$implementation_head" \
   --arg implementation_tree "$implementation_tree" '
-  .schema_version == "taskseal.p06.zero-auth-preauthenticated-native-session-v1.task-receipt.v1" and
+  .schema_version == "taskseal.p06.zero-auth-preauthenticated-native-session-v1.task-receipt.v2" and
   .plan_id == "P06-ZERO-AUTH-PREAUTHENTICATED-NATIVE-SESSION-V1" and
   .task == 2 and .result == "accepted" and
   .acceptance == {
-    id:"P06-ZERO-AUTH-T2-EXECUTABLE-PATH-CLOSURE-V1",
-    operator_result:"Current Phase 2 and T8 credential/login launchers are non-executable unconditional historical-only refusals; executable product inventory refuses auth-file, credential extraction/copy, provider-login, OAuth/device/browser, and API-key/token-input source paths; the former auth fingerprint is historical provenance only and non-authoritative.",
+    id:"P06-ZERO-AUTH-T2-EXECUTABLE-PATH-CLOSURE-V2",
+    operator_result:"Four historical credential/login probe and caller paths are non-executable unconditional historical-only refusals; the closed exact-digest inventory scans every tracked executable, every tracked shebang script regardless of mode, tracked symlinks, build.rs and all compiled src Rust while refusing auth-file, credential extraction/copy, provider-login, OAuth/device/browser, and API-key/token-input patterns; the former auth fingerprint remains historical and non-authoritative, and descendant durability execution is sealed.",
     control_ids:["AUTH-01"],
     evidence_ids:[
       "P06-ZERO-AUTH-T2-RED-MISSING-SOURCE-INVENTORY-V1",
       "P06-ZERO-AUTH-T2-RED-AUTH-FINGERPRINT-SUPERSESSION-V1",
-      "P06-ZERO-AUTH-T2-GREEN-EXECUTABLE-SOURCE-INVENTORY-V1"
+      "P06-ZERO-AUTH-T2-GREEN-EXECUTABLE-SOURCE-INVENTORY-V1",
+      "P06-ZERO-AUTH-T2-FIX1-RED-GATE-RUST-INVENTORY-GAP-V1",
+      "P06-ZERO-AUTH-T2-FIX1-GREEN-CLOSED-SOURCE-INVENTORY-V1",
+      "P06-ZERO-AUTH-T2-FIX1-RED-DURABILITY-EVIDENCE-GAP-V1",
+      "P06-ZERO-AUTH-T2-FIX1-GREEN-DESCENDANT-DURABILITY-V1"
     ]
   } and
   .binding == {
-    scheme:"parent-bound-receipt.v1",
+    scheme:"parent-bound-receipt.v2",
     input_head:$input_head,
     implementation_result_head:$implementation_head,
     implementation_tree:$implementation_tree,
     receipt_commit_parent:$implementation_head,
+    replaces_receipt_commit:"3e40a4b688bb489b5cbc9a8ec8e32a2be032c26e",
     parent_task_receipt:{
       path:"reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/task-1.json",
       commit:$input_head,
@@ -65,14 +70,17 @@ jq -e \
   [.subject.sources[].path] == [
     "reports/contracts/provider-capability-truth.json",
     "scripts/gates/p06/successors/observation-capability-v1-phase2/run-once.sh",
+    "scripts/gates/p06/successors/observation-capability-v1/probe-local.sh",
+    "scripts/gates/p06/successors/observation-capability-v1/verify.sh",
+    "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/source-inventory-allowlist.json",
     "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/source-inventory.rb",
     "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-source-inventory.sh",
     "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-2-receipt-durability.sh",
     "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-2-receipt.sh",
     "scripts/gates/p06/t8-native-observe-once.sh"
   ] and
-  ([.subject.sources[].path] | unique | length) == 7 and
-  ([.subject.sources[] | select(.kind == "repository_implementation_commit")] | length) == 7 and
+  ([.subject.sources[].path] | unique | length) == 10 and
+  ([.subject.sources[] | select(.kind == "repository_implementation_commit")] | length) == 10 and
   .evidence == [
     {
       id:"P06-ZERO-AUTH-T2-RED-MISSING-SOURCE-INVENTORY-V1",
@@ -98,6 +106,40 @@ jq -e \
       output:"P06_ZERO_AUTH_SOURCE_INVENTORY_TEST_PASS",
       output_sha256:"ff2c843a18a4b76f59ff24589d0335a7057640cb926ea647f7246d40ae7b64af",
       meaning:"The offline focused suite executed both refusal stubs, checked their non-executable tracked modes and predecessor Git objects, accepted clean product source, and independently refused all required credential/login/browser/token fixture classes plus executable or contaminated historical stubs."
+    },
+    {
+      id:"P06-ZERO-AUTH-T2-FIX1-RED-GATE-RUST-INVENTORY-GAP-V1",
+      command:"sh scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-source-inventory.sh",
+      exit:1,
+      output:"P06_ZERO_AUTH_EXPECTED_REFUSAL_MISSING:gate_provider_login:0:P06_ZERO_AUTH_SOURCE_INVENTORY_PASS",
+      output_sha256:"ff5f992254ca3801b8ab5d84170f64365791c0f1a639fcf1c5706007bdc9b1d0",
+      input:"The reviewed v1 scanner skipped every scripts/gates path and considered only tracked mode 100755, so an executable renamed gate fixture invoking provider login passed before compiled Rust mutations were reached.",
+      meaning:"Focused review RED proved the blanket gate exclusion and mode-only inventory omitted a runnable provider-login path."
+    },
+    {
+      id:"P06-ZERO-AUTH-T2-FIX1-GREEN-CLOSED-SOURCE-INVENTORY-V1",
+      command:"sh scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-source-inventory.sh",
+      exit:0,
+      output:"P06_ZERO_AUTH_SOURCE_INVENTORY_TEST_PASS",
+      output_sha256:"ff2c843a18a4b76f59ff24589d0335a7057640cb926ea647f7246d40ae7b64af",
+      meaning:"The closed offline inventory accepted exact refusal stubs and audited evidence digests while refusing gate-path, compiled Rust, multiline, dynamic, provider-prefixed, renamed and symlink mutations for every required class."
+    },
+    {
+      id:"P06-ZERO-AUTH-T2-FIX1-RED-DURABILITY-EVIDENCE-GAP-V1",
+      command:"scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-2-receipt.sh",
+      exit:1,
+      output:"P06_ZERO_AUTH_RECEIPT_REFUSAL:RECEIPT_CONTRACT",
+      output_sha256:"214a4e314731fc14660d0ba2bef487260d990ea67c19b1d57c7d29bef9e3c54b",
+      input:"The reviewed Task 2 receipt omitted the executed descendant durability command/result from ordered acceptance evidence.",
+      meaning:"The replacement receipt checker refused the incomplete v1 receipt before durability execution evidence was sealed."
+    },
+    {
+      id:"P06-ZERO-AUTH-T2-FIX1-GREEN-DESCENDANT-DURABILITY-V1",
+      command:"scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-2-receipt-durability.sh",
+      exit:0,
+      output:"P06_ZERO_AUTH_TASK_2_RECEIPT_DURABILITY_PASS",
+      output_sha256:"1add4b71d256ffb6680b54bc26849f2a1ad6d9f80531ad42958f0abf9c3ecccb",
+      meaning:"A no-network local clone added a real descendant commit and reproduced the unique parent-bound replacement Task 2 receipt."
     }
   ] and
   .seal_tdd == {
@@ -113,8 +155,15 @@ jq -e \
   .controls == {
     historical_runners_executable:false,
     historical_runners_behavior:"HISTORICAL_ONLY_REFUSED",
+    historical_runner_paths:[
+      "scripts/gates/p06/successors/observation-capability-v1-phase2/run-once.sh",
+      "scripts/gates/p06/successors/observation-capability-v1/probe-local.sh",
+      "scripts/gates/p06/successors/observation-capability-v1/verify.sh",
+      "scripts/gates/p06/t8-native-observe-once.sh"
+    ],
     historical_git_objects_preserved:true,
     executable_product_source_inventory:"PASS",
+    governed_inventory:{tracked_executables:true,tracked_shebangs_regardless_of_mode:true,compiled_rust:"build.rs + src/**/*.rs",tracked_symlinks:"REFUSE",evidence_allowlist:"EXACT_DIGEST_AND_PER_FILE_RATIONALE"},
     refused_classes:["AUTH_FILE","CREDENTIAL_EXTRACTION","CREDENTIAL_COPY","PROVIDER_LOGIN","BROWSER_AUTH","TOKEN_INPUT"],
     current_auth_fingerprint_claim:"ABSENT",
     historical_auth_fingerprint_authority:"NON_AUTHORITATIVE",
@@ -122,6 +171,7 @@ jq -e \
     provider_or_auth_process:"not invoked",
     browser_launch:"not invoked",
     credential_or_keychain_read:"not invoked",
+    descendant_durability_execution_sealed:true,
     main_mutation:false
   }
   ' "$receipt" >/dev/null || refuse RECEIPT_CONTRACT
@@ -133,6 +183,9 @@ test "$(git show "$input_head:$parent_receipt_rel" | shasum -a 256 | awk '{print
 
 expected_paths='reports/contracts/provider-capability-truth.json
 scripts/gates/p06/successors/observation-capability-v1-phase2/run-once.sh
+scripts/gates/p06/successors/observation-capability-v1/probe-local.sh
+scripts/gates/p06/successors/observation-capability-v1/verify.sh
+scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/source-inventory-allowlist.json
 scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/source-inventory.rb
 scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-source-inventory.sh
 scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-2-receipt-durability.sh
@@ -140,7 +193,11 @@ scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-t
 scripts/gates/p06/t8-native-observe-once.sh'
 test "$(git diff --name-only "$input_head..$implementation_head")" = "$expected_paths" || refuse IMPLEMENTATION_WRITE_SET
 test "$(git ls-tree "$implementation_head" scripts/gates/p06/successors/observation-capability-v1-phase2/run-once.sh | awk '{print $1}')" = 100644 || refuse PHASE2_MODE
+test "$(git ls-tree "$implementation_head" scripts/gates/p06/successors/observation-capability-v1/probe-local.sh | awk '{print $1}')" = 100644 || refuse PROBE_MODE
+test "$(git ls-tree "$implementation_head" scripts/gates/p06/successors/observation-capability-v1/verify.sh | awk '{print $1}')" = 100644 || refuse PROBE_CALLER_MODE
 test "$(git ls-tree "$implementation_head" scripts/gates/p06/t8-native-observe-once.sh | awk '{print $1}')" = 100644 || refuse T8_MODE
+git merge-base --is-ancestor 3e40a4b688bb489b5cbc9a8ec8e32a2be032c26e "$implementation_head" || refuse REPLACEMENT_LINEAGE
+test "$(git diff-tree --no-commit-id --name-only -r 3e40a4b688bb489b5cbc9a8ec8e32a2be032c26e)" = "$receipt_rel" || refuse REPLACED_RECEIPT_NOT_RECEIPT_ONLY
 
 scratch=$(mktemp -d "${TMPDIR:-/tmp}/taskseal-p06-zero-auth-task2-receipt.XXXXXX")
 trap 'rm -rf "$scratch"' EXIT HUP INT TERM
@@ -156,7 +213,7 @@ match_count=$(wc -l <"$scratch/matching-commits" | tr -d ' ')
 case "$match_count" in
   0)
     test "$(git rev-parse HEAD)" = "$implementation_head" || refuse UNCOMMITTED_RECEIPT_WRONG_HEAD
-    test "$(git status --porcelain=v1 --untracked-files=all)" = "?? $receipt_rel" || refuse UNCOMMITTED_RECEIPT_WRITE_SET
+    test "$(git status --porcelain=v1 --untracked-files=all)" = " M $receipt_rel" || refuse UNCOMMITTED_RECEIPT_WRITE_SET
     ;;
   1)
     receipt_commit=$(sed -n '1p' "$scratch/matching-commits")
