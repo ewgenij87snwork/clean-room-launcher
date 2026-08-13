@@ -1,0 +1,198 @@
+{
+  "schema_version": "taskseal.p06.zero-auth-preauthenticated-native-session-v1.task-receipt.v1",
+  "plan_id": "P06-ZERO-AUTH-PREAUTHENTICATED-NATIVE-SESSION-V1",
+  "task": 3,
+  "result": "accepted",
+  "acceptance": {
+    "id": "P06-ZERO-AUTH-T3-LAUNCHER-ENVIRONMENT-CLOSURE-V1",
+    "operator_result": "Named, generic, device-helper, browser-helper, renamed and symlinked external routes share one stable zero-auth refusal before child birth; local commands remain available; and the environment contract carries only an opaque provider-native preauthenticated-session availability state with unavailable and ambiguous states refusing without fallback.",
+    "control_ids": [
+      "AUTH-01"
+    ],
+    "evidence_ids": [
+      "P06-ZERO-AUTH-T3-RED-STABLE-REFUSAL-V1",
+      "P06-ZERO-AUTH-T3-RED-OPAQUE-SESSION-API-V1",
+      "P06-ZERO-AUTH-T3-GREEN-CLI-CALL-PATHS-V1",
+      "P06-ZERO-AUTH-T3-GREEN-OPAQUE-SESSION-V1",
+      "P06-ZERO-AUTH-T3-GREEN-RELEVANT-SUITES-V1",
+      "P06-ZERO-AUTH-T3-GREEN-SOURCE-INVENTORY-V1",
+      "P06-ZERO-AUTH-T3-GREEN-CLIPPY-V1"
+    ]
+  },
+  "binding": {
+    "scheme": "parent-bound-receipt.v2",
+    "input_head": "3f2bda4dadd22395a9313e80b03b029b43e4a5f3",
+    "implementation_result_head": "33cf4f7c89bcd11466662831702de147e81f87b2",
+    "implementation_tree": "3683660d481fd5df5d619ae8df37017526d9ea79",
+    "receipt_commit_parent": "33cf4f7c89bcd11466662831702de147e81f87b2",
+    "parent_task_receipt": {
+      "path": "reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/task-2.json",
+      "commit": "3f2bda4dadd22395a9313e80b03b029b43e4a5f3",
+      "blob_oid": "7a06a1a17ff68b931385326896fde7ba6adc9002",
+      "sha256": "81673336fa08bb90a48229779556bb4a1c9ee21d2b8c0b7bd44eef3db583105a"
+    },
+    "resolution": "Resolve exactly one commit in input_head..tip whose task-3 receipt blob equals these bytes; it must be a single-parent receipt-only child of implementation_result_head. Repository subjects are read from that implementation commit, while the accepted Task 2 receipt is read from input_head."
+  },
+  "inputs": {
+    "plan_checkpoint_path": "/Users/ysorokin/Documents/it/5-LVL - 2026/Temp in Projects/wisdom/taskseal/plans/2026-08-13-p06-zero-auth-preauthenticated-native-session-v1.md",
+    "plan_checkpoint_sha256": "b26939c0863cb8760baa89418d2817ddc732ab5cf5b1551d08218ef585f1ed68",
+    "accepted_task_2_head": "3f2bda4dadd22395a9313e80b03b029b43e4a5f3"
+  },
+  "subject": {
+    "algorithm": "sha256 of sorted path, tab, sha256, newline repository records",
+    "sha256": "3885619438e9d6459d7707e4843803a5fd9948ec822d96db36278886cb147dbf",
+    "sources": [
+      {
+        "kind": "repository_implementation_commit",
+        "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-3-receipt-durability.sh",
+        "sha256": "7b679df8beef8c9790bf848bc3857656a6dd0e725aba4c3089d9e7954ff5611b"
+      },
+      {
+        "kind": "repository_implementation_commit",
+        "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-3-receipt.sh",
+        "sha256": "f7318c406e4cd5893e932f2d1aa2944fa0f8f895b84e09400217c2adc07bb502"
+      },
+      {
+        "kind": "repository_implementation_commit",
+        "path": "src/adapters/environment.rs",
+        "sha256": "99243e1d484059bd3a8273770b01f2ea76c36118e305656b81fca0261406ccbd"
+      },
+      {
+        "kind": "repository_implementation_commit",
+        "path": "src/cli/dispatch.rs",
+        "sha256": "56af1638c0ec5c593ea1b789ec1b8abcd316dda6b55ebd570003079d865cfbd9"
+      },
+      {
+        "kind": "repository_implementation_commit",
+        "path": "src/cli/help.rs",
+        "sha256": "e73bad0fba4e0e981c2a663e319dd5de097ad5a556d65ecf20ce158ced38bdaa"
+      },
+      {
+        "kind": "repository_implementation_commit",
+        "path": "src/cli/process.rs",
+        "sha256": "6c206960c1c6a330b4cfd1ee5f6fc401b5e24581d9075ca57e43e2e378a78b49"
+      },
+      {
+        "kind": "repository_implementation_commit",
+        "path": "tests/adapters/environment.rs",
+        "sha256": "2f667ad0d8fb4f070f91aa95e4cc65b1b3a5da4f7c2826fdf441b0d7e122e9c5"
+      },
+      {
+        "kind": "repository_implementation_commit",
+        "path": "tests/cli/argv_passthrough.rs",
+        "sha256": "8d7b0e17a6ce51059c9e9dac7040dcbe4b10b6658712b6b20d8e97fd46bcf865"
+      },
+      {
+        "kind": "repository_implementation_commit",
+        "path": "tests/cli/foreground_process.rs",
+        "sha256": "28c65cefbaffe7aab33411878cce598a97d0258227c9e2633626f81f4284cab4"
+      }
+    ]
+  },
+  "evidence": [
+    {
+      "id": "P06-ZERO-AUTH-T3-RED-STABLE-REFUSAL-V1",
+      "command": "cargo test --test cli argv_passthrough::named_and_generic_auth_routes_share_one_pre_birth_zero_auth_refusal -- --exact",
+      "exit": 101,
+      "output": "left: P06_REQUIRED: provider tuple is not qualified; right: ZERO_AUTH_REFUSAL: provider-native preauthenticated session unavailable or ambiguous; continue locally",
+      "output_sha256": "d0311996f44e8d760c7bce53e20d1f7454104321b43a1007ce543bf688fb6c26",
+      "meaning": "The real named CLI path refused before child birth but lacked the stable zero-auth contract shared by every prohibited external route."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T3-RED-OPAQUE-SESSION-API-V1",
+      "command": "cargo test --test adapters environment::unavailable_and_ambiguous_session_states_refuse_without_fallback -- --exact",
+      "exit": 101,
+      "output": "error[E0432]: ProviderNativePreauthenticatedSession API is absent",
+      "output_sha256": "7be5d005764ae638406e0c7b66f1957aa482660509918449204ad851b6032e8c",
+      "meaning": "The typed adapter test could not compile before the data-free provider-native session state replaced the raw value map."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T3-GREEN-CLI-CALL-PATHS-V1",
+      "command": "cargo test --test cli argv_passthrough::",
+      "exit": 0,
+      "output": "test result: ok. 4 passed; 0 failed; 0 ignored",
+      "output_sha256": "12b870455880fdf988e0e26f4add7aa2681d66166767172857044de0689dcc8f",
+      "meaning": "Named and generic zero-auth negatives and local-only positives passed; fake external capture files remained absent."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T3-GREEN-OPAQUE-SESSION-V1",
+      "command": "cargo test --test adapters environment::",
+      "exit": 0,
+      "output": "test result: ok. 5 passed; 0 failed; 0 ignored",
+      "output_sha256": "5488d903bcf9e747af3425d8a71354c9d318f4a9f43af02e88e873f792e44b06",
+      "meaning": "The data-free available state passed while unavailable, ambiguous and wrong-identity inputs refused without a value or fallback path."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T3-GREEN-RELEVANT-SUITES-V1",
+      "command": "cargo test --test cli --test adapters",
+      "exit": 0,
+      "output": "adapters: 31 passed; cli: 30 passed; 0 failed",
+      "output_sha256": "8b0d473629b024fab4b51da8c52ce96a8ed6fb6e62b2151854093a8a16bee160",
+      "meaning": "The complete CLI and adapter suites passed after closing external execution and replacing the environment contract."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T3-GREEN-SOURCE-INVENTORY-V1",
+      "command": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-source-inventory.sh",
+      "exit": 0,
+      "output": "P06_ZERO_AUTH_SOURCE_INVENTORY_TEST_PASS",
+      "output_sha256": "ff2c843a18a4b76f59ff24589d0335a7057640cb926ea647f7246d40ae7b64af",
+      "meaning": "The current governed executable and compiled-source inventory remained free of credential, provider-login and browser-flow execution paths."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T3-GREEN-CLIPPY-V1",
+      "command": "cargo clippy --all-targets --offline -- -D warnings",
+      "exit": 0,
+      "output": "cargo clippy --all-targets --offline -- -D warnings: exit 0",
+      "output_sha256": "98f57ed33b0abfb146322bda89690a037b88bcbbbe93ad84019dc7199ae0eac4",
+      "meaning": "Every Rust target compiled under strict warning denial without network access."
+    }
+  ],
+  "seal_tdd": {
+    "red_command": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-3-receipt.sh",
+    "red_exit": 1,
+    "red_output": "P06_ZERO_AUTH_TASK_3_RECEIPT_REFUSAL:MISSING_RECEIPT",
+    "red_output_sha256": "5657c4852348d0aef68f019f6d7c5375bf84f0dd465adaf365dd57af1e1d4f62",
+    "green_command": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-3-receipt.sh",
+    "green_exit": 0,
+    "green_output": "P06_ZERO_AUTH_TASK_3_RECEIPT_PASS",
+    "green_output_sha256": "dde3b4e2e699bf0abbcd33dfda90e45060637af03d7671648f8967d08f1703a0"
+  },
+  "controls": {
+    "arbitrary_external_execution": "REFUSED",
+    "external_allowlist": "TASKSEAL_OWNED_LOCAL_COMMANDS_ONLY",
+    "external_routes": [
+      "NAMED",
+      "GENERIC",
+      "DEVICE_HELPER",
+      "BROWSER_HELPER",
+      "RENAMED",
+      "SYMLINKED"
+    ],
+    "stable_refusal": "ZERO_AUTH_REFUSAL: provider-native preauthenticated session unavailable or ambiguous; continue locally",
+    "local_commands_available": [
+      "status",
+      "scan",
+      "prepare",
+      "check"
+    ],
+    "environment_contract": "PROVIDER_NATIVE_PREAUTHENTICATED_SESSION",
+    "transported_value_count": 0,
+    "unavailable_state": "REFUSED_PRE_BIRTH",
+    "ambiguous_state": "REFUSED_PRE_BIRTH",
+    "auth_or_billing_fallback": false,
+    "external_child_birth": false,
+    "browser_or_prompt_birth": false,
+    "network_access": "not invoked",
+    "main_mutation": false,
+    "verification_environment_exceptions": [
+      {
+        "test": "checked_in_authority_schema_accepts_only_the_exact_private_receipt",
+        "reason": "The test requires authority.head to equal current HEAD, while the execution protocol authorizes continuation from accepted parent-bound task receipts and the owner-issued ignored authority remains fixed at the plan base."
+      },
+      {
+        "test": "clean_public_inventory_passes",
+        "reason": "The working-tree public-boundary test sees the active ignored SDD ledger path .superpowers/sdd/.gitignore; that execution-only path is absent from Git subjects and release inventory."
+      }
+    ]
+  }
+}
