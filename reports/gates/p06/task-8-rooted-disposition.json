@@ -2,7 +2,7 @@
   "schema_version": "taskseal.codex-context-rooted-disposition.v1",
   "task": 8,
   "result": "sealed_negative",
-  "subject": "f459f9187094e572a46799d0c1d4f673e19620bc",
+  "subject": "080daba08279f424cadab63d3cd41caa468a3529",
   "tuple": {
     "provider_id": "codex",
     "artifact_digest": "19c4f144c5226a9f17c58e6f0fa854843b0f77a6eb420f40e2745a12f10f5d37",
@@ -23,29 +23,33 @@
     "forbidden_ambient": false,
     "native_evidence": false,
     "output": {
-      "path": "outputs/task-8-root-discovery.txt",
-      "sha256": "f345133924d06ae5a016e1aceb041c73bf44b6f9cbfb0d058cb4ff16f2f16885"
+      "path": "outputs/task-8-root-discovery-current.txt",
+      "sha256": "3e887c215fb3300ba36510eaaf988e71b69acf707faf0046735aebe66ba6f12b"
     }
   },
   "rooted_attempt": {
-    "process_exit": 1,
-    "native_observation": "UNAVAILABLE",
-    "provider_response": "ABSENT",
-    "result": "ABSENT",
-    "native_required_layers": "UNKNOWN",
-    "native_forbidden_ambient": "UNKNOWN",
-    "authority": {
-      "kind": "T8_GIT_ROOT_PROVIDER_NATIVE",
-      "uses": 1
+    "observed": {
+      "native_process_exit": 1,
+      "native_observation": "UNAVAILABLE",
+      "root_discovery": "L0_L2_L3",
+      "forbidden_ambient_observed": false,
+      "result_sha256": "ABSENT",
+      "binary_unchanged": true,
+      "user_auth_config_unchanged": true,
+      "worktree_unchanged": true,
+      "temporary_auth_removed": true,
+      "raw_output_removed": true
     },
-    "binary_unchanged": true,
-    "user_auth_config_unchanged": true,
-    "worktree_unchanged": true,
-    "temporary_auth_removed": true,
-    "raw_output_retained": false,
+    "derivations": {
+      "provider_response": {"value":"ABSENT","rule":"native_process_exit_nonzero_and_result_sha256_ABSENT"},
+      "native_required_layers": {"value":"UNKNOWN","rule":"offline_root_discovery_is_not_native_evidence"},
+      "native_forbidden_ambient": {"value":"UNKNOWN","rule":"offline_root_discovery_is_not_native_evidence"},
+      "authority_kind": {"value":"T8_GIT_ROOT_PROVIDER_NATIVE","rule":"execution_authority_kind_without_private_id"},
+      "authority_uses": {"value":1,"rule":"one_shot_marker_and_execution_authority"}
+    },
     "output": {
       "path": "outputs/task-8-rooted-attempt.txt",
-      "sha256": "3ed0b86503d31121cee64ba2fbb9db5336ffdd6dd54e03641fea4bdbfbaa6aa4"
+      "sha256": "caeeb9bb68ff461eb422cfdcbeb2146ac66bddb43d127d089b6c210805354489"
     }
   },
   "sources": [
@@ -55,7 +59,7 @@
     },
     {
       "path": "scripts/gates/p06/t8-root-discovery-verify.sh",
-      "sha256": "d1326ec8c456d2cc47a6ec788418354b9ec201b0c95c8fc87f3161da6fe8450e"
+      "sha256": "78f4406cd31cb45411fead5e9e10a4b1a9f45a9f76c4e1b9e51280dda55fc2f2"
     },
     {
       "path": "scripts/gates/p06/test-t8-native-sandbox-profile.sh",
