@@ -4,7 +4,7 @@ set -eu
 root=$(CDPATH='' cd -- "$(dirname -- "$0")/../../../../.." && pwd -P)
 base=73d48ffbed1794c6691ba59be006aa096dcfcb22
 task_1_commit=09ec751eddc33b5c941393503271de0afcb70744
-replaced_task_2_commit=26ab551b984cfb977eec945f0583ed9f382251f2
+replaced_task_2_commit=193fe6394455bfbf0fb1c5ba52152be523fa6b8e
 correction_rel=reports/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/correction.json
 task_1_rel=reports/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/task-1.json
 task_2_rel=reports/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/task-2.json
@@ -274,9 +274,9 @@ validate_task_2() {
     .acceptance == {id:"P06-PHASE2-CORRECTION-T2-HISTORICAL-BINDING-V1",operator_result:"The sole correction gate chains the immutable Phase 2 verifier and rejects privacy, protected-state, write-set, historical-drift, receipt-binding and classification mutations.",mutation_pass_marker:"P06_PHASE2_CORRECTION_MUTATIONS_PASS"} and
     (.acceptance | keys) == ["id","mutation_pass_marker","operator_result"] and
     (.binding | keys) == ["implementation_result_head","implementation_tree","input_head","receipt_commit_parent","replaces_receipt_commit","resolution","scheme"] and
-    .binding.scheme == "parent-bound-receipt.v2" and
-    .binding.input_head == "26ab551b984cfb977eec945f0583ed9f382251f2" and
-    .binding.replaces_receipt_commit == "26ab551b984cfb977eec945f0583ed9f382251f2" and
+    .binding.scheme == "parent-bound-receipt.v3" and
+    .binding.input_head == "193fe6394455bfbf0fb1c5ba52152be523fa6b8e" and
+    .binding.replaces_receipt_commit == "193fe6394455bfbf0fb1c5ba52152be523fa6b8e" and
     .binding.receipt_commit_parent == .binding.implementation_result_head and
     (.binding.implementation_result_head | test("^[0-9a-f]{40}$")) and
     (.binding.implementation_tree | test("^[0-9a-f]{40}$")) and
@@ -305,9 +305,23 @@ validate_task_2() {
       "P06-PHASE2-CORRECTION-T2-REVIEW1-RED-CURRENT-SUBJECT-V1",
       "P06-PHASE2-CORRECTION-T2-REVIEW1-RED-TASK3-INTERSTITIAL-V1",
       "P06-PHASE2-CORRECTION-T2-REVIEW1-RED-HISTORICAL-REVERT-V1",
-      "P06-PHASE2-CORRECTION-T2-REVIEW1-GREEN-MUTATIONS-PASS-V1"
+      "P06-PHASE2-CORRECTION-T2-REVIEW1-GREEN-MUTATIONS-PASS-V1",
+      "P06-PHASE2-CORRECTION-T2-REVIEW2-RED-COMMAND-BINDING-V1",
+      "P06-PHASE2-CORRECTION-T2-REVIEW2-GREEN-MUTATIONS-PASS-V1"
     ] and
-    [.evidence[].exit] == [1,0,1,1,1,1,1,0] and
+    [.evidence[].exit] == [1,0,1,1,1,1,1,0,1,0] and
+    [.evidence[].command] == [
+      "sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/test-verify.sh",
+      "sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/test-verify.sh",
+      "P06_PHASE2_CORRECTION_TEST_CASE=task_2_tree sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/test-verify.sh",
+      "P06_PHASE2_CORRECTION_TEST_CASE=task_2_privacy sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/test-verify.sh",
+      "P06_PHASE2_CORRECTION_TEST_CASE=current_subject sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/test-verify.sh",
+      "P06_PHASE2_CORRECTION_TEST_CASE=task_3_interstitial sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/test-verify.sh",
+      "P06_PHASE2_CORRECTION_TEST_CASE=historical_revert sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/test-verify.sh",
+      "sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/test-verify.sh",
+      "P06_PHASE2_CORRECTION_TEST_CASE=task_2_command sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/test-verify.sh",
+      "sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/test-verify.sh"
+    ] and
     [.evidence[].output] == [
       "scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/test-verify.sh: line 28: /Users/ysorokin/taskseal-wt/p06-phase2-evidence-correction/scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/verify.sh: No such file or directory",
       "P06_PHASE2_CORRECTION_MUTATIONS_PASS",
@@ -316,6 +330,8 @@ validate_task_2() {
       "P06_EXPECTED_REFUSAL_MISSING:current_subject",
       "P06_EXPECTED_REFUSAL_MISSING:task_3_interstitial",
       "P06_EXPECTED_REFUSAL_MISSING:historical_change_then_revert",
+      "P06_PHASE2_CORRECTION_MUTATIONS_PASS",
+      "P06_EXPECTED_REFUSAL_MISSING:task_2_command",
       "P06_PHASE2_CORRECTION_MUTATIONS_PASS"
     ]
   ' "$task_2" >/dev/null
