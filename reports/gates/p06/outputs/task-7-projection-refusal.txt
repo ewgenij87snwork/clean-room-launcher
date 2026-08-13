@@ -1,4 +1,5 @@
 projection_state=REFUSED
+dispatch_preflight=REFUSED
 ambient_values=not-read
 target_state=unchanged
 network=not-attempted
