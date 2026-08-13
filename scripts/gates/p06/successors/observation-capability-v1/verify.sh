@@ -6,7 +6,7 @@ default_receipt="$root/reports/gates/p06/successors/observation-capability-v1/ph
 receipt=${P06_CAPABILITY_RECEIPT:-$default_receipt}
 codex_bin=${P06_CODEX_BIN:?P06_CODEX_BIN is required}
 predecessor=707622eaf5e1543e34341be4eed152dbfe3ae5c5
-subject=e86f92d165530c5147b37be7c3040e08b674b938
+subject=a2315ea5b6b22f4ada0c253f5a513be80bb3ef67
 
 test "$(pwd -P)" = "$root"
 test "$(git -C "$root" rev-parse --show-toplevel)" = "$root"
@@ -61,10 +61,10 @@ jq -e --arg predecessor "$predecessor" --arg subject "$subject" '
   .controls == {network_denied:true,provider_route_started:false,owner_auth_read:false,owner_config_mutated:false,temporary_home_removed:true,raw_output_removed:true} and
   .product == {qualification:"NOT_QUALIFIED",original_progression:"STOPPED_AT_T8",original_tasks_9_13:"FORBIDDEN",phase_2:"WAITING_FOR_OWNER"} and
   .sources == [
-    {path:"scripts/gates/p06/successors/observation-capability-v1/probe-local.sh",sha256:"9fa5ce9da8b9875b7c104789be56e793482b7fe33c3015bab0b7e2d143efe3ba"},
-    {path:"scripts/gates/p06/successors/observation-capability-v1/test-probe-local.sh",sha256:"e6dccfed4ee0e3edb79ccd999aa499118d6e656f453b46107ad9daac9e83ae66"}
+    {path:"scripts/gates/p06/successors/observation-capability-v1/probe-local.sh",sha256:"d741ad3860c572e2c086a824efdc727a16a56feff840677211064aaba556d15f"},
+    {path:"scripts/gates/p06/successors/observation-capability-v1/test-probe-local.sh",sha256:"734e632e714fa9e37dba89631fcffdcc217ab6f7bdc5e1aa4076ea700739c211"}
   ] and
-  .evidence == {output_path:"reports/gates/p06/successors/observation-capability-v1/outputs/task-2-capability.txt",output_sha256:"fec02c9fe34e28a7b2bcaf421f7b159a6f8f909aa32a2e1de5021db08f09bad9"}
+  .evidence == {task_1_output_path:"reports/gates/p06/successors/observation-capability-v1/outputs/task-1-boundary.txt",task_1_output_sha256:"652f91678ebee476d8f0ba036ab72d825483b3b888fee8b8de35735b7dd20cc2",output_path:"reports/gates/p06/successors/observation-capability-v1/outputs/task-2-capability.txt",output_sha256:"7c0b4d35091cb2cc077e97ebe9492ace0390327dc17c8f484c543b2b5090fa50"}
 ' "$receipt" >/dev/null
 
 jq -r '.sources[] | [.path,.sha256] | @tsv' "$receipt" | while IFS='	' read -r path expected; do
@@ -72,6 +72,8 @@ jq -r '.sources[] | [.path,.sha256] | @tsv' "$receipt" | while IFS='	' read -r p
 done
 output_path=$(jq -r .evidence.output_path "$receipt")
 test "$(shasum -a 256 "$root/$output_path" | awk '{print $1}')" = "$(jq -r .evidence.output_sha256 "$receipt")"
+task_1_output_path=$(jq -r .evidence.task_1_output_path "$receipt")
+test "$(shasum -a 256 "$root/$task_1_output_path" | awk '{print $1}')" = "$(jq -r .evidence.task_1_output_sha256 "$receipt")"
 
 temporary_root=$(mktemp -d /tmp/taskseal-p06-capability-gate.XXXXXX)
 temporary_root=$(realpath "$temporary_root")
