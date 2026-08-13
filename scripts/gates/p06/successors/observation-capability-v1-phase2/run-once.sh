@@ -125,10 +125,10 @@ test "$(realpath "$auth_source")" = "$auth_source"
 test -f "$auth_source" && test ! -L "$auth_source" && test "$(stat -f %Lp "$auth_source")" = 600
 
 # Validate only shape/type before consuming the login counter. No credential bytes leave the sandbox.
-/usr/bin/sandbox-exec -f "$extract_profile" /usr/bin/ruby -rjson -e '
+(cd "$temporary_root" && /usr/bin/sandbox-exec -f "$extract_profile" /usr/bin/ruby -rjson -e '
   value=JSON.parse(File.read(ARGV.fetch(0))).dig("tokens","access_token")
   exit(value.is_a?(String) && !value.empty? && !value.include?("\n") && !value.include?("\r") ? 0 : 2)
-' "$auth_source"
+' "$auth_source")
 
 before_auth_metadata=$(stat -f '%d:%i:%z:%m:%c:%Lp' "$auth_source")
 before_binary=$(shasum -a 256 "$command" | awk '{print $1}')
@@ -139,12 +139,12 @@ set -C
 : >"$login_marker"
 set +C
 set +e
-TASKSEAL_EXTRACT_STATUS="$temporary_root/extract.status" /usr/bin/sandbox-exec -f "$extract_profile" /usr/bin/ruby -rjson -e '
+(cd "$temporary_root" && TASKSEAL_EXTRACT_STATUS="$temporary_root/extract.status" /usr/bin/sandbox-exec -f "$extract_profile" /usr/bin/ruby -rjson -e '
   value=JSON.parse(File.read(ARGV.fetch(0))).dig("tokens","access_token")
   abort unless value.is_a?(String) && !value.empty? && !value.include?("\n") && !value.include?("\r")
   File.write(ENV.fetch("TASKSEAL_EXTRACT_STATUS"), "EXTRACT_OK\n")
   STDOUT.write(value); STDOUT.write("\n")
-' "$auth_source" | env -i HOME="$temporary_root/home" CODEX_HOME="$temporary_root/codex-home" XDG_CONFIG_HOME="$temporary_root/xdg" PATH=/usr/bin:/bin \
+' "$auth_source") | env -i HOME="$temporary_root/home" CODEX_HOME="$temporary_root/codex-home" XDG_CONFIG_HOME="$temporary_root/xdg" PATH=/usr/bin:/bin \
   /usr/bin/sandbox-exec -f "$online_profile" "$command" login --with-access-token >"$temporary_root/login.stdout" 2>"$temporary_root/login.stderr"
 login_status=$?
 set -e

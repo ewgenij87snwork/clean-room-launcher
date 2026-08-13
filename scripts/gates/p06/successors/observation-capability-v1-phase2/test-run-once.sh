@@ -43,6 +43,7 @@ for source_pattern in \
   'native_observation'; do
   rg -n -- "$source_pattern" "$runner" >/dev/null
 done
+test "$(rg -n 'cd "\$temporary_root"' "$runner" | wc -l | tr -d ' ')" -ge 2
 if rg -n 'pipe-credential|credential=.*jq|credential=.*cat|export .*TOKEN|CODEX_ACCESS_TOKEN=' "$runner"; then exit 2; fi
 
 printf '%s\n' \
