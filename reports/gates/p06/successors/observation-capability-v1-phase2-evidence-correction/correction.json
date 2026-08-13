@@ -1,0 +1,70 @@
+{
+  "schema_version": "taskseal.p06.phase2-evidence-correction.v1",
+  "plan_id": "P06-CODEX-OBSERVATION-CAPABILITY-V1-PHASE2-EVIDENCE-CORRECTION",
+  "scope": {
+    "base_head": "73d48ffbed1794c6691ba59be006aa096dcfcb22",
+    "exclusive_write_set": [
+      "scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/**",
+      "reports/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/**"
+    ],
+    "historical_mutation": false
+  },
+  "predecessor": {
+    "checkpoint": "73d48ffbed1794c6691ba59be006aa096dcfcb22",
+    "branch": "feat/p06-codex-observation-capability-v1-phase2",
+    "gate_path": "scripts/gates/p06/successors/observation-capability-v1-phase2/verify.sh",
+    "gate_sha256": "2e597069bb9fc3287e88ccc18071123e768d488697128c5ff6c9debaa0b3ece9",
+    "gate_blob_oid": "6df1553f643ba8ad9918a90fffc468e51eefc3b6",
+    "receipt_path": "reports/gates/p06/successors/observation-capability-v1-phase2/phase-2.json",
+    "receipt_sha256": "2a2e51fc2e97d657aa1fc7d413304f7b11362791abf4e354c3039406c5f1dfed",
+    "receipt_blob_oid": "53f2424669815d64136745194703a7be48d77c8d",
+    "pass_marker": "P06_CODEX_OBSERVATION_CAPABILITY_V1_PHASE2_PASS"
+  },
+  "task_1": {
+    "receipt_path": "reports/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/task-1.json",
+    "receipt_sha256": "403a73a8513d84db52a91e386549c2348b7e8d7906aaccb4d5d872416e742346",
+    "receipt_blob_oid": "3e5d403ab51e961698a088fc77aca563535b0700",
+    "receipt_commit": "09ec751eddc33b5c941393503271de0afcb70744",
+    "implementation_result_head": "f2a018aee29074199edbc2ee231d00e077249d84",
+    "subject_sha256": "6f4173333eb04ea4ddae6ef87c8276d943fe163628170ae4de57ef0df42eb553",
+    "acceptance_id": "P06-PHASE2-CORRECTION-T1-SYNTHETIC-BOUNDARY-V1"
+  },
+  "historical": [
+    {
+      "id": "P06_PHASE1_RECEIPT",
+      "commit": "d3c753458c32dc7bc4105f1deddf35d8d43fb5d2",
+      "path": "reports/gates/p06/successors/observation-capability-v1/phase-1.json",
+      "sha256": "7e0db9d70c99976e7666d6a9a4ecc903462d821620f8d862cd397a50c2136115",
+      "blob_oid": "a1bb617da344b99f5be0db56c068ba25ad47d2e2"
+    },
+    {
+      "id": "P06_T8_ROOTED_DISPOSITION",
+      "commit": "73d48ffbed1794c6691ba59be006aa096dcfcb22",
+      "path": "reports/gates/p06/task-8-rooted-disposition.json",
+      "sha256": "250bd5a4d1591213ebd4ea145991572da5a0356aed777e179a74ae25db899d18",
+      "blob_oid": "706057bdeb50eeae4a3ffa557a6141b6b00eda68"
+    },
+    {
+      "id": "P06_PHASE2_RECEIPT",
+      "commit": "73d48ffbed1794c6691ba59be006aa096dcfcb22",
+      "path": "reports/gates/p06/successors/observation-capability-v1-phase2/phase-2.json",
+      "sha256": "2a2e51fc2e97d657aa1fc7d413304f7b11362791abf4e354c3039406c5f1dfed",
+      "blob_oid": "53f2424669815d64136745194703a7be48d77c8d"
+    }
+  ],
+  "classification": {
+    "qualification": "NOT_QUALIFIED",
+    "progression": "STOPPED_AT_T8",
+    "original_tasks_9_13": "FORBIDDEN",
+    "phase_2_result": "SEALED_NEGATIVE",
+    "independent_review": "CORRECTION_PENDING"
+  },
+  "controls": {
+    "fixtures_only": true,
+    "privacy": "NO_CREDENTIAL_BYTES",
+    "protected_state": "HISTORICAL_ATTESTATION_BOUND",
+    "network_access": "NOT_INVOKED",
+    "provider_or_codex_process": "NOT_INVOKED",
+    "credential_or_keychain_read": "NOT_INVOKED"
+  }
+}
