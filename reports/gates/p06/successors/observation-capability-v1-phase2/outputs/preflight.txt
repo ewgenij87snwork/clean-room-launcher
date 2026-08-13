@@ -1,0 +1,12 @@
+schema_version=taskseal.p06-codex-observation-capability-v1-phase2.preflight.v1
+candidate=codex-0.147.0-macos-aarch64
+executable_sha256=19c4f144c5226a9f17c58e6f0fa854843b0f77a6eb420f40e2745a12f10f5d37
+credential_field=.tokens.access_token
+credential_pipe=ANONYMOUS_STDIN
+credential_shell_variable=false
+keychain_access=DENIED
+login_counter=UNUSED
+model_counter=UNUSED
+network_test=EPERM
+provider_route_started=false
+temporary_state_removed=true
