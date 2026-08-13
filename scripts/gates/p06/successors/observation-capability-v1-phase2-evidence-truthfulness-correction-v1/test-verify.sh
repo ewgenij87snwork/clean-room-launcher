@@ -6,6 +6,10 @@ successor_rel=scripts/gates/p06/successors/observation-capability-v1-phase2-evid
 truth_rel=reports/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/truthfulness.json
 verify="$root/$successor_rel/verify.sh"
 truth="$root/$truth_rel"
+authority="$root/.taskseal-dev/execution-authority.json"
+status=$(jq -r .status_path "$authority")
+dashboard=$(jq -r .dashboard_path "$authority")
+worklog=$(jq -r .worklog_path "$authority")
 
 if ! test -x "$verify"; then
   printf '%s\n' P06_TRUTH_RED_VERIFIER_MISSING >&2
@@ -21,8 +25,14 @@ trap 'rm -rf "$temporary_root"' EXIT HUP INT TERM
 fixture_truth="$temporary_root/truthfulness.json"
 changed_paths="$temporary_root/changed-paths.txt"
 scan_root="$temporary_root/privacy-subject"
+fixture_status="$temporary_root/STATUS.md"
+fixture_dashboard="$temporary_root/TASKSEAL-OWNER-DASHBOARD.html"
+fixture_worklog="$temporary_root/TASKSEAL-WORKLOG.jsonl"
 mkdir -p "$scan_root/$successor_rel" "$scan_root/$(dirname -- "$truth_rel")"
 cp "$truth" "$fixture_truth"
+cp "$status" "$fixture_status"
+cp "$dashboard" "$fixture_dashboard"
+cp "$worklog" "$fixture_worklog"
 cp "$root/$successor_rel/verify.sh" "$scan_root/$successor_rel/verify.sh"
 cp "$root/$successor_rel/test-verify.sh" "$scan_root/$successor_rel/test-verify.sh"
 cp "$truth" "$scan_root/$truth_rel"
@@ -34,6 +44,30 @@ run_verify() {
     P06_TRUTH_CHANGED_PATHS_FILE="$changed_paths" \
     P06_TRUTH_PRIVACY_ROOT="$scan_root" \
     "$verify"
+}
+
+run_ssot_verify() {
+  P06_TRUTH_STAGE=task-3-precommit \
+    P06_TRUTH_SSOT_ONLY=1 \
+    P06_TRUTH_STATUS="$fixture_status" \
+    P06_TRUTH_DASHBOARD="$fixture_dashboard" \
+    P06_TRUTH_WORKLOG="$fixture_worklog" \
+    "$verify"
+}
+
+ssot_mutation_must_fail() {
+  name=$1
+  set +e
+  run_ssot_verify >/dev/null 2>&1
+  mutation_status=$?
+  set -e
+  if test "$mutation_status" = 0; then
+    printf 'P06_TRUTH_EXPECTED_REFUSAL_MISSING:%s\n' "$name" >&2
+    exit 1
+  fi
+  cp "$status" "$fixture_status"
+  cp "$dashboard" "$fixture_dashboard"
+  cp "$worklog" "$fixture_worklog"
 }
 
 mutation_must_fail() {
@@ -66,6 +100,34 @@ run_selected() {
   test "$test_case" = all || test "$test_case" = "$1"
 }
 
+if run_selected chronology_link; then
+  jq -s -c '.[-1].supersedes_event_id="P06-CODEX-OBS-CAP-V1-PH2-CORRECTION-T3-001" | .[]' "$worklog" >"$fixture_worklog"
+  ssot_mutation_must_fail chronology_link
+fi
+if run_selected chronology_order; then
+  jq -s -c '.[-1].stopped_at="2026-08-13T11:18:08+02:00" | .[]' "$worklog" >"$fixture_worklog"
+  ssot_mutation_must_fail chronology_order
+fi
+if run_selected immutable_prefix; then
+  jq -s -c '.[0].status="mutated" | .[]' "$worklog" >"$fixture_worklog"
+  ssot_mutation_must_fail immutable_prefix
+fi
+if run_selected unique_event_ids; then
+  jq -s -c '.[-1].event_id=.[-2].event_id | .[]' "$worklog" >"$fixture_worklog"
+  ssot_mutation_must_fail unique_event_ids
+fi
+if run_selected progress_semantics; then
+  sed 's/53%/54%/g' "$status" >"$fixture_status"
+  ssot_mutation_must_fail progress_semantics
+fi
+if run_selected review_semantics; then
+  sed 's/REV BLOCKER correction in review/REV PASS/g' "$status" >"$fixture_status"
+  ssot_mutation_must_fail review_semantics
+fi
+if run_selected uncertainty_semantics; then
+  sed 's/UNKNOWN\/UNVERIFIED/VERIFIED/g' "$dashboard" >"$fixture_dashboard"
+  ssot_mutation_must_fail uncertainty_semantics
+fi
 if run_selected boolean_inventory_bound_source; then
   mutation_must_fail boolean_inventory_bound_source '.historical_claim_authority.json_pointers |= map(select(. != "reports/gates/p06/task-8-rooted-disposition.json#/rooted_attempt/observed/forbidden_ambient_observed"))'
 fi
@@ -97,6 +159,32 @@ if test "$test_case" != all; then
   printf '%s\n' P06_PHASE2_TRUTHFULNESS_MUTATIONS_PASS
   exit 0
 fi
+
+set +e
+ssot_baseline_output=$(run_ssot_verify 2>&1)
+ssot_baseline_status=$?
+set -e
+if test "$ssot_baseline_status" -ne 0; then
+  test -z "$ssot_baseline_output" || printf '%s\n' "$ssot_baseline_output" >&2
+  printf '%s\n' P06_TRUTH_EXPECTED_SSOT_BASELINE_PASS >&2
+  exit 1
+fi
+test "$ssot_baseline_output" = P06_PHASE2_TRUTHFULNESS_SSOT_PASS
+
+jq -s -c '.[-1].supersedes_event_id="P06-CODEX-OBS-CAP-V1-PH2-CORRECTION-T3-001" | .[]' "$worklog" >"$fixture_worklog"
+ssot_mutation_must_fail chronology_link
+jq -s -c '.[-1].stopped_at="2026-08-13T11:18:08+02:00" | .[]' "$worklog" >"$fixture_worklog"
+ssot_mutation_must_fail chronology_order
+jq -s -c '.[0].status="mutated" | .[]' "$worklog" >"$fixture_worklog"
+ssot_mutation_must_fail immutable_prefix
+jq -s -c '.[-1].event_id=.[-2].event_id | .[]' "$worklog" >"$fixture_worklog"
+ssot_mutation_must_fail unique_event_ids
+sed 's/53%/54%/g' "$status" >"$fixture_status"
+ssot_mutation_must_fail progress_semantics
+sed 's/REV BLOCKER correction in review/REV PASS/g' "$status" >"$fixture_status"
+ssot_mutation_must_fail review_semantics
+sed 's/UNKNOWN\/UNVERIFIED/VERIFIED/g' "$dashboard" >"$fixture_dashboard"
+ssot_mutation_must_fail uncertainty_semantics
 
 mutation_must_fail credential_state '.uncertainty.credential_retention.state="NOT_RETAINED"'
 mutation_must_fail credential_verification '.uncertainty.credential_retention.verification="VERIFIED"'
