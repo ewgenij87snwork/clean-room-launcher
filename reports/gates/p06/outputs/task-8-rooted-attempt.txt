@@ -1,0 +1,16 @@
+process_exit=1
+native_observation=UNAVAILABLE
+provider_response=ABSENT
+result=ABSENT
+native_required_layers=UNKNOWN
+native_forbidden_ambient=UNKNOWN
+offline_root_discovery=L0_L2_L3
+offline_forbidden_ambient=false
+authority_kind=T8_GIT_ROOT_PROVIDER_NATIVE
+authority_uses=1
+binary_unchanged=true
+user_auth_config_unchanged=true
+worktree_unchanged=true
+temporary_auth_removed=true
+raw_output_retained=false
+qualification=NOT_QUALIFIED

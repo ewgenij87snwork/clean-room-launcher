@@ -1,0 +1,72 @@
+{
+  "schema_version": "taskseal.codex-context-rooted-disposition.v1",
+  "task": 8,
+  "result": "sealed_negative",
+  "subject": "f459f9187094e572a46799d0c1d4f673e19620bc",
+  "tuple": {
+    "provider_id": "codex",
+    "artifact_digest": "19c4f144c5226a9f17c58e6f0fa854843b0f77a6eb420f40e2745a12f10f5d37",
+    "version": [
+      0,
+      147,
+      0
+    ],
+    "os": "macos",
+    "arch": "aarch64"
+  },
+  "historical_receipt": {
+    "path": "task-8.json",
+    "sha256": "5207d1b52b4bf1f748368fef79dbc0b7129413aeb58b1f9601390a4f4cc79bc4"
+  },
+  "root_discovery": {
+    "state": "L0_L2_L3",
+    "forbidden_ambient": false,
+    "native_evidence": false,
+    "output": {
+      "path": "outputs/task-8-root-discovery.txt",
+      "sha256": "f345133924d06ae5a016e1aceb041c73bf44b6f9cbfb0d058cb4ff16f2f16885"
+    }
+  },
+  "rooted_attempt": {
+    "process_exit": 1,
+    "native_observation": "UNAVAILABLE",
+    "provider_response": "ABSENT",
+    "result": "ABSENT",
+    "native_required_layers": "UNKNOWN",
+    "native_forbidden_ambient": "UNKNOWN",
+    "authority": {
+      "kind": "T8_GIT_ROOT_PROVIDER_NATIVE",
+      "uses": 1
+    },
+    "binary_unchanged": true,
+    "user_auth_config_unchanged": true,
+    "worktree_unchanged": true,
+    "temporary_auth_removed": true,
+    "raw_output_retained": false,
+    "output": {
+      "path": "outputs/task-8-rooted-attempt.txt",
+      "sha256": "3ed0b86503d31121cee64ba2fbb9db5336ffdd6dd54e03641fea4bdbfbaa6aa4"
+    }
+  },
+  "sources": [
+    {
+      "path": "scripts/gates/p06/t8-native-observe-once.sh",
+      "sha256": "21f565399615c0d9c5dd7bfc6da7e521cda77b3f554a0be7f705003de48fb89f"
+    },
+    {
+      "path": "scripts/gates/p06/t8-root-discovery-verify.sh",
+      "sha256": "d1326ec8c456d2cc47a6ec788418354b9ec201b0c95c8fc87f3161da6fe8450e"
+    },
+    {
+      "path": "scripts/gates/p06/test-t8-native-sandbox-profile.sh",
+      "sha256": "15a3c857b6abcca3486f68ff166f045fecf3922aa47c57486ea00393bf9ef504"
+    },
+    {
+      "path": "src/cli/dispatch.rs",
+      "sha256": "3e03c564cffe83d65537e26f246fca8c522b86cd89f4a49fcdcb362e3a25e4c1"
+    }
+  ],
+  "product_route": "P06_REQUIRED",
+  "qualification": "NOT_QUALIFIED",
+  "progression": "STOPPED_AT_T8"
+}
