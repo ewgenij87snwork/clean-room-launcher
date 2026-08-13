@@ -1,0 +1,99 @@
+{
+  "schema_version": "taskseal.p06.zero-auth-preauthenticated-native-session-v1.task-receipt.v1",
+  "plan_id": "P06-ZERO-AUTH-PREAUTHENTICATED-NATIVE-SESSION-V1",
+  "task": 1,
+  "result": "accepted",
+  "acceptance": {
+    "id": "P06-ZERO-AUTH-T1-GOVERNANCE-V1",
+    "operator_result": "OD-10 and permanent product law make TaskSeal zero-auth until both owner gates exist; ADP-05 no longer permits raw auth, AUTH-01 is assigned to P06/P08, threshold automation and runtime stargazer checks are forbidden, unavailable or ambiguous native-session state refuses before provider birth, and local functionality remains available.",
+    "control_ids": [
+      "ADP-05",
+      "AUTH-01",
+      "OD-10"
+    ],
+    "evidence_ids": [
+      "P06-ZERO-AUTH-T1-RED-MISSING-CONTROL-VALIDATOR-V1",
+      "P06-ZERO-AUTH-T1-GREEN-CONTROL-CONTRACT-V1"
+    ]
+  },
+  "binding": {
+    "scheme": "parent-bound-receipt.v1",
+    "input_head": "b9a8d2c9dda084d90b984f77faa8a26dd4f03b3a",
+    "implementation_result_head": "f70c8aea7b5cb78f9d5e91befae2a5da914d62b8",
+    "implementation_tree": "692f524de3da1440a018a792456e44c492346291",
+    "receipt_commit_parent": "f70c8aea7b5cb78f9d5e91befae2a5da914d62b8",
+    "resolution": "The containing receipt-only child must have implementation_result_head as its first parent, so the implementation subject is reproducible without a self-referential containing commit."
+  },
+  "inputs": {
+    "plan_checkpoint_path": "/Users/ysorokin/Documents/it/5-LVL - 2026/Temp in Projects/wisdom/taskseal/plans/2026-08-13-p06-zero-auth-preauthenticated-native-session-v1.md",
+    "plan_checkpoint_sha256": "b26939c0863cb8760baa89418d2817ddc732ab5cf5b1551d08218ef585f1ed68",
+    "predecessor_checkpoint": "b9a8d2c9dda084d90b984f77faa8a26dd4f03b3a"
+  },
+  "subject": {
+    "algorithm": "sha256 of sorted path, tab, sha256, newline source records",
+    "sha256": "d363289611df105ecb46c99443e0e3feddd8410fc4025f1888ebc141febfe2ae",
+    "sources": [
+      {
+        "path": "/Users/ysorokin/Documents/it/5-LVL - 2026/Temp in Projects/wisdom/taskseal/TASKSEAL-MASTER-PROGRAM.md",
+        "sha256": "5b864edeeea14cf9615dbc1945eb82ed830f5c95ed4dd44e5c2f1f6e33a8a753"
+      },
+      {
+        "path": "/Users/ysorokin/Documents/it/5-LVL - 2026/Temp in Projects/wisdom/taskseal/TASKSEAL-OWNER-DECISIONS.md",
+        "sha256": "7524ff9f821152f4a797686491bc776e314f4a96bc6dcca788a8b4dec417512a"
+      },
+      {
+        "path": "/Users/ysorokin/Documents/it/5-LVL - 2026/Temp in Projects/wisdom/taskseal/TASKSEAL-REQUIREMENTS-TRACEABILITY.md",
+        "sha256": "a0c949b57bfdf6b8ec6e28d15f014ac893c2ec2caa08fe09d3d07e1f0c94c5a7"
+      },
+      {
+        "path": "controls/v0.1-execution-map.tsv",
+        "sha256": "b5809bbcf74bf5370aa22d703f2a96801bc8ca535c564ca195efbeca639d6325"
+      },
+      {
+        "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/control-validator.rb",
+        "sha256": "349970245708511100786ea47f2e55c9e9834af883582cb1ddc87b171bdd3165"
+      },
+      {
+        "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-control-validator.sh",
+        "sha256": "b7da7bfd3df5d0fb284c4bfa56375b043b29ab0c2313a4c686feb8ed13feb2bc"
+      }
+    ]
+  },
+  "evidence": [
+    {
+      "id": "P06-ZERO-AUTH-T1-RED-MISSING-CONTROL-VALIDATOR-V1",
+      "command": "sh scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-control-validator.sh",
+      "exit": 1,
+      "output": "P06_ZERO_AUTH_RED_MISSING_CONTROL_VALIDATOR",
+      "output_sha256": "bf10638ed78669e4b80e3eb2e255a7d4e79d1517d5a6fa35cde79b5c5f497b0d",
+      "meaning": "The focused contract test failed before the validator and governed semantics existed."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T1-GREEN-CONTROL-CONTRACT-V1",
+      "command": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-control-validator.sh",
+      "exit": 0,
+      "output": "P06_ZERO_AUTH_CONTROL_TEST_PASS",
+      "output_sha256": "28fe4d0eb9e577e479f071c5edfa5060197bfe346d9798825ab6e646475908b4",
+      "meaning": "The real validator accepted the governed SSOT/map and refused threshold automation, credential ownership, post-birth ambiguity, lost local continuity, old ADP-05 semantics and broken P06/P08 ownership fixtures."
+    }
+  ],
+  "seal_tdd": {
+    "red_command": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-1-receipt.sh",
+    "red_exit": 1,
+    "red_output": "P06_ZERO_AUTH_RED_MISSING_TASK_1_RECEIPT",
+    "red_output_sha256": "733a6ffa78acbfa2c6ac555c6d81ccc8c00e0e0b6eae6b083c409c1d80103252",
+    "green_output": "P06_ZERO_AUTH_TASK_1_RECEIPT_PASS"
+  },
+  "controls": {
+    "threshold_reconsideration_only": true,
+    "runtime_github_or_stargazer_check": false,
+    "automatic_auth_enablement": false,
+    "credential_ownership": "none",
+    "provider_birth_on_unavailable_or_ambiguous_session": false,
+    "local_functionality_continues": true,
+    "network_access": "not invoked",
+    "provider_or_auth_process": "not invoked",
+    "credential_or_keychain_read": "not invoked",
+    "main_mutation": false
+  }
+}
