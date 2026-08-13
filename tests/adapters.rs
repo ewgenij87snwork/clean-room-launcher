@@ -1,3 +1,5 @@
+#[path = "adapters/codex/context_canaries.rs"]
+mod codex_context_canaries;
 #[path = "adapters/codex/environment.rs"]
 mod codex_environment;
 #[path = "adapters/codex/identity.rs"]
