@@ -1,0 +1,169 @@
+{
+  "schema_version": "taskseal.p06.phase2-evidence-truthfulness-correction.v1",
+  "plan_id": "P06-PHASE2-EVIDENCE-TRUTHFULNESS-CORRECTION-V1",
+  "scope": {
+    "base_head": "c54284cb3c2a2cfb7fb8508c5eef35204fd8ed71",
+    "historical_mutation": false,
+    "runtime_reconstruction": false,
+    "exclusive_write_set": [
+      "scripts/gates/p06/successors/observation-capability-v1-phase2/run-once.sh",
+      "scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/**",
+      "reports/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/**"
+    ]
+  },
+  "task_1": {
+    "receipt_path": "reports/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/task-1.json",
+    "receipt_sha256": "7d6ae063881b69b1117402cae45bbe2b50ae3609595e2aec424ed5097ba49f8e",
+    "receipt_commit": "82e1acb883ebe4ba2f3f54ad57857b126c942409",
+    "implementation_result_head": "29c5da46d80b79e91c548aaacc44958e95e37bcb",
+    "acceptance_id": "P06-PHASE2-TRUTH-CORRECTION-T1-SHARED-BOUNDARY-V3"
+  },
+  "historical_receipts": [
+    {
+      "id": "P06_PHASE1_RECEIPT",
+      "commit": "d3c753458c32dc7bc4105f1deddf35d8d43fb5d2",
+      "path": "reports/gates/p06/successors/observation-capability-v1/phase-1.json",
+      "sha256": "7e0db9d70c99976e7666d6a9a4ecc903462d821620f8d862cd397a50c2136115",
+      "blob_oid": "a1bb617da344b99f5be0db56c068ba25ad47d2e2"
+    },
+    {
+      "id": "P06_T8_ROOTED_DISPOSITION",
+      "commit": "73d48ffbed1794c6691ba59be006aa096dcfcb22",
+      "path": "reports/gates/p06/task-8-rooted-disposition.json",
+      "sha256": "250bd5a4d1591213ebd4ea145991572da5a0356aed777e179a74ae25db899d18",
+      "blob_oid": "706057bdeb50eeae4a3ffa557a6141b6b00eda68"
+    },
+    {
+      "id": "P06_PHASE2_RECEIPT",
+      "commit": "73d48ffbed1794c6691ba59be006aa096dcfcb22",
+      "path": "reports/gates/p06/successors/observation-capability-v1-phase2/phase-2.json",
+      "sha256": "2a2e51fc2e97d657aa1fc7d413304f7b11362791abf4e354c3039406c5f1dfed",
+      "blob_oid": "53f2424669815d64136745194703a7be48d77c8d"
+    },
+    {
+      "id": "P06_PHASE2_EVIDENCE_CORRECTION",
+      "commit": "c54284cb3c2a2cfb7fb8508c5eef35204fd8ed71",
+      "path": "reports/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/correction.json",
+      "sha256": "8e039c31d16ff355cf0cdcd35f5113a3cb08e4210b77ea46e43877e42573d818",
+      "blob_oid": "597ea5d88e38d3fa72526a428f1faabb0b56a1eb"
+    },
+    {
+      "id": "P06_PHASE2_EVIDENCE_CORRECTION_TASK1",
+      "commit": "c54284cb3c2a2cfb7fb8508c5eef35204fd8ed71",
+      "path": "reports/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/task-1.json",
+      "sha256": "403a73a8513d84db52a91e386549c2348b7e8d7906aaccb4d5d872416e742346",
+      "blob_oid": "3e5d403ab51e961698a088fc77aca563535b0700"
+    },
+    {
+      "id": "P06_PHASE2_EVIDENCE_CORRECTION_TASK2",
+      "commit": "c54284cb3c2a2cfb7fb8508c5eef35204fd8ed71",
+      "path": "reports/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/task-2.json",
+      "sha256": "611bb39a7ce04f090bc75a9a0db4c548cd0e6c7cbccb131239b4a40d3314ae1d",
+      "blob_oid": "eeeb4c339b8fa011be93aed1fe868e27fe45d164"
+    },
+    {
+      "id": "P06_PHASE2_EVIDENCE_CORRECTION_TASK3",
+      "commit": "c54284cb3c2a2cfb7fb8508c5eef35204fd8ed71",
+      "path": "reports/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/task-3.json",
+      "sha256": "968779a627cd65d69f27edfa39293fd5f998f50029904ba52a1347463578b2e2",
+      "blob_oid": "618b668d5534945bd8d5eb4f48153101250ce37b"
+    }
+  ],
+  "primary_artifacts": [
+    {
+      "id": "P06_PHASE2_PREFLIGHT_OUTPUT",
+      "commit": "73d48ffbed1794c6691ba59be006aa096dcfcb22",
+      "path": "reports/gates/p06/successors/observation-capability-v1-phase2/outputs/preflight.txt",
+      "sha256": "94c0c0172cf8fae3b52add679f328307820b67641ae9350cd3ec6f37b0a8f7f3",
+      "blob_oid": "285542bc1d82144321ec38aa6f1a5cc7cfef5178",
+      "authority": "SUPPORTED_FACTS_ALLOWLIST_ONLY"
+    },
+    {
+      "id": "P06_PHASE2_OBSERVATION_OUTPUT",
+      "commit": "73d48ffbed1794c6691ba59be006aa096dcfcb22",
+      "path": "reports/gates/p06/successors/observation-capability-v1-phase2/outputs/observation.txt",
+      "sha256": "547fccefdd2a26bde33c363d3efc3172a1cb7ebf425c865b872275e00933ee6d",
+      "blob_oid": "781028f3666cedf2ed05acd40379ac5cd71fc4de",
+      "authority": "SUPPORTED_FACTS_ALLOWLIST_ONLY"
+    }
+  ],
+  "preserved_facts": {
+    "login_result": "LOGIN_REFUSED",
+    "qualification": "NOT_QUALIFIED",
+    "progression": "STOPPED_AT_T8",
+    "model_counter": "UNUSED",
+    "model_process_exit": "NOT_STARTED",
+    "original_tasks_9_13": "FORBIDDEN"
+  },
+  "uncertainty": {
+    "credential_retention": {
+      "state": "UNKNOWN",
+      "verification": "UNVERIFIED",
+      "reason": "No independent primary artifact proves post-attempt credential retention state.",
+      "historical_claims": [
+        "reports/gates/p06/successors/observation-capability-v1-phase2/phase-2.json#/controls/credential_retained"
+      ]
+    },
+    "protected_state_equality": {
+      "state": "UNKNOWN",
+      "verification": "UNVERIFIED",
+      "reason": "No independent before/after artifact proves equality of protected, auth, binary, or worktree state.",
+      "historical_claims": [
+        "reports/gates/p06/successors/observation-capability-v1/phase-1.json#/controls/owner_config_mutated",
+        "reports/gates/p06/task-8-rooted-disposition.json#/rooted_attempt/observed/binary_unchanged",
+        "reports/gates/p06/task-8-rooted-disposition.json#/rooted_attempt/observed/user_auth_config_unchanged",
+        "reports/gates/p06/task-8-rooted-disposition.json#/rooted_attempt/observed/worktree_unchanged",
+        "reports/gates/p06/successors/observation-capability-v1-phase2/phase-2.json#/controls/binary_unchanged",
+        "reports/gates/p06/successors/observation-capability-v1-phase2/phase-2.json#/controls/protected_state_unchanged",
+        "reports/gates/p06/successors/observation-capability-v1-phase2/phase-2.json#/controls/worktree_unchanged"
+      ]
+    },
+    "cleanup": {
+      "state": "UNKNOWN",
+      "verification": "UNVERIFIED",
+      "reason": "No independent primary artifact proves temporary-state and raw-output cleanup.",
+      "historical_claims": [
+        "reports/gates/p06/successors/observation-capability-v1/phase-1.json#/controls/temporary_home_removed",
+        "reports/gates/p06/successors/observation-capability-v1/phase-1.json#/controls/raw_output_removed",
+        "reports/gates/p06/task-8-rooted-disposition.json#/rooted_attempt/observed/temporary_auth_removed",
+        "reports/gates/p06/task-8-rooted-disposition.json#/rooted_attempt/observed/raw_output_removed",
+        "reports/gates/p06/successors/observation-capability-v1-phase2/phase-2.json#/controls/temporary_runtime_removed",
+        "reports/gates/p06/successors/observation-capability-v1-phase2/phase-2.json#/controls/raw_output_removed"
+      ]
+    }
+  },
+  "historical_claim_authority": {
+    "receipt_bytes": "AUTHORITATIVE_FOR_PROVENANCE_ONLY",
+    "unsupported_booleans": "NON_AUTHORITATIVE",
+    "rule": "Byte binding preserves what a historical receipt said; it does not verify an unsupported runtime boolean.",
+    "json_pointers": [
+      "reports/gates/p06/successors/observation-capability-v1/phase-1.json#/controls/network_denied",
+      "reports/gates/p06/successors/observation-capability-v1/phase-1.json#/controls/provider_route_started",
+      "reports/gates/p06/successors/observation-capability-v1/phase-1.json#/controls/owner_auth_read",
+      "reports/gates/p06/successors/observation-capability-v1/phase-1.json#/controls/owner_config_mutated",
+      "reports/gates/p06/successors/observation-capability-v1/phase-1.json#/controls/temporary_home_removed",
+      "reports/gates/p06/successors/observation-capability-v1/phase-1.json#/controls/raw_output_removed",
+      "reports/gates/p06/task-8-rooted-disposition.json#/root_discovery/forbidden_ambient",
+      "reports/gates/p06/task-8-rooted-disposition.json#/root_discovery/native_evidence",
+      "reports/gates/p06/task-8-rooted-disposition.json#/rooted_attempt/observed/binary_unchanged",
+      "reports/gates/p06/task-8-rooted-disposition.json#/rooted_attempt/observed/user_auth_config_unchanged",
+      "reports/gates/p06/task-8-rooted-disposition.json#/rooted_attempt/observed/worktree_unchanged",
+      "reports/gates/p06/task-8-rooted-disposition.json#/rooted_attempt/observed/temporary_auth_removed",
+      "reports/gates/p06/task-8-rooted-disposition.json#/rooted_attempt/observed/raw_output_removed",
+      "reports/gates/p06/successors/observation-capability-v1-phase2/phase-2.json#/controls/credential_retained",
+      "reports/gates/p06/successors/observation-capability-v1-phase2/phase-2.json#/controls/binary_unchanged",
+      "reports/gates/p06/successors/observation-capability-v1-phase2/phase-2.json#/controls/protected_state_unchanged",
+      "reports/gates/p06/successors/observation-capability-v1-phase2/phase-2.json#/controls/worktree_unchanged",
+      "reports/gates/p06/successors/observation-capability-v1-phase2/phase-2.json#/controls/temporary_runtime_removed",
+      "reports/gates/p06/successors/observation-capability-v1-phase2/phase-2.json#/controls/raw_output_removed"
+    ]
+  },
+  "controls": {
+    "offline_only": true,
+    "historical_runner_executed": false,
+    "network_access": "NOT_INVOKED",
+    "provider_or_codex_process": "NOT_INVOKED",
+    "credential_or_keychain_read": "NOT_INVOKED",
+    "original_tasks_9_13_executed": false
+  }
+}
