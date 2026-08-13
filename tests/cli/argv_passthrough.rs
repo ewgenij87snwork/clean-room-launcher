@@ -150,6 +150,86 @@ fn provider_and_generic_refusal_do_not_consume_credential_shaped_tails() {
 }
 
 #[test]
+fn selector_prefixed_refusal_does_not_consume_credential_shaped_tails() {
+    // Break caught: parsing --output json collects an API-key/token value before refusal.
+    for (prefix, unread_tail, expected_calls) in [
+        (
+            vec!["--output".to_owned(), "json".to_owned(), "codex".to_owned()],
+            vec![
+                "--api-key".to_owned(),
+                "selector-named-value-must-not-be-read".to_owned(),
+            ],
+            3,
+        ),
+        (
+            vec![
+                "--output".to_owned(),
+                "json".to_owned(),
+                "--".to_owned(),
+                "codex".to_owned(),
+            ],
+            vec![
+                "--access-token".to_owned(),
+                "selector-generic-value-must-not-be-read".to_owned(),
+            ],
+            4,
+        ),
+    ] {
+        let next_calls = Rc::new(Cell::new(0));
+        let exit = cli_entry::run(
+            "tseal",
+            PoisonTail {
+                prefix: prefix.into_iter(),
+                next_calls: Rc::clone(&next_calls),
+                unread_tail,
+            },
+        );
+        assert_eq!(exit, std::process::ExitCode::from(2));
+        assert_eq!(next_calls.get(), expected_calls);
+    }
+}
+
+#[test]
+fn selector_prefixed_real_routes_refuse_before_child_birth() {
+    let (codex, capture) = fake_provider("codex");
+    let provider_dir = codex.parent().unwrap();
+
+    for args in [
+        vec![
+            "--output".into(),
+            "json".into(),
+            "codex".into(),
+            "--api-key".into(),
+            "selector-named-value-must-not-be-read".into(),
+        ],
+        vec![
+            "--output".into(),
+            "json".into(),
+            "--".into(),
+            codex.clone().into_os_string(),
+            "--access-token".into(),
+            "selector-generic-value-must-not-be-read".into(),
+        ],
+    ] {
+        assert_zero_auth_refusal(args, provider_dir, &capture);
+    }
+}
+
+#[test]
+fn selector_prefixed_local_command_keeps_existing_output_refusal() {
+    let output = Command::new(env!("CARGO_BIN_EXE_tseal"))
+        .args(["--output", "json", "status"])
+        .output()
+        .expect("tseal must run");
+    assert_eq!(output.status.code(), Some(2));
+    assert!(output.stdout.is_empty());
+    assert_eq!(
+        String::from_utf8(output.stderr).unwrap(),
+        "OUTPUT_UNSUPPORTED_FOR_COMMAND: status; use human output\n"
+    );
+}
+
+#[test]
 fn unqualified_provider_route_refuses_before_ambient_path_can_spawn() {
     let (codex, capture) = fake_provider("codex");
     let before = fs::read(&codex).unwrap();

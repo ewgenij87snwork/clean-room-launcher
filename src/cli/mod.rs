@@ -18,21 +18,46 @@ pub fn run(invoked_as: &str, args: impl IntoIterator<Item = String>) -> ExitCode
     let Some(first) = source.next() else {
         return run_local(invoked_as, Vec::new());
     };
-    if let Some(spec) = help::resolve(&first)
-        && matches!(
-            spec.command,
-            parser::Command::Provider | parser::Command::Generic
-        )
+    if let Some(exit) = external_prefix(&first, &mut source) {
+        return exit;
+    }
+    if first == "--output"
+        && let Some(format) = source.next()
     {
-        let generic_executable_present =
-            !matches!(spec.command, parser::Command::Generic) || source.next().is_some();
-        return external_refusal(spec.command, generic_executable_present);
+        if format == "json"
+            && let Some(command) = source.next()
+        {
+            if let Some(exit) = external_prefix(&command, &mut source) {
+                return exit;
+            }
+            return run_local(
+                invoked_as,
+                [first, format, command].into_iter().chain(source).collect(),
+            );
+        }
+        return run_local(
+            invoked_as,
+            [first, format].into_iter().chain(source).collect(),
+        );
     }
 
     run_local(
         invoked_as,
         std::iter::once(first).chain(source).collect::<Vec<_>>(),
     )
+}
+
+fn external_prefix(command: &str, source: &mut impl Iterator<Item = String>) -> Option<ExitCode> {
+    let spec = help::resolve(command)?;
+    if !matches!(
+        spec.command,
+        parser::Command::Provider | parser::Command::Generic
+    ) {
+        return None;
+    }
+    let generic_executable_present =
+        !matches!(spec.command, parser::Command::Generic) || source.next().is_some();
+    Some(external_refusal(spec.command, generic_executable_present))
 }
 
 fn external_refusal(command: parser::Command, generic_executable_present: bool) -> ExitCode {

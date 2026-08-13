@@ -35,7 +35,7 @@ jq -e \
   .task == 3 and .result == "accepted" and
   .acceptance == {
     id:"P06-ZERO-AUTH-T3-LAUNCHER-ENVIRONMENT-CLOSURE-V1",
-    operator_result:"Named routes refuse after consuming only the command token and generic routes after only the boundary plus executable, without reading or copying credential-shaped tails; every real external route still refuses before child birth; local commands remain available; the environment carries only an opaque provider-native preauthenticated-session availability state; and descendant execution is sealed.",
+    operator_result:"Named routes refuse after consuming only supported selectors plus the command token and generic routes after only supported selectors plus the boundary and executable, without reading or copying credential-shaped tails; every real external route still refuses before child birth; selector-prefixed local commands preserve their prior parsing; the environment carries only an opaque provider-native preauthenticated-session availability state; and descendant execution is sealed.",
     control_ids:["AUTH-01"],
     evidence_ids:[
       "P06-ZERO-AUTH-T3-RED-STABLE-REFUSAL-V1",
@@ -49,7 +49,17 @@ jq -e \
       "P06-ZERO-AUTH-T3-GREEN-SOURCE-INVENTORY-V1",
       "P06-ZERO-AUTH-T3-GREEN-CLIPPY-V1",
       "P06-ZERO-AUTH-T3-FIX1-RED-REPLACEMENT-RECEIPT-V1",
-      "P06-ZERO-AUTH-T3-FIX1-GREEN-DESCENDANT-DURABILITY-V1"
+      "P06-ZERO-AUTH-T3-FIX1-GREEN-DESCENDANT-DURABILITY-V1",
+      "P06-ZERO-AUTH-T3-FIX2-RED-SELECTOR-TAIL-CONSUMPTION-V1",
+      "P06-ZERO-AUTH-T3-FIX2-RED-SELECTOR-REFUSAL-V1",
+      "P06-ZERO-AUTH-T3-FIX2-GREEN-UNCONSUMED-SELECTOR-TAIL-V1",
+      "P06-ZERO-AUTH-T3-FIX2-GREEN-SELECTOR-CALL-PATHS-V1",
+      "P06-ZERO-AUTH-T3-FIX2-GREEN-LOCAL-SELECTOR-PARSING-V1",
+      "P06-ZERO-AUTH-T3-FIX2-GREEN-OFFLINE-RELEVANT-SUITES-V1",
+      "P06-ZERO-AUTH-T3-FIX2-GREEN-SOURCE-INVENTORY-V1",
+      "P06-ZERO-AUTH-T3-FIX2-GREEN-CLIPPY-V1",
+      "P06-ZERO-AUTH-T3-FIX2-RED-REPLACEMENT-RECEIPT-V1",
+      "P06-ZERO-AUTH-T3-FIX2-GREEN-DESCENDANT-DURABILITY-V1"
     ]
   } and
   .binding == {
@@ -58,7 +68,7 @@ jq -e \
     implementation_result_head:$implementation_head,
     implementation_tree:$implementation_tree,
     receipt_commit_parent:$implementation_head,
-    replaces_receipt_commit:"487c762fb79429337b6067a80a9ab7c3de3a3178",
+    replaces_receipt_commit:"57a1e6121a521e089c8617939bd3b802db737570",
     parent_task_receipt:{
       path:"reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/task-2.json",
       commit:$input_head,
@@ -186,6 +196,86 @@ jq -e \
       output:"P06_ZERO_AUTH_TASK_3_RECEIPT_DURABILITY_PASS",
       output_sha256:"6611239986d8ef1e5d89d4d3ce74caef1948305d36b6d87e6045f1f5f9f39bc9",
       meaning:"A no-network local clone added a real descendant commit and reproduced the parent-bound Task 3 receipt."
+    },
+    {
+      id:"P06-ZERO-AUTH-T3-FIX2-RED-SELECTOR-TAIL-CONSUMPTION-V1",
+      command:"cargo test --offline --test cli argv_passthrough::selector_prefixed_refusal_does_not_consume_credential_shaped_tails -- --exact",
+      exit:101,
+      output:"TaskSeal consumed a prohibited provider tail containing 2 unread values",
+      output_sha256:"c80465777a3dcd248678302f7ea1774fb5e06c1c6a61d099799e8905265ed82f",
+      meaning:"The poison iterator proved the supported JSON selector still caused cli::run to enumerate a value-bearing provider tail."
+    },
+    {
+      id:"P06-ZERO-AUTH-T3-FIX2-RED-SELECTOR-REFUSAL-V1",
+      command:"cargo test --offline --test cli argv_passthrough::selector_prefixed_real_routes_refuse_before_child_birth -- --exact",
+      exit:101,
+      output:"left: OUTPUT_UNSUPPORTED_FOR_COMMAND: codex; use human output; right: ZERO_AUTH_REFUSAL: provider-native preauthenticated session unavailable or ambiguous; continue locally",
+      output_sha256:"2bcb72d075f078185495ee93bbf70085f3c0cf3de9541f0c4b1254977a271ae5",
+      meaning:"The real selector-prefixed named route reached output rejection rather than the shared pre-birth zero-auth refusal."
+    },
+    {
+      id:"P06-ZERO-AUTH-T3-FIX2-GREEN-UNCONSUMED-SELECTOR-TAIL-V1",
+      command:"cargo test --offline --test cli argv_passthrough::selector_prefixed_refusal_does_not_consume_credential_shaped_tails -- --exact",
+      exit:0,
+      output:"test result: ok. 1 passed; 0 failed; 0 ignored",
+      output_sha256:"e9452ac4fb913b961bfcddcb2990f876000c3af2780281421ed04e69499594c0",
+      meaning:"The counting iterator observed exactly three reads for selector plus named command and four for selector plus generic boundary and executable, leaving both credential-shaped tails unread."
+    },
+    {
+      id:"P06-ZERO-AUTH-T3-FIX2-GREEN-SELECTOR-CALL-PATHS-V1",
+      command:"cargo test --offline --test cli argv_passthrough::selector_prefixed_real_routes_refuse_before_child_birth -- --exact",
+      exit:0,
+      output:"test result: ok. 1 passed; 0 failed; 0 ignored",
+      output_sha256:"e9452ac4fb913b961bfcddcb2990f876000c3af2780281421ed04e69499594c0",
+      meaning:"Real selector-prefixed named and generic routes carried prohibited values but returned the stable refusal without creating the fake-provider capture."
+    },
+    {
+      id:"P06-ZERO-AUTH-T3-FIX2-GREEN-LOCAL-SELECTOR-PARSING-V1",
+      command:"cargo test --offline --test cli argv_passthrough::selector_prefixed_local_command_keeps_existing_output_refusal -- --exact",
+      exit:0,
+      output:"test result: ok. 1 passed; 0 failed; 0 ignored",
+      output_sha256:"e9452ac4fb913b961bfcddcb2990f876000c3af2780281421ed04e69499594c0",
+      meaning:"A selector-prefixed local command retained the existing output-mode refusal after lazy external-route classification."
+    },
+    {
+      id:"P06-ZERO-AUTH-T3-FIX2-GREEN-OFFLINE-RELEVANT-SUITES-V1",
+      command:"cargo test --test cli --test adapters --offline",
+      exit:0,
+      output:"adapters: 31 passed; cli: 34 passed; 0 failed",
+      output_sha256:"2ccca1ad09e2dd20a646f9557fa5b9ceefb1475708e12c73d9405b2515ee33a0",
+      meaning:"The exact offline CLI and adapter suites passed after selector-aware lazy refusal."
+    },
+    {
+      id:"P06-ZERO-AUTH-T3-FIX2-GREEN-SOURCE-INVENTORY-V1",
+      command:"scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-source-inventory.sh",
+      exit:0,
+      output:"P06_ZERO_AUTH_SOURCE_INVENTORY_TEST_PASS",
+      output_sha256:"ff2c843a18a4b76f59ff24589d0335a7057640cb926ea647f7246d40ae7b64af",
+      meaning:"The governed executable and compiled-source inventory remained free of credential, provider-login and browser-flow execution paths after the selector fix."
+    },
+    {
+      id:"P06-ZERO-AUTH-T3-FIX2-GREEN-CLIPPY-V1",
+      command:"cargo clippy --all-targets --offline -- -D warnings",
+      exit:0,
+      output:"cargo clippy --all-targets --offline -- -D warnings: exit 0",
+      output_sha256:"98f57ed33b0abfb146322bda89690a037b88bcbbbe93ad84019dc7199ae0eac4",
+      meaning:"Every Rust target compiled under strict warning denial after the selector fix without network access."
+    },
+    {
+      id:"P06-ZERO-AUTH-T3-FIX2-RED-REPLACEMENT-RECEIPT-V1",
+      command:"scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-3-receipt.sh",
+      exit:1,
+      output:"P06_ZERO_AUTH_TASK_3_RECEIPT_REFUSAL:RECEIPT_CONTRACT",
+      output_sha256:"99105b71affcc63e638e4be1bb9d98bd83aff56f72ed8e6d9e50d1e9e4874fb0",
+      meaning:"The round-2 checker rejected the predecessor receipt because it lacked selector-tail and updated suite/topology evidence."
+    },
+    {
+      id:"P06-ZERO-AUTH-T3-FIX2-GREEN-DESCENDANT-DURABILITY-V1",
+      command:"scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-3-receipt-durability.sh",
+      exit:0,
+      output:"P06_ZERO_AUTH_TASK_3_RECEIPT_DURABILITY_PASS",
+      output_sha256:"6611239986d8ef1e5d89d4d3ce74caef1948305d36b6d87e6045f1f5f9f39bc9",
+      meaning:"A fresh no-network local clone added a real descendant commit and reproduced the round-2 parent-bound Task 3 receipt."
     }
   ] and
   .seal_tdd == {
@@ -201,7 +291,8 @@ jq -e \
   .controls == {
     arbitrary_external_execution:"REFUSED",
     external_allowlist:"TASKSEAL_OWNED_LOCAL_COMMANDS_ONLY",
-    external_routes:["NAMED","GENERIC","DEVICE_HELPER","BROWSER_HELPER","RENAMED","SYMLINKED"],
+    external_routes:["NAMED","GENERIC","SELECTOR_PREFIXED_NAMED","SELECTOR_PREFIXED_GENERIC","DEVICE_HELPER","BROWSER_HELPER","RENAMED","SYMLINKED"],
+    supported_lazy_selectors:["--output json"],
     stable_refusal:"ZERO_AUTH_REFUSAL: provider-native preauthenticated session unavailable or ambiguous; continue locally",
     local_commands_available:["status","scan","prepare","check"],
     environment_contract:"PROVIDER_NATIVE_PREAUTHENTICATED_SESSION",
@@ -227,8 +318,8 @@ test "$(git rev-parse "$implementation_head^{tree}")" = "$implementation_tree" |
 git merge-base --is-ancestor "$input_head" "$implementation_head" || refuse IMPLEMENTATION_LINEAGE
 test "$(git rev-parse "$input_head:$parent_receipt_rel")" = "$(jq -r '.binding.parent_task_receipt.blob_oid' "$receipt")" || refuse PARENT_RECEIPT_BLOB
 test "$(git show "$input_head:$parent_receipt_rel" | shasum -a 256 | awk '{print $1}')" = "$(jq -r '.binding.parent_task_receipt.sha256' "$receipt")" || refuse PARENT_RECEIPT_DIGEST
-git merge-base --is-ancestor 487c762fb79429337b6067a80a9ab7c3de3a3178 "$implementation_head" || refuse REPLACEMENT_LINEAGE
-test "$(git diff-tree --no-commit-id --name-only -r 487c762fb79429337b6067a80a9ab7c3de3a3178)" = "$receipt_rel" || refuse REPLACED_RECEIPT_NOT_RECEIPT_ONLY
+git merge-base --is-ancestor 57a1e6121a521e089c8617939bd3b802db737570 "$implementation_head" || refuse REPLACEMENT_LINEAGE
+test "$(git diff-tree --no-commit-id --name-only -r 57a1e6121a521e089c8617939bd3b802db737570)" = "$receipt_rel" || refuse REPLACED_RECEIPT_NOT_RECEIPT_ONLY
 
 expected_paths='reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/task-3.json
 scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-3-receipt-durability.sh
