@@ -55,4 +55,12 @@ test "$(count_code "$l2" "$temporary_root/rooted.json")" = 1
 test "$(count_code "$l3" "$temporary_root/rooted.json")" = 1
 test "$(count_code "$forbidden" "$temporary_root/rooted.json")" = 0
 test "$(shasum -a 256 "$command" | awk '{print $1}')" = "$before"
+if test -n "${P06_T8_DISCOVERY_REPORT:-}"; then
+  report=$P06_T8_DISCOVERY_REPORT
+  case "$report" in
+    "$root"/reports/gates/p06/outputs/*) ;;
+    *) echo P06_T8_DISCOVERY_REPORT_REFUSED >&2; exit 2 ;;
+  esac
+  printf 'unrooted_l0=1\nunrooted_l2=0\nunrooted_l3=1\nunrooted_forbidden=0\nrooted_l0=1\nrooted_l2=1\nrooted_l3=1\nrooted_forbidden=0\nroot_marker=git\nnetwork=DENIED_BY_OS_SANDBOX\nfilesystem=LEAST_READ_TEMP_WRITE_ONLY\nraw_debug_removed=true\n' >"$report"
+fi
 echo P06_T8_ROOT_DISCOVERY_PASS
