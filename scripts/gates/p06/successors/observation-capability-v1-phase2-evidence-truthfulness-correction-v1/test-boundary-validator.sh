@@ -275,23 +275,23 @@ keychain_profile="$profile_base
 (deny mach-lookup (global-name-regex #\"^com\\.apple\\.(security|SecurityAgent)\"))"
 p06_boundary_validate_policy \
   "$offline_profile" "$extract_profile" "$online_profile" "$keychain_profile" \
-  /private/tmp/taskseal-p06-phase2-runtime.INVENTED /Users/ysorokin/.codex/auth.json
+  /private/tmp/taskseal-p06-phase2-runtime.INVENTED /Users/ysorokin/.codex/auth.json /invented/codex
 expect_refusal P06_BOUNDARY_REFUSAL_POLICY_DRIFT \
   p06_boundary_validate_policy \
     "$online_profile" "$extract_profile" "$online_profile" "$keychain_profile" \
-    /private/tmp/taskseal-p06-phase2-runtime.INVENTED /Users/ysorokin/.codex/auth.json
+    /private/tmp/taskseal-p06-phase2-runtime.INVENTED /Users/ysorokin/.codex/auth.json /invented/codex
 expect_refusal P06_BOUNDARY_REFUSAL_POLICY_DRIFT \
   p06_boundary_validate_policy \
     "$offline_profile" "$offline_profile" "$online_profile" "$keychain_profile" \
-    /private/tmp/taskseal-p06-phase2-runtime.INVENTED /Users/ysorokin/.codex/auth.json
+    /private/tmp/taskseal-p06-phase2-runtime.INVENTED /Users/ysorokin/.codex/auth.json /invented/codex
 expect_refusal P06_BOUNDARY_REFUSAL_POLICY_DRIFT \
   p06_boundary_validate_policy \
     "$offline_profile" "$extract_profile" "$offline_profile" "$keychain_profile" \
-    /private/tmp/taskseal-p06-phase2-runtime.INVENTED /Users/ysorokin/.codex/auth.json
+    /private/tmp/taskseal-p06-phase2-runtime.INVENTED /Users/ysorokin/.codex/auth.json /invented/codex
 expect_refusal P06_BOUNDARY_REFUSAL_POLICY_DRIFT \
   p06_boundary_validate_policy \
     "$offline_profile" "$extract_profile" "$online_profile" "$online_profile" \
-    /private/tmp/taskseal-p06-phase2-runtime.INVENTED /Users/ysorokin/.codex/auth.json
+    /private/tmp/taskseal-p06-phase2-runtime.INVENTED /Users/ysorokin/.codex/auth.json /invented/codex
 broad_read_offline="$offline_profile
 (allow file-read* (subpath \"/\"))"
 broad_read_extract="$extract_profile
@@ -303,7 +303,7 @@ broad_read_keychain="$keychain_profile
 expect_refusal P06_BOUNDARY_REFUSAL_POLICY_DRIFT \
   p06_boundary_validate_policy \
     "$broad_read_offline" "$broad_read_extract" "$broad_read_online" "$broad_read_keychain" \
-    /private/tmp/taskseal-p06-phase2-runtime.INVENTED /Users/ysorokin/.codex/auth.json
+    /private/tmp/taskseal-p06-phase2-runtime.INVENTED /Users/ysorokin/.codex/auth.json /invented/codex
 broad_write_offline="$offline_profile
 (allow file-write* (subpath \"/\"))"
 broad_write_extract="$extract_profile
@@ -315,7 +315,46 @@ broad_write_keychain="$keychain_profile
 expect_refusal P06_BOUNDARY_REFUSAL_POLICY_DRIFT \
   p06_boundary_validate_policy \
     "$broad_write_offline" "$broad_write_extract" "$broad_write_online" "$broad_write_keychain" \
-    /private/tmp/taskseal-p06-phase2-runtime.INVENTED /Users/ysorokin/.codex/auth.json
+    /private/tmp/taskseal-p06-phase2-runtime.INVENTED /Users/ysorokin/.codex/auth.json /invented/codex
+
+replace_first_read_grant() {
+  printf '%s\n' "$1" | awk '
+    !replaced && index($0, "(allow file-read*") == 1 {
+      print "(allow file-read* (subpath \"/Users\"))"
+      replaced=1
+      next
+    }
+    { print }
+  '
+}
+count_preserving_read_offline=$(replace_first_read_grant "$offline_profile")
+count_preserving_read_extract=$(replace_first_read_grant "$extract_profile")
+count_preserving_read_online=$(replace_first_read_grant "$online_profile")
+count_preserving_read_keychain=$(replace_first_read_grant "$keychain_profile")
+expect_refusal P06_BOUNDARY_REFUSAL_POLICY_DRIFT \
+  p06_boundary_validate_policy \
+    "$count_preserving_read_offline" "$count_preserving_read_extract" \
+    "$count_preserving_read_online" "$count_preserving_read_keychain" \
+    /private/tmp/taskseal-p06-phase2-runtime.INVENTED /Users/ysorokin/.codex/auth.json /invented/codex
+
+replace_write_grant() {
+  printf '%s\n' "$1" | awk '
+    index($0, "(allow file-write*") == 1 {
+      print "(allow file-write* (subpath \"/Users\"))"
+      next
+    }
+    { print }
+  '
+}
+count_preserving_write_offline=$(replace_write_grant "$offline_profile")
+count_preserving_write_extract=$(replace_write_grant "$extract_profile")
+count_preserving_write_online=$(replace_write_grant "$online_profile")
+count_preserving_write_keychain=$(replace_write_grant "$keychain_profile")
+expect_refusal P06_BOUNDARY_REFUSAL_POLICY_DRIFT \
+  p06_boundary_validate_policy \
+    "$count_preserving_write_offline" "$count_preserving_write_extract" \
+    "$count_preserving_write_online" "$count_preserving_write_keychain" \
+    /private/tmp/taskseal-p06-phase2-runtime.INVENTED /Users/ysorokin/.codex/auth.json /invented/codex
 
 p06_boundary_validate_output \
   EXTRACT_PREVALIDATED 1 LOGIN_REFUSED false NOT_STARTED NOT_STARTED \

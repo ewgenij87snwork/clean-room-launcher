@@ -95,7 +95,7 @@ printf '(deny network*)\n(deny file-read* (subpath "/Users/ysorokin/Library/Keyc
 p06_boundary_validate_policy \
   "$(cat "$offline_profile")" "$(cat "$extract_profile")" \
   "$(cat "$online_profile")" "$(cat "$keychain_profile")" \
-  "$temporary_root" "$auth_source"
+  "$temporary_root" "$auth_source" "$command"
 
 clean_offline() {
   env -i HOME="$temporary_root/home" CODEX_HOME="$temporary_root/codex-home" XDG_CONFIG_HOME="$temporary_root/xdg" PATH=/usr/bin:/bin \

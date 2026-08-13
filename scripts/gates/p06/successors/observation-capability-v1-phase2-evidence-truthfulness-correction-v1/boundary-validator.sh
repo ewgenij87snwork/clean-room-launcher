@@ -5,24 +5,6 @@ p06_boundary_refuse() {
   return 1
 }
 
-p06_boundary_contains() {
-  case "$1" in
-    *"$2"*) return 0 ;;
-    *) return 1 ;;
-  esac
-}
-
-p06_boundary_occurrences() {
-  occurrence_value=$1
-  occurrence_needle=$2
-  occurrence_count=0
-  while p06_boundary_contains "$occurrence_value" "$occurrence_needle"; do
-    occurrence_value=${occurrence_value#*"$occurrence_needle"}
-    occurrence_count=$((occurrence_count + 1))
-  done
-  printf '%s\n' "$occurrence_count"
-}
-
 p06_boundary_validate_tuple_platform() {
   if test "$#" != 3; then
     p06_boundary_refuse P06_BOUNDARY_REFUSAL_INVALID_ARGUMENTS
@@ -121,7 +103,7 @@ p06_boundary_validate_source_field() {
 }
 
 p06_boundary_validate_policy() {
-  if test "$#" != 6; then
+  if test "$#" != 7; then
     p06_boundary_refuse P06_BOUNDARY_REFUSAL_INVALID_ARGUMENTS
     return 1
   fi
@@ -131,58 +113,37 @@ p06_boundary_validate_policy() {
   keychain_policy=$4
   policy_temporary_root=$5
   policy_auth_source=$6
-  common_write="(allow file-write* (subpath \"$policy_temporary_root\"))"
+  policy_command=$7
+  expected_profile_base="(version 1)
+(deny default)
+(import \"system.sb\")
+(allow file-read-metadata (subpath \"/private\"))
+(allow file-read* (subpath \"$policy_temporary_root\") (literal \"$policy_command\") (subpath \"/System\") (subpath \"/usr\") (subpath \"/private/etc\") (subpath \"/private/var/db/timezone\") (subpath \"/dev\"))
+(allow process*)
+(allow sysctl-read)
+(allow file-write* (subpath \"$policy_temporary_root\"))"
   keychain_denial='(deny file-read* (subpath "/Users/ysorokin/Library/Keychains") (subpath "/Library/Keychains") (subpath "/System/Library/Keychains"))'
   security_denial='(deny mach-lookup (global-name-regex #"^com\.apple\.(security|SecurityAgent)"))'
+  expected_offline="$expected_profile_base
+(deny network*)
+(deny mach-lookup)"
+  expected_extract="$expected_profile_base
+(allow file-read* (literal \"$policy_auth_source\"))
+(deny network*)
+(deny mach-lookup)"
+  expected_online="$expected_profile_base
+(allow network-outbound)
+$keychain_denial
+$security_denial"
+  expected_keychain="$expected_profile_base
+(deny network*)
+$keychain_denial
+$security_denial"
 
-  for profile in "$offline_policy" "$extract_policy" "$online_policy" "$keychain_policy"; do
-    if ! p06_boundary_contains "$profile" '(deny default)' ||
-      ! p06_boundary_contains "$profile" "$common_write"; then
-      p06_boundary_refuse P06_BOUNDARY_REFUSAL_POLICY_DRIFT
-      return 1
-    fi
-    if p06_boundary_contains "$profile" '(subpath "/")' ||
-      p06_boundary_contains "$profile" '(literal "/")' ||
-      test "$(p06_boundary_occurrences "$profile" '(allow file-write*')" != 1; then
-      p06_boundary_refuse P06_BOUNDARY_REFUSAL_POLICY_DRIFT
-      return 1
-    fi
-  done
-
-  if test "$(p06_boundary_occurrences "$offline_policy" '(allow file-read*')" != 1 ||
-    test "$(p06_boundary_occurrences "$extract_policy" '(allow file-read*')" != 2 ||
-    test "$(p06_boundary_occurrences "$online_policy" '(allow file-read*')" != 1 ||
-    test "$(p06_boundary_occurrences "$keychain_policy" '(allow file-read*')" != 1; then
-    p06_boundary_refuse P06_BOUNDARY_REFUSAL_POLICY_DRIFT
-    return 1
-  fi
-
-  if ! p06_boundary_contains "$offline_policy" '(deny network*)' ||
-    ! p06_boundary_contains "$offline_policy" '(deny mach-lookup)' ||
-    p06_boundary_contains "$offline_policy" '(allow network-outbound)'; then
-    p06_boundary_refuse P06_BOUNDARY_REFUSAL_POLICY_DRIFT
-    return 1
-  fi
-
-  if ! p06_boundary_contains "$extract_policy" "(allow file-read* (literal \"$policy_auth_source\"))" ||
-    ! p06_boundary_contains "$extract_policy" '(deny network*)' ||
-    ! p06_boundary_contains "$extract_policy" '(deny mach-lookup)' ||
-    p06_boundary_contains "$extract_policy" '(allow network-outbound)'; then
-    p06_boundary_refuse P06_BOUNDARY_REFUSAL_POLICY_DRIFT
-    return 1
-  fi
-
-  if ! p06_boundary_contains "$online_policy" '(allow network-outbound)' ||
-    ! p06_boundary_contains "$online_policy" "$keychain_denial" ||
-    ! p06_boundary_contains "$online_policy" "$security_denial"; then
-    p06_boundary_refuse P06_BOUNDARY_REFUSAL_POLICY_DRIFT
-    return 1
-  fi
-
-  if ! p06_boundary_contains "$keychain_policy" '(deny network*)' ||
-    ! p06_boundary_contains "$keychain_policy" "$keychain_denial" ||
-    ! p06_boundary_contains "$keychain_policy" "$security_denial" ||
-    p06_boundary_contains "$keychain_policy" '(allow network-outbound)'; then
+  if test "$offline_policy" != "$expected_offline" ||
+    test "$extract_policy" != "$expected_extract" ||
+    test "$online_policy" != "$expected_online" ||
+    test "$keychain_policy" != "$expected_keychain"; then
     p06_boundary_refuse P06_BOUNDARY_REFUSAL_POLICY_DRIFT
     return 1
   fi
