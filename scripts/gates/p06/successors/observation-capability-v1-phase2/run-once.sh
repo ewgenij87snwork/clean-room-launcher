@@ -147,9 +147,9 @@ set +e
 (cd "$temporary_root" && /usr/bin/sandbox-exec -f "$extract_profile" \
   /usr/bin/plutil -extract tokens.access_token raw -expect string -n -o - "$auth_source") | \
   LC_ALL=C /usr/bin/awk '
-    BEGIN { valid=0; buffer="" }
-    { if (NR != 1 || length($0) == 0 || $0 ~ /[[:cntrl:]]/) exit 2; buffer=$0; valid=1 }
-    END { if (!valid) exit 2; printf "%s\n",buffer }
+    BEGIN { valid=0; invalid=0; buffer="" }
+    { if (NR != 1 || length($0) == 0 || $0 ~ /[[:cntrl:]]/) { invalid=1; exit 2 }; buffer=$0; valid=1 }
+    END { if (!valid || invalid) exit 2; printf "%s\n",buffer }
   ' | \
   env -i HOME="$temporary_root/home" CODEX_HOME="$temporary_root/codex-home" XDG_CONFIG_HOME="$temporary_root/xdg" PATH=/usr/bin:/bin \
   /usr/bin/sandbox-exec -f "$online_profile" "$command" login --with-access-token >"$temporary_root/login.stdout" 2>"$temporary_root/login.stderr"
