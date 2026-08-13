@@ -1,0 +1,112 @@
+{
+  "schema_version": "taskseal.p06.phase2-evidence-truthfulness-correction-v1.task-receipt.v1",
+  "plan_id": "P06-PHASE2-EVIDENCE-TRUTHFULNESS-CORRECTION-V1",
+  "task": 3,
+  "result": "accepted",
+  "acceptance": {
+    "id": "P06-PHASE2-TRUTH-CORRECTION-T3-CHRONOLOGY-SSOT-V1",
+    "operator_result": "Owner SSOT reports P06 7/13 = 53%, REV BLOCKER correction in review, UNKNOWN/UNVERIFIED historical runtime claims, and an append-only chronology correction that does not attribute a later seal to an earlier interval.",
+    "current_progress": {
+      "completed": 7,
+      "total": 13,
+      "percent": 53
+    },
+    "terminal_review": "PENDING",
+    "completion_marker": "P06_PHASE2_EVIDENCE_TRUTHFULNESS_CORRECTION_PASS"
+  },
+  "binding": {
+    "scheme": "parent-bound-receipt.v1",
+    "input_head": "b1dd448acfb9163836b87d8d0fd02717caf41e0b",
+    "implementation_result_head": "76d520b0e3db2f9e77654b274e0ec06c076ce1fc",
+    "implementation_tree": "48008378536bef22171ed138fb2810d7aa58d47f",
+    "receipt_commit_parent": "76d520b0e3db2f9e77654b274e0ec06c076ce1fc",
+    "resolution": "The unique receipt-only child binds the RED and GREEN implementation commits, exact owner SSOT bytes and immutable 114-line worklog prefix without self-reference."
+  },
+  "inputs": {
+    "plan_checkpoint_path": "/Users/ysorokin/Documents/it/5-LVL - 2026/Temp in Projects/wisdom/taskseal/plans/2026-08-13-p06-phase2-evidence-truthfulness-correction-v1.md",
+    "plan_checkpoint_sha256": "a8a11bfa9b7f83369041c03f217f6d389a97c7a1d84756228e65e9a1e61ab9bf",
+    "task_2_receipt_path": "reports/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/task-2.json",
+    "task_2_receipt_sha256": "9551ed6f03b851da1b72f62f8085b33bc0c952fcdb1d7a748802d5fd8751d9a5",
+    "predecessor_checkpoint": "c54284cb3c2a2cfb7fb8508c5eef35204fd8ed71",
+    "predecessor_task_3_receipt_path": "reports/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/task-3.json",
+    "predecessor_task_3_receipt_sha256": "968779a627cd65d69f27edfa39293fd5f998f50029904ba52a1347463578b2e2",
+    "worklog_prefix_line_count": 114,
+    "worklog_prefix_sha256": "d3db76d507fd82c29406b1193cc7b11ef89bd3ba5e75f20119910078dd57fc48",
+    "superseded_event_id": "P06-CODEX-OBS-CAP-V1-PH2-CORRECTION-T3-003-stop-correction",
+    "chronology_event_id": "P06-CODEX-OBS-CAP-V1-PH2-CORRECTION-T3-004-chronology-correction",
+    "seal_commit": "373c9091fac7d34419d77484639d50c1331ee050",
+    "seal_committed_at": "2026-08-13T11:18:07+02:00",
+    "status_path": "/Users/ysorokin/Documents/it/5-LVL - 2026/Temp in Projects/wisdom/taskseal/STATUS.md",
+    "dashboard_path": "/Users/ysorokin/Documents/it/5-LVL - 2026/Temp in Projects/wisdom/taskseal/TASKSEAL-OWNER-DASHBOARD.html",
+    "worklog_path": "/Users/ysorokin/Documents/it/5-LVL - 2026/Temp in Projects/wisdom/taskseal/TASKSEAL-WORKLOG.jsonl"
+  },
+  "subject": {
+    "algorithm": "sha256 of sorted path, tab, sha256, newline source records",
+    "sha256": "ca814b0ef5f1374d8c668d28e61fa1819037dbf36953afaa21b04a073a19c6e1",
+    "sources": [
+      {
+        "path": "scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/test-verify.sh",
+        "sha256": "3b9c7640b4b2f7cc1a2b82315d1e915ad7e3f15caa490928d5fdf2079a7a43cf"
+      },
+      {
+        "path": "scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/verify.sh",
+        "sha256": "8b10858151d6bccb592ca8e2049e7671f994b0e5d645d7a3c1b04f510b8e70bf"
+      },
+      {
+        "path": "/Users/ysorokin/Documents/it/5-LVL - 2026/Temp in Projects/wisdom/taskseal/TASKSEAL-OWNER-DASHBOARD.html",
+        "sha256": "0c779ec3897b804d73eaf80fe663329c33e13042e6f1fc00b53caebe80081180"
+      },
+      {
+        "path": "/Users/ysorokin/Documents/it/5-LVL - 2026/Temp in Projects/wisdom/taskseal/STATUS.md",
+        "sha256": "d0114b2d918d4a4b66baad31f96045f3df5f7e6f4353f93a942a3ef2ae62052e"
+      },
+      {
+        "path": "/Users/ysorokin/Documents/it/5-LVL - 2026/Temp in Projects/wisdom/taskseal/TASKSEAL-WORKLOG.jsonl",
+        "sha256": "81e63958773b127ee4c6c0754abd843de060ae36f775c7eeab4c58b77ba36b6f"
+      }
+    ]
+  },
+  "evidence": [
+    {
+      "id": "P06-PHASE2-TRUTH-CORRECTION-T3-RED-CHRONOLOGY-LINK-V1",
+      "command": "P06_TRUTH_TEST_CASE=chronology_link sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/test-verify.sh",
+      "exit": 1,
+      "output": "P06_TRUTH_EXPECTED_REFUSAL_MISSING:chronology_link",
+      "output_sha256": "a9d9a5ad2ecfa555b4c2b80629ea204bc5dce4eb7c0f1b16ac988f29959c0bfc",
+      "meaning": "Before implementation, the production gate accepted a chronology fixture whose superseding event linked to the wrong predecessor."
+    },
+    {
+      "id": "P06-PHASE2-TRUTH-CORRECTION-T3-GREEN-CHRONOLOGY-LINK-V1",
+      "command": "P06_TRUTH_TEST_CASE=chronology_link sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/test-verify.sh",
+      "exit": 0,
+      "output": "P06_PHASE2_TRUTHFULNESS_MUTATIONS_PASS",
+      "output_sha256": "6103704193d31ad2c1e3472a530c611942b6efcfe140247dee7324c44ddbcc52",
+      "meaning": "The shared production SSOT validator accepts the corrected baseline and refuses the broken event linkage."
+    },
+    {
+      "id": "P06-PHASE2-TRUTH-CORRECTION-T3-GREEN-MUTATIONS-V1",
+      "command": "sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/test-verify.sh",
+      "exit": 0,
+      "output": "P06_PHASE2_TRUTHFULNESS_MUTATIONS_PASS",
+      "output_sha256": "6103704193d31ad2c1e3472a530c611942b6efcfe140247dee7324c44ddbcc52",
+      "meaning": "The complete offline mutation suite refuses chronology, immutable-prefix, unique-ID, progress, review and uncertainty drift together with every accepted Task 2 mutation."
+    },
+    {
+      "id": "P06-PHASE2-TRUTH-CORRECTION-T3-PRECOMMIT-GATE-V1",
+      "command": "P06_TRUTH_STAGE=task-3-precommit sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/verify.sh",
+      "exit": 0,
+      "output": "P06_PHASE2_EVIDENCE_TRUTHFULNESS_CORRECTION_PASS",
+      "output_sha256": "0ac64c22fdf943073387c8c122afe8277aa019bdc1d0d71631c79bbcb5922326",
+      "meaning": "The sole gate validates accepted Task 2 and the exact chronology-corrected owner SSOT before the receipt-only seal."
+    }
+  ],
+  "controls": {
+    "owner_ssot_only": true,
+    "worklog_append_only": true,
+    "historical_receipt_mutation": false,
+    "network_access": "not invoked",
+    "provider_or_codex_process": "not invoked",
+    "credential_or_keychain_read": "not invoked",
+    "original_tasks_9_13_executed": false
+  }
+}
