@@ -2,6 +2,7 @@
 set -eu
 root=$(CDPATH= cd -- "$(dirname -- "$0")/../../../../.." && pwd -P)
 verify="$root/scripts/gates/p06/successors/observation-capability-v1/verify.sh"
+write_set_check="$root/scripts/gates/p06/successors/observation-capability-v1/validate-write-set.sh"
 receipt="$root/reports/gates/p06/successors/observation-capability-v1/phase-1.json"
 temporary_root=$(mktemp -d /tmp/taskseal-p06-capability-verify.XXXXXX)
 temporary_root=$(realpath "$temporary_root")
@@ -17,10 +18,9 @@ P06_CODEX_BIN=${P06_CODEX_BIN:-/Users/ysorokin/.local/bin/codex} "$verify" >/dev
 
 printf '%s\n' \
   'scripts/gates/p06/successors/observation-capability-v1/verify.sh' \
-  'reports/gates/p06/task-8.json' >"$temporary_root/forbidden-diff.txt"
+  'reports/gates/p06/successors/observation-capability-v1/phase-1.json' | "$write_set_check"
 set +e
-P06_CODEX_BIN=${P06_CODEX_BIN:-/Users/ysorokin/.local/bin/codex} \
-  P06_CAPABILITY_DIFF_LIST="$temporary_root/forbidden-diff.txt" "$verify" >/dev/null 2>&1
+printf '%s\n' 'reports/gates/p06/task-8.json' | "$write_set_check" >/dev/null 2>&1
 forbidden_diff_status=$?
 set -e
 test "$forbidden_diff_status" -ne 0

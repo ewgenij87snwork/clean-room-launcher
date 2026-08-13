@@ -21,27 +21,8 @@ jq -e --arg root "$root" --arg head "$current_head" '
   .branch == "feat/p06-codex-observation-capability-v1" and .head == $head
 ' "$root/.taskseal-dev/execution-authority.json" >/dev/null
 
-diff_list=${P06_CAPABILITY_DIFF_LIST:-}
-if test -n "$diff_list"; then
-  diff_list=$(realpath "$diff_list")
-  case "$diff_list" in
-    /private/tmp/taskseal-p06-capability-verify.*/*.txt) ;;
-    *) echo P06_CAPABILITY_DIFF_OVERRIDE_REFUSED >&2; exit 2 ;;
-  esac
-  diff_command="cat"
-else
-  diff_command="git"
-fi
-if test "$diff_command" = cat; then
-  cat "$diff_list"
-else
-  git -C "$root" diff --name-only "$predecessor..$current_head"
-fi | while IFS= read -r changed_path; do
-  case "$changed_path" in
-    scripts/gates/p06/successors/observation-capability-v1/*|reports/gates/p06/successors/observation-capability-v1/*) ;;
-    *) echo "P06_CAPABILITY_WRITE_SET_REFUSED:$changed_path" >&2; exit 2 ;;
-  esac
-done
+git -C "$root" diff --name-only "$predecessor..$current_head" | \
+  "$root/scripts/gates/p06/successors/observation-capability-v1/validate-write-set.sh"
 
 if test "$receipt" != "$default_receipt"; then
   receipt=$(realpath "$receipt")
