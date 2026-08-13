@@ -5,7 +5,28 @@ root=$(CDPATH= cd -- "$(dirname -- "$0")/../../../../.." && pwd -P)
 receipt_rel=reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/task-1.json
 receipt="$root/$receipt_rel"
 input_head=b9a8d2c9dda084d90b984f77faa8a26dd4f03b3a
-replaced_receipt_commit=ee7bbef06f97c03eb1f05ee9c9d7cba8658a3e8d
+replaced_receipt_commit=2f8daaab9a26f19cee960858cbba8c2d7cf861ce
+fix2_normative_red_output='P06_ZERO_AUTH_EXPECTED_REFUSAL_MISSING:OD10_CONTRADICTORY_PERMISSION
+P06_ZERO_AUTH_EXPECTED_REFUSAL_MISSING:MASTER_CONTRADICTORY_PERMISSION
+P06_ZERO_AUTH_EXPECTED_REFUSAL_MISSING:OD10_CONTRADICTORY_PERMISSION
+P06_ZERO_AUTH_EXPECTED_REFUSAL_MISSING:MASTER_CONTRADICTORY_PERMISSION
+P06_ZERO_AUTH_EXPECTED_REFUSAL_MISSING:OD10_CONTRADICTORY_PERMISSION
+P06_ZERO_AUTH_EXPECTED_REFUSAL_MISSING:MASTER_CONTRADICTORY_PERMISSION
+P06_ZERO_AUTH_EXPECTED_REFUSAL_MISSING:OD10_CONTRADICTORY_PERMISSION
+P06_ZERO_AUTH_EXPECTED_REFUSAL_MISSING:MASTER_CONTRADICTORY_PERMISSION'
+trace_command="bash -o pipefail -c 'CARGO_INCREMENTAL=0 cargo test --offline --test trace_metadata -- --test-threads=1 2>&1 | sed -E -n \"/^running [0-9]+ tests$/p; /^test (canonical_|missing_|previous_).* \.\.\. (ok|FAILED)$/p; /^test result: /{s/; finished in [0-9.]+s$//;p;}\"'"
+trace_red_output='running 4 tests
+test canonical_checker_is_the_executable_446_gate ... FAILED
+test canonical_map_has_446_explicit_rows_and_reciprocal_fields ... FAILED
+test missing_conflicting_unreviewed_and_stale_rows_refuse ... ok
+test previous_445_row_map_refuses_in_rust_and_the_executable_gate ... FAILED
+test result: FAILED. 1 passed; 3 failed; 0 ignored; 0 measured; 0 filtered out'
+trace_green_output='running 4 tests
+test canonical_checker_is_the_executable_446_gate ... ok
+test canonical_map_has_446_explicit_rows_and_reciprocal_fields ... ok
+test missing_conflicting_unreviewed_and_stale_rows_refuse ... ok
+test previous_445_row_map_refuses_in_rust_and_the_executable_gate ... ok
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out'
 
 refuse() {
   printf '%s\n' "P06_ZERO_AUTH_RECEIPT_REFUSAL:$1" >&2
@@ -30,12 +51,16 @@ jq -e \
   --arg input_head "$input_head" \
   --arg implementation_head "$implementation_head" \
   --arg implementation_tree "$implementation_tree" \
-  --arg replaced_receipt_commit "$replaced_receipt_commit" '
+  --arg replaced_receipt_commit "$replaced_receipt_commit" \
+  --arg fix2_normative_red_output "$fix2_normative_red_output" \
+  --arg trace_command "$trace_command" \
+  --arg trace_red_output "$trace_red_output" \
+  --arg trace_green_output "$trace_green_output" '
   .schema_version == "taskseal.p06.zero-auth-preauthenticated-native-session-v1.task-receipt.v2" and
   .plan_id == "P06-ZERO-AUTH-PREAUTHENTICATED-NATIVE-SESSION-V1" and
   .task == 1 and
   .result == "accepted" and
-  .acceptance.id == "P06-ZERO-AUTH-T1-GOVERNANCE-V2" and
+  .acceptance.id == "P06-ZERO-AUTH-T1-GOVERNANCE-V3" and
   .acceptance.control_ids == ["ADP-05", "AUTH-01", "OD-10"] and
   .acceptance.evidence_ids == [
     "P06-ZERO-AUTH-T1-RED-MISSING-CONTROL-VALIDATOR-V1",
@@ -43,6 +68,10 @@ jq -e \
     "P06-ZERO-AUTH-T1-FIX1-RED-CONTRADICTORY-PERMISSION-V1",
     "P06-ZERO-AUTH-T1-FIX1-GREEN-SEMANTIC-BRANCHES-V1",
     "P06-ZERO-AUTH-T1-FIX1-GREEN-446-COVERAGE-V1",
+    "P06-ZERO-AUTH-T1-FIX2-RED-NORMATIVE-CONTRADICTIONS-V1",
+    "P06-ZERO-AUTH-T1-FIX2-GREEN-NORMATIVE-CONTRADICTIONS-V1",
+    "P06-ZERO-AUTH-T1-FIX2-RED-RUST-TRACE-445-V1",
+    "P06-ZERO-AUTH-T1-FIX2-GREEN-RUST-TRACE-446-V1",
     "P06-ZERO-AUTH-T1-FIX1-RED-DESCENDANT-RECEIPT-V1",
     "P06-ZERO-AUTH-T1-FIX1-GREEN-DESCENDANT-RECEIPT-V1"
   ] and
@@ -62,6 +91,7 @@ jq -e \
   .controls.canonical_control_count == 446 and
   .controls.previous_445_state_refuses == true and
   .controls.contradictory_permissions_refuse == true and
+  .controls.all_normative_positive_prohibited_actions_refuse == true and
   .controls.network_access == "not invoked" and
   .controls.provider_or_auth_process == "not invoked" and
   .controls.credential_or_keychain_read == "not invoked" and
@@ -122,6 +152,40 @@ jq -e \
       "output":"446/446 explicit controls pass",
       "output_sha256":"ba8021f85dc71498fdb979e50bce268c50d39965284768e8c8a622fb2bf8766d",
       "meaning":"The live canonical coverage checker accepted all 446 unique explicit control rows."
+    },
+    {
+      "id":"P06-ZERO-AUTH-T1-FIX2-RED-NORMATIVE-CONTRADICTIONS-V1",
+      "command":"scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-control-validator.sh",
+      "exit":1,
+      "output":$fix2_normative_red_output,
+      "output_sha256":"21c80b3e8ca509c4b51207a730a55b0578075f5d8554c3a0f29ea1561109256b",
+      "meaning":"The modal-enumeration validator false-accepted direct MUST and SHOULD provider-login obligations in both governed sections and case variants."
+    },
+    {
+      "id":"P06-ZERO-AUTH-T1-FIX2-GREEN-NORMATIVE-CONTRADICTIONS-V1",
+      "command":"scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-control-validator.sh",
+      "exit":0,
+      "output":"P06_ZERO_AUTH_CONTROL_TEST_PASS",
+      "output_sha256":"28fe4d0eb9e577e479f071c5edfa5060197bfe346d9798825ab6e646475908b4",
+      "meaning":"Exact prohibited action clauses now default to refusal unless governed by a proven negative scope; MUST, SHOULD, MAY, CAN, SHALL and WILL upper/lower forms refuse in OD-10 and master law."
+    },
+    {
+      "id":"P06-ZERO-AUTH-T1-FIX2-RED-RUST-TRACE-445-V1",
+      "command":$trace_command,
+      "exit":101,
+      "output":$trace_red_output,
+      "output_sha256":"5928d04b4ca782e5935e5f6e765495f56998b44cc54c6c0126b718458c5055f3",
+      "input":"Disposable clone of 2f8daaab9a26f19cee960858cbba8c2d7cf861ce with only scripts/check-control-coverage.rb and src/contracts/trace.rs changed from current 446 back to previous 445; canonical map and four-test Rust contract unchanged.",
+      "meaning":"The Rust contract produced the focused previous-445 RED: both live consumers were stale and the dedicated old-445 regression caught the Rust validator."
+    },
+    {
+      "id":"P06-ZERO-AUTH-T1-FIX2-GREEN-RUST-TRACE-446-V1",
+      "command":$trace_command,
+      "exit":0,
+      "output":$trace_green_output,
+      "output_sha256":"e03cfc379822332f8dec6910fc4f9838a0e6009f5ba9cdf74f1ba179d3f920bf",
+      "input":"Current Task 1 implementation with the canonical map and both live count consumers fixed at 446.",
+      "meaning":"The focused Rust trace contract accepted all current 446 consumers and independently refused the previous-445 fixture."
     },
     {
       "id":"P06-ZERO-AUTH-T1-FIX1-RED-DESCENDANT-RECEIPT-V1",
@@ -206,11 +270,14 @@ sort "$scratch/subject-records" >"$scratch/subject-records.sorted"
 cmp -s "$scratch/subject-records" "$scratch/subject-records.sorted" || refuse SUBJECT_ORDER
 test "$(sha_file "$scratch/subject-records")" = "$(jq -r '.subject.sha256' "$receipt")" || refuse SUBJECT_AGGREGATE
 
-while IFS=$(printf '\t') read -r output expected_sha; do
+evidence_index=0
+evidence_count=$(jq '.evidence | length' "$receipt")
+while test "$evidence_index" -lt "$evidence_count"; do
+  output=$(jq -r --argjson index "$evidence_index" '.evidence[$index].output' "$receipt")
+  expected_sha=$(jq -r --argjson index "$evidence_index" '.evidence[$index].output_sha256' "$receipt")
   test "$(sha_output "$output")" = "$expected_sha" || refuse EVIDENCE_OUTPUT_DIGEST
-done <<EOF
-$(jq -r '.evidence[] | [.output, .output_sha256] | @tsv' "$receipt")
-EOF
+  evidence_index=$((evidence_index + 1))
+done
 
 test "$(sha_output "$(jq -r '.seal_tdd.red_output' "$receipt")")" = "$(jq -r '.seal_tdd.red_output_sha256' "$receipt")" || refuse SEAL_RED_OUTPUT_DIGEST
 test "$(sha_output "$(jq -r '.seal_tdd.green_output' "$receipt")")" = "$(jq -r '.seal_tdd.green_output_sha256' "$receipt")" || refuse SEAL_GREEN_OUTPUT_DIGEST

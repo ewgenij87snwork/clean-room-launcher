@@ -36,6 +36,23 @@ expect_refusal() {
   fi
 }
 
+collect_refusal() {
+  expected=$1
+  shift
+  set +e
+  actual=$(run_validator "$@" 2>&1)
+  status=$?
+  set -e
+  if test "$status" != 1; then
+    printf '%s\n' "P06_ZERO_AUTH_EXPECTED_REFUSAL_MISSING:$expected"
+    return 1
+  fi
+  if test "$actual" != "P06_ZERO_AUTH_CONTROL_REFUSAL:$expected"; then
+    printf '%s\n' "P06_ZERO_AUTH_WRONG_REFUSAL:$expected:$actual"
+    return 1
+  fi
+}
+
 replace_once() {
   path=$1
   old=$2
@@ -69,6 +86,36 @@ append_line "$fixture_root/owner-provider-login-contradiction.md" \
   'TaskSeal MAY invoke provider login.'
 expect_refusal OD10_CONTRADICTORY_PERMISSION \
   "$fixture_root/owner-provider-login-contradiction.md" "$master" "$trace" "$execution_map"
+
+# Break caught: every positive normative form of the exact prohibited provider-login
+# clause must refuse in both governed sections, without relying on a partial modal list.
+normative_failures=0
+normative_index=0
+for normative in MUST SHOULD MAY CAN SHALL WILL must should may can shall will; do
+  normative_index=$((normative_index + 1))
+
+  owner_normative="$fixture_root/owner-provider-login-normative-$normative_index.md"
+  cp "$fixture_root/owner.md" "$owner_normative"
+  append_line "$owner_normative" "TaskSeal $normative invoke provider login."
+  if ! collect_refusal OD10_CONTRADICTORY_PERMISSION \
+    "$owner_normative" "$master" "$trace" "$execution_map"; then
+    normative_failures=1
+  fi
+
+  master_normative="$fixture_root/master-provider-login-normative-$normative_index.md"
+  cp "$fixture_root/master.md" "$master_normative"
+  replace_once "$master_normative" \
+    '  only, with no runtime GitHub/stargazer check and no automatic enablement;' \
+    "  only, with no runtime GitHub/stargazer check and no automatic enablement;
+  TaskSeal $normative invoke provider login."
+  if ! collect_refusal MASTER_CONTRADICTORY_PERMISSION \
+    "$owner" "$master_normative" "$trace" "$execution_map"; then
+    normative_failures=1
+  fi
+done
+if test "$normative_failures" != 0; then
+  exit 1
+fi
 
 # Break caught: the permanent law must keep dated, public threshold evidence.
 cp "$fixture_root/master.md" "$fixture_root/master-dated-evidence.md"

@@ -22,20 +22,43 @@ end
 
 def refuse_contradictory_permissions(text, code)
   compact = text.gsub(/\s+/, " ")
-  affirmative = "(?:MAY|CAN|SHALL|WILL)"
-  forbidden_actions = [
-    /\b#{affirmative}\s+request\s+login\b/i,
-    /\b#{affirmative}\b.{0,80}\b(?:open|trigger)\b.{0,80}\bbrowser\b.{0,80}\b(?:OAuth|device)\b/i,
-    /\b#{affirmative}\s+invoke\s+provider\s+login\b/i,
-    /\b#{affirmative}\b.{0,80}\b(?:request|read|copy|store)\b.{0,80}\b(?:API\s+keys?|keys?|tokens?)\b/i,
-    /\b#{affirmative}\b.{0,80}\bfall\s+back\b.{0,80}\b(?:authentication|auth|billing)\b/i,
-    /\b#{affirmative}\b.{0,80}\bruntime\b.{0,80}\b(?:GitHub|stargazer)\b.{0,80}\bcheck\b/i,
-    /\b#{affirmative}\b.{0,80}\bautomatically\s+enable\b/i,
-    /\b#{affirmative}\b.{0,80}\bcontinue\b.{0,80}\bprovider\s+birth\b/i,
-    /\bTaskSeal\b.{0,80}\b(?:create|establish)\b.{0,80}\b(?:authentication|auth)\s+session\b/i,
-    /\blocal\s+TaskSeal\s+functionality\b.{0,80}\b(?:becomes|is)\s+unavailable\b/i
+  prohibited_actions = [
+    /\brequest\s+login\b/i,
+    /\b(?:open|trigger)\b.{0,80}\bbrowser\b.{0,80}\b(?:OAuth(?:\s+flow)?|device\s+flow)\b/i,
+    /\binvoke\s+provider\s+login\b/i,
+    /\b(?:request|read|copy|store)\b.{0,80}\b(?:API\s+keys?|keys?|tokens?)\b/i,
+    /\bfall\s+back\b.{0,80}\b(?:authentication|auth|billing)\b/i,
+    /\bruntime\b.{0,80}\b(?:GitHub|stargazer)\b.{0,80}\bcheck\b/i,
+    /\bautomatically\s+enable\b/i,
+    /\bcontinue\b.{0,80}\bprovider\s+birth\b/i,
+    /\b(?:creat(?:e|es|ed|ing)|establish(?:es|ed|ing)?)\b.{0,80}\b(?:authentication|auth)\s+session\b/i,
+    /\bfunctionality\b.{0,80}\b(?:becomes|is)\s+unavailable\b/i
   ]
-  refuse(code) if forbidden_actions.any? { |pattern| compact.match?(pattern) }
+  negative_governance = /\b(?:(?:must|should|may|shall|will)\s+not|can(?:not|\s+not)|never|(?:does|do|is|are)\s+not|prohibited|forbidden)\b/i
+
+  compact.scan(/\bTaskSeal\b[^.!?;]*/i).each do |clause|
+    actions = prohibited_actions.flat_map do |pattern|
+      clause.to_enum(:scan, pattern).map do
+        match = Regexp.last_match
+        [match.begin(0), match.end(0)]
+      end
+    end.sort_by(&:first)
+    next if actions.empty?
+
+    previous_end = 0
+    negative_scope = false
+    actions.each_with_index do |(action_start, action_end), index|
+      bridge = clause[previous_end...action_start]
+      if bridge.match?(negative_governance)
+        negative_scope = true
+      elsif index.zero? || bridge.scan(/[A-Za-z]+/).any? { |word| !%w[and or].include?(word.downcase) }
+        negative_scope = false
+      end
+      refuse(code) unless negative_scope
+
+      previous_end = action_end
+    end
+  end
 end
 
 def section(text, heading, next_heading, code)
