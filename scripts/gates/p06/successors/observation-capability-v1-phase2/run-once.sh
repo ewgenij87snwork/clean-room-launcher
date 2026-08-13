@@ -21,6 +21,7 @@ login_marker="$root/.taskseal-dev/phase2-login-used"
 model_marker="$root/.taskseal-dev/phase2-model-used"
 auth_source=/Users/ysorokin/.codex/auth.json
 credential_field=.tokens.access_token
+credential_plutil_field=${credential_field#.}
 
 actual_pwd=$(pwd -P)
 actual_top_level=$(git -C "$root" rev-parse --show-toplevel)
@@ -39,7 +40,7 @@ test ! -e "$model_marker" || model_counter_state=CONSUMED
 p06_boundary_validate_base "$actual_pwd" "$root" "$actual_top_level" "$actual_branch" "$base_is_ancestor"
 p06_boundary_validate_authority "$authority_json" "$root" "$current_head"
 p06_boundary_validate_counter_state "$login_counter_state" "$model_counter_state"
-p06_boundary_validate_source_field "$auth_source" "$credential_field"
+p06_boundary_validate_source_field "$auth_source" "$credential_field" "$credential_plutil_field"
 
 command=$(realpath "$command")
 command_digest=$(shasum -a 256 "$command" | awk '{print $1}')
@@ -125,7 +126,7 @@ if test "$mode" = --preflight; then
     'schema_version=taskseal.p06-codex-observation-capability-v1-phase2.preflight.v1' \
     'candidate=codex-0.147.0-macos-aarch64' \
     "executable_sha256=$expected_digest" \
-    'credential_field=.tokens.access_token' \
+    "credential_field=$credential_field" \
     'credential_pipe=ANONYMOUS_STDIN' \
     'credential_shell_variable=false' \
     'keychain_access=DENIED' \
@@ -144,7 +145,7 @@ test -f "$auth_source" && test ! -L "$auth_source" && test "$(stat -f %Lp "$auth
 # Validate the exact field type and single-line/nonempty shape before consuming the login counter.
 # Only counts leave the anonymous validation pipe; credential bytes remain inside sandboxed processes.
 credential_validation=$( (cd "$temporary_root" && /usr/bin/sandbox-exec -f "$extract_profile" \
-  /usr/bin/plutil -extract tokens.access_token raw -expect string -n -o - "$auth_source") | \
+  /usr/bin/plutil -extract "$credential_plutil_field" raw -expect string -n -o - "$auth_source") | \
   LC_ALL=C /usr/bin/awk '
     BEGIN { valid=0 }
     { if (NR != 1 || length($0) == 0 || $0 ~ /[[:cntrl:]]/) exit 2; valid=1 }
@@ -162,7 +163,7 @@ set -C
 set +C
 set +e
 (cd "$temporary_root" && /usr/bin/sandbox-exec -f "$extract_profile" \
-  /usr/bin/plutil -extract tokens.access_token raw -expect string -n -o - "$auth_source") | \
+  /usr/bin/plutil -extract "$credential_plutil_field" raw -expect string -n -o - "$auth_source") | \
   LC_ALL=C /usr/bin/awk '
     BEGIN { valid=0; invalid=0; buffer="" }
     { if (NR != 1 || length($0) == 0 || $0 ~ /[[:cntrl:]]/) { invalid=1; exit 2 }; buffer=$0; valid=1 }

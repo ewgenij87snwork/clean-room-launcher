@@ -12,6 +12,17 @@ p06_boundary_contains() {
   esac
 }
 
+p06_boundary_occurrences() {
+  occurrence_value=$1
+  occurrence_needle=$2
+  occurrence_count=0
+  while p06_boundary_contains "$occurrence_value" "$occurrence_needle"; do
+    occurrence_value=${occurrence_value#*"$occurrence_needle"}
+    occurrence_count=$((occurrence_count + 1))
+  done
+  printf '%s\n' "$occurrence_count"
+}
+
 p06_boundary_validate_tuple_platform() {
   if test "$#" != 3; then
     p06_boundary_refuse P06_BOUNDARY_REFUSAL_INVALID_ARGUMENTS
@@ -91,7 +102,7 @@ p06_boundary_validate_counter_state() {
 }
 
 p06_boundary_validate_source_field() {
-  if test "$#" != 2; then
+  if test "$#" != 3; then
     p06_boundary_refuse P06_BOUNDARY_REFUSAL_INVALID_ARGUMENTS
     return 1
   fi
@@ -100,6 +111,10 @@ p06_boundary_validate_source_field() {
     return 1
   fi
   if test "$2" != .tokens.access_token; then
+    p06_boundary_refuse P06_BOUNDARY_REFUSAL_ALTERNATE_CREDENTIAL_FIELD
+    return 1
+  fi
+  if test "$3" != tokens.access_token || test ".$3" != "$2"; then
     p06_boundary_refuse P06_BOUNDARY_REFUSAL_ALTERNATE_CREDENTIAL_FIELD
     return 1
   fi
@@ -126,7 +141,21 @@ p06_boundary_validate_policy() {
       p06_boundary_refuse P06_BOUNDARY_REFUSAL_POLICY_DRIFT
       return 1
     fi
+    if p06_boundary_contains "$profile" '(subpath "/")' ||
+      p06_boundary_contains "$profile" '(literal "/")' ||
+      test "$(p06_boundary_occurrences "$profile" '(allow file-write*')" != 1; then
+      p06_boundary_refuse P06_BOUNDARY_REFUSAL_POLICY_DRIFT
+      return 1
+    fi
   done
+
+  if test "$(p06_boundary_occurrences "$offline_policy" '(allow file-read*')" != 1 ||
+    test "$(p06_boundary_occurrences "$extract_policy" '(allow file-read*')" != 2 ||
+    test "$(p06_boundary_occurrences "$online_policy" '(allow file-read*')" != 1 ||
+    test "$(p06_boundary_occurrences "$keychain_policy" '(allow file-read*')" != 1; then
+    p06_boundary_refuse P06_BOUNDARY_REFUSAL_POLICY_DRIFT
+    return 1
+  fi
 
   if ! p06_boundary_contains "$offline_policy" '(deny network*)' ||
     ! p06_boundary_contains "$offline_policy" '(deny mach-lookup)' ||
