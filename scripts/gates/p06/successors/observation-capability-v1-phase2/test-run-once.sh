@@ -37,7 +37,7 @@ for source_pattern in \
   'login .*--with-access-token' \
   '\.tokens\.access_token' \
   'allow network-outbound' \
-  'com\.apple\.securityd' \
+  'SecurityAgent' \
   'native_observation'; do
   rg -n -- "$source_pattern" "$runner" >/dev/null
 done
