@@ -156,7 +156,7 @@ match_count=$(wc -l <"$scratch/matching-commits" | tr -d ' ')
 case "$match_count" in
   0)
     test "$(git rev-parse HEAD)" = "$implementation_head" || refuse UNCOMMITTED_RECEIPT_WRONG_HEAD
-    test "$(git diff --name-only HEAD --)" = "$receipt_rel" || refuse UNCOMMITTED_RECEIPT_WRITE_SET
+    test "$(git status --porcelain=v1 --untracked-files=all)" = "?? $receipt_rel" || refuse UNCOMMITTED_RECEIPT_WRITE_SET
     ;;
   1)
     receipt_commit=$(sed -n '1p' "$scratch/matching-commits")
