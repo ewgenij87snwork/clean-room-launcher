@@ -205,10 +205,10 @@ jq -e \
     }
   ] and
   .seal_tdd == {
-    "red_command":"scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-1-receipt-durability.sh",
+    "red_command":"scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-1-receipt.sh",
     "red_exit":1,
-    "red_output":"P06_ZERO_AUTH_RECEIPT_DESCENDANT_RED:1:NO_OUTPUT",
-    "red_output_sha256":"fda533ecbf4ef4d92cf35e261bb66c6aa203774ff4f7efb59f097204c59c185e",
+    "red_output":"P06_ZERO_AUTH_RECEIPT_REFUSAL:RECEIPT_CONTRACT",
+    "red_output_sha256":"214a4e314731fc14660d0ba2bef487260d990ea67c19b1d57c7d29bef9e3c54b",
     "green_command":"scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-1-receipt.sh",
     "green_exit":0,
     "green_output":"P06_ZERO_AUTH_TASK_1_RECEIPT_PASS",
