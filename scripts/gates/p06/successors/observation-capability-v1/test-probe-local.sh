@@ -32,6 +32,16 @@ rg -x 'owner_config_mutated=false' "$temporary_root/probe.out" >/dev/null
 rg -x 'temporary_home_removed=true' "$temporary_root/probe.out" >/dev/null
 rg -x 'provider_route_started=false' "$temporary_root/probe.out" >/dev/null
 rg -x 'classification=(CAPABILITY_IDENTIFIED|NO_MATERIAL_CAPABILITY)' "$temporary_root/probe.out" >/dev/null
+rg -x 'transport_id=(CODEX_ACCESS_TOKEN_STDIN|NONE)' "$temporary_root/probe.out" >/dev/null
+rg -x 'selection_surface=(CODEX_LOGIN_WITH_ACCESS_TOKEN|NONE)' "$temporary_root/probe.out" >/dev/null
+rg -x 'evidence_kind=LOCAL_CLI_HELP' "$temporary_root/probe.out" >/dev/null
+rg -x 'selection_evidence_sha256=([0-9a-f]{64}|ABSENT)' "$temporary_root/probe.out" >/dev/null
+if rg -x 'classification=CAPABILITY_IDENTIFIED' "$temporary_root/probe.out" >/dev/null; then
+  rg -x 'transport_id=CODEX_ACCESS_TOKEN_STDIN' "$temporary_root/probe.out" >/dev/null
+  rg -x 'selection_surface=CODEX_LOGIN_WITH_ACCESS_TOKEN' "$temporary_root/probe.out" >/dev/null
+  rg -x 'material_difference=STDIN_TOKEN_SELECTION_NOT_COPIED_STORED_AUTH' "$temporary_root/probe.out" >/dev/null
+  ! rg -x 'selection_evidence_sha256=ABSENT' "$temporary_root/probe.out" >/dev/null
+fi
 if rg -n "$poison_api|$poison_access|/Users/ysorokin/\.codex|Bearer |sk-[A-Za-z0-9]" "$temporary_root/probe.out"; then
   exit 2
 fi

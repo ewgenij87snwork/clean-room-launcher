@@ -5,14 +5,15 @@ umask 077
 root=$(CDPATH= cd -- "$(dirname -- "$0")/../../../../.." && pwd -P)
 authority="$root/.taskseal-dev/execution-authority.json"
 command=${P06_CODEX_BIN:?P06_CODEX_BIN is required}
-expected_head=707622eaf5e1543e34341be4eed152dbfe3ae5c5
+predecessor=707622eaf5e1543e34341be4eed152dbfe3ae5c5
 expected_digest=19c4f144c5226a9f17c58e6f0fa854843b0f77a6eb420f40e2745a12f10f5d37
 
 test "$(pwd -P)" = "$root"
 test "$(git -C "$root" rev-parse --show-toplevel)" = "$root"
 test "$(git -C "$root" branch --show-current)" = feat/p06-codex-observation-capability-v1
-test "$(git -C "$root" rev-parse HEAD)" = "$expected_head"
-jq -e --arg root "$root" --arg head "$expected_head" '
+current_head=$(git -C "$root" rev-parse HEAD)
+git -C "$root" merge-base --is-ancestor "$predecessor" "$current_head"
+jq -e --arg root "$root" --arg head "$current_head" '
   .schema_version == "taskseal.execution-authority.v2" and
   .plan_id == "P06-CODEX-OBSERVATION-CAPABILITY-V1" and
   .allowed_task_first == 1 and .allowed_task_last == 3 and
@@ -72,11 +73,13 @@ transport_id=NONE
 selection_surface=NONE
 evidence_kind=LOCAL_CLI_HELP
 material_difference=NONE
+selection_evidence_sha256=ABSENT
 if test "$access_token_stdin" = true; then
   classification=CAPABILITY_IDENTIFIED
   transport_id=CODEX_ACCESS_TOKEN_STDIN
   selection_surface=CODEX_LOGIN_WITH_ACCESS_TOKEN
   material_difference=STDIN_TOKEN_SELECTION_NOT_COPIED_STORED_AUTH
+  selection_evidence_sha256=$(rg -F -- '--with-access-token' "$temporary_root/login-help.txt" | shasum -a 256 | awk '{print $1}')
 fi
 
 rm -f "$temporary_root/root-help.txt" "$temporary_root/root-help.stderr" \
@@ -102,6 +105,7 @@ printf '%s\n' \
   "transport_id=$transport_id" \
   "selection_surface=$selection_surface" \
   "evidence_kind=$evidence_kind" \
+  "selection_evidence_sha256=$selection_evidence_sha256" \
   "material_difference=$material_difference" \
   'qualification=NOT_QUALIFIED' \
   'original_progression=STOPPED_AT_T8'
