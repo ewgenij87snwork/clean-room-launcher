@@ -1,26 +1,31 @@
 {
-  "schema_version": "taskseal.p06.zero-auth-preauthenticated-native-session-v1.task-receipt.v1",
+  "schema_version": "taskseal.p06.zero-auth-preauthenticated-native-session-v1.task-receipt.v2",
   "plan_id": "P06-ZERO-AUTH-PREAUTHENTICATED-NATIVE-SESSION-V1",
   "task": 2,
   "result": "accepted",
   "acceptance": {
-    "id": "P06-ZERO-AUTH-T2-EXECUTABLE-PATH-CLOSURE-V1",
-    "operator_result": "Current Phase 2 and T8 credential/login launchers are non-executable unconditional historical-only refusals; executable product inventory refuses auth-file, credential extraction/copy, provider-login, OAuth/device/browser, and API-key/token-input source paths; the former auth fingerprint is historical provenance only and non-authoritative.",
+    "id": "P06-ZERO-AUTH-T2-EXECUTABLE-PATH-CLOSURE-V2",
+    "operator_result": "Four historical credential/login probe and caller paths are non-executable unconditional historical-only refusals; the closed exact-digest inventory scans every tracked executable, every tracked shebang script regardless of mode, tracked symlinks, build.rs and all compiled src Rust while refusing auth-file, credential extraction/copy, provider-login, OAuth/device/browser, and API-key/token-input patterns; the former auth fingerprint remains historical and non-authoritative, and descendant durability execution is sealed.",
     "control_ids": [
       "AUTH-01"
     ],
     "evidence_ids": [
       "P06-ZERO-AUTH-T2-RED-MISSING-SOURCE-INVENTORY-V1",
       "P06-ZERO-AUTH-T2-RED-AUTH-FINGERPRINT-SUPERSESSION-V1",
-      "P06-ZERO-AUTH-T2-GREEN-EXECUTABLE-SOURCE-INVENTORY-V1"
+      "P06-ZERO-AUTH-T2-GREEN-EXECUTABLE-SOURCE-INVENTORY-V1",
+      "P06-ZERO-AUTH-T2-FIX1-RED-GATE-RUST-INVENTORY-GAP-V1",
+      "P06-ZERO-AUTH-T2-FIX1-GREEN-CLOSED-SOURCE-INVENTORY-V1",
+      "P06-ZERO-AUTH-T2-FIX1-RED-DURABILITY-EVIDENCE-GAP-V1",
+      "P06-ZERO-AUTH-T2-FIX1-GREEN-DESCENDANT-DURABILITY-V1"
     ]
   },
   "binding": {
-    "scheme": "parent-bound-receipt.v1",
+    "scheme": "parent-bound-receipt.v2",
     "input_head": "2d29ecfef073c5ad1a04d3acb96a6ccb48261ce6",
-    "implementation_result_head": "6785aef3458f80639cf3b1df19be59918484a45e",
-    "implementation_tree": "a913b76a59c707b517063154377f84906af531e9",
-    "receipt_commit_parent": "6785aef3458f80639cf3b1df19be59918484a45e",
+    "implementation_result_head": "39f534926f71c251f5207715132dac3492722fff",
+    "implementation_tree": "61aeb40260dac2b1720f446b3cc43588093abadb",
+    "receipt_commit_parent": "39f534926f71c251f5207715132dac3492722fff",
+    "replaces_receipt_commit": "3e40a4b688bb489b5cbc9a8ec8e32a2be032c26e",
     "parent_task_receipt": {
       "path": "reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/task-1.json",
       "commit": "2d29ecfef073c5ad1a04d3acb96a6ccb48261ce6",
@@ -36,7 +41,7 @@
   },
   "subject": {
     "algorithm": "sha256 of sorted path, tab, sha256, newline repository records",
-    "sha256": "ce4871f677460e375310982e9eed663666ce7c9e38dd27b356a776620d10fcb8",
+    "sha256": "33067faae965cae9c6cff97fcf8c374c416efc7af9f9996f98e085efd8c62722",
     "sources": [
       {
         "kind": "repository_implementation_commit",
@@ -50,13 +55,28 @@
       },
       {
         "kind": "repository_implementation_commit",
+        "path": "scripts/gates/p06/successors/observation-capability-v1/probe-local.sh",
+        "sha256": "6f8fd8e8f78cacf159b998f3b29157eb2289e685b8ef4f476e9e13be989246c4"
+      },
+      {
+        "kind": "repository_implementation_commit",
+        "path": "scripts/gates/p06/successors/observation-capability-v1/verify.sh",
+        "sha256": "6f8fd8e8f78cacf159b998f3b29157eb2289e685b8ef4f476e9e13be989246c4"
+      },
+      {
+        "kind": "repository_implementation_commit",
+        "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/source-inventory-allowlist.json",
+        "sha256": "31886f92ae40fe7d5a8e3c54e20a3048c0fc645b32b302dc42910c7f3a722049"
+      },
+      {
+        "kind": "repository_implementation_commit",
         "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/source-inventory.rb",
-        "sha256": "842a6c469e583f9b6bef40a1b4c1c26437c356d805c2fe12dd1a25fe94a1ca88"
+        "sha256": "e54711f6f11bf3e6ca989583e25c0c8eaad244e5c3f78017cbdd1dccd2530843"
       },
       {
         "kind": "repository_implementation_commit",
         "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-source-inventory.sh",
-        "sha256": "c88320fdd269c6a417860c52eadb99c09efa08a0d96076d3cb1fdb78ff09a176"
+        "sha256": "383e4359d8930ed0469e112c5cc21b41821652f25f9171584e57965a8e6a3b6f"
       },
       {
         "kind": "repository_implementation_commit",
@@ -66,7 +86,7 @@
       {
         "kind": "repository_implementation_commit",
         "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-2-receipt.sh",
-        "sha256": "654907b3959eeb958b5ccdd3fcde161423f22c2a02848b8f7a2bf6b711b1f53e"
+        "sha256": "6ec3b5075604d5f7d802ff621f0a885a75f82b31f0c76bc203fe22b315a3a1f4"
       },
       {
         "kind": "repository_implementation_commit",
@@ -100,6 +120,40 @@
       "output": "P06_ZERO_AUTH_SOURCE_INVENTORY_TEST_PASS",
       "output_sha256": "ff2c843a18a4b76f59ff24589d0335a7057640cb926ea647f7246d40ae7b64af",
       "meaning": "The offline focused suite executed both refusal stubs, checked their non-executable tracked modes and predecessor Git objects, accepted clean product source, and independently refused all required credential/login/browser/token fixture classes plus executable or contaminated historical stubs."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T2-FIX1-RED-GATE-RUST-INVENTORY-GAP-V1",
+      "command": "sh scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-source-inventory.sh",
+      "exit": 1,
+      "output": "P06_ZERO_AUTH_EXPECTED_REFUSAL_MISSING:gate_provider_login:0:P06_ZERO_AUTH_SOURCE_INVENTORY_PASS",
+      "output_sha256": "ff5f992254ca3801b8ab5d84170f64365791c0f1a639fcf1c5706007bdc9b1d0",
+      "input": "The reviewed v1 scanner skipped every scripts/gates path and considered only tracked mode 100755, so an executable renamed gate fixture invoking provider login passed before compiled Rust mutations were reached.",
+      "meaning": "Focused review RED proved the blanket gate exclusion and mode-only inventory omitted a runnable provider-login path."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T2-FIX1-GREEN-CLOSED-SOURCE-INVENTORY-V1",
+      "command": "sh scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-source-inventory.sh",
+      "exit": 0,
+      "output": "P06_ZERO_AUTH_SOURCE_INVENTORY_TEST_PASS",
+      "output_sha256": "ff2c843a18a4b76f59ff24589d0335a7057640cb926ea647f7246d40ae7b64af",
+      "meaning": "The closed offline inventory accepted exact refusal stubs and audited evidence digests while refusing gate-path, compiled Rust, multiline, dynamic, provider-prefixed, renamed and symlink mutations for every required class."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T2-FIX1-RED-DURABILITY-EVIDENCE-GAP-V1",
+      "command": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-2-receipt.sh",
+      "exit": 1,
+      "output": "P06_ZERO_AUTH_RECEIPT_REFUSAL:RECEIPT_CONTRACT",
+      "output_sha256": "214a4e314731fc14660d0ba2bef487260d990ea67c19b1d57c7d29bef9e3c54b",
+      "input": "The reviewed Task 2 receipt omitted the executed descendant durability command/result from ordered acceptance evidence.",
+      "meaning": "The replacement receipt checker refused the incomplete v1 receipt before durability execution evidence was sealed."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T2-FIX1-GREEN-DESCENDANT-DURABILITY-V1",
+      "command": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-2-receipt-durability.sh",
+      "exit": 0,
+      "output": "P06_ZERO_AUTH_TASK_2_RECEIPT_DURABILITY_PASS",
+      "output_sha256": "1add4b71d256ffb6680b54bc26849f2a1ad6d9f80531ad42958f0abf9c3ecccb",
+      "meaning": "A no-network local clone added a real descendant commit and reproduced the unique parent-bound replacement Task 2 receipt."
     }
   ],
   "seal_tdd": {
@@ -115,8 +169,21 @@
   "controls": {
     "historical_runners_executable": false,
     "historical_runners_behavior": "HISTORICAL_ONLY_REFUSED",
+    "historical_runner_paths": [
+      "scripts/gates/p06/successors/observation-capability-v1-phase2/run-once.sh",
+      "scripts/gates/p06/successors/observation-capability-v1/probe-local.sh",
+      "scripts/gates/p06/successors/observation-capability-v1/verify.sh",
+      "scripts/gates/p06/t8-native-observe-once.sh"
+    ],
     "historical_git_objects_preserved": true,
     "executable_product_source_inventory": "PASS",
+    "governed_inventory": {
+      "tracked_executables": true,
+      "tracked_shebangs_regardless_of_mode": true,
+      "compiled_rust": "build.rs + src/**/*.rs",
+      "tracked_symlinks": "REFUSE",
+      "evidence_allowlist": "EXACT_DIGEST_AND_PER_FILE_RATIONALE"
+    },
     "refused_classes": [
       "AUTH_FILE",
       "CREDENTIAL_EXTRACTION",
@@ -131,6 +198,7 @@
     "provider_or_auth_process": "not invoked",
     "browser_launch": "not invoked",
     "credential_or_keychain_read": "not invoked",
+    "descendant_durability_execution_sealed": true,
     "main_mutation": false
   }
 }
