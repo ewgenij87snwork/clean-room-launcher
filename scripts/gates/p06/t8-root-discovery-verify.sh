@@ -24,7 +24,7 @@ cp "$root/fixtures/adapters/codex/context-canaries/native/project/task/AGENTS.md
 
 render_prompt() {
   destination=$1
-  (cd "$temporary_root/project/task" && env -i HOME="$temporary_root/ambient-home" CODEX_HOME="$temporary_root/codex-home" PATH=/usr/bin:/bin "$command" debug prompt-input "Return only supplied canary codes.") >"$destination" 2>/dev/null
+  (cd "$temporary_root/project/task" && env -i HOME="$temporary_root/ambient-home" CODEX_HOME="$temporary_root/codex-home" PATH=/usr/bin:/bin /usr/bin/sandbox-exec -p '(version 1)(allow default)(deny network*)' "$command" debug prompt-input "Return only supplied canary codes.") >"$destination" 2>/dev/null
 }
 count_code() {
   code=$1
