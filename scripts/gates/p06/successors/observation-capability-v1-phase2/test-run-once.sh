@@ -43,7 +43,8 @@ for source_pattern in \
   'native_observation'; do
   rg -n -- "$source_pattern" "$runner" >/dev/null
 done
-test "$(rg -n 'cd "\$temporary_root"' "$runner" | wc -l | tr -d ' ')" -ge 2
+rg -n '/usr/bin/plutil -extract tokens\.access_token raw -expect string -n -o -' "$runner" >/dev/null
+if rg -n '/usr/bin/ruby -rjson|rubygems' "$runner"; then exit 2; fi
 if rg -n 'pipe-credential|credential=.*jq|credential=.*cat|export .*TOKEN|CODEX_ACCESS_TOKEN=' "$runner"; then exit 2; fi
 
 printf '%s\n' \
