@@ -1,0 +1,74 @@
+{
+  "schema_version": "taskseal.p06.phase2-evidence-truthfulness-correction-v1.task-receipt.v1",
+  "plan_id": "P06-PHASE2-EVIDENCE-TRUTHFULNESS-CORRECTION-V1",
+  "task": 2,
+  "result": "accepted",
+  "acceptance": {
+    "id": "P06-PHASE2-TRUTH-CORRECTION-T2-TRUTHFUL-HISTORY-V1",
+    "operator_result": "The sole offline successor gate preserves only LOGIN_REFUSED, NOT_QUALIFIED, STOPPED_AT_T8, an unused/not-started model process and forbidden T9-T13 while classifying unsupported retention, protected-state and cleanup claims UNKNOWN and UNVERIFIED.",
+    "mutation_pass_marker": "P06_PHASE2_TRUTHFULNESS_MUTATIONS_PASS"
+  },
+  "binding": {
+    "scheme": "parent-bound-receipt.v1",
+    "input_head": "82e1acb883ebe4ba2f3f54ad57857b126c942409",
+    "implementation_result_head": "3c6368249ad47b7876cf713056050e8b567d4884",
+    "implementation_tree": "bc541b6a27f977f207ce403a5d3c6d3a702cfe0d",
+    "receipt_commit_parent": "3c6368249ad47b7876cf713056050e8b567d4884",
+    "resolution": "The unique receipt-only child of the implementation result binds Task 2 without embedding its own containing commit."
+  },
+  "inputs": {
+    "plan_checkpoint_path": "/Users/ysorokin/Documents/it/5-LVL - 2026/Temp in Projects/wisdom/taskseal/plans/2026-08-13-p06-phase2-evidence-truthfulness-correction-v1.md",
+    "plan_checkpoint_sha256": "a8a11bfa9b7f83369041c03f217f6d389a97c7a1d84756228e65e9a1e61ab9bf",
+    "predecessor_checkpoint": "c54284cb3c2a2cfb7fb8508c5eef35204fd8ed71",
+    "predecessor_receipt_path": "reports/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/task-3.json",
+    "predecessor_receipt_sha256": "968779a627cd65d69f27edfa39293fd5f998f50029904ba52a1347463578b2e2",
+    "task_1_receipt_path": "reports/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/task-1.json",
+    "task_1_receipt_sha256": "7d6ae063881b69b1117402cae45bbe2b50ae3609595e2aec424ed5097ba49f8e",
+    "truthfulness_path": "reports/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/truthfulness.json",
+    "truthfulness_sha256": "faeb6c39f3881319302030c833017bd237626d83fab5fa5012709f18fc171751"
+  },
+  "subject": {
+    "algorithm": "sha256 of sorted path, tab, sha256, newline source records",
+    "sha256": "d68d132f177406ada558b929315d2efa029ee9c14808839eb5387ce01bd8e1fb",
+    "sources": [
+      {
+        "path": "reports/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/truthfulness.json",
+        "sha256": "faeb6c39f3881319302030c833017bd237626d83fab5fa5012709f18fc171751"
+      },
+      {
+        "path": "scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/test-verify.sh",
+        "sha256": "bbcbcf482b4f791006468e8593df3e973018e7d3db2a44d2ddee6dec1c895e6a"
+      },
+      {
+        "path": "scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/verify.sh",
+        "sha256": "3a66ef6e7e7013b882fd4f9e2256fda15bfda6ec7791f66052e939b220452e0d"
+      }
+    ]
+  },
+  "evidence": [
+    {
+      "id": "P06-PHASE2-TRUTH-CORRECTION-T2-RED-MISSING-VERIFIER-V1",
+      "command": "sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/test-verify.sh",
+      "exit": 1,
+      "output": "P06_TRUTH_RED_VERIFIER_MISSING",
+      "output_sha256": "5edeeab2be6aa2b186c3c4b320767bf891d4d75eedb7b2161800242e80f1a8ce",
+      "meaning": "The focused mutation suite failed before implementation because the successor verifier did not exist."
+    },
+    {
+      "id": "P06-PHASE2-TRUTH-CORRECTION-T2-GREEN-MUTATIONS-PASS-V1",
+      "command": "sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/test-verify.sh",
+      "exit": 0,
+      "output": "P06_PHASE2_TRUTHFULNESS_MUTATIONS_PASS",
+      "output_sha256": "6103704193d31ad2c1e3472a530c611942b6efcfe140247dee7324c44ddbcc52",
+      "meaning": "The focused suite accepted the truthful baseline and refused every uncertainty upgrade, supported-fact drift, history/write-set mutation, private-material history and merge topology."
+    }
+  ],
+  "controls": {
+    "fixtures_only": true,
+    "network_access": "not invoked",
+    "provider_or_codex_process": "not invoked",
+    "credential_or_keychain_read": "not invoked",
+    "historical_receipt_mutation": false,
+    "original_tasks_9_13_executed": false
+  }
+}
