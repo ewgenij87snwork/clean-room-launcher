@@ -1,0 +1,13 @@
+unrooted_l0=1
+unrooted_l2=0
+unrooted_l3=1
+unrooted_forbidden=0
+rooted_l0=1
+rooted_l2=1
+rooted_l3=1
+rooted_forbidden=0
+root_marker=git
+hypothesis=PROJECT_ROOT_MARKER_MISSING
+provider_launch=false
+network=NOT_ATTEMPTED
+raw_debug_removed=true
