@@ -27,7 +27,7 @@ jq -e --arg root "$root" --arg head "$current_head" '
   .plan_id == "P06-CODEX-OBSERVATION-CAPABILITY-V1-PHASE2" and
   .repository_realpath == $root and .worktree_realpath == $root and
   .branch == "feat/p06-codex-observation-capability-v1-phase2" and .head == $head and
-  .observation_authority == {id:"P06-CODEX-OBS-CAP-V1-PH2-D3C7534-ONE",credential_source:"/Users/ysorokin/.codex/auth.json",credential_field:".tokens.access_token",login_invocations:1,model_requests:1,retries:0}
+  .observation_authority == {id:"P06-CODEX-OBS-CAP-V1-PH2-D3C7534-ONE",credential_source:"/Users/ysorokin/.codex/auth.json",credential_field:".tokens.access_token",login_invocations:1,model_processes:1,model_process_timeout_seconds:120,intrinsic_provider_requests_and_retries:"included",retries:0}
 ' "$authority" >/dev/null
 test ! -e "$login_marker"
 test ! -e "$model_marker"

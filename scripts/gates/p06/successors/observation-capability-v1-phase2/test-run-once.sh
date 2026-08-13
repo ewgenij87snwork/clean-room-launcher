@@ -34,6 +34,8 @@ for source_pattern in \
   'P06_PHASE2_AUTHORITY' \
   'phase2-login-used' \
   'phase2-model-used' \
+  'model_processes:1' \
+  'model_process_timeout_seconds:120' \
   'login .*--with-access-token' \
   '\.tokens\.access_token' \
   'allow network-outbound' \
