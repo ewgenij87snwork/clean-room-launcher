@@ -146,6 +146,7 @@
       "reports/gates/p06/task-8-rooted-disposition.json#/root_discovery/forbidden_ambient",
       "reports/gates/p06/task-8-rooted-disposition.json#/root_discovery/native_evidence",
       "reports/gates/p06/task-8-rooted-disposition.json#/rooted_attempt/observed/binary_unchanged",
+      "reports/gates/p06/task-8-rooted-disposition.json#/rooted_attempt/observed/forbidden_ambient_observed",
       "reports/gates/p06/task-8-rooted-disposition.json#/rooted_attempt/observed/user_auth_config_unchanged",
       "reports/gates/p06/task-8-rooted-disposition.json#/rooted_attempt/observed/worktree_unchanged",
       "reports/gates/p06/task-8-rooted-disposition.json#/rooted_attempt/observed/temporary_auth_removed",

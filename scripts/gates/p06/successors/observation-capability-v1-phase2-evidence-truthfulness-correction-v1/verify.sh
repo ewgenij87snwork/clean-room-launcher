@@ -95,14 +95,13 @@ validate_committed_history() {
   done
 }
 
-validate_committed_history
-
 if test -n "${P06_TRUTH_HISTORY_ONLY:-}"; then
   test "$P06_TRUTH_HISTORY_ONLY" = 1
   case "$root" in
     /private/tmp/taskseal-p06-truth-verify.*/*-repository) ;;
     *) exit 2 ;;
   esac
+  validate_committed_history
   printf '%s\n' P06_PHASE2_TRUTH_HISTORY_PASS
   exit 0
 fi
@@ -155,14 +154,23 @@ jq -e '
   (.preserved_facts | keys) == ["login_result","model_counter","model_process_exit","original_tasks_9_13","progression","qualification"] and
   .preserved_facts == {login_result:"LOGIN_REFUSED",qualification:"NOT_QUALIFIED",progression:"STOPPED_AT_T8",model_counter:"UNUSED",model_process_exit:"NOT_STARTED",original_tasks_9_13:"FORBIDDEN"} and
   .uncertainty.credential_retention.state == "UNKNOWN" and .uncertainty.credential_retention.verification == "UNVERIFIED" and
+  .uncertainty.credential_retention.reason == "No independent primary artifact proves post-attempt credential retention state." and
   .uncertainty.protected_state_equality.state == "UNKNOWN" and .uncertainty.protected_state_equality.verification == "UNVERIFIED" and
+  .uncertainty.protected_state_equality.reason == "No independent before/after artifact proves equality of protected, auth, binary, or worktree state." and
   .uncertainty.cleanup.state == "UNKNOWN" and .uncertainty.cleanup.verification == "UNVERIFIED" and
+  .uncertainty.cleanup.reason == "No independent primary artifact proves temporary-state and raw-output cleanup." and
+  .historical_claim_authority.rule == "Byte binding preserves what a historical receipt said; it does not verify an unsupported runtime boolean." and
   .historical_claim_authority.unsupported_booleans == "NON_AUTHORITATIVE" and
-  (.historical_claim_authority.json_pointers | length) == 19 and
+  (.historical_claim_authority.json_pointers | length) == 20 and
   .task_1.receipt_sha256 == "7d6ae063881b69b1117402cae45bbe2b50ae3609595e2aec424ed5097ba49f8e" and
   .historical_receipts[0].sha256 == "7e0db9d70c99976e7666d6a9a4ecc903462d821620f8d862cd397a50c2136115" and
-  .primary_artifacts[1].sha256 == "547fccefdd2a26bde33c363d3efc3172a1cb7ebf425c865b872275e00933ee6d"
+  .primary_artifacts == [
+    {id:"P06_PHASE2_PREFLIGHT_OUTPUT",commit:"73d48ffbed1794c6691ba59be006aa096dcfcb22",path:"reports/gates/p06/successors/observation-capability-v1-phase2/outputs/preflight.txt",sha256:"94c0c0172cf8fae3b52add679f328307820b67641ae9350cd3ec6f37b0a8f7f3",blob_oid:"285542bc1d82144321ec38aa6f1a5cc7cfef5178",authority:"SUPPORTED_FACTS_ALLOWLIST_ONLY"},
+    {id:"P06_PHASE2_OBSERVATION_OUTPUT",commit:"73d48ffbed1794c6691ba59be006aa096dcfcb22",path:"reports/gates/p06/successors/observation-capability-v1-phase2/outputs/observation.txt",sha256:"547fccefdd2a26bde33c363d3efc3172a1cb7ebf425c865b872275e00933ee6d",blob_oid:"781028f3666cedf2ed05acd40379ac5cd71fc4de",authority:"SUPPORTED_FACTS_ALLOWLIST_ONLY"}
+  ]
 ' "$truth" >/dev/null
+
+validate_committed_history
 
 test "$(shasum -a 256 "$default_task_1" | awk '{print $1}')" = 7d6ae063881b69b1117402cae45bbe2b50ae3609595e2aec424ed5097ba49f8e
 jq -e '
@@ -224,11 +232,17 @@ jq -e '
   [.historical_receipts[].commit] == ["d3c753458c32dc7bc4105f1deddf35d8d43fb5d2","73d48ffbed1794c6691ba59be006aa096dcfcb22","73d48ffbed1794c6691ba59be006aa096dcfcb22","c54284cb3c2a2cfb7fb8508c5eef35204fd8ed71","c54284cb3c2a2cfb7fb8508c5eef35204fd8ed71","c54284cb3c2a2cfb7fb8508c5eef35204fd8ed71","c54284cb3c2a2cfb7fb8508c5eef35204fd8ed71"] and
   [.historical_receipts[].path] == ["reports/gates/p06/successors/observation-capability-v1/phase-1.json","reports/gates/p06/task-8-rooted-disposition.json","reports/gates/p06/successors/observation-capability-v1-phase2/phase-2.json","reports/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/correction.json","reports/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/task-1.json","reports/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/task-2.json","reports/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/task-3.json"] and
   [.primary_artifacts[].id] == ["P06_PHASE2_PREFLIGHT_OUTPUT","P06_PHASE2_OBSERVATION_OUTPUT"] and
-  [.primary_artifacts[].authority] == ["SUPPORTED_FACTS_ALLOWLIST_ONLY","SUPPORTED_FACTS_ALLOWLIST_ONLY"] and
+  .primary_artifacts == [
+    {id:"P06_PHASE2_PREFLIGHT_OUTPUT",commit:"73d48ffbed1794c6691ba59be006aa096dcfcb22",path:"reports/gates/p06/successors/observation-capability-v1-phase2/outputs/preflight.txt",sha256:"94c0c0172cf8fae3b52add679f328307820b67641ae9350cd3ec6f37b0a8f7f3",blob_oid:"285542bc1d82144321ec38aa6f1a5cc7cfef5178",authority:"SUPPORTED_FACTS_ALLOWLIST_ONLY"},
+    {id:"P06_PHASE2_OBSERVATION_OUTPUT",commit:"73d48ffbed1794c6691ba59be006aa096dcfcb22",path:"reports/gates/p06/successors/observation-capability-v1-phase2/outputs/observation.txt",sha256:"547fccefdd2a26bde33c363d3efc3172a1cb7ebf425c865b872275e00933ee6d",blob_oid:"781028f3666cedf2ed05acd40379ac5cd71fc4de",authority:"SUPPORTED_FACTS_ALLOWLIST_ONLY"}
+  ] and
   .preserved_facts == {login_result:"LOGIN_REFUSED",qualification:"NOT_QUALIFIED",progression:"STOPPED_AT_T8",model_counter:"UNUSED",model_process_exit:"NOT_STARTED",original_tasks_9_13:"FORBIDDEN"} and
   .uncertainty.credential_retention.state == "UNKNOWN" and .uncertainty.credential_retention.verification == "UNVERIFIED" and
+  .uncertainty.credential_retention.reason == "No independent primary artifact proves post-attempt credential retention state." and
   .uncertainty.protected_state_equality.state == "UNKNOWN" and .uncertainty.protected_state_equality.verification == "UNVERIFIED" and
+  .uncertainty.protected_state_equality.reason == "No independent before/after artifact proves equality of protected, auth, binary, or worktree state." and
   .uncertainty.cleanup.state == "UNKNOWN" and .uncertainty.cleanup.verification == "UNVERIFIED" and
+  .uncertainty.cleanup.reason == "No independent primary artifact proves temporary-state and raw-output cleanup." and
   [.uncertainty.credential_retention.historical_claims[],.uncertainty.protected_state_equality.historical_claims[],.uncertainty.cleanup.historical_claims[]] == [
     "reports/gates/p06/successors/observation-capability-v1-phase2/phase-2.json#/controls/credential_retained",
     "reports/gates/p06/successors/observation-capability-v1/phase-1.json#/controls/owner_config_mutated",
@@ -247,7 +261,8 @@ jq -e '
   ] and
   .historical_claim_authority.receipt_bytes == "AUTHORITATIVE_FOR_PROVENANCE_ONLY" and
   .historical_claim_authority.unsupported_booleans == "NON_AUTHORITATIVE" and
-  (.historical_claim_authority.json_pointers | length) == 19 and
+  .historical_claim_authority.rule == "Byte binding preserves what a historical receipt said; it does not verify an unsupported runtime boolean." and
+  (.historical_claim_authority.json_pointers | length) == 20 and
   (.historical_claim_authority.json_pointers | sort) == ([
     .uncertainty.credential_retention.historical_claims[],
     .uncertainty.protected_state_equality.historical_claims[],
@@ -256,7 +271,8 @@ jq -e '
     "reports/gates/p06/successors/observation-capability-v1/phase-1.json#/controls/provider_route_started",
     "reports/gates/p06/successors/observation-capability-v1/phase-1.json#/controls/owner_auth_read",
     "reports/gates/p06/task-8-rooted-disposition.json#/root_discovery/forbidden_ambient",
-    "reports/gates/p06/task-8-rooted-disposition.json#/root_discovery/native_evidence"
+    "reports/gates/p06/task-8-rooted-disposition.json#/root_discovery/native_evidence",
+    "reports/gates/p06/task-8-rooted-disposition.json#/rooted_attempt/observed/forbidden_ambient_observed"
   ] | unique) and
   .controls == {offline_only:true,historical_runner_executed:false,network_access:"NOT_INVOKED",provider_or_codex_process:"NOT_INVOKED",credential_or_keychain_read:"NOT_INVOKED",original_tasks_9_13_executed:false}
 ' "$truth" >/dev/null
@@ -270,6 +286,18 @@ jq -c '.historical_receipts[]' "$truth" | while IFS= read -r object; do
   test "$(git -C "$root" show "$object_commit:$object_path" | shasum -a 256 | awk '{print $1}')" = "$object_sha"
   test "$(shasum -a 256 "$root/$object_path" | awk '{print $1}')" = "$object_sha"
 done
+
+derived_boolean_pointers=$({
+  jq -r --arg prefix 'reports/gates/p06/successors/observation-capability-v1/phase-1.json#' 'paths(type == "boolean") | $prefix + "/" + (map(tostring) | join("/"))' \
+    "$root/reports/gates/p06/successors/observation-capability-v1/phase-1.json"
+  jq -r --arg prefix 'reports/gates/p06/task-8-rooted-disposition.json#' 'paths(type == "boolean") | $prefix + "/" + (map(tostring) | join("/"))' \
+    "$root/reports/gates/p06/task-8-rooted-disposition.json"
+  jq -r --arg prefix 'reports/gates/p06/successors/observation-capability-v1-phase2/phase-2.json#' 'paths(type == "boolean") | $prefix + "/" + (map(tostring) | join("/"))' \
+    "$root/reports/gates/p06/successors/observation-capability-v1-phase2/phase-2.json"
+} | LC_ALL=C sort)
+declared_boolean_pointers=$(jq -r '.historical_claim_authority.json_pointers[]' "$truth" | LC_ALL=C sort)
+test "$(printf '%s\n' "$derived_boolean_pointers" | awk 'NF { count++ } END { print count+0 }')" = 20
+test "$declared_boolean_pointers" = "$derived_boolean_pointers"
 
 jq -c '.primary_artifacts[]' "$truth" | while IFS= read -r object; do
   object_commit=$(printf '%s\n' "$object" | jq -r .commit)
@@ -317,12 +345,13 @@ validate_task_2() {
   test -f "$default_task_2"
   jq -e '
     keys == ["acceptance","binding","controls","evidence","inputs","plan_id","result","schema_version","subject","task"] and
-    .schema_version == "taskseal.p06.phase2-evidence-truthfulness-correction-v1.task-receipt.v1" and
+    .schema_version == "taskseal.p06.phase2-evidence-truthfulness-correction-v1.task-receipt.v2" and
     .plan_id == "P06-PHASE2-EVIDENCE-TRUTHFULNESS-CORRECTION-V1" and
     .task == 2 and .result == "accepted" and
     .acceptance == {id:"P06-PHASE2-TRUTH-CORRECTION-T2-TRUTHFUL-HISTORY-V1",operator_result:"The sole offline successor gate preserves only LOGIN_REFUSED, NOT_QUALIFIED, STOPPED_AT_T8, an unused/not-started model process and forbidden T9-T13 while classifying unsupported retention, protected-state and cleanup claims UNKNOWN and UNVERIFIED.",mutation_pass_marker:"P06_PHASE2_TRUTHFULNESS_MUTATIONS_PASS"} and
-    .binding.scheme == "parent-bound-receipt.v1" and
-    .binding.input_head == "82e1acb883ebe4ba2f3f54ad57857b126c942409" and
+    .binding.scheme == "parent-bound-receipt.v2" and
+    .binding.input_head == "2ba9e0fb92d82632b382296c1cb07067d8432879" and
+    .binding.replaces_receipt_commit == "2ba9e0fb92d82632b382296c1cb07067d8432879" and
     .binding.receipt_commit_parent == .binding.implementation_result_head and
     (.binding.implementation_result_head | test("^[0-9a-f]{40}$")) and
     (.binding.implementation_tree | test("^[0-9a-f]{40}$")) and
@@ -330,21 +359,25 @@ validate_task_2() {
     .inputs.predecessor_checkpoint == "c54284cb3c2a2cfb7fb8508c5eef35204fd8ed71" and
     .inputs.predecessor_receipt_sha256 == "968779a627cd65d69f27edfa39293fd5f998f50029904ba52a1347463578b2e2" and
     .inputs.task_1_receipt_sha256 == "7d6ae063881b69b1117402cae45bbe2b50ae3609595e2aec424ed5097ba49f8e" and
+    .inputs.superseded_task_2_receipt_sha256 == "f87eb90933b234c6e8ad6ddddcd2697c9fb92fe06ea5930df3f384a77063d4d0" and
     .subject.algorithm == "sha256 of sorted path, tab, sha256, newline source records" and
     [.subject.sources[].path] == [
       "reports/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/truthfulness.json",
       "scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/test-verify.sh",
       "scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/verify.sh"
     ] and
-    [.evidence[].id] == ["P06-PHASE2-TRUTH-CORRECTION-T2-RED-MISSING-VERIFIER-V1","P06-PHASE2-TRUTH-CORRECTION-T2-GREEN-MUTATIONS-PASS-V1"] and
-    [.evidence[].command] == ["sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/test-verify.sh","sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/test-verify.sh"] and
-    [.evidence[].exit] == [1,0] and
-    [.evidence[].output] == ["P06_TRUTH_RED_VERIFIER_MISSING","P06_PHASE2_TRUTHFULNESS_MUTATIONS_PASS"] and
+    [.evidence[].id] == ["P06-PHASE2-TRUTH-CORRECTION-T2-RED-MISSING-VERIFIER-V1","P06-PHASE2-TRUTH-CORRECTION-T2-GREEN-MUTATIONS-PASS-V1","P06-PHASE2-TRUTH-CORRECTION-T2-REVIEW1-RED-BOOLEAN-CENSUS-V1","P06-PHASE2-TRUTH-CORRECTION-T2-REVIEW1-RED-AUTHORITY-RULE-V1","P06-PHASE2-TRUTH-CORRECTION-T2-REVIEW1-RED-CREDENTIAL-REASON-V1","P06-PHASE2-TRUTH-CORRECTION-T2-REVIEW1-RED-PROTECTED-REASON-V1","P06-PHASE2-TRUTH-CORRECTION-T2-REVIEW1-RED-CLEANUP-REASON-V1","P06-PHASE2-TRUTH-CORRECTION-T2-REVIEW1-RED-PREFLIGHT-COMMIT-V1","P06-PHASE2-TRUTH-CORRECTION-T2-REVIEW1-RED-OBSERVATION-COMMIT-V1","P06-PHASE2-TRUTH-CORRECTION-T2-REVIEW1-RED-PREFLIGHT-PATH-V1","P06-PHASE2-TRUTH-CORRECTION-T2-REVIEW1-RED-OBSERVATION-PATH-V1","P06-PHASE2-TRUTH-CORRECTION-T2-REVIEW1-GREEN-MUTATIONS-PASS-V1"] and
+    [.evidence[].command] == ["sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/test-verify.sh","sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/test-verify.sh","P06_TRUTH_TEST_CASE=boolean_inventory_bound_source sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/test-verify.sh","P06_TRUTH_TEST_CASE=authority_rule sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/test-verify.sh","P06_TRUTH_TEST_CASE=credential_reason sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/test-verify.sh","P06_TRUTH_TEST_CASE=protected_reason sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/test-verify.sh","P06_TRUTH_TEST_CASE=cleanup_reason sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/test-verify.sh","P06_TRUTH_TEST_CASE=primary_preflight_commit sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/test-verify.sh","P06_TRUTH_TEST_CASE=primary_observation_commit sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/test-verify.sh","P06_TRUTH_TEST_CASE=primary_preflight_path sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/test-verify.sh","P06_TRUTH_TEST_CASE=primary_observation_path sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/test-verify.sh","sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/test-verify.sh"] and
+    [.evidence[].exit] == [1,0,1,1,1,1,1,1,1,1,1,0] and
+    [.evidence[].output] == ["P06_TRUTH_RED_VERIFIER_MISSING","P06_PHASE2_TRUTHFULNESS_MUTATIONS_PASS","P06_TRUTH_EXPECTED_REFUSAL_MISSING:boolean_inventory_bound_source","P06_TRUTH_EXPECTED_REFUSAL_MISSING:authority_rule","P06_TRUTH_EXPECTED_REFUSAL_MISSING:credential_reason","P06_TRUTH_EXPECTED_REFUSAL_MISSING:protected_reason","P06_TRUTH_EXPECTED_REFUSAL_MISSING:cleanup_reason","P06_TRUTH_EXPECTED_REFUSAL_MISSING:primary_preflight_commit","P06_TRUTH_EXPECTED_REFUSAL_MISSING:primary_observation_commit","P06_TRUTH_EXPECTED_REFUSAL_MISSING:primary_preflight_path","P06_TRUTH_EXPECTED_REFUSAL_MISSING:primary_observation_path","P06_PHASE2_TRUTHFULNESS_MUTATIONS_PASS"] and
     .controls == {fixtures_only:true,network_access:"not invoked",provider_or_codex_process:"not invoked",credential_or_keychain_read:"not invoked",historical_receipt_mutation:false,original_tasks_9_13_executed:false}
   ' "$default_task_2" >/dev/null
   implementation_head=$(jq -r .binding.implementation_result_head "$default_task_2")
-  git -C "$root" merge-base --is-ancestor "$task_1_commit" "$implementation_head"
-  git -C "$root" rev-list --reverse "$task_1_commit..$implementation_head" | while IFS= read -r implementation_commit; do
+  test "$(git -C "$root" rev-parse 2ba9e0fb92d82632b382296c1cb07067d8432879^1)" = 3c6368249ad47b7876cf713056050e8b567d4884
+  test "$(git -C "$root" diff-tree --no-commit-id --name-only --no-renames -r 2ba9e0fb92d82632b382296c1cb07067d8432879)" = "$task_2_rel"
+  test "$(git -C "$root" show 2ba9e0fb92d82632b382296c1cb07067d8432879:$task_2_rel | shasum -a 256 | awk '{print $1}')" = f87eb90933b234c6e8ad6ddddcd2697c9fb92fe06ea5930df3f384a77063d4d0
+  git -C "$root" merge-base --is-ancestor 2ba9e0fb92d82632b382296c1cb07067d8432879 "$implementation_head"
+  git -C "$root" rev-list --reverse 2ba9e0fb92d82632b382296c1cb07067d8432879.."$implementation_head" | while IFS= read -r implementation_commit; do
     test -z "$(git -C "$root" rev-list --min-parents=2 -n 1 "$implementation_commit")"
     git -C "$root" diff-tree --no-commit-id --name-only --no-renames -r "$implementation_commit" | while IFS= read -r implementation_path; do
       jq -e --arg path "$implementation_path" '.subject.sources | map(.path) | index($path) != null' "$default_task_2" >/dev/null

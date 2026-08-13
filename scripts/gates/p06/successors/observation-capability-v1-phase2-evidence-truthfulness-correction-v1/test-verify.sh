@@ -61,6 +61,43 @@ if test "$baseline_status" -ne 0; then
 fi
 test "$baseline_output" = P06_PHASE2_EVIDENCE_TRUTHFULNESS_CORRECTION_PASS
 
+test_case=${P06_TRUTH_TEST_CASE:-all}
+run_selected() {
+  test "$test_case" = all || test "$test_case" = "$1"
+}
+
+if run_selected boolean_inventory_bound_source; then
+  mutation_must_fail boolean_inventory_bound_source '.historical_claim_authority.json_pointers |= map(select(. != "reports/gates/p06/task-8-rooted-disposition.json#/rooted_attempt/observed/forbidden_ambient_observed"))'
+fi
+if run_selected authority_rule; then
+  mutation_must_fail authority_rule '.historical_claim_authority.rule="Historical receipt booleans independently verify their runtime claims."'
+fi
+if run_selected credential_reason; then
+  mutation_must_fail credential_reason '.uncertainty.credential_retention.reason="The historical false boolean independently verifies no credential retention."'
+fi
+if run_selected protected_reason; then
+  mutation_must_fail protected_reason '.uncertainty.protected_state_equality.reason="The historical true booleans independently verify protected-state equality."'
+fi
+if run_selected cleanup_reason; then
+  mutation_must_fail cleanup_reason '.uncertainty.cleanup.reason="The historical true booleans independently verify cleanup."'
+fi
+if run_selected primary_preflight_commit; then
+  mutation_must_fail primary_preflight_commit '.primary_artifacts[0].commit="c54284cb3c2a2cfb7fb8508c5eef35204fd8ed71"'
+fi
+if run_selected primary_observation_commit; then
+  mutation_must_fail primary_observation_commit '.primary_artifacts[1].commit="c54284cb3c2a2cfb7fb8508c5eef35204fd8ed71"'
+fi
+if run_selected primary_preflight_path; then
+  mutation_must_fail primary_preflight_path '.primary_artifacts[0].path="./reports/gates/p06/successors/observation-capability-v1-phase2/outputs/preflight.txt"'
+fi
+if run_selected primary_observation_path; then
+  mutation_must_fail primary_observation_path '.primary_artifacts[1].path="./reports/gates/p06/successors/observation-capability-v1-phase2/outputs/observation.txt"'
+fi
+if test "$test_case" != all; then
+  printf '%s\n' P06_PHASE2_TRUTHFULNESS_MUTATIONS_PASS
+  exit 0
+fi
+
 mutation_must_fail credential_state '.uncertainty.credential_retention.state="NOT_RETAINED"'
 mutation_must_fail credential_verification '.uncertainty.credential_retention.verification="VERIFIED"'
 mutation_must_fail protected_state '.uncertainty.protected_state_equality.state="EQUAL"'
