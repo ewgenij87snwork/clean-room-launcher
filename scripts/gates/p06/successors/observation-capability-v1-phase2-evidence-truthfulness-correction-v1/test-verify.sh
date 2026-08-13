@@ -100,6 +100,17 @@ run_selected() {
   test "$test_case" = all || test "$test_case" = "$1"
 }
 
+set +e
+ssot_baseline_output=$(run_ssot_verify 2>&1)
+ssot_baseline_status=$?
+set -e
+if test "$ssot_baseline_status" -ne 0; then
+  test -z "$ssot_baseline_output" || printf '%s\n' "$ssot_baseline_output" >&2
+  printf '%s\n' P06_TRUTH_EXPECTED_SSOT_BASELINE_PASS >&2
+  exit 1
+fi
+test "$ssot_baseline_output" = P06_PHASE2_TRUTHFULNESS_SSOT_PASS
+
 if run_selected chronology_link; then
   jq -s -c '.[-1].supersedes_event_id="P06-CODEX-OBS-CAP-V1-PH2-CORRECTION-T3-001" | .[]' "$worklog" >"$fixture_worklog"
   ssot_mutation_must_fail chronology_link
@@ -159,17 +170,6 @@ if test "$test_case" != all; then
   printf '%s\n' P06_PHASE2_TRUTHFULNESS_MUTATIONS_PASS
   exit 0
 fi
-
-set +e
-ssot_baseline_output=$(run_ssot_verify 2>&1)
-ssot_baseline_status=$?
-set -e
-if test "$ssot_baseline_status" -ne 0; then
-  test -z "$ssot_baseline_output" || printf '%s\n' "$ssot_baseline_output" >&2
-  printf '%s\n' P06_TRUTH_EXPECTED_SSOT_BASELINE_PASS >&2
-  exit 1
-fi
-test "$ssot_baseline_output" = P06_PHASE2_TRUTHFULNESS_SSOT_PASS
 
 jq -s -c '.[-1].supersedes_event_id="P06-CODEX-OBS-CAP-V1-PH2-CORRECTION-T3-001" | .[]' "$worklog" >"$fixture_worklog"
 ssot_mutation_must_fail chronology_link

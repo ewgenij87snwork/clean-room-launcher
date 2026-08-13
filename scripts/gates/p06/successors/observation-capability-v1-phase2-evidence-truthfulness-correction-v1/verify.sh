@@ -1,4 +1,5 @@
 #!/bin/sh
+# shellcheck disable=SC2016
 set -eu
 
 root=$(CDPATH='' cd -- "$(dirname -- "$0")/../../../../.." && pwd -P)
@@ -10,12 +11,21 @@ report_rel=reports/gates/p06/successors/observation-capability-v1-phase2-evidenc
 truth_rel=$report_rel/truthfulness.json
 task_1_rel=$report_rel/task-1.json
 task_2_rel=$report_rel/task-2.json
+task_3_rel=$report_rel/task-3.json
 default_truth="$root/$truth_rel"
 default_task_1="$root/$task_1_rel"
 default_task_2="$root/$task_2_rel"
+default_task_3="$root/$task_3_rel"
 truth=${P06_TRUTH_RECEIPT:-$default_truth}
 privacy_root=${P06_TRUTH_PRIVACY_ROOT:-$root}
 stage=${P06_TRUTH_STAGE:-task-2}
+authority="$root/.taskseal-dev/execution-authority.json"
+default_status=$(jq -r .status_path "$authority")
+default_dashboard=$(jq -r .dashboard_path "$authority")
+default_worklog=$(jq -r .worklog_path "$authority")
+status=${P06_TRUTH_STATUS:-$default_status}
+dashboard=${P06_TRUTH_DASHBOARD:-$default_dashboard}
+worklog=${P06_TRUTH_WORKLOG:-$default_worklog}
 
 case "$stage" in
   task-2-precommit|task-2|task-3-precommit|final) ;;
@@ -50,6 +60,13 @@ if test -n "${P06_TRUTH_CHANGED_PATHS_FILE:-}"; then
   changed_paths_file=$(temporary_fixture "$P06_TRUTH_CHANGED_PATHS_FILE")
 else
   changed_paths_file=
+fi
+if test "$status" != "$default_status" || test "$dashboard" != "$default_dashboard" || test "$worklog" != "$default_worklog"; then
+  test "$stage" = task-3-precommit
+  test "${P06_TRUTH_SSOT_ONLY:-}" = 1
+  status=$(temporary_fixture "$status")
+  dashboard=$(temporary_fixture "$dashboard")
+  worklog=$(temporary_fixture "$worklog")
 fi
 
 validate_write_set() {
@@ -126,7 +143,6 @@ for privacy_dir in "$privacy_root/$successor_rel" "$privacy_root/$report_rel"; d
   done
 done
 
-authority="$root/.taskseal-dev/execution-authority.json"
 checkpoint_path=$(jq -r .plan_checkpoint_path "$authority")
 jq -e --arg root "$root" --arg base "$base" '
   keys == ["allowed_external_actions","allowed_task_first","allowed_task_last","approved_at","approved_by","branch","dashboard_path","forbidden_actions","head","plan_checkpoint_path","plan_checkpoint_sha256","plan_id","repository_realpath","schema_version","status_path","worklog_path","worktree_realpath"] and
@@ -147,6 +163,87 @@ jq -e --arg root "$root" --arg base "$base" '
   (.forbidden_actions | index("main mutation")) != null
 ' "$authority" >/dev/null
 test "$(shasum -a 256 "$checkpoint_path" | awk '{print $1}')" = a8a11bfa9b7f83369041c03f217f6d389a97c7a1d84756228e65e9a1e61ab9bf
+
+require_literal() {
+  literal=$1
+  path=$2
+  rg -Fq -- "$literal" "$path"
+}
+
+validate_owner_ssot() {
+  test -f "$status"
+  test -f "$dashboard"
+  test -f "$worklog"
+
+  # Literals intentionally preserve Markdown code spans and the `$rev` token.
+  require_literal 'Product implementation: 42% — 3 of 7 public v0.1 release plans implemented.' "$status"
+  require_literal 'Current stage: 53% of P06 — 7/13 tasks remain accepted' "$status"
+  require_literal '`REV BLOCKER correction in review`' "$status"
+  require_literal 'credential retention, protected-state equality and cleanup are each `UNKNOWN/UNVERIFIED`' "$status"
+  require_literal 'that interval did not observe the later commit' "$status"
+  require_literal 'one terminal `$rev` of the immutable parent-bound Task 3 truthfulness-correction checkpoint' "$status"
+  require_literal '`P06_PHASE2_EVIDENCE_TRUTHFULNESS_CORRECTION_PASS`' "$status"
+  require_literal 'Independent terminal review remains `PENDING`; no correction `REV PASS` is claimed.' "$status"
+
+  require_literal 'Текущий этап P06: 53% — 7/13; evidence truthfulness correction, qualified tuples 0/1' "$dashboard"
+  require_literal 'REV BLOCKER correction in review' "$dashboard"
+  require_literal 'UNKNOWN/UNVERIFIED' "$dashboard"
+  require_literal 'did not observe it' "$dashboard"
+  require_literal 'data-receipt="parent-bound" data-gate="P06_PHASE2_EVIDENCE_TRUTHFULNESS_CORRECTION_PASS" data-review="PENDING"' "$dashboard"
+  require_literal 'Получить один terminal <span class="mono">$rev</span> на immutable parent-bound Task 3 checkpoint' "$dashboard"
+
+  test "$(wc -l <"$worklog" | tr -d ' ')" = 115
+  test "$(head -n 114 "$worklog" | shasum -a 256 | awk '{print $1}')" = d3db76d507fd82c29406b1193cc7b11ef89bd3ba5e75f20119910078dd57fc48
+
+  seal_commit=373c9091fac7d34419d77484639d50c1331ee050
+  seal_committed_at=$(git -C "$root" show -s --format=%aI "$seal_commit")
+  test "$seal_committed_at" = 2026-08-13T11:18:07+02:00
+  event_stopped_at=$(jq -s -r '.[-1].stopped_at' "$worklog")
+  jq -n -e --arg stop "$event_stopped_at" --arg seal "$seal_committed_at" '$stop < $seal' >/dev/null
+
+  jq -s -e --arg seal_commit "$seal_commit" --arg seal_committed_at "$seal_committed_at" '
+    length == 115 and
+    ([.[].event_id] | length) == ([.[].event_id] | unique | length) and
+    (.[-1] | keys) == ["active_seconds","category","correction_reason","event","event_id","forecast_minutes","plan","remaining_minutes","replacement_event","result","schema","section","started_at","status","stopped_at","supersedes_event_id","task","variance_reason","version","work_id","worker_id"] and
+    .[-2].event_id == "P06-CODEX-OBS-CAP-V1-PH2-CORRECTION-T3-003-stop-correction" and
+    .[-1] == {
+      schema:"taskseal.worklog.event.v1",
+      event_id:"P06-CODEX-OBS-CAP-V1-PH2-CORRECTION-T3-004-chronology-correction",
+      work_id:"P06-CODEX-OBSERVATION-CAPABILITY-V1-PHASE2-EVIDENCE-CORRECTION-T3",
+      event:"correction",
+      supersedes_event_id:"P06-CODEX-OBS-CAP-V1-PH2-CORRECTION-T3-003-stop-correction",
+      replacement_event:"stop",
+      correction_reason:("Supersede the impossible chronology: the captured interval ended before seal commit " + $seal_commit + ", so it did not observe that later commit."),
+      started_at:"2026-08-13T11:12:41+02:00",
+      stopped_at:"2026-08-13T11:14:18+02:00",
+      active_seconds:97,
+      worker_id:"codex-task3",
+      category:"implementation",
+      version:"v0.1",
+      plan:"P06-CODEX-OBSERVATION-CAPABILITY-V1-PHASE2-EVIDENCE-CORRECTION",
+      section:"owner-evidence",
+      task:"3",
+      forecast_minutes:null,
+      remaining_minutes:{low:10,high:20},
+      result:("The captured interval ended at 2026-08-13T11:14:18+02:00, before seal commit " + $seal_commit + " was committed at " + $seal_committed_at + "; it did not observe that later commit. The truthfulness correction is sealed for independent review, which remains PENDING."),
+      variance_reason:"The 97-second interval remains only the captured interval; this chronology correction records no later active time and does not reconstruct missing time.",
+      status:"REV_BLOCKER_CORRECTION_REVIEW_PENDING"
+    } and
+    .[-1].work_id == .[-2].work_id and
+    .[-1].started_at == .[-2].started_at and
+    .[-1].stopped_at == .[-2].stopped_at and
+    .[-1].active_seconds == .[-2].active_seconds and
+    ([.[] | select(.supersedes_event_id? == "P06-CODEX-OBS-CAP-V1-PH2-CORRECTION-T3-003-stop-correction")] | length) == 1
+  ' "$worklog" >/dev/null
+}
+
+if test -n "${P06_TRUTH_SSOT_ONLY:-}"; then
+  test "$P06_TRUTH_SSOT_ONLY" = 1
+  test "$stage" = task-3-precommit
+  validate_owner_ssot
+  printf '%s\n' P06_PHASE2_TRUTHFULNESS_SSOT_PASS
+  exit 0
+fi
 
 # Fail fast on the truth claims before replaying the accepted Task 1 interface.
 # The full closed manifest contract and byte bindings are validated below.
@@ -396,6 +493,117 @@ validate_task_2() {
   printf '%s\n' "$task_2_commit"
 }
 
+validate_task_3() {
+  test -f "$default_task_3"
+  seal_commit=373c9091fac7d34419d77484639d50c1331ee050
+  seal_committed_at=$(git -C "$root" show -s --format=%aI "$seal_commit")
+  jq -e \
+    --arg status_path "$default_status" \
+    --arg dashboard_path "$default_dashboard" \
+    --arg worklog_path "$default_worklog" \
+    --arg seal_commit "$seal_commit" \
+    --arg seal_committed_at "$seal_committed_at" '
+    keys == ["acceptance","binding","controls","evidence","inputs","plan_id","result","schema_version","subject","task"] and
+    .schema_version == "taskseal.p06.phase2-evidence-truthfulness-correction-v1.task-receipt.v1" and
+    .plan_id == "P06-PHASE2-EVIDENCE-TRUTHFULNESS-CORRECTION-V1" and
+    .task == 3 and .result == "accepted" and
+    .acceptance == {
+      id:"P06-PHASE2-TRUTH-CORRECTION-T3-CHRONOLOGY-SSOT-V1",
+      operator_result:"Owner SSOT reports P06 7/13 = 53%, REV BLOCKER correction in review, UNKNOWN/UNVERIFIED historical runtime claims, and an append-only chronology correction that does not attribute a later seal to an earlier interval.",
+      current_progress:{completed:7,total:13,percent:53},
+      terminal_review:"PENDING",
+      completion_marker:"P06_PHASE2_EVIDENCE_TRUTHFULNESS_CORRECTION_PASS"
+    } and
+    .binding.scheme == "parent-bound-receipt.v1" and
+    .binding.input_head == "b1dd448acfb9163836b87d8d0fd02717caf41e0b" and
+    .binding.receipt_commit_parent == .binding.implementation_result_head and
+    (.binding.implementation_result_head | test("^[0-9a-f]{40}$")) and
+    (.binding.implementation_tree | test("^[0-9a-f]{40}$")) and
+    .inputs == {
+      plan_checkpoint_path:"/Users/ysorokin/Documents/it/5-LVL - 2026/Temp in Projects/wisdom/taskseal/plans/2026-08-13-p06-phase2-evidence-truthfulness-correction-v1.md",
+      plan_checkpoint_sha256:"a8a11bfa9b7f83369041c03f217f6d389a97c7a1d84756228e65e9a1e61ab9bf",
+      task_2_receipt_path:"reports/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/task-2.json",
+      task_2_receipt_sha256:"9551ed6f03b851da1b72f62f8085b33bc0c952fcdb1d7a748802d5fd8751d9a5",
+      predecessor_checkpoint:"c54284cb3c2a2cfb7fb8508c5eef35204fd8ed71",
+      predecessor_task_3_receipt_path:"reports/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/task-3.json",
+      predecessor_task_3_receipt_sha256:"968779a627cd65d69f27edfa39293fd5f998f50029904ba52a1347463578b2e2",
+      worklog_prefix_line_count:114,
+      worklog_prefix_sha256:"d3db76d507fd82c29406b1193cc7b11ef89bd3ba5e75f20119910078dd57fc48",
+      superseded_event_id:"P06-CODEX-OBS-CAP-V1-PH2-CORRECTION-T3-003-stop-correction",
+      chronology_event_id:"P06-CODEX-OBS-CAP-V1-PH2-CORRECTION-T3-004-chronology-correction",
+      seal_commit:$seal_commit,
+      seal_committed_at:$seal_committed_at,
+      status_path:$status_path,
+      dashboard_path:$dashboard_path,
+      worklog_path:$worklog_path
+    } and
+    .subject.algorithm == "sha256 of sorted path, tab, sha256, newline source records" and
+    [.subject.sources[].path] == [
+      "scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/test-verify.sh",
+      "scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/verify.sh",
+      $dashboard_path,
+      $status_path,
+      $worklog_path
+    ] and
+    [.evidence[].id] == [
+      "P06-PHASE2-TRUTH-CORRECTION-T3-RED-CHRONOLOGY-LINK-V1",
+      "P06-PHASE2-TRUTH-CORRECTION-T3-GREEN-CHRONOLOGY-LINK-V1",
+      "P06-PHASE2-TRUTH-CORRECTION-T3-GREEN-MUTATIONS-V1",
+      "P06-PHASE2-TRUTH-CORRECTION-T3-PRECOMMIT-GATE-V1"
+    ] and
+    [.evidence[].command] == [
+      "P06_TRUTH_TEST_CASE=chronology_link sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/test-verify.sh",
+      "P06_TRUTH_TEST_CASE=chronology_link sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/test-verify.sh",
+      "sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/test-verify.sh",
+      "P06_TRUTH_STAGE=task-3-precommit sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/verify.sh"
+    ] and
+    [.evidence[].exit] == [1,0,0,0] and
+    [.evidence[].output] == [
+      "P06_TRUTH_EXPECTED_REFUSAL_MISSING:chronology_link",
+      "P06_PHASE2_TRUTHFULNESS_MUTATIONS_PASS",
+      "P06_PHASE2_TRUTHFULNESS_MUTATIONS_PASS",
+      "P06_PHASE2_EVIDENCE_TRUTHFULNESS_CORRECTION_PASS"
+    ] and
+    .controls == {
+      owner_ssot_only:true,
+      worklog_append_only:true,
+      historical_receipt_mutation:false,
+      network_access:"not invoked",
+      provider_or_codex_process:"not invoked",
+      credential_or_keychain_read:"not invoked",
+      original_tasks_9_13_executed:false
+    }
+  ' "$default_task_3" >/dev/null
+
+  implementation_head=$(jq -r .binding.implementation_result_head "$default_task_3")
+  test "$(jq -r .binding.implementation_tree "$default_task_3")" = "$(git -C "$root" rev-parse "$implementation_head^{tree}")"
+  test "$(shasum -a 256 "$default_task_2" | awk '{print $1}')" = "$(jq -r .inputs.task_2_receipt_sha256 "$default_task_3")"
+  test "$(git -C "$root" show c54284cb3c2a2cfb7fb8508c5eef35204fd8ed71:reports/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/task-3.json | shasum -a 256 | awk '{print $1}')" = "$(jq -r .inputs.predecessor_task_3_receipt_sha256 "$default_task_3")"
+  test "$(head -n 114 "$default_worklog" | shasum -a 256 | awk '{print $1}')" = "$(jq -r .inputs.worklog_prefix_sha256 "$default_task_3")"
+
+  git -C "$root" merge-base --is-ancestor b1dd448acfb9163836b87d8d0fd02717caf41e0b "$implementation_head"
+  git -C "$root" rev-list --reverse b1dd448acfb9163836b87d8d0fd02717caf41e0b.."$implementation_head" | while IFS= read -r implementation_commit; do
+    test -z "$(git -C "$root" rev-list --min-parents=2 -n 1 "$implementation_commit")"
+    git -C "$root" diff-tree --no-commit-id --name-only --no-renames -r "$implementation_commit" | while IFS= read -r implementation_path; do
+      jq -e --arg path "$implementation_path" '.subject.sources | map(.path) | index($path) != null' "$default_task_3" >/dev/null
+    done
+  done
+
+  task_3_commit=$(resolve_parent_bound_receipt "$default_task_3" "$task_3_rel" 3)
+  jq -r '.subject.sources[] | [.path,.sha256] | @tsv' "$default_task_3" | while IFS='	' read -r source_path source_sha; do
+    case "$source_path" in
+      /*) test "$(shasum -a 256 "$source_path" | awk '{print $1}')" = "$source_sha" ;;
+      *) test "$(git -C "$root" show "$implementation_head:$source_path" | shasum -a 256 | awk '{print $1}')" = "$source_sha" ;;
+    esac
+  done
+  subject_sha=$(jq -r '.subject.sources[] | [.path,.sha256] | @tsv' "$default_task_3" | LC_ALL=C sort | shasum -a 256 | awk '{print $1}')
+  test "$subject_sha" = "$(jq -r .subject.sha256 "$default_task_3")"
+  jq -c '.evidence[]' "$default_task_3" | while IFS= read -r evidence; do
+    test "$(printf '%s\n' "$(printf '%s\n' "$evidence" | jq -r .output)" | shasum -a 256 | awk '{print $1}')" = "$(printf '%s\n' "$evidence" | jq -r .output_sha256)"
+  done
+  printf '%s\n' "$task_3_commit"
+}
+
 case "$stage" in
   task-2-precommit) ;;
   task-2)
@@ -404,6 +612,11 @@ case "$stage" in
     ;;
   task-3-precommit|final)
     validate_task_2 >/dev/null
+    validate_owner_ssot
+    if test "$stage" = final; then
+      task_3_commit=$(validate_task_3)
+      test "$head" = "$task_3_commit"
+    fi
     ;;
 esac
 
