@@ -4,8 +4,8 @@
   "task": 1,
   "result": "accepted",
   "acceptance": {
-    "id": "P06-ZERO-AUTH-T1-GOVERNANCE-V2",
-    "operator_result": "OD-10, corrected ADP-05 and AUTH-01 are enforced by all 446 live canonical-control consumers, the policy validator refuses affirmative contradictions and every critical semantic-branch mutation, and the unique replacement receipt remains verifiable after descendant commits while binding repository implementation objects separately from current external owner SSOT bytes.",
+    "id": "P06-ZERO-AUTH-T1-GOVERNANCE-V3",
+    "operator_result": "OD-10, corrected ADP-05 and AUTH-01 are enforced by all 446 live canonical-control consumers; exact prohibited positive action clauses default to refusal without a proven negative scope across normative verb and case variants; the receipt binds the focused Rust previous-445 RED and current-446 GREEN commands, exits, outputs and hashes; and the unique replacement receipt remains verifiable after descendant commits while binding repository implementation objects separately from current external owner SSOT bytes.",
     "control_ids": [
       "ADP-05",
       "AUTH-01",
@@ -17,6 +17,10 @@
       "P06-ZERO-AUTH-T1-FIX1-RED-CONTRADICTORY-PERMISSION-V1",
       "P06-ZERO-AUTH-T1-FIX1-GREEN-SEMANTIC-BRANCHES-V1",
       "P06-ZERO-AUTH-T1-FIX1-GREEN-446-COVERAGE-V1",
+      "P06-ZERO-AUTH-T1-FIX2-RED-NORMATIVE-CONTRADICTIONS-V1",
+      "P06-ZERO-AUTH-T1-FIX2-GREEN-NORMATIVE-CONTRADICTIONS-V1",
+      "P06-ZERO-AUTH-T1-FIX2-RED-RUST-TRACE-445-V1",
+      "P06-ZERO-AUTH-T1-FIX2-GREEN-RUST-TRACE-446-V1",
       "P06-ZERO-AUTH-T1-FIX1-RED-DESCENDANT-RECEIPT-V1",
       "P06-ZERO-AUTH-T1-FIX1-GREEN-DESCENDANT-RECEIPT-V1"
     ]
@@ -24,10 +28,10 @@
   "binding": {
     "scheme": "parent-bound-receipt.v2",
     "input_head": "b9a8d2c9dda084d90b984f77faa8a26dd4f03b3a",
-    "implementation_result_head": "1edc23e3459a622f99c0a88b8b8cb188d8d0030f",
-    "implementation_tree": "145dd342b940e975c0044077566a8d15b87e1f74",
-    "receipt_commit_parent": "1edc23e3459a622f99c0a88b8b8cb188d8d0030f",
-    "replaces_receipt_commit": "ee7bbef06f97c03eb1f05ee9c9d7cba8658a3e8d",
+    "implementation_result_head": "70127589615724d74601443dd1e2f8f76c251b04",
+    "implementation_tree": "f45ce68eb8982f568357561bf0e990838cc2e28c",
+    "receipt_commit_parent": "70127589615724d74601443dd1e2f8f76c251b04",
+    "replaces_receipt_commit": "2f8daaab9a26f19cee960858cbba8c2d7cf861ce",
     "resolution": "Resolve exactly one commit in input_head..tip whose task-1 receipt blob equals these bytes; it must be a single-parent receipt-only child of implementation_result_head. Repository subjects are read from that implementation commit, so later descendants do not invalidate Task 1."
   },
   "inputs": {
@@ -37,7 +41,7 @@
   },
   "subject": {
     "algorithm": "sha256 of sorted path, tab, sha256, newline source records",
-    "sha256": "7d2e170daa11294a66089eff1d0366ef0a5973b6859d759e9d89ccd6cb86f421",
+    "sha256": "e9f47808e5404d966d36d2e5a21f19fbc3533d8c06af12b37f2223fa33aa525e",
     "sources": [
       {
         "kind": "external_owner_ssot_current",
@@ -67,12 +71,12 @@
       {
         "kind": "repository_implementation_commit",
         "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/control-validator.rb",
-        "sha256": "a23a6062d291f03b14260a6598ab2f66ea7a6a06d284b74155acd971a9bf8edd"
+        "sha256": "b1043c13d258e7ee615d45801e330481fd0f70d559f5364e233e4e77f520d9bd"
       },
       {
         "kind": "repository_implementation_commit",
         "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-control-validator.sh",
-        "sha256": "c4baee36650f86a9c47fac15bbc1436b12e38f8d408a2123a61c6d812338c3ba"
+        "sha256": "4e307db67a2477d01f765c8c8fcb43a6663f473e1bf5e9efea64a881e55527d5"
       },
       {
         "kind": "repository_implementation_commit",
@@ -82,7 +86,7 @@
       {
         "kind": "repository_implementation_commit",
         "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-1-receipt.sh",
-        "sha256": "a86486fc571c6b8ef1df1e94f6c5eed3fb43bc489684fdbe45f5f75f3f0b858e"
+        "sha256": "b3ced82256850e85ea49a4e93c1bfc209a9400f6940195daaad761d865958de0"
       },
       {
         "kind": "repository_implementation_commit",
@@ -138,6 +142,40 @@
       "meaning": "The live canonical coverage checker accepted all 446 unique explicit control rows."
     },
     {
+      "id": "P06-ZERO-AUTH-T1-FIX2-RED-NORMATIVE-CONTRADICTIONS-V1",
+      "command": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-control-validator.sh",
+      "exit": 1,
+      "output": "P06_ZERO_AUTH_EXPECTED_REFUSAL_MISSING:OD10_CONTRADICTORY_PERMISSION\nP06_ZERO_AUTH_EXPECTED_REFUSAL_MISSING:MASTER_CONTRADICTORY_PERMISSION\nP06_ZERO_AUTH_EXPECTED_REFUSAL_MISSING:OD10_CONTRADICTORY_PERMISSION\nP06_ZERO_AUTH_EXPECTED_REFUSAL_MISSING:MASTER_CONTRADICTORY_PERMISSION\nP06_ZERO_AUTH_EXPECTED_REFUSAL_MISSING:OD10_CONTRADICTORY_PERMISSION\nP06_ZERO_AUTH_EXPECTED_REFUSAL_MISSING:MASTER_CONTRADICTORY_PERMISSION\nP06_ZERO_AUTH_EXPECTED_REFUSAL_MISSING:OD10_CONTRADICTORY_PERMISSION\nP06_ZERO_AUTH_EXPECTED_REFUSAL_MISSING:MASTER_CONTRADICTORY_PERMISSION",
+      "output_sha256": "21c80b3e8ca509c4b51207a730a55b0578075f5d8554c3a0f29ea1561109256b",
+      "meaning": "The modal-enumeration validator false-accepted direct MUST and SHOULD provider-login obligations in both governed sections and case variants."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T1-FIX2-GREEN-NORMATIVE-CONTRADICTIONS-V1",
+      "command": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-control-validator.sh",
+      "exit": 0,
+      "output": "P06_ZERO_AUTH_CONTROL_TEST_PASS",
+      "output_sha256": "28fe4d0eb9e577e479f071c5edfa5060197bfe346d9798825ab6e646475908b4",
+      "meaning": "Exact prohibited action clauses now default to refusal unless governed by a proven negative scope; MUST, SHOULD, MAY, CAN, SHALL and WILL upper/lower forms refuse in OD-10 and master law."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T1-FIX2-RED-RUST-TRACE-445-V1",
+      "command": "bash -o pipefail -c 'CARGO_INCREMENTAL=0 cargo test --offline --test trace_metadata -- --test-threads=1 2>&1 | sed -E -n \"/^running [0-9]+ tests$/p; /^test (canonical_|missing_|previous_).* \\.\\.\\. (ok|FAILED)$/p; /^test result: /{s/; finished in [0-9.]+s$//;p;}\"'",
+      "exit": 101,
+      "output": "running 4 tests\ntest canonical_checker_is_the_executable_446_gate ... FAILED\ntest canonical_map_has_446_explicit_rows_and_reciprocal_fields ... FAILED\ntest missing_conflicting_unreviewed_and_stale_rows_refuse ... ok\ntest previous_445_row_map_refuses_in_rust_and_the_executable_gate ... FAILED\ntest result: FAILED. 1 passed; 3 failed; 0 ignored; 0 measured; 0 filtered out",
+      "output_sha256": "5928d04b4ca782e5935e5f6e765495f56998b44cc54c6c0126b718458c5055f3",
+      "input": "Disposable clone of 2f8daaab9a26f19cee960858cbba8c2d7cf861ce with only scripts/check-control-coverage.rb and src/contracts/trace.rs changed from current 446 back to previous 445; canonical map and four-test Rust contract unchanged.",
+      "meaning": "The Rust contract produced the focused previous-445 RED: both live consumers were stale and the dedicated old-445 regression caught the Rust validator."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T1-FIX2-GREEN-RUST-TRACE-446-V1",
+      "command": "bash -o pipefail -c 'CARGO_INCREMENTAL=0 cargo test --offline --test trace_metadata -- --test-threads=1 2>&1 | sed -E -n \"/^running [0-9]+ tests$/p; /^test (canonical_|missing_|previous_).* \\.\\.\\. (ok|FAILED)$/p; /^test result: /{s/; finished in [0-9.]+s$//;p;}\"'",
+      "exit": 0,
+      "output": "running 4 tests\ntest canonical_checker_is_the_executable_446_gate ... ok\ntest canonical_map_has_446_explicit_rows_and_reciprocal_fields ... ok\ntest missing_conflicting_unreviewed_and_stale_rows_refuse ... ok\ntest previous_445_row_map_refuses_in_rust_and_the_executable_gate ... ok\ntest result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out",
+      "output_sha256": "e03cfc379822332f8dec6910fc4f9838a0e6009f5ba9cdf74f1ba179d3f920bf",
+      "input": "Current Task 1 implementation with the canonical map and both live count consumers fixed at 446.",
+      "meaning": "The focused Rust trace contract accepted all current 446 consumers and independently refused the previous-445 fixture."
+    },
+    {
       "id": "P06-ZERO-AUTH-T1-FIX1-RED-DESCENDANT-RECEIPT-V1",
       "command": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-1-receipt-durability.sh",
       "exit": 1,
@@ -155,10 +193,10 @@
     }
   ],
   "seal_tdd": {
-    "red_command": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-1-receipt-durability.sh",
+    "red_command": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-1-receipt.sh",
     "red_exit": 1,
-    "red_output": "P06_ZERO_AUTH_RECEIPT_DESCENDANT_RED:1:NO_OUTPUT",
-    "red_output_sha256": "fda533ecbf4ef4d92cf35e261bb66c6aa203774ff4f7efb59f097204c59c185e",
+    "red_output": "P06_ZERO_AUTH_RECEIPT_REFUSAL:RECEIPT_CONTRACT",
+    "red_output_sha256": "214a4e314731fc14660d0ba2bef487260d990ea67c19b1d57c7d29bef9e3c54b",
     "green_command": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-1-receipt.sh",
     "green_exit": 0,
     "green_output": "P06_ZERO_AUTH_TASK_1_RECEIPT_PASS",
@@ -174,6 +212,7 @@
     "canonical_control_count": 446,
     "previous_445_state_refuses": true,
     "contradictory_permissions_refuse": true,
+    "all_normative_positive_prohibited_actions_refuse": true,
     "network_access": "not invoked",
     "provider_or_auth_process": "not invoked",
     "credential_or_keychain_read": "not invoked",
