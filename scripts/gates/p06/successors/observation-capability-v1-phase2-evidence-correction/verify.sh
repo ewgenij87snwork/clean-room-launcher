@@ -4,7 +4,7 @@ set -eu
 root=$(CDPATH='' cd -- "$(dirname -- "$0")/../../../../.." && pwd -P)
 base=73d48ffbed1794c6691ba59be006aa096dcfcb22
 task_1_commit=09ec751eddc33b5c941393503271de0afcb70744
-replaced_task_2_commit=193fe6394455bfbf0fb1c5ba52152be523fa6b8e
+replaced_task_2_commit=de741505bcdecd5a75865aafb4f73336185f8b0e
 correction_rel=reports/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/correction.json
 task_1_rel=reports/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/task-1.json
 task_2_rel=reports/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/task-2.json
@@ -274,9 +274,9 @@ validate_task_2() {
     .acceptance == {id:"P06-PHASE2-CORRECTION-T2-HISTORICAL-BINDING-V1",operator_result:"The sole correction gate chains the immutable Phase 2 verifier and rejects privacy, protected-state, write-set, historical-drift, receipt-binding and classification mutations.",mutation_pass_marker:"P06_PHASE2_CORRECTION_MUTATIONS_PASS"} and
     (.acceptance | keys) == ["id","mutation_pass_marker","operator_result"] and
     (.binding | keys) == ["implementation_result_head","implementation_tree","input_head","receipt_commit_parent","replaces_receipt_commit","resolution","scheme"] and
-    .binding.scheme == "parent-bound-receipt.v3" and
-    .binding.input_head == "193fe6394455bfbf0fb1c5ba52152be523fa6b8e" and
-    .binding.replaces_receipt_commit == "193fe6394455bfbf0fb1c5ba52152be523fa6b8e" and
+    .binding.scheme == "parent-bound-receipt.v4" and
+    .binding.input_head == "de741505bcdecd5a75865aafb4f73336185f8b0e" and
+    .binding.replaces_receipt_commit == "de741505bcdecd5a75865aafb4f73336185f8b0e" and
     .binding.receipt_commit_parent == .binding.implementation_result_head and
     (.binding.implementation_result_head | test("^[0-9a-f]{40}$")) and
     (.binding.implementation_tree | test("^[0-9a-f]{40}$")) and
