@@ -14,12 +14,13 @@
     "independent_review": "PENDING"
   },
   "binding": {
-    "scheme": "parent-bound-receipt.v1",
-    "input_head": "8dad36da261dcfa45454166a82b6448a11002a95",
-    "implementation_result_head": "8dad36da261dcfa45454166a82b6448a11002a95",
-    "implementation_tree": "d5522ff8ebd00d289bb3fb8221546f35ecbccc36",
-    "receipt_commit_parent": "8dad36da261dcfa45454166a82b6448a11002a95",
-    "resolution": "The containing receipt commit must be the unique receipt-only child of the exact accepted Task 2 seal. The corrected SSOT remains external and is bound by exact SHA-256 digests, avoiding self-reference."
+    "scheme": "parent-bound-receipt.v2",
+    "input_head": "373c9091fac7d34419d77484639d50c1331ee050",
+    "implementation_result_head": "0b7d28dc92782ae9a99db0eb646f50ac71d5d228",
+    "implementation_tree": "d6e9aa0e6aa26e72ee59005c21609a6ca6131ede",
+    "receipt_commit_parent": "0b7d28dc92782ae9a99db0eb646f50ac71d5d228",
+    "replaces_receipt_commit": "373c9091fac7d34419d77484639d50c1331ee050",
+    "resolution": "The unique receipt-only child of the replacement implementation result supersedes the reviewed Task 3 seal. The prior seal remains in history, repair commits are path-confined, and external SSOT bytes are bound by exact digests without self-reference."
   },
   "inputs": {
     "plan_checkpoint_path": "/Users/ysorokin/Documents/it/5-LVL - 2026/Temp in Projects/wisdom/taskseal/plans/2026-08-13-p06-phase2-evidence-correction.md",
@@ -31,34 +32,54 @@
     "task_1_receipt_path": "reports/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/task-1.json",
     "task_1_receipt_sha256": "403a73a8513d84db52a91e386549c2348b7e8d7906aaccb4d5d872416e742346",
     "task_2_receipt_path": "reports/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/task-2.json",
-    "task_2_receipt_sha256": "611bb39a7ce04f090bc75a9a0db4c548cd0e6c7cbccb131239b4a40d3314ae1d"
+    "task_2_receipt_sha256": "611bb39a7ce04f090bc75a9a0db4c548cd0e6c7cbccb131239b4a40d3314ae1d",
+    "prior_task_3_receipt_path": "reports/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/task-3.json",
+    "prior_task_3_receipt_sha256": "058277ec3385faca15d4ca71a021e7871af9fe2aac571fb3e33218b4cc9312cc",
+    "worklog_prefix_line_count": 110,
+    "worklog_prefix_sha256": "fa0fef231880c923d8e0434526d111028f195abc9c23da8be4ef8507c85d13e3"
   },
   "subject": {
     "algorithm": "sha256 of sorted path, tab, sha256, newline source records",
-    "sha256": "703cb19d2187909e41be5e3e86460ae0c0e02a90b0dc228ea43827bfdcafe28b",
+    "sha256": "3c3cef0018e01f0b357dd11b3b24ac5c5bc7fe83d0f08bdbd763acd0347e01a7",
     "sources": [
       {
         "path": "/Users/ysorokin/Documents/it/5-LVL - 2026/Temp in Projects/wisdom/taskseal/TASKSEAL-OWNER-DASHBOARD.html",
-        "sha256": "4252ee5816fc0f04ffba179adbe7262cbdeebc38b37124e6f9a71d4257682d33"
+        "sha256": "e4beb04664bd1acd16b58d317ee462fe92e7e4ea867c42eb1ade2e322b959dd6"
       },
       {
         "path": "/Users/ysorokin/Documents/it/5-LVL - 2026/Temp in Projects/wisdom/taskseal/STATUS.md",
-        "sha256": "22a12d652adb4f90d49dc40936a44374010794f41b2379cc6aab32d5c14e9e0b"
+        "sha256": "a34b7c91a1d8f3aecddbd4061342359dd6b9aba02ee20ac2615bcdb6f11fcdaa"
       },
       {
         "path": "/Users/ysorokin/Documents/it/5-LVL - 2026/Temp in Projects/wisdom/taskseal/TASKSEAL-WORKLOG.jsonl",
-        "sha256": "fa0fef231880c923d8e0434526d111028f195abc9c23da8be4ef8507c85d13e3"
+        "sha256": "d3db76d507fd82c29406b1193cc7b11ef89bd3ba5e75f20119910078dd57fc48"
       }
     ]
   },
   "evidence": [
     {
-      "id": "P06-PHASE2-CORRECTION-T3-PRECOMMIT-GATE-PASS-V1",
+      "id": "P06-PHASE2-CORRECTION-T3-REVIEW1-RED-SSOT-SEMANTICS-V1",
+      "command": "P06_PHASE2_CORRECTION_TEST_CASE=task_3_ssot sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/test-verify.sh",
+      "exit": 1,
+      "output": "P06_EXPECTED_TASK3_SSOT_BASELINE_PASS",
+      "output_sha256": "3bf1e85a2bc62ee1782058d310466aa4baaea6a4a4f944e793a2ff0bbeae7fc6",
+      "meaning": "The focused SSOT suite failed before the semantic validator existed, proving the old hash-only gate could not accept and validate the canonical owner-evidence baseline."
+    },
+    {
+      "id": "P06-PHASE2-CORRECTION-T3-REVIEW1-GREEN-SSOT-SEMANTICS-V1",
+      "command": "P06_PHASE2_CORRECTION_TEST_CASE=task_3_ssot sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/test-verify.sh",
+      "exit": 0,
+      "output": "P06_PHASE2_CORRECTION_MUTATIONS_PASS",
+      "output_sha256": "38d74c26976a46e8b16082c40da6a382c64333deb410783dbab45f927c6cfede",
+      "meaning": "The focused suite accepts the canonical baseline and refuses correction-link, category, prefix, progress, premature-PASS, stale-lifecycle and missing-time mutations."
+    },
+    {
+      "id": "P06-PHASE2-CORRECTION-T3-PRECOMMIT-GATE-PASS-V2",
       "command": "P06_PHASE2_CORRECTION_STAGE=task-3-precommit sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/verify.sh",
       "exit": 0,
       "output": "P06_PHASE2_EVIDENCE_CORRECTION_PASS",
       "output_sha256": "1501d677fff542bc83d8737d494020893635a3b42efcefca748fc67a17ffa533",
-      "meaning": "The successor sole gate validates the exact Task 2 anchor, corrected SSOT bytes, receipt digests and non-circular Task 3 precommit topology."
+      "meaning": "The successor sole gate validates the replacement topology, immutable prefix, canonical ledger projection, current lifecycle, dashboard time facts and exact corrected SSOT digests."
     }
   ],
   "controls": {
