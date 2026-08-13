@@ -1,11 +1,11 @@
 {
-  "schema_version": "taskseal.p06.zero-auth-preauthenticated-native-session-v1.task-receipt.v2",
+  "schema_version": "taskseal.p06.zero-auth-preauthenticated-native-session-v1.task-receipt.v3",
   "plan_id": "P06-ZERO-AUTH-PREAUTHENTICATED-NATIVE-SESSION-V1",
   "task": 2,
   "result": "accepted",
   "acceptance": {
     "id": "P06-ZERO-AUTH-T2-EXECUTABLE-PATH-CLOSURE-V2",
-    "operator_result": "Four historical credential/login probe and caller paths are non-executable unconditional historical-only refusals; the closed exact-digest inventory scans every tracked executable, every tracked shebang script regardless of mode, tracked symlinks, build.rs and all compiled src Rust while refusing auth-file, credential extraction/copy, provider-login, OAuth/device/browser, and API-key/token-input patterns; the former auth fingerprint remains historical and non-authoritative, and descendant durability execution is sealed.",
+    "operator_result": "Four historical credential/login probe and caller paths are non-executable unconditional historical-only refusals; the closed exact-digest inventory scans every tracked executable, all tracked interpreter-source extensions and shebang scripts regardless of mode, tracked symlinks, build.rs and all compiled src Rust while refusing auth-file, credential extraction/copy, provider-login, OAuth/device/browser, and API-key/token-input patterns; the former auth fingerprint remains historical and non-authoritative, and descendant durability execution is sealed.",
     "control_ids": [
       "AUTH-01"
     ],
@@ -15,6 +15,8 @@
       "P06-ZERO-AUTH-T2-GREEN-EXECUTABLE-SOURCE-INVENTORY-V1",
       "P06-ZERO-AUTH-T2-FIX1-RED-GATE-RUST-INVENTORY-GAP-V1",
       "P06-ZERO-AUTH-T2-FIX1-GREEN-CLOSED-SOURCE-INVENTORY-V1",
+      "P06-ZERO-AUTH-T2-FIX1-RED-INTERPRETER-RUNNABLE-GAP-V1",
+      "P06-ZERO-AUTH-T2-FIX1-GREEN-ALL-MODE-SOURCE-INVENTORY-V1",
       "P06-ZERO-AUTH-T2-FIX1-RED-DURABILITY-EVIDENCE-GAP-V1",
       "P06-ZERO-AUTH-T2-FIX1-GREEN-DESCENDANT-DURABILITY-V1"
     ]
@@ -22,10 +24,10 @@
   "binding": {
     "scheme": "parent-bound-receipt.v2",
     "input_head": "2d29ecfef073c5ad1a04d3acb96a6ccb48261ce6",
-    "implementation_result_head": "39f534926f71c251f5207715132dac3492722fff",
-    "implementation_tree": "61aeb40260dac2b1720f446b3cc43588093abadb",
-    "receipt_commit_parent": "39f534926f71c251f5207715132dac3492722fff",
-    "replaces_receipt_commit": "3e40a4b688bb489b5cbc9a8ec8e32a2be032c26e",
+    "implementation_result_head": "524c6f657694a15e8b322b19e9c31780c8a3020c",
+    "implementation_tree": "9bde4787d79dbe7f8eb588dcf05db7cba599c8d8",
+    "receipt_commit_parent": "524c6f657694a15e8b322b19e9c31780c8a3020c",
+    "replaces_receipt_commit": "61a15b52cd073a5af516e56cc61c393b97deadd4",
     "parent_task_receipt": {
       "path": "reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/task-1.json",
       "commit": "2d29ecfef073c5ad1a04d3acb96a6ccb48261ce6",
@@ -41,7 +43,7 @@
   },
   "subject": {
     "algorithm": "sha256 of sorted path, tab, sha256, newline repository records",
-    "sha256": "33067faae965cae9c6cff97fcf8c374c416efc7af9f9996f98e085efd8c62722",
+    "sha256": "2bbcd4df12775cb395653405e71aeed8c8eb1150bbe9f10fa36c9fd8a3af816d",
     "sources": [
       {
         "kind": "repository_implementation_commit",
@@ -66,17 +68,17 @@
       {
         "kind": "repository_implementation_commit",
         "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/source-inventory-allowlist.json",
-        "sha256": "31886f92ae40fe7d5a8e3c54e20a3048c0fc645b32b302dc42910c7f3a722049"
+        "sha256": "c7babae3242f20c70134b489eefafbc7df0b69dd33ff1e2ec355da4f956426d1"
       },
       {
         "kind": "repository_implementation_commit",
         "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/source-inventory.rb",
-        "sha256": "e54711f6f11bf3e6ca989583e25c0c8eaad244e5c3f78017cbdd1dccd2530843"
+        "sha256": "375b4317906d8fac5e2e9d246354432daedd29480c96ff5d35afc639cc2a0fd7"
       },
       {
         "kind": "repository_implementation_commit",
         "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-source-inventory.sh",
-        "sha256": "383e4359d8930ed0469e112c5cc21b41821652f25f9171584e57965a8e6a3b6f"
+        "sha256": "3403659d97fa9973393b401b0aab6dc08bcef9c5f5746fb4fc253fcf85a8f5ef"
       },
       {
         "kind": "repository_implementation_commit",
@@ -86,7 +88,7 @@
       {
         "kind": "repository_implementation_commit",
         "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-2-receipt.sh",
-        "sha256": "6ec3b5075604d5f7d802ff621f0a885a75f82b31f0c76bc203fe22b315a3a1f4"
+        "sha256": "2f2552a5d50fb7f8b644643c44fd29af5ab2e7d16195d077fa72a7b3759f3fbc"
       },
       {
         "kind": "repository_implementation_commit",
@@ -139,6 +141,23 @@
       "meaning": "The closed offline inventory accepted exact refusal stubs and audited evidence digests while refusing gate-path, compiled Rust, multiline, dynamic, provider-prefixed, renamed and symlink mutations for every required class."
     },
     {
+      "id": "P06-ZERO-AUTH-T2-FIX1-RED-INTERPRETER-RUNNABLE-GAP-V1",
+      "command": "sh scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-source-inventory.sh",
+      "exit": 1,
+      "output": "P06_ZERO_AUTH_EXPECTED_REFUSAL_MISSING:interpreter_runnable_100644:0:P06_ZERO_AUTH_SOURCE_INVENTORY_PASS",
+      "output_sha256": "a923f00cd823b5840c2a0716b40cadb86b27d0ff4d67ac432e307a29326251de",
+      "input": "A renamed 100644 shell source without a shebang contained a provider-login invocation and was executable through an explicit interpreter.",
+      "meaning": "Focused review RED proved executable mode and shebang detection alone do not cover interpreter-invoked tracked source."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T2-FIX1-GREEN-ALL-MODE-SOURCE-INVENTORY-V1",
+      "command": "sh scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-source-inventory.sh",
+      "exit": 0,
+      "output": "P06_ZERO_AUTH_SOURCE_INVENTORY_TEST_PASS",
+      "output_sha256": "ff2c843a18a4b76f59ff24589d0335a7057640cb926ea647f7246d40ae7b64af",
+      "meaning": "The final inventory also refuses auth/login patterns in tracked sh, bash, zsh, Ruby, Python and Perl source regardless of executable bit or shebang."
+    },
+    {
       "id": "P06-ZERO-AUTH-T2-FIX1-RED-DURABILITY-EVIDENCE-GAP-V1",
       "command": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-2-receipt.sh",
       "exit": 1,
@@ -179,6 +198,14 @@
     "executable_product_source_inventory": "PASS",
     "governed_inventory": {
       "tracked_executables": true,
+      "tracked_interpreter_sources_regardless_of_mode": [
+        ".sh",
+        ".bash",
+        ".zsh",
+        ".rb",
+        ".py",
+        ".pl"
+      ],
       "tracked_shebangs_regardless_of_mode": true,
       "compiled_rust": "build.rs + src/**/*.rs",
       "tracked_symlinks": "REFUSE",
