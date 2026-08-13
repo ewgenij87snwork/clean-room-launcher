@@ -1,4 +1,5 @@
 canary_state=REFUSED
+forbidden_first=PASS
 exact_tuple_bound=true
 network=NOT_ATTEMPTED
 provider_launch=false
