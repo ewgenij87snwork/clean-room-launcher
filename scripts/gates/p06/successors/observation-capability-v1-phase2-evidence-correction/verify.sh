@@ -236,6 +236,13 @@ validate_task_2() {
     .inputs.predecessor_checkpoint == "73d48ffbed1794c6691ba59be006aa096dcfcb22" and
     .inputs.predecessor_receipt_sha256 == "2a2e51fc2e97d657aa1fc7d413304f7b11362791abf4e354c3039406c5f1dfed" and
     .inputs.task_1_receipt_sha256 == "403a73a8513d84db52a91e386549c2348b7e8d7906aaccb4d5d872416e742346" and
+    .inputs.correction_receipt_sha256 == "8e039c31d16ff355cf0cdcd35f5113a3cb08e4210b77ea46e43877e42573d818" and
+    .subject.algorithm == "sha256 of sorted path, tab, sha256, newline source records" and
+    [.subject.sources[].path] == [
+      "reports/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/correction.json",
+      "scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/test-verify.sh",
+      "scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/verify.sh"
+    ] and
     .controls == {fixtures_only:true,network_access:"not invoked",provider_or_codex_process:"not invoked",credential_or_keychain_read:"not invoked",historical_phase_1_t8_phase_2_mutation:false} and
     [.evidence[].id] == ["P06-PHASE2-CORRECTION-T2-RED-MISSING-VERIFIER-V1","P06-PHASE2-CORRECTION-T2-GREEN-MUTATIONS-PASS-V1"] and
     .evidence[0].command == "sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/test-verify.sh" and
