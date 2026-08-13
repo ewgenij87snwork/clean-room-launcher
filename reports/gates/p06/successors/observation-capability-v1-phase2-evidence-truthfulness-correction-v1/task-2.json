@@ -1,5 +1,5 @@
 {
-  "schema_version": "taskseal.p06.phase2-evidence-truthfulness-correction-v1.task-receipt.v1",
+  "schema_version": "taskseal.p06.phase2-evidence-truthfulness-correction-v1.task-receipt.v2",
   "plan_id": "P06-PHASE2-EVIDENCE-TRUTHFULNESS-CORRECTION-V1",
   "task": 2,
   "result": "accepted",
@@ -9,12 +9,13 @@
     "mutation_pass_marker": "P06_PHASE2_TRUTHFULNESS_MUTATIONS_PASS"
   },
   "binding": {
-    "scheme": "parent-bound-receipt.v1",
-    "input_head": "82e1acb883ebe4ba2f3f54ad57857b126c942409",
-    "implementation_result_head": "3c6368249ad47b7876cf713056050e8b567d4884",
-    "implementation_tree": "bc541b6a27f977f207ce403a5d3c6d3a702cfe0d",
-    "receipt_commit_parent": "3c6368249ad47b7876cf713056050e8b567d4884",
-    "resolution": "The unique receipt-only child of the implementation result binds Task 2 without embedding its own containing commit."
+    "scheme": "parent-bound-receipt.v2",
+    "input_head": "2ba9e0fb92d82632b382296c1cb07067d8432879",
+    "implementation_result_head": "22fe814d21f88a53ab65ad2ec18d8f206472a3ec",
+    "implementation_tree": "65a6fee91b48c7b46cc519f9502fa7383b4594ea",
+    "receipt_commit_parent": "22fe814d21f88a53ab65ad2ec18d8f206472a3ec",
+    "replaces_receipt_commit": "2ba9e0fb92d82632b382296c1cb07067d8432879",
+    "resolution": "The unique receipt-only child of the review-fix implementation replaces the V1 receipt while preserving both historical seals and avoiding self-reference."
   },
   "inputs": {
     "plan_checkpoint_path": "/Users/ysorokin/Documents/it/5-LVL - 2026/Temp in Projects/wisdom/taskseal/plans/2026-08-13-p06-phase2-evidence-truthfulness-correction-v1.md",
@@ -24,24 +25,25 @@
     "predecessor_receipt_sha256": "968779a627cd65d69f27edfa39293fd5f998f50029904ba52a1347463578b2e2",
     "task_1_receipt_path": "reports/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/task-1.json",
     "task_1_receipt_sha256": "7d6ae063881b69b1117402cae45bbe2b50ae3609595e2aec424ed5097ba49f8e",
+    "superseded_task_2_receipt_sha256": "f87eb90933b234c6e8ad6ddddcd2697c9fb92fe06ea5930df3f384a77063d4d0",
     "truthfulness_path": "reports/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/truthfulness.json",
-    "truthfulness_sha256": "faeb6c39f3881319302030c833017bd237626d83fab5fa5012709f18fc171751"
+    "truthfulness_sha256": "ce78f0db765057eb841956d5d99440644509c6a8f3f4ebeb3327f30cce74758c"
   },
   "subject": {
     "algorithm": "sha256 of sorted path, tab, sha256, newline source records",
-    "sha256": "d68d132f177406ada558b929315d2efa029ee9c14808839eb5387ce01bd8e1fb",
+    "sha256": "ecb7ff8c8c3f161e9f4639710515d022aaf3a6da4d89557756d5b0df80ed6da4",
     "sources": [
       {
         "path": "reports/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/truthfulness.json",
-        "sha256": "faeb6c39f3881319302030c833017bd237626d83fab5fa5012709f18fc171751"
+        "sha256": "ce78f0db765057eb841956d5d99440644509c6a8f3f4ebeb3327f30cce74758c"
       },
       {
         "path": "scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/test-verify.sh",
-        "sha256": "bbcbcf482b4f791006468e8593df3e973018e7d3db2a44d2ddee6dec1c895e6a"
+        "sha256": "b97c2cd3ddb511e0479f0ad7303cad0140fca372cd2c25c1e5bbc9edcdd53e8a"
       },
       {
         "path": "scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/verify.sh",
-        "sha256": "3a66ef6e7e7013b882fd4f9e2256fda15bfda6ec7791f66052e939b220452e0d"
+        "sha256": "1854a03cfcc66c81224671bd6dee6843f98f28da54a52a6984d2ca7e0bb0adf3"
       }
     ]
   },
@@ -61,6 +63,86 @@
       "output": "P06_PHASE2_TRUTHFULNESS_MUTATIONS_PASS",
       "output_sha256": "6103704193d31ad2c1e3472a530c611942b6efcfe140247dee7324c44ddbcc52",
       "meaning": "The focused suite accepted the truthful baseline and refused every uncertainty upgrade, supported-fact drift, history/write-set mutation, private-material history and merge topology."
+    },
+    {
+      "id": "P06-PHASE2-TRUTH-CORRECTION-T2-REVIEW1-RED-BOOLEAN-CENSUS-V1",
+      "command": "P06_TRUTH_TEST_CASE=boolean_inventory_bound_source sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/test-verify.sh",
+      "exit": 1,
+      "output": "P06_TRUTH_EXPECTED_REFUSAL_MISSING:boolean_inventory_bound_source",
+      "output_sha256": "5be5fe412e3b8e2eaadafbae4595dd5f7e41ab1a8a03a1922a37a21187ba3a27",
+      "meaning": "The reviewed gate accepted omission of the twentieth boolean because the original manifest and gate shared the same incomplete census."
+    },
+    {
+      "id": "P06-PHASE2-TRUTH-CORRECTION-T2-REVIEW1-RED-AUTHORITY-RULE-V1",
+      "command": "P06_TRUTH_TEST_CASE=authority_rule sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/test-verify.sh",
+      "exit": 1,
+      "output": "P06_TRUTH_EXPECTED_REFUSAL_MISSING:authority_rule",
+      "output_sha256": "7c9f9c45238dd21e1c5d2bffb230dc454a60e203dbc9241de111c6e7f971efde",
+      "meaning": "The reviewed gate accepted a governing rule that reversed the non-authoritative historical-boolean policy."
+    },
+    {
+      "id": "P06-PHASE2-TRUTH-CORRECTION-T2-REVIEW1-RED-CREDENTIAL-REASON-V1",
+      "command": "P06_TRUTH_TEST_CASE=credential_reason sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/test-verify.sh",
+      "exit": 1,
+      "output": "P06_TRUTH_EXPECTED_REFUSAL_MISSING:credential_reason",
+      "output_sha256": "f203881de71266b53f22f831879a2048bd615b1c51cb71dae92fb389f8516fd2",
+      "meaning": "The reviewed gate accepted a credential-retention reason that treated the old boolean as independent runtime proof."
+    },
+    {
+      "id": "P06-PHASE2-TRUTH-CORRECTION-T2-REVIEW1-RED-PROTECTED-REASON-V1",
+      "command": "P06_TRUTH_TEST_CASE=protected_reason sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/test-verify.sh",
+      "exit": 1,
+      "output": "P06_TRUTH_EXPECTED_REFUSAL_MISSING:protected_reason",
+      "output_sha256": "52c3bc4ae4a8756fee371c1ead858a2be49e68d3fb113ee1c880dc082b36ae4f",
+      "meaning": "The reviewed gate accepted a protected-state reason that treated old equality booleans as independent runtime proof."
+    },
+    {
+      "id": "P06-PHASE2-TRUTH-CORRECTION-T2-REVIEW1-RED-CLEANUP-REASON-V1",
+      "command": "P06_TRUTH_TEST_CASE=cleanup_reason sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/test-verify.sh",
+      "exit": 1,
+      "output": "P06_TRUTH_EXPECTED_REFUSAL_MISSING:cleanup_reason",
+      "output_sha256": "b5dffbc9beed4d22e4a1180ed8e6e6a8b5dde7f31a84cd28b19d4ab4642b2fbb",
+      "meaning": "The reviewed gate accepted a cleanup reason that treated old cleanup booleans as independent runtime proof."
+    },
+    {
+      "id": "P06-PHASE2-TRUTH-CORRECTION-T2-REVIEW1-RED-PREFLIGHT-COMMIT-V1",
+      "command": "P06_TRUTH_TEST_CASE=primary_preflight_commit sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/test-verify.sh",
+      "exit": 1,
+      "output": "P06_TRUTH_EXPECTED_REFUSAL_MISSING:primary_preflight_commit",
+      "output_sha256": "3b67dbfc9f7f6ec61cf9066661324e41550d7745628058ee23676117d33aee88",
+      "meaning": "The reviewed gate accepted descendant-commit provenance for the unchanged preflight blob."
+    },
+    {
+      "id": "P06-PHASE2-TRUTH-CORRECTION-T2-REVIEW1-RED-OBSERVATION-COMMIT-V1",
+      "command": "P06_TRUTH_TEST_CASE=primary_observation_commit sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/test-verify.sh",
+      "exit": 1,
+      "output": "P06_TRUTH_EXPECTED_REFUSAL_MISSING:primary_observation_commit",
+      "output_sha256": "ad64dfb14d08021d0b3dc60d87cf457c756ddb607bca9d967035ea1c5ef2bee7",
+      "meaning": "The reviewed gate accepted descendant-commit provenance for the unchanged observation blob."
+    },
+    {
+      "id": "P06-PHASE2-TRUTH-CORRECTION-T2-REVIEW1-RED-PREFLIGHT-PATH-V1",
+      "command": "P06_TRUTH_TEST_CASE=primary_preflight_path sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/test-verify.sh",
+      "exit": 1,
+      "output": "P06_TRUTH_EXPECTED_REFUSAL_MISSING:primary_preflight_path",
+      "output_sha256": "f40ad49ce88f86d05c539aff83fe850b698eb062c80a6a8b3c23cf96df65d88f",
+      "meaning": "The reviewed gate accepted an alias path for the preflight artifact."
+    },
+    {
+      "id": "P06-PHASE2-TRUTH-CORRECTION-T2-REVIEW1-RED-OBSERVATION-PATH-V1",
+      "command": "P06_TRUTH_TEST_CASE=primary_observation_path sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/test-verify.sh",
+      "exit": 1,
+      "output": "P06_TRUTH_EXPECTED_REFUSAL_MISSING:primary_observation_path",
+      "output_sha256": "d3a802edc39befa7ac5881923493fc4ffc722287177a19b648234ea5c9d6332d",
+      "meaning": "The reviewed gate accepted an alias path for the observation artifact."
+    },
+    {
+      "id": "P06-PHASE2-TRUTH-CORRECTION-T2-REVIEW1-GREEN-MUTATIONS-PASS-V1",
+      "command": "sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/test-verify.sh",
+      "exit": 0,
+      "output": "P06_PHASE2_TRUTHFULNESS_MUTATIONS_PASS",
+      "output_sha256": "6103704193d31ad2c1e3472a530c611942b6efcfe140247dee7324c44ddbcc52",
+      "meaning": "The complete suite accepted the corrected baseline and refused all original and review-round-1 mutations, including derived census omission, semantic reversal and exact provenance drift."
     }
   ],
   "controls": {
