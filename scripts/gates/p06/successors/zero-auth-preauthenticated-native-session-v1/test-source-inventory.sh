@@ -187,6 +187,21 @@ if test "$status" != 1 || test "$actual" != 'P06_ZERO_AUTH_SOURCE_REFUSAL:TRACKE
 fi
 git -C "$fixture" rm -q -f scripts/renamed-auth
 
+# Break caught: interpreter-invoked source remains runnable without a shebang or
+# executable mode, so a renamed 100644 shell path must still be inventoried.
+printf '%s\n' '"$OTHER_PROVIDER" login --help' >"$fixture/scripts/renamed-auth.sh"
+chmod 644 "$fixture/scripts/renamed-auth.sh"
+git -C "$fixture" add --chmod=-x scripts/renamed-auth.sh
+set +e
+actual=$(ruby "$scanner" "$fixture" 2>&1)
+status=$?
+set -e
+if test "$status" != 1 || test "$actual" != 'P06_ZERO_AUTH_SOURCE_REFUSAL:PROVIDER_LOGIN:scripts/renamed-auth.sh'; then
+  printf '%s\n' "P06_ZERO_AUTH_EXPECTED_REFUSAL_MISSING:interpreter_runnable_100644:$status:$actual"
+  exit 1
+fi
+git -C "$fixture" rm -q -f scripts/renamed-auth.sh
+
 # Break caught: only exact-digest, per-file-rationale evidence source may carry
 # inert forbidden literals. Any byte change invalidates the closed allowlist.
 evidence_path=scripts/gates/p06/test-inert-login-fixture.sh

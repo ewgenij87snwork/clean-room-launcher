@@ -30,12 +30,12 @@ jq -e \
   --arg input_head "$input_head" \
   --arg implementation_head "$implementation_head" \
   --arg implementation_tree "$implementation_tree" '
-  .schema_version == "taskseal.p06.zero-auth-preauthenticated-native-session-v1.task-receipt.v2" and
+  .schema_version == "taskseal.p06.zero-auth-preauthenticated-native-session-v1.task-receipt.v3" and
   .plan_id == "P06-ZERO-AUTH-PREAUTHENTICATED-NATIVE-SESSION-V1" and
   .task == 2 and .result == "accepted" and
   .acceptance == {
     id:"P06-ZERO-AUTH-T2-EXECUTABLE-PATH-CLOSURE-V2",
-    operator_result:"Four historical credential/login probe and caller paths are non-executable unconditional historical-only refusals; the closed exact-digest inventory scans every tracked executable, every tracked shebang script regardless of mode, tracked symlinks, build.rs and all compiled src Rust while refusing auth-file, credential extraction/copy, provider-login, OAuth/device/browser, and API-key/token-input patterns; the former auth fingerprint remains historical and non-authoritative, and descendant durability execution is sealed.",
+    operator_result:"Four historical credential/login probe and caller paths are non-executable unconditional historical-only refusals; the closed exact-digest inventory scans every tracked executable, all tracked interpreter-source extensions and shebang scripts regardless of mode, tracked symlinks, build.rs and all compiled src Rust while refusing auth-file, credential extraction/copy, provider-login, OAuth/device/browser, and API-key/token-input patterns; the former auth fingerprint remains historical and non-authoritative, and descendant durability execution is sealed.",
     control_ids:["AUTH-01"],
     evidence_ids:[
       "P06-ZERO-AUTH-T2-RED-MISSING-SOURCE-INVENTORY-V1",
@@ -43,6 +43,8 @@ jq -e \
       "P06-ZERO-AUTH-T2-GREEN-EXECUTABLE-SOURCE-INVENTORY-V1",
       "P06-ZERO-AUTH-T2-FIX1-RED-GATE-RUST-INVENTORY-GAP-V1",
       "P06-ZERO-AUTH-T2-FIX1-GREEN-CLOSED-SOURCE-INVENTORY-V1",
+      "P06-ZERO-AUTH-T2-FIX1-RED-INTERPRETER-RUNNABLE-GAP-V1",
+      "P06-ZERO-AUTH-T2-FIX1-GREEN-ALL-MODE-SOURCE-INVENTORY-V1",
       "P06-ZERO-AUTH-T2-FIX1-RED-DURABILITY-EVIDENCE-GAP-V1",
       "P06-ZERO-AUTH-T2-FIX1-GREEN-DESCENDANT-DURABILITY-V1"
     ]
@@ -53,7 +55,7 @@ jq -e \
     implementation_result_head:$implementation_head,
     implementation_tree:$implementation_tree,
     receipt_commit_parent:$implementation_head,
-    replaces_receipt_commit:"3e40a4b688bb489b5cbc9a8ec8e32a2be032c26e",
+    replaces_receipt_commit:"61a15b52cd073a5af516e56cc61c393b97deadd4",
     parent_task_receipt:{
       path:"reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/task-1.json",
       commit:$input_head,
@@ -125,6 +127,23 @@ jq -e \
       meaning:"The closed offline inventory accepted exact refusal stubs and audited evidence digests while refusing gate-path, compiled Rust, multiline, dynamic, provider-prefixed, renamed and symlink mutations for every required class."
     },
     {
+      id:"P06-ZERO-AUTH-T2-FIX1-RED-INTERPRETER-RUNNABLE-GAP-V1",
+      command:"sh scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-source-inventory.sh",
+      exit:1,
+      output:"P06_ZERO_AUTH_EXPECTED_REFUSAL_MISSING:interpreter_runnable_100644:0:P06_ZERO_AUTH_SOURCE_INVENTORY_PASS",
+      output_sha256:"a923f00cd823b5840c2a0716b40cadb86b27d0ff4d67ac432e307a29326251de",
+      input:"A renamed 100644 shell source without a shebang contained a provider-login invocation and was executable through an explicit interpreter.",
+      meaning:"Focused review RED proved executable mode and shebang detection alone do not cover interpreter-invoked tracked source."
+    },
+    {
+      id:"P06-ZERO-AUTH-T2-FIX1-GREEN-ALL-MODE-SOURCE-INVENTORY-V1",
+      command:"sh scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-source-inventory.sh",
+      exit:0,
+      output:"P06_ZERO_AUTH_SOURCE_INVENTORY_TEST_PASS",
+      output_sha256:"ff2c843a18a4b76f59ff24589d0335a7057640cb926ea647f7246d40ae7b64af",
+      meaning:"The final inventory also refuses auth/login patterns in tracked sh, bash, zsh, Ruby, Python and Perl source regardless of executable bit or shebang."
+    },
+    {
       id:"P06-ZERO-AUTH-T2-FIX1-RED-DURABILITY-EVIDENCE-GAP-V1",
       command:"scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-2-receipt.sh",
       exit:1,
@@ -163,7 +182,7 @@ jq -e \
     ],
     historical_git_objects_preserved:true,
     executable_product_source_inventory:"PASS",
-    governed_inventory:{tracked_executables:true,tracked_shebangs_regardless_of_mode:true,compiled_rust:"build.rs + src/**/*.rs",tracked_symlinks:"REFUSE",evidence_allowlist:"EXACT_DIGEST_AND_PER_FILE_RATIONALE"},
+    governed_inventory:{tracked_executables:true,tracked_interpreter_sources_regardless_of_mode:[".sh",".bash",".zsh",".rb",".py",".pl"],tracked_shebangs_regardless_of_mode:true,compiled_rust:"build.rs + src/**/*.rs",tracked_symlinks:"REFUSE",evidence_allowlist:"EXACT_DIGEST_AND_PER_FILE_RATIONALE"},
     refused_classes:["AUTH_FILE","CREDENTIAL_EXTRACTION","CREDENTIAL_COPY","PROVIDER_LOGIN","BROWSER_AUTH","TOKEN_INPUT"],
     current_auth_fingerprint_claim:"ABSENT",
     historical_auth_fingerprint_authority:"NON_AUTHORITATIVE",
@@ -197,8 +216,8 @@ test "$(git ls-tree "$implementation_head" scripts/gates/p06/successors/observat
 test "$(git ls-tree "$implementation_head" scripts/gates/p06/successors/observation-capability-v1/probe-local.sh | awk '{print $1}')" = 100644 || refuse PROBE_MODE
 test "$(git ls-tree "$implementation_head" scripts/gates/p06/successors/observation-capability-v1/verify.sh | awk '{print $1}')" = 100644 || refuse PROBE_CALLER_MODE
 test "$(git ls-tree "$implementation_head" scripts/gates/p06/t8-native-observe-once.sh | awk '{print $1}')" = 100644 || refuse T8_MODE
-git merge-base --is-ancestor 3e40a4b688bb489b5cbc9a8ec8e32a2be032c26e "$implementation_head" || refuse REPLACEMENT_LINEAGE
-test "$(git diff-tree --no-commit-id --name-only -r 3e40a4b688bb489b5cbc9a8ec8e32a2be032c26e)" = "$receipt_rel" || refuse REPLACED_RECEIPT_NOT_RECEIPT_ONLY
+git merge-base --is-ancestor 61a15b52cd073a5af516e56cc61c393b97deadd4 "$implementation_head" || refuse REPLACEMENT_LINEAGE
+test "$(git diff-tree --no-commit-id --name-only -r 61a15b52cd073a5af516e56cc61c393b97deadd4)" = "$receipt_rel" || refuse REPLACED_RECEIPT_NOT_RECEIPT_ONLY
 
 scratch=$(mktemp -d "${TMPDIR:-/tmp}/taskseal-p06-zero-auth-task2-receipt.XXXXXX")
 trap 'rm -rf "$scratch"' EXIT HUP INT TERM

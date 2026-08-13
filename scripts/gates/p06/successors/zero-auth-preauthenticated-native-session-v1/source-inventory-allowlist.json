@@ -69,7 +69,7 @@
     },
     {
       "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/source-inventory.rb",
-      "sha256": "e54711f6f11bf3e6ca989583e25c0c8eaad244e5c3f78017cbdd1dccd2530843",
+      "sha256": "375b4317906d8fac5e2e9d246354432daedd29480c96ff5d35afc639cc2a0fd7",
       "matched_classes": ["CREDENTIAL_COPY", "BROWSER_AUTH"],
       "rationale": "This offline scanner contains only detection regular expressions for the matched forms; its sole subprocess is git ls-files and it has no provider interface."
     },
@@ -81,13 +81,13 @@
     },
     {
       "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-source-inventory.sh",
-      "sha256": "383e4359d8930ed0469e112c5cc21b41821652f25f9171584e57965a8e6a3b6f",
+      "sha256": "3403659d97fa9973393b401b0aab6dc08bcef9c5f5746fb4fc253fcf85a8f5ef",
       "matched_classes": ["AUTH_FILE", "CREDENTIAL_EXTRACTION", "CREDENTIAL_COPY", "PROVIDER_LOGIN", "BROWSER_AUTH", "TOKEN_INPUT"],
       "rationale": "Offline scanner mutation suite: every matched form is written as inert source into disposable Git fixtures and is never executed as an auth, browser, or provider command."
     },
     {
       "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-2-receipt.sh",
-      "sha256": "6ec3b5075604d5f7d802ff621f0a885a75f82b31f0c76bc203fe22b315a3a1f4",
+      "sha256": "2f2552a5d50fb7f8b644643c44fd29af5ab2e7d16195d077fa72a7b3759f3fbc",
       "matched_classes": ["CREDENTIAL_EXTRACTION", "PROVIDER_LOGIN", "BROWSER_AUTH"],
       "rationale": "Offline receipt checker: matched terms are sealed evidence labels and JSON equality assertions; it invokes Git/JQ/hash tools only and no provider interface."
     },

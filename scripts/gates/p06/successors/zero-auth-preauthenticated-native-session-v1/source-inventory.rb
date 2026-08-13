@@ -66,7 +66,8 @@ entries.sort.each do |path, metadata|
   mode = metadata.fetch("mode")
   refuse("TRACKED_SYMLINK", path) if mode == "120000"
   next if historical_paths.include?(path)
-  next unless mode == "100755" || path == "build.rs" || (path.start_with?("src/") && path.end_with?(".rs")) || begin
+  interpreter_source = [".sh", ".bash", ".zsh", ".rb", ".py", ".pl"].include?(File.extname(path))
+  next unless mode == "100755" || interpreter_source || path == "build.rs" || (path.start_with?("src/") && path.end_with?(".rs")) || begin
     absolute = File.join(root, path)
     File.file?(absolute) && !File.symlink?(absolute) && File.binread(absolute, 2) == "#!"
   end
