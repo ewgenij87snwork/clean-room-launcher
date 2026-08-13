@@ -1,15 +1,29 @@
 {
-  "schema_version": "taskseal.p06.phase2-evidence-truthfulness-correction-v1.task-receipt.v1",
+  "schema_version": "taskseal.p06.phase2-evidence-truthfulness-correction-v1.task-receipt.v2",
   "plan_id": "P06-PHASE2-EVIDENCE-TRUTHFULNESS-CORRECTION-V1",
   "task": 1,
   "result": "accepted",
   "acceptance": {
-    "id": "P06-PHASE2-TRUTH-CORRECTION-T1-SHARED-BOUNDARY-V1",
-    "operator_result": "The historical real runner sources and calls the same pure boundary validator exercised by invented offline fixtures for tuple, base, authority, counters, credential source/field, policy, output, cleanup and write-set predicates.",
+    "id": "P06-PHASE2-TRUTH-CORRECTION-T1-SHARED-BOUNDARY-V2",
+    "operator_result": "A guarded invented runner fixture reaches the real shared-predicate call path, both extraction sites consume the validated canonical field, broad read/write policy grants refuse, and exact provider-equivalence evidence is executable from this receipt.",
     "evidence_ids": [
       "P06-PHASE2-TRUTH-CORRECTION-T1-RED-REAL-RUNNER-MISSING-IMPORT-V1",
-      "P06-PHASE2-TRUTH-CORRECTION-T1-GREEN-SHARED-VALIDATOR-V1",
+      "P06-PHASE2-TRUTH-CORRECTION-T1-FIX1-RED-BROAD-POLICY-V1",
+      "P06-PHASE2-TRUTH-CORRECTION-T1-FIX1-GREEN-CALL-PATH-POLICY-V1",
+      "P06-PHASE2-TRUTH-CORRECTION-T1-FIX1-RED-FIELD-BINDING-V1",
+      "P06-PHASE2-TRUTH-CORRECTION-T1-FIX1-GREEN-FIELD-BINDING-V1",
+      "P06-PHASE2-TRUTH-CORRECTION-T1-FIX1-RED-PROVIDER-COMMAND-V1",
+      "P06-PHASE2-TRUTH-CORRECTION-T1-FIX1-GREEN-SHARED-VALIDATOR-V1",
       "P06-PHASE2-TRUTH-CORRECTION-T1-PROVIDER-BLOCK-EQUIVALENCE-V1"
+    ],
+    "real_runner_calls_proven_before_guard": [
+      "base",
+      "authority",
+      "counter_state",
+      "source_field",
+      "tuple_platform",
+      "write_set",
+      "policy"
     ],
     "pure_predicates": [
       "tuple_platform",
@@ -17,46 +31,64 @@
       "base",
       "authority",
       "counter_state",
-      "credential_source_field",
-      "sandbox_policy",
+      "credential_source_field_mapping",
+      "closed_sandbox_policy",
       "output_domain",
       "cleanup",
       "write_set"
     ]
   },
   "binding": {
-    "scheme": "parent-bound-receipt.v1",
-    "input_head": "c54284cb3c2a2cfb7fb8508c5eef35204fd8ed71",
-    "implementation_result_head": "f4c734df6e4d23807e5a09257f820fd7aa98688e",
-    "implementation_tree": "60a5560d81e815037eec40a5ecee13aeaefef137",
-    "receipt_commit_parent": "f4c734df6e4d23807e5a09257f820fd7aa98688e",
-    "resolution": "The containing receipt-only commit must have implementation_result_head as its first parent, keeping the receipt non-circular and the implementation bytes reproducible."
+    "scheme": "parent-bound-receipt.v2",
+    "input_head": "4eab2ba1008a4e1af77c21b1c7f62cf63a9b91bd",
+    "implementation_result_head": "c532fb6b2ed18c542160723084c88f6baa2ea0e3",
+    "implementation_tree": "46275ae1b85d5e6b26a5c93396f8610a37ed3854",
+    "receipt_commit_parent": "c532fb6b2ed18c542160723084c88f6baa2ea0e3",
+    "replaces_receipt_commit": "4eab2ba1008a4e1af77c21b1c7f62cf63a9b91bd",
+    "resolution": "The containing receipt-only child of implementation_result_head replaces the reviewed V1 receipt while preserving its exact commit and avoiding self-reference."
   },
   "inputs": {
+    "original_input_head": "c54284cb3c2a2cfb7fb8508c5eef35204fd8ed71",
     "plan_checkpoint_path": "/Users/ysorokin/Documents/it/5-LVL - 2026/Temp in Projects/wisdom/taskseal/plans/2026-08-13-p06-phase2-evidence-truthfulness-correction-v1.md",
     "plan_checkpoint_sha256": "a8a11bfa9b7f83369041c03f217f6d389a97c7a1d84756228e65e9a1e61ab9bf",
     "predecessor_checkpoint": "c54284cb3c2a2cfb7fb8508c5eef35204fd8ed71",
     "predecessor_receipt_path": "reports/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/task-3.json",
     "predecessor_receipt_sha256": "968779a627cd65d69f27edfa39293fd5f998f50029904ba52a1347463578b2e2",
+    "superseded_task_1_receipt_sha256": "0443949c4e1bba27ca2464d2235eac221318b682ebccbb2db93fad508a24dfd4",
     "historical_runner_baseline_sha256": "568a73855e26c836d70cdf739b0818b3b421291d1a5fdd76ad029ad6cc3c6497"
   },
   "subject": {
     "algorithm": "sha256 of sorted path, tab, sha256, newline source records",
-    "sha256": "86941740bc983bf1c1f97a0deedd788a53141b10d5eb0f306a80f573f81604ac",
+    "sha256": "2ce0fb6437f9a630e5eb6edfe8277d8fea510c4b1896b8687392a747bc57126a",
     "sources": [
       {
         "path": "scripts/gates/p06/successors/observation-capability-v1-phase2/run-once.sh",
-        "sha256": "4fcd90d56c05381c1e13cb66a5fbca9c31ad5bd689f69abb6147c6e38e943a53"
+        "sha256": "a17aeff1c009da9f070b5353a1d0064642e6a0f1aba09551c87e8b798b8f6f66"
       },
       {
         "path": "scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/boundary-validator.sh",
-        "sha256": "cba2075feadebe5e9120fe6de731401ce9b97dbd5cc6baaa77c8cd885678fcb1"
+        "sha256": "d04eb733405e45a5c3bf318687302f66a6fb68df708d3c5973060ba5d8907a44"
       },
       {
         "path": "scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/test-boundary-validator.sh",
-        "sha256": "26ca4f914d012f035e93222a7273859839ac113009fb34823f6f077a1ec5e981"
+        "sha256": "2d52417b255200ae906526fc1c26c72a386f0375090d9b3673b8200042d1958a"
       }
     ]
+  },
+  "provider_equivalence": {
+    "baseline_object": "c54284cb3c2a2cfb7fb8508c5eef35204fd8ed71",
+    "current_object": "c532fb6b2ed18c542160723084c88f6baa2ea0e3",
+    "path": "scripts/gates/p06/successors/observation-capability-v1-phase2/run-once.sh",
+    "login_region": {
+      "start": "# Validate the exact field type and single-line/nonempty shape before consuming the login counter.",
+      "end": "extract_result=EXTRACT_PREVALIDATED",
+      "normalization": "replace -extract \"$credential_plutil_field\" raw with -extract tokens.access_token raw"
+    },
+    "model_region": {
+      "start": "    if test \"$marker_status\" = 0; then",
+      "end": "      model_status=$?",
+      "normalization": "none"
+    }
   },
   "evidence": [
     {
@@ -65,32 +97,74 @@
       "exit": 1,
       "output": "P06_BOUNDARY_RED_RUNNER_DID_NOT_IMPORT_SHARED_VALIDATOR",
       "output_sha256": "96e28b7b1959907e40bfe5f0b4b0f3516b0cf0ca40e8fa2d3c2109f7318e2eec",
-      "meaning": "Before implementation, the focused executable import probe proved that the real historical runner did not source the shared validator."
+      "meaning": "Initial Task 1 RED before the shared import existed."
     },
     {
-      "id": "P06-PHASE2-TRUTH-CORRECTION-T1-GREEN-SHARED-VALIDATOR-V1",
+      "id": "P06-PHASE2-TRUTH-CORRECTION-T1-FIX1-RED-BROAD-POLICY-V1",
+      "command": "sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/test-boundary-validator.sh",
+      "exit": 1,
+      "output": "P06_BOUNDARY_EXPECTED_REFUSAL_MISSING:P06_BOUNDARY_REFUSAL_POLICY_DRIFT",
+      "output_sha256": "f45ca25d1e9c106b62173a76bba10b88dc0b8688644258c2fe7d356be453a978",
+      "meaning": "The reviewed policy predicate accepted invented root-wide read/write grants before the closed-grant fix."
+    },
+    {
+      "id": "P06-PHASE2-TRUTH-CORRECTION-T1-FIX1-GREEN-CALL-PATH-POLICY-V1",
       "command": "sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/test-boundary-validator.sh",
       "exit": 0,
       "output": "P06_PHASE2_TRUTH_BOUNDARY_VALIDATOR_PASS",
       "output_sha256": "30b7038d598964abdd27804c202161e90c7c5917c590f080950cb09719ee05b6",
-      "meaning": "The real runner import probe and all invented pure-predicate acceptance/refusal fixtures passed without reaching git, auth, sandbox, Keychain, network or provider execution."
+      "meaning": "The guarded copied runner reached seven real validator calls and the policy predicate rejected broad read/write fixtures."
+    },
+    {
+      "id": "P06-PHASE2-TRUTH-CORRECTION-T1-FIX1-RED-FIELD-BINDING-V1",
+      "command": "sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/test-boundary-validator.sh",
+      "exit": 1,
+      "output": "P06_BOUNDARY_EXPECTED_ACCEPTANCE_MISSING:P06_BOUNDARY_SOURCE_FIELD_BINDING",
+      "output_sha256": "0d029028cf2483601cb1cc2234edbae070a994adb814dd7733f84ff9b82d520f",
+      "meaning": "The reviewed two-argument predicate did not bind the public credential field to the real plutil selector."
+    },
+    {
+      "id": "P06-PHASE2-TRUTH-CORRECTION-T1-FIX1-GREEN-FIELD-BINDING-V1",
+      "command": "sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/test-boundary-validator.sh",
+      "exit": 0,
+      "output": "P06_PHASE2_TRUTH_BOUNDARY_VALIDATOR_PASS",
+      "output_sha256": "30b7038d598964abdd27804c202161e90c7c5917c590f080950cb09719ee05b6",
+      "meaning": "Both extraction sites consumed the canonical validated selector and literal-field drift was refused."
+    },
+    {
+      "id": "P06-PHASE2-TRUTH-CORRECTION-T1-FIX1-RED-PROVIDER-COMMAND-V1",
+      "command": "sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/test-boundary-validator.sh",
+      "exit": 1,
+      "output": "P06_BOUNDARY_RED_PROVIDER_COMMAND_NOT_REPRODUCIBLE",
+      "output_sha256": "cd9cf3ac290937f4fbffbc8c7972b6fd1bbf0848bacf53e7b742c746f2f6e951",
+      "meaning": "The V1 receipt contained prose rather than an exact provider-equivalence command and source boundaries."
+    },
+    {
+      "id": "P06-PHASE2-TRUTH-CORRECTION-T1-FIX1-GREEN-SHARED-VALIDATOR-V1",
+      "command": "sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/test-boundary-validator.sh",
+      "exit": 0,
+      "output": "P06_PHASE2_TRUTH_BOUNDARY_VALIDATOR_PASS",
+      "output_sha256": "30b7038d598964abdd27804c202161e90c7c5917c590f080950cb09719ee05b6",
+      "meaning": "The full focused suite accepted the guarded runner call path, field seam, closed policy and replacement receipt."
     },
     {
       "id": "P06-PHASE2-TRUTH-CORRECTION-T1-PROVIDER-BLOCK-EQUIVALENCE-V1",
-      "command": "Compare the c54284c baseline and implementation-result credential/login and model-execution source regions with awk and shasum -a 256",
+      "command": "P06_BOUNDARY_PROVIDER_CURRENT_OBJECT=c532fb6b2ed18c542160723084c88f6baa2ea0e3 P06_BOUNDARY_TEST_CASE=provider-equivalence sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/test-boundary-validator.sh",
       "exit": 0,
-      "output": "P06_PROVIDER_LOGIN_BLOCK_UNCHANGED:c0f4d9a1013d16950b2bd9ff232d252f3c06bb196ec7e62d9c3155cda474c7a9\nP06_PROVIDER_MODEL_BLOCK_UNCHANGED:e1e76237c95dff9352dea8a4ef1ff4637493d7139fea55d3bb1c0ae1295fe20e",
-      "output_sha256": "a73a8770f6caa1d9f3b46b3eded5df89e2dd5989a4685ac876a2f86c91a1afb1",
-      "meaning": "The credential/login and model invocation regions are byte-identical to the accepted predecessor; only pure validation plumbing changed."
+      "output": "P06_PROVIDER_LOGIN_SEMANTICS_EQUIVALENT:c0f4d9a1013d16950b2bd9ff232d252f3c06bb196ec7e62d9c3155cda474c7a9\nP06_PROVIDER_MODEL_BLOCK_UNCHANGED:e1e76237c95dff9352dea8a4ef1ff4637493d7139fea55d3bb1c0ae1295fe20e",
+      "output_sha256": "bf55870ccf257c0907d2a6bd7c7de09703bc2488987756f6fff061ebf63541f3",
+      "meaning": "The exact receipt command extracts the bound semantic regions, normalizes only the canonical selector substitution, fails on any remaining drift, and emits the reproduced digests."
     }
   ],
   "controls": {
     "invented_fixtures_only": true,
+    "guard_before_clean_offline": true,
     "historical_runner_runtime_executed": false,
     "network_access": "not invoked",
     "provider_or_codex_process": "not invoked",
     "credential_or_keychain_read": "not invoked",
-    "provider_login_region_sha256": "c0f4d9a1013d16950b2bd9ff232d252f3c06bb196ec7e62d9c3155cda474c7a9",
+    "provider_login_normalized_sha256": "c0f4d9a1013d16950b2bd9ff232d252f3c06bb196ec7e62d9c3155cda474c7a9",
+    "provider_login_current_raw_sha256": "a26b09b525f2c96f621f23609bd052976243a25d8762ccb83ac800266348f838",
     "provider_model_region_sha256": "e1e76237c95dff9352dea8a4ef1ff4637493d7139fea55d3bb1c0ae1295fe20e",
     "historical_receipt_mutation": false,
     "main_mutation": false
