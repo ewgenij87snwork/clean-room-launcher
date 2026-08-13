@@ -8,6 +8,10 @@ case "$mode" in
   *) echo P06_PHASE2_MODE_REQUIRED >&2; exit 2 ;;
 esac
 
+boundary_validator=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd -P)/observation-capability-v1-phase2-evidence-truthfulness-correction-v1/boundary-validator.sh
+# shellcheck source=/dev/null
+. "$boundary_validator"
+
 root=$(CDPATH= cd -- "$(dirname -- "$0")/../../../../.." && pwd -P)
 command=${P06_CODEX_BIN:?P06_CODEX_BIN is required}
 base=d3c753458c32dc7bc4105f1deddf35d8d43fb5d2
@@ -16,26 +20,32 @@ authority="$root/.taskseal-dev/execution-authority.json"
 login_marker="$root/.taskseal-dev/phase2-login-used"
 model_marker="$root/.taskseal-dev/phase2-model-used"
 auth_source=/Users/ysorokin/.codex/auth.json
+credential_field=.tokens.access_token
 
-test "$(pwd -P)" = "$root"
-test "$(git -C "$root" rev-parse --show-toplevel)" = "$root"
-test "$(git -C "$root" branch --show-current)" = feat/p06-codex-observation-capability-v1-phase2
+actual_pwd=$(pwd -P)
+actual_top_level=$(git -C "$root" rev-parse --show-toplevel)
+actual_branch=$(git -C "$root" branch --show-current)
 current_head=$(git -C "$root" rev-parse HEAD)
-git -C "$root" merge-base --is-ancestor "$base" "$current_head"
-jq -e --arg root "$root" --arg head "$current_head" '
-  .schema_version == "taskseal.execution-authority.v2" and
-  .plan_id == "P06-CODEX-OBSERVATION-CAPABILITY-V1-PHASE2" and
-  .repository_realpath == $root and .worktree_realpath == $root and
-  .branch == "feat/p06-codex-observation-capability-v1-phase2" and .head == $head and
-  .observation_authority == {id:"P06-CODEX-OBS-CAP-V1-PH2-D3C7534-ONE",credential_source:"/Users/ysorokin/.codex/auth.json",credential_field:".tokens.access_token",login_invocations:1,model_processes:1,model_process_timeout_seconds:120,intrinsic_provider_requests_and_retries:"included",retries:0}
-' "$authority" >/dev/null
-test ! -e "$login_marker"
-test ! -e "$model_marker"
+if git -C "$root" merge-base --is-ancestor "$base" "$current_head"; then
+  base_is_ancestor=true
+else
+  base_is_ancestor=false
+fi
+authority_json=$(jq -c . "$authority")
+login_counter_state=UNUSED
+model_counter_state=UNUSED
+test ! -e "$login_marker" || login_counter_state=CONSUMED
+test ! -e "$model_marker" || model_counter_state=CONSUMED
+p06_boundary_validate_base "$actual_pwd" "$root" "$actual_top_level" "$actual_branch" "$base_is_ancestor"
+p06_boundary_validate_authority "$authority_json" "$root" "$current_head"
+p06_boundary_validate_counter_state "$login_counter_state" "$model_counter_state"
+p06_boundary_validate_source_field "$auth_source" "$credential_field"
 
 command=$(realpath "$command")
-test "$(shasum -a 256 "$command" | awk '{print $1}')" = "$expected_digest"
-test "$(uname -s)" = Darwin && test "$(uname -m)" = arm64
-git -C "$root" diff --name-only "$base..$current_head" | "$root/scripts/gates/p06/successors/observation-capability-v1-phase2/validate-write-set.sh"
+command_digest=$(shasum -a 256 "$command" | awk '{print $1}')
+p06_boundary_validate_tuple_platform "$command_digest" "$(uname -s)" "$(uname -m)"
+changed_paths=$(git -C "$root" diff --name-only "$base..$current_head")
+p06_boundary_validate_write_set "$changed_paths"
 
 protected_inventory() {
   {
@@ -81,12 +91,17 @@ printf "$profile_base" "$escaped_root" "$escaped_command" "$escaped_root" >"$onl
 printf '(allow network-outbound)\n(deny file-read* (subpath "/Users/ysorokin/Library/Keychains") (subpath "/Library/Keychains") (subpath "/System/Library/Keychains"))\n(deny mach-lookup (global-name-regex #"^com\\.apple\\.(security|SecurityAgent)"))\n' >>"$online_profile"
 printf "$profile_base" "$escaped_root" "$escaped_command" "$escaped_root" >"$keychain_profile"
 printf '(deny network*)\n(deny file-read* (subpath "/Users/ysorokin/Library/Keychains") (subpath "/Library/Keychains") (subpath "/System/Library/Keychains"))\n(deny mach-lookup (global-name-regex #"^com\\.apple\\.(security|SecurityAgent)"))\n' >>"$keychain_profile"
+p06_boundary_validate_policy \
+  "$(cat "$offline_profile")" "$(cat "$extract_profile")" \
+  "$(cat "$online_profile")" "$(cat "$keychain_profile")" \
+  "$temporary_root" "$auth_source"
 
 clean_offline() {
   env -i HOME="$temporary_root/home" CODEX_HOME="$temporary_root/codex-home" XDG_CONFIG_HOME="$temporary_root/xdg" PATH=/usr/bin:/bin \
     /usr/bin/sandbox-exec -f "$offline_profile" "$@"
 }
-test "$(clean_offline "$command" --version)" = 'codex-cli 0.147.0'
+command_version=$(clean_offline "$command" --version)
+p06_boundary_validate_tuple_version "$command_version"
 
 set +e
 clean_offline /usr/bin/ruby -rsocket -e 'TCPSocket.new("127.0.0.1", 9)' >"$temporary_root/net.out" 2>"$temporary_root/net.err"
@@ -103,7 +118,9 @@ rg -n 'Operation not permitted|Permission denied|sandbox' "$temporary_root/keych
 if test "$mode" = --preflight; then
   cleanup
   trap - EXIT HUP INT TERM
-  test ! -e "$temporary_root"
+  cleanup_state=removed
+  test ! -e "$temporary_root" || cleanup_state=present
+  p06_boundary_validate_cleanup "$temporary_root" "$cleanup_state"
   printf '%s\n' \
     'schema_version=taskseal.p06-codex-observation-capability-v1-phase2.preflight.v1' \
     'candidate=codex-0.147.0-macos-aarch64' \
@@ -251,7 +268,14 @@ if test "$binary_unchanged" != true || test "$protected_state_unchanged" != true
 fi
 cleanup
 trap - EXIT HUP INT TERM
-test ! -e "$temporary_root"
+cleanup_state=removed
+test ! -e "$temporary_root" || cleanup_state=present
+p06_boundary_validate_cleanup "$temporary_root" "$cleanup_state"
+p06_boundary_validate_output \
+  "$extract_result" "$login_status" "$login_result" "$model_started" \
+  "$model_status" "$native_observation" "$root_discovery" \
+  "$forbidden_ambient_observed" "$result_sha256" "$binary_unchanged" \
+  "$protected_state_unchanged" "$worktree_unchanged"
 
 printf 'schema_version=taskseal.p06-codex-observation-capability-v1-phase2.observation.v1\n'
 printf 'login_counter=CONSUMED\nextract_result=%s\nlogin_process_exit=%s\nlogin_result=%s\n' "$extract_result" "$login_status" "$login_result"
