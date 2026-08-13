@@ -1,0 +1,78 @@
+{
+  "schema_version": "taskseal.p06.phase2-evidence-correction.task-receipt.v1",
+  "plan_id": "P06-CODEX-OBSERVATION-CAPABILITY-V1-PHASE2-EVIDENCE-CORRECTION",
+  "task": 1,
+  "result": "accepted",
+  "acceptance": {
+    "id": "P06-PHASE2-CORRECTION-T1-SYNTHETIC-BOUNDARY-V1",
+    "operator_result": "The closed synthetic control is accepted and every promised refusal vector has a deterministic refusal code.",
+    "control_id": "P06-PHASE2-CORRECTION-SYNTHETIC-CONTROL-V1",
+    "refusal_ids": [
+      "P06_SYNTHETIC_REFUSAL_WRONG_TUPLE",
+      "P06_SYNTHETIC_REFUSAL_WRONG_BASE",
+      "P06_SYNTHETIC_REFUSAL_WRONG_AUTHORITY",
+      "P06_SYNTHETIC_REFUSAL_REUSED_COUNTER",
+      "P06_SYNTHETIC_REFUSAL_ALTERNATE_CREDENTIAL_SOURCE",
+      "P06_SYNTHETIC_REFUSAL_ALTERNATE_CREDENTIAL_FIELD",
+      "P06_SYNTHETIC_REFUSAL_CREDENTIAL_SHAPED_OUTPUT",
+      "P06_SYNTHETIC_REFUSAL_KEYCHAIN_NOT_DENIED",
+      "P06_SYNTHETIC_REFUSAL_BROAD_READ_POLICY",
+      "P06_SYNTHETIC_REFUSAL_BROAD_WRITE_POLICY",
+      "P06_SYNTHETIC_REFUSAL_CLEANUP_FAILED",
+      "P06_SYNTHETIC_REFUSAL_NON_SUCCESSOR_DRIFT"
+    ]
+  },
+  "binding": {
+    "scheme": "parent-bound-receipt.v1",
+    "input_head": "73d48ffbed1794c6691ba59be006aa096dcfcb22",
+    "implementation_result_head": "f2a018aee29074199edbc2ee231d00e077249d84",
+    "implementation_tree": "1d60cd414c35a1651e59bd5b74b089682afa6524",
+    "receipt_commit_parent": "f2a018aee29074199edbc2ee231d00e077249d84",
+    "resolution": "The containing receipt commit must have implementation_result_head as its first parent. The result head is therefore reproducible without embedding the self-referential containing commit."
+  },
+  "inputs": {
+    "plan_checkpoint_path": "/Users/ysorokin/Documents/it/5-LVL - 2026/Temp in Projects/wisdom/taskseal/plans/2026-08-13-p06-phase2-evidence-correction.md",
+    "plan_checkpoint_sha256": "1cc0164fe6aec201f69b09da212a7fbd79d19f5cef7d96eadde1dc68548fd07b",
+    "predecessor_receipt_path": "reports/gates/p06/successors/observation-capability-v1-phase2/phase-2.json",
+    "predecessor_receipt_sha256": "2a2e51fc2e97d657aa1fc7d413304f7b11362791abf4e354c3039406c5f1dfed"
+  },
+  "subject": {
+    "algorithm": "sha256 of sorted path, tab, sha256, newline source records",
+    "sha256": "6f4173333eb04ea4ddae6ef87c8276d943fe163628170ae4de57ef0df42eb553",
+    "sources": [
+      {
+        "path": "scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/synthetic-boundary.sh",
+        "sha256": "debbbabbad44460b1312c848508764a2c0617f3c00193ce8edde273a832227d5"
+      },
+      {
+        "path": "scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/test-synthetic-boundary.sh",
+        "sha256": "25c719957d5ec3f504bba775b8afefaadc7ab54695a5058f8aecf4e7a3c8fe41"
+      }
+    ]
+  },
+  "evidence": [
+    {
+      "id": "P06-PHASE2-CORRECTION-T1-RED-MISSING-HARNESS-V1",
+      "command": "sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/test-synthetic-boundary.sh",
+      "exit": 127,
+      "output_sha256": "92ea498d7a5732b889a21b690d3d9374c13e8433d6cead0a6525b4ccc624f738",
+      "output": "scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/test-synthetic-boundary.sh: line 40: /Users/ysorokin/taskseal-wt/p06-phase2-evidence-correction/scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/synthetic-boundary.sh: No such file or directory",
+      "meaning": "The focused test failed before implementation because the harness did not exist."
+    },
+    {
+      "id": "P06-PHASE2-CORRECTION-T1-GREEN-SYNTHETIC-PASS-V1",
+      "command": "sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/test-synthetic-boundary.sh",
+      "exit": 0,
+      "output_sha256": "2dea5cd2ee61cce34febb9a19898f13677e57b8cd6c9cb950a0a7bb87ac2966b",
+      "output": "P06_PHASE2_CORRECTION_SYNTHETIC_PASS",
+      "meaning": "The focused test exercised the real shell harness and verified the closed control plus all refusal vectors."
+    }
+  ],
+  "controls": {
+    "fixtures_only": true,
+    "network_access": "not invoked",
+    "provider_or_codex_process": "not invoked",
+    "credential_or_keychain_read": "not invoked",
+    "historical_phase_1_t8_phase_2_mutation": false
+  }
+}
