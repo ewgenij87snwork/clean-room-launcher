@@ -1,0 +1,73 @@
+{
+  "schema_version": "taskseal.p06.phase2-evidence-correction.task-receipt.v1",
+  "plan_id": "P06-CODEX-OBSERVATION-CAPABILITY-V1-PHASE2-EVIDENCE-CORRECTION",
+  "task": 2,
+  "result": "accepted",
+  "acceptance": {
+    "id": "P06-PHASE2-CORRECTION-T2-HISTORICAL-BINDING-V1",
+    "operator_result": "The sole correction gate chains the immutable Phase 2 verifier and rejects privacy, protected-state, write-set, historical-drift, receipt-binding and classification mutations.",
+    "mutation_pass_marker": "P06_PHASE2_CORRECTION_MUTATIONS_PASS"
+  },
+  "binding": {
+    "scheme": "parent-bound-receipt.v1",
+    "input_head": "09ec751eddc33b5c941393503271de0afcb70744",
+    "implementation_result_head": "fd39d7ca9e9e540bf8e1f1bac1ba81f23ed01944",
+    "implementation_tree": "227d81782dd1d55e56b922451bde7519c0af54e8",
+    "receipt_commit_parent": "fd39d7ca9e9e540bf8e1f1bac1ba81f23ed01944",
+    "resolution": "The containing receipt commit must have implementation_result_head as its first parent. The result head is reproducible without embedding the self-referential containing commit."
+  },
+  "inputs": {
+    "plan_checkpoint_path": "/Users/ysorokin/Documents/it/5-LVL - 2026/Temp in Projects/wisdom/taskseal/plans/2026-08-13-p06-phase2-evidence-correction.md",
+    "plan_checkpoint_sha256": "1cc0164fe6aec201f69b09da212a7fbd79d19f5cef7d96eadde1dc68548fd07b",
+    "predecessor_checkpoint": "73d48ffbed1794c6691ba59be006aa096dcfcb22",
+    "predecessor_receipt_path": "reports/gates/p06/successors/observation-capability-v1-phase2/phase-2.json",
+    "predecessor_receipt_sha256": "2a2e51fc2e97d657aa1fc7d413304f7b11362791abf4e354c3039406c5f1dfed",
+    "task_1_receipt_path": "reports/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/task-1.json",
+    "task_1_receipt_sha256": "403a73a8513d84db52a91e386549c2348b7e8d7906aaccb4d5d872416e742346",
+    "correction_receipt_path": "reports/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/correction.json",
+    "correction_receipt_sha256": "8e039c31d16ff355cf0cdcd35f5113a3cb08e4210b77ea46e43877e42573d818"
+  },
+  "subject": {
+    "algorithm": "sha256 of sorted path, tab, sha256, newline source records",
+    "sha256": "53f096c07aa7ee4c77c2c093a0a25cedca8fc8778dce3d76adc2cd995fb0f52d",
+    "sources": [
+      {
+        "path": "reports/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/correction.json",
+        "sha256": "8e039c31d16ff355cf0cdcd35f5113a3cb08e4210b77ea46e43877e42573d818"
+      },
+      {
+        "path": "scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/test-verify.sh",
+        "sha256": "9c7bc692cd3c64f1a882ccc45f92582d2c370e7fed629dfcb819d7db9aa148be"
+      },
+      {
+        "path": "scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/verify.sh",
+        "sha256": "478262724d37a1d4faae670fb1b3adb19a04f5bad75550ec679e25341b899944"
+      }
+    ]
+  },
+  "evidence": [
+    {
+      "id": "P06-PHASE2-CORRECTION-T2-RED-MISSING-VERIFIER-V1",
+      "command": "sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/test-verify.sh",
+      "exit": 1,
+      "output_sha256": "2a1e0389d3210a2f08f0adb6b1522f0b1fac375f7bafe2ff3e194395c78245ec",
+      "output": "scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/test-verify.sh: line 28: /Users/ysorokin/taskseal-wt/p06-phase2-evidence-correction/scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/verify.sh: No such file or directory",
+      "meaning": "The mutation suite failed before implementation because the correction verifier did not exist."
+    },
+    {
+      "id": "P06-PHASE2-CORRECTION-T2-GREEN-MUTATIONS-PASS-V1",
+      "command": "sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/test-verify.sh",
+      "exit": 0,
+      "output_sha256": "38d74c26976a46e8b16082c40da6a382c64333deb410783dbab45f927c6cfede",
+      "output": "P06_PHASE2_CORRECTION_MUTATIONS_PASS",
+      "meaning": "The suite exercised the real predecessor and correction gates and rejected every required mutation class."
+    }
+  ],
+  "controls": {
+    "fixtures_only": true,
+    "network_access": "not invoked",
+    "provider_or_codex_process": "not invoked",
+    "credential_or_keychain_read": "not invoked",
+    "historical_phase_1_t8_phase_2_mutation": false
+  }
+}
