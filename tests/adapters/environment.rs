@@ -1,6 +1,8 @@
-use std::collections::BTreeMap;
 use taskseal::adapters::{
-    environment::{EnvironmentKey, EnvironmentPolicy, ProxyMode, build_environment},
+    environment::{
+        EnvironmentPolicy, LaunchEnvironment, ProviderNativePreauthenticatedSession, ProxyMode,
+        build_environment,
+    },
     identity::ProviderIdentity,
 };
 fn identity() -> ProviderIdentity {
@@ -21,46 +23,59 @@ fn policy(identity: &ProviderIdentity) -> EnvironmentPolicy {
         version: identity.version,
         os: identity.os.clone(),
         arch: identity.arch.clone(),
-        allowed: vec![EnvironmentKey::QualifiedAuth],
-        required_auth: vec![EnvironmentKey::QualifiedAuth],
         proxy_mode: ProxyMode::Deny,
     }
 }
 #[test]
-fn typed_policy_admits_only_required_auth_and_binds_exact_identity() {
+fn typed_policy_admits_only_an_opaque_preauthenticated_session_state() {
+    // Break caught: a raw credential-like value is copied into the provider launch environment.
     let identity = identity();
-    let parent = BTreeMap::from([
-        ("QUALIFIED_AUTH".into(), "secret".into()),
-        ("HOME".into(), "poison".into()),
-        ("PATH".into(), "poison".into()),
-        ("ALL_PROXY".into(), "poison".into()),
-    ]);
-    let environment = build_environment(&parent, &identity, &policy(&identity)).unwrap();
-    assert_eq!(environment.redacted_keys(), vec!["QUALIFIED_AUTH"]);
+    let environment = build_environment(
+        ProviderNativePreauthenticatedSession::Available,
+        &identity,
+        &policy(&identity),
+    )
+    .unwrap();
+    assert_eq!(
+        environment,
+        LaunchEnvironment::ProviderNativePreauthenticatedSession
+    );
+
     let mut wrong = policy(&identity);
     wrong.os = "other".into();
     assert_eq!(
-        build_environment(&parent, &identity, &wrong)
-            .unwrap_err()
-            .to_string(),
+        build_environment(
+            ProviderNativePreauthenticatedSession::Available,
+            &identity,
+            &wrong,
+        )
+        .unwrap_err()
+        .to_string(),
         "POLICY_IDENTITY_MISMATCH"
     );
 }
 #[test]
-fn typed_policy_refuses_missing_required_auth_and_invalid_requirement() {
+fn unavailable_and_ambiguous_session_states_refuse_without_fallback() {
+    // Break caught: missing or conflicting session evidence falls through to auth/billing input.
     let identity = identity();
     assert_eq!(
-        build_environment(&BTreeMap::new(), &identity, &policy(&identity))
-            .unwrap_err()
-            .to_string(),
-        "REQUIRED_AUTH_MISSING"
+        build_environment(
+            ProviderNativePreauthenticatedSession::Unavailable,
+            &identity,
+            &policy(&identity),
+        )
+        .unwrap_err()
+        .to_string(),
+        "PROVIDER_NATIVE_PREAUTHENTICATED_SESSION_UNAVAILABLE"
     );
-    let mut invalid = policy(&identity);
-    invalid.allowed.clear();
     assert_eq!(
-        build_environment(&BTreeMap::new(), &identity, &invalid)
-            .unwrap_err()
-            .to_string(),
-        "INVALID_ENVIRONMENT_POLICY"
+        build_environment(
+            ProviderNativePreauthenticatedSession::Ambiguous,
+            &identity,
+            &policy(&identity),
+        )
+        .unwrap_err()
+        .to_string(),
+        "PROVIDER_NATIVE_PREAUTHENTICATED_SESSION_AMBIGUOUS"
     );
 }

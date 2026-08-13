@@ -1,14 +1,11 @@
-use super::identity::{AdapterError, ProviderIdentity};
-use std::collections::BTreeMap;
+use super::identity::ProviderIdentity;
+use std::fmt;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum EnvironmentKey {
-    QualifiedAuth,
-}
-impl EnvironmentKey {
-    fn name(self) -> &'static str {
-        "QUALIFIED_AUTH"
-    }
+pub enum ProviderNativePreauthenticatedSession {
+    Available,
+    Unavailable,
+    Ambiguous,
 }
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ProxyMode {
@@ -20,53 +17,58 @@ pub struct EnvironmentPolicy {
     pub version: (u64, u64, u64),
     pub os: String,
     pub arch: String,
-    pub allowed: Vec<EnvironmentKey>,
-    pub required_auth: Vec<EnvironmentKey>,
     pub proxy_mode: ProxyMode,
 }
-#[derive(Debug)]
-pub struct LaunchEnvironment(BTreeMap<String, String>);
-impl LaunchEnvironment {
-    pub fn redacted_keys(&self) -> Vec<&str> {
-        self.0.keys().map(String::as_str).collect()
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum LaunchEnvironment {
+    ProviderNativePreauthenticatedSession,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum EnvironmentError {
+    PolicyIdentityMismatch,
+    ProviderNativePreauthenticatedSessionUnavailable,
+    ProviderNativePreauthenticatedSessionAmbiguous,
+}
+impl fmt::Display for EnvironmentError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(match self {
+            Self::PolicyIdentityMismatch => "POLICY_IDENTITY_MISMATCH",
+            Self::ProviderNativePreauthenticatedSessionUnavailable => {
+                "PROVIDER_NATIVE_PREAUTHENTICATED_SESSION_UNAVAILABLE"
+            }
+            Self::ProviderNativePreauthenticatedSessionAmbiguous => {
+                "PROVIDER_NATIVE_PREAUTHENTICATED_SESSION_AMBIGUOUS"
+            }
+        })
     }
 }
+impl std::error::Error for EnvironmentError {}
+
 pub fn build_environment(
-    parent: &BTreeMap<String, String>,
+    session: ProviderNativePreauthenticatedSession,
     identity: &ProviderIdentity,
     policy: &EnvironmentPolicy,
-) -> Result<LaunchEnvironment, AdapterError> {
+) -> Result<LaunchEnvironment, EnvironmentError> {
     if policy.identity_digest != identity.artifact_digest
         || policy.provider_id != identity.provider_id
         || policy.version != identity.version
         || policy.os != identity.os
         || policy.arch != identity.arch
     {
-        return Err(AdapterError::PolicyIdentityMismatch);
+        return Err(EnvironmentError::PolicyIdentityMismatch);
     }
-    if policy
-        .required_auth
-        .iter()
-        .any(|key| !policy.allowed.contains(key))
-    {
-        return Err(AdapterError::InvalidPolicy);
+
+    match session {
+        ProviderNativePreauthenticatedSession::Available => {
+            Ok(LaunchEnvironment::ProviderNativePreauthenticatedSession)
+        }
+        ProviderNativePreauthenticatedSession::Unavailable => {
+            Err(EnvironmentError::ProviderNativePreauthenticatedSessionUnavailable)
+        }
+        ProviderNativePreauthenticatedSession::Ambiguous => {
+            Err(EnvironmentError::ProviderNativePreauthenticatedSessionAmbiguous)
+        }
     }
-    let values: BTreeMap<String, String> = policy
-        .allowed
-        .iter()
-        .filter_map(|key| {
-            parent
-                .get(key.name())
-                .map(|value| (key.name().to_owned(), value.clone()))
-        })
-        .collect();
-    if !policy.required_auth.is_empty()
-        && !policy
-            .required_auth
-            .iter()
-            .any(|key| values.contains_key(key.name()))
-    {
-        return Err(AdapterError::RequiredAuthMissing);
-    }
-    Ok(LaunchEnvironment(values))
 }

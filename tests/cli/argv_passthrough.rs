@@ -1,4 +1,12 @@
-use std::{fs, path::PathBuf, process::Command};
+use std::{
+    ffi::OsString,
+    fs,
+    os::unix::fs::symlink,
+    path::{Path, PathBuf},
+    process::Command,
+};
+
+const ZERO_AUTH_REFUSAL: &str = "ZERO_AUTH_REFUSAL: provider-native preauthenticated session unavailable or ambiguous; continue locally\n";
 
 fn scratch(name: &str) -> PathBuf {
     let path = std::env::temp_dir().join(format!("taskseal-{name}-{}", std::process::id()));
@@ -20,23 +28,54 @@ fn fake_provider(name: &str) -> (PathBuf, PathBuf) {
     (executable, capture)
 }
 
-#[test]
-fn generic_boundary_forwards_every_argument_without_shell_evaluation() {
-    // Break caught: joined/shell-evaluated argv loses empty/Unicode values or executes an injection string.
-    let (generic, generic_capture) = fake_provider("generic-provider");
-    let generic_args = ["--model", "opus", "", "--dangerously-skip-permissions"];
+fn assert_zero_auth_refusal(args: Vec<OsString>, provider_dir: &Path, capture: &Path) {
+    let _ = fs::remove_file(capture);
     let output = Command::new(env!("CARGO_BIN_EXE_tseal"))
-        .arg("--")
-        .arg(&generic)
-        .args(generic_args)
-        .env("TASKSEAL_CAPTURE_PATH", &generic_capture)
+        .args(args)
+        .env("PATH", provider_dir)
+        .env("TASKSEAL_CAPTURE_PATH", capture)
         .output()
         .expect("tseal must run");
-    assert_eq!(output.status.code(), Some(0));
-    assert_eq!(
-        fs::read_to_string(generic_capture).unwrap(),
-        generic_args.join("\0")
-    );
+    assert_eq!(output.status.code(), Some(2));
+    assert!(output.stdout.is_empty());
+    assert_eq!(String::from_utf8(output.stderr).unwrap(), ZERO_AUTH_REFUSAL);
+    assert!(!capture.exists(), "external child must not be born");
+}
+
+#[test]
+fn named_and_generic_auth_routes_share_one_pre_birth_zero_auth_refusal() {
+    // Break caught: an auth spelling reaches provider birth or a raw-input/browser fallback.
+    let (codex, capture) = fake_provider("codex");
+    let provider_dir = codex.parent().unwrap();
+    let renamed = provider_dir.join("renamed-provider");
+    fs::copy(&codex, &renamed).unwrap();
+    let symlinked = provider_dir.join("provider-link");
+    symlink(&codex, &symlinked).unwrap();
+    let device_provider = provider_dir.join("device-provider");
+    fs::copy(&codex, &device_provider).unwrap();
+    let browser_helper = provider_dir.join("browser-helper");
+    fs::copy(&codex, &browser_helper).unwrap();
+
+    let cases = [
+        vec!["codex".into(), "login".into()],
+        vec!["codex".into(), "login".into(), "--with-access-token".into()],
+        vec!["--".into(), "codex".into(), "login".into()],
+        vec![
+            "--".into(),
+            device_provider.into_os_string(),
+            "device-flow".into(),
+        ],
+        vec![
+            "--".into(),
+            browser_helper.into_os_string(),
+            "browser-oauth".into(),
+        ],
+        vec!["--".into(), renamed.into_os_string(), "login".into()],
+        vec!["--".into(), symlinked.into_os_string(), "login".into()],
+    ];
+    for args in cases {
+        assert_zero_auth_refusal(args, provider_dir, &capture);
+    }
 }
 
 #[test]
@@ -51,10 +90,7 @@ fn unqualified_provider_route_refuses_before_ambient_path_can_spawn() {
         .output()
         .expect("tseal must run");
     assert_eq!(output.status.code(), Some(2));
-    assert_eq!(
-        String::from_utf8(output.stderr).unwrap(),
-        "P06_REQUIRED: provider tuple is not qualified\n"
-    );
+    assert_eq!(String::from_utf8(output.stderr).unwrap(), ZERO_AUTH_REFUSAL);
     assert!(!capture.exists());
     assert_eq!(fs::read(codex).unwrap(), before);
 }
@@ -72,4 +108,22 @@ fn generic_boundary_without_an_executable_refuses_safely() {
         String::from_utf8(output.stderr).unwrap(),
         "GENERIC_EXECUTABLE_REQUIRED: use tseal -- <executable> [args...]\n"
     );
+}
+
+#[test]
+fn taskseal_owned_local_commands_remain_available() {
+    // Break caught: closing external execution accidentally disables local-only operations.
+    for command in ["status", "scan", "prepare", "check"] {
+        let output = Command::new(env!("CARGO_BIN_EXE_tseal"))
+            .arg(command)
+            .output()
+            .expect("tseal must run");
+        assert_eq!(output.status.code(), Some(0), "{command}");
+        assert_eq!(
+            String::from_utf8(output.stdout).unwrap(),
+            "tseal: command accepted\n",
+            "{command}"
+        );
+        assert!(output.stderr.is_empty(), "{command}");
+    }
 }
