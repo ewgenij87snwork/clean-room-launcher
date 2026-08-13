@@ -87,7 +87,7 @@
     },
     {
       "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-2-receipt.sh",
-      "sha256": "d67aa418aa935883da2de2672d439f8d9d685bea54595476047c96b0157ae620",
+      "sha256": "6ec3b5075604d5f7d802ff621f0a885a75f82b31f0c76bc203fe22b315a3a1f4",
       "matched_classes": ["CREDENTIAL_EXTRACTION", "PROVIDER_LOGIN", "BROWSER_AUTH"],
       "rationale": "Offline receipt checker: matched terms are sealed evidence labels and JSON equality assertions; it invokes Git/JQ/hash tools only and no provider interface."
     },

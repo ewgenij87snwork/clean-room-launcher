@@ -182,6 +182,7 @@ test "$(git rev-parse "$input_head:$parent_receipt_rel")" = "$(jq -r '.binding.p
 test "$(git show "$input_head:$parent_receipt_rel" | shasum -a 256 | awk '{print $1}')" = "$(jq -r '.binding.parent_task_receipt.sha256' "$receipt")" || refuse PARENT_RECEIPT_DIGEST
 
 expected_paths='reports/contracts/provider-capability-truth.json
+reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/task-2.json
 scripts/gates/p06/successors/observation-capability-v1-phase2/run-once.sh
 scripts/gates/p06/successors/observation-capability-v1/probe-local.sh
 scripts/gates/p06/successors/observation-capability-v1/verify.sh
