@@ -5,6 +5,7 @@ root=$(CDPATH='' cd -- "$(dirname -- "$0")/../../../../.." && pwd -P)
 base=73d48ffbed1794c6691ba59be006aa096dcfcb22
 task_1_commit=09ec751eddc33b5c941393503271de0afcb70744
 replaced_task_2_commit=de741505bcdecd5a75865aafb4f73336185f8b0e
+replaced_task_3_commit=373c9091fac7d34419d77484639d50c1331ee050
 correction_rel=reports/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/correction.json
 task_1_rel=reports/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/task-1.json
 task_2_rel=reports/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/task-2.json
@@ -13,6 +14,7 @@ default_correction="$root/$correction_rel"
 default_task_1="$root/$task_1_rel"
 default_task_2="$root/$task_2_rel"
 default_task_3="$root/$task_3_rel"
+ssot_validator="$root/scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/validate-owner-ssot.sh"
 correction=${P06_PHASE2_CORRECTION_RECEIPT:-$default_correction}
 task_1=${P06_PHASE2_CORRECTION_TASK_1_RECEIPT:-$default_task_1}
 task_2=${P06_PHASE2_CORRECTION_TASK_2_RECEIPT:-$default_task_2}
@@ -20,7 +22,7 @@ subject_root=${P06_PHASE2_CORRECTION_SUBJECT_ROOT:-$root}
 stage=${P06_PHASE2_CORRECTION_STAGE:-final}
 
 case "$stage" in
-  task-2-bootstrap|task-2|task-3-precommit|final) ;;
+  task-2-bootstrap|task-2|task-3-semantics|task-3-precommit|final) ;;
   *) exit 2 ;;
 esac
 
@@ -88,6 +90,22 @@ if test -n "${P06_PHASE2_RECEIPT:-}"; then
   esac
 else
   phase_2_override=
+fi
+
+default_status_path=$(jq -r .status_path "$root/.taskseal-dev/execution-authority.json")
+default_dashboard_path=$(jq -r .dashboard_path "$root/.taskseal-dev/execution-authority.json")
+default_worklog_path=$(jq -r .worklog_path "$root/.taskseal-dev/execution-authority.json")
+status_path=${P06_PHASE2_CORRECTION_STATUS_PATH:-$default_status_path}
+dashboard_path=${P06_PHASE2_CORRECTION_DASHBOARD_PATH:-$default_dashboard_path}
+worklog_path=${P06_PHASE2_CORRECTION_WORKLOG_PATH:-$default_worklog_path}
+if test "$status_path" != "$default_status_path" || test "$dashboard_path" != "$default_dashboard_path" || test "$worklog_path" != "$default_worklog_path"; then
+  test "$stage" = task-3-semantics
+  test -n "${P06_PHASE2_CORRECTION_STATUS_PATH:-}"
+  test -n "${P06_PHASE2_CORRECTION_DASHBOARD_PATH:-}"
+  test -n "${P06_PHASE2_CORRECTION_WORKLOG_PATH:-}"
+  status_path=$(temporary_fixture "$status_path")
+  dashboard_path=$(temporary_fixture "$dashboard_path")
+  worklog_path=$(temporary_fixture "$worklog_path")
 fi
 
 validate_write_set() {
@@ -255,10 +273,13 @@ resolve_parent_bound_receipt() {
 
 validate_subject_sources() {
   receipt=$1
+  validate_current=$2
   result_head=$(jq -r .binding.implementation_result_head "$receipt")
   jq -r '.subject.sources[] | [.path,.sha256] | @tsv' "$receipt" | while IFS='	' read -r source_path source_sha; do
     test "$(git -C "$root" show "$result_head:$source_path" | shasum -a 256 | awk '{print $1}')" = "$source_sha"
-    test "$(shasum -a 256 "$subject_root/$source_path" | awk '{print $1}')" = "$source_sha"
+    if test "$validate_current" = 1; then
+      test "$(shasum -a 256 "$subject_root/$source_path" | awk '{print $1}')" = "$source_sha"
+    fi
   done
   subject_sha=$(jq -r '.subject.sources[] | [.path,.sha256] | @tsv' "$receipt" | LC_ALL=C sort | shasum -a 256 | awk '{print $1}')
   test "$subject_sha" = "$(jq -r .subject.sha256 "$receipt")"
@@ -344,7 +365,11 @@ validate_task_2() {
     done
   done
   task_2_commit=$(resolve_parent_bound_receipt "$task_2" "$task_2_rel" 2)
-  validate_subject_sources "$task_2"
+  validate_current=0
+  if test "$head" = "$task_2_commit" || test "$subject_root" != "$root"; then
+    validate_current=1
+  fi
+  validate_subject_sources "$task_2" "$validate_current"
   jq -c '.evidence[]' "$task_2" | while IFS= read -r evidence; do
     test "$(printf '%s\n' "$(printf '%s\n' "$evidence" | jq -r .output)" | shasum -a 256 | awk '{print $1}')" = "$(printf '%s\n' "$evidence" | jq -r .output_sha256)"
   done
@@ -361,31 +386,59 @@ validate_task_3() {
     .plan_id == "P06-CODEX-OBSERVATION-CAPABILITY-V1-PHASE2-EVIDENCE-CORRECTION" and
     .task == 3 and .result == "accepted" and
     .acceptance == {id:"P06-PHASE2-CORRECTION-T3-OWNER-EVIDENCE-V1",operator_result:"Owner evidence reports P06 7/13 as 53%, removes premature correction REV PASS, and preserves the sealed-negative NOT_QUALIFIED disposition.",current_progress:{completed:7,total:13,percent:53},independent_review:"PENDING"} and
-    (.binding | keys) == ["implementation_result_head","implementation_tree","input_head","receipt_commit_parent","resolution","scheme"] and
-    .binding.scheme == "parent-bound-receipt.v1" and
+    (.binding | keys) == ["implementation_result_head","implementation_tree","input_head","receipt_commit_parent","replaces_receipt_commit","resolution","scheme"] and
+    .binding.scheme == "parent-bound-receipt.v2" and
+    .binding.input_head == "373c9091fac7d34419d77484639d50c1331ee050" and
+    .binding.replaces_receipt_commit == "373c9091fac7d34419d77484639d50c1331ee050" and
+    .binding.receipt_commit_parent == .binding.implementation_result_head and
+    (.binding.implementation_result_head | test("^[0-9a-f]{40}$")) and
+    (.binding.implementation_tree | test("^[0-9a-f]{40}$")) and
+    (.inputs | keys) == ["correction_receipt_path","correction_receipt_sha256","phase_2_checkpoint","phase_2_terminal_review","plan_checkpoint_path","plan_checkpoint_sha256","prior_task_3_receipt_path","prior_task_3_receipt_sha256","task_1_receipt_path","task_1_receipt_sha256","task_2_receipt_path","task_2_receipt_sha256","worklog_prefix_line_count","worklog_prefix_sha256"] and
     .inputs.plan_checkpoint_sha256 == "1cc0164fe6aec201f69b09da212a7fbd79d19f5cef7d96eadde1dc68548fd07b" and
+    .inputs.phase_2_checkpoint == "73d48ffbed1794c6691ba59be006aa096dcfcb22" and
+    .inputs.phase_2_terminal_review == "BLOCKER" and
+    .inputs.prior_task_3_receipt_path == "reports/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/task-3.json" and
+    .inputs.prior_task_3_receipt_sha256 == "058277ec3385faca15d4ca71a021e7871af9fe2aac571fb3e33218b4cc9312cc" and
+    .inputs.worklog_prefix_line_count == 110 and
+    .inputs.worklog_prefix_sha256 == "fa0fef231880c923d8e0434526d111028f195abc9c23da8be4ef8507c85d13e3" and
     .controls == {owner_ssot_only:true,worklog_append_only:true,network_access:"not invoked",provider_or_codex_process:"not invoked",credential_or_keychain_read:"not invoked",historical_phase_1_t8_phase_2_mutation:false} and
     [.subject.sources[].path] == [$dashboard_path,$status_path,$worklog_path] and
-    [.evidence[].id] == ["P06-PHASE2-CORRECTION-T3-PRECOMMIT-GATE-PASS-V1"] and
-    .evidence[0].command == "P06_PHASE2_CORRECTION_STAGE=task-3-precommit sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/verify.sh" and
-    .evidence[0].exit == 0 and .evidence[0].output == "P06_PHASE2_EVIDENCE_CORRECTION_PASS"
+    [.evidence[].id] == ["P06-PHASE2-CORRECTION-T3-REVIEW1-RED-SSOT-SEMANTICS-V1","P06-PHASE2-CORRECTION-T3-REVIEW1-GREEN-SSOT-SEMANTICS-V1","P06-PHASE2-CORRECTION-T3-PRECOMMIT-GATE-PASS-V2"] and
+    [.evidence[].command] == ["P06_PHASE2_CORRECTION_TEST_CASE=task_3_ssot sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/test-verify.sh","P06_PHASE2_CORRECTION_TEST_CASE=task_3_ssot sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/test-verify.sh","P06_PHASE2_CORRECTION_STAGE=task-3-precommit sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/verify.sh"] and
+    [.evidence[].exit] == [1,0,0] and
+    [.evidence[].output] == ["P06_EXPECTED_TASK3_SSOT_BASELINE_PASS","P06_PHASE2_CORRECTION_MUTATIONS_PASS","P06_PHASE2_EVIDENCE_CORRECTION_PASS"]
   ' "$task_3" >/dev/null
-  test "$(jq -r .binding.input_head "$task_3")" = "$task_2_commit"
-  test "$(jq -r .binding.implementation_result_head "$task_3")" = "$task_2_commit"
-  test "$(jq -r .binding.receipt_commit_parent "$task_3")" = "$task_2_commit"
-  test "$(jq -r .binding.implementation_tree "$task_3")" = "$(git -C "$root" rev-parse "$task_2_commit^{tree}")"
+  test "$(git -C "$root" show "$replaced_task_3_commit:$task_3_rel" | shasum -a 256 | awk '{print $1}')" = "$(jq -r .inputs.prior_task_3_receipt_sha256 "$task_3")"
+  implementation_head=$(jq -r .binding.implementation_result_head "$task_3")
+  git -C "$root" merge-base --is-ancestor "$replaced_task_3_commit" "$implementation_head"
+  git -C "$root" rev-list --reverse "$replaced_task_3_commit..$implementation_head" | while IFS= read -r repair_commit; do
+    test -z "$(git -C "$root" rev-list --min-parents=2 -n 1 "$repair_commit")"
+    git -C "$root" diff-tree --no-commit-id --name-only --no-renames -r "$repair_commit" | while IFS= read -r repair_path; do
+      case "$repair_path" in
+        scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/test-verify.sh) ;;
+        scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/verify.sh) ;;
+        scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/validate-owner-ssot.sh) ;;
+        *) exit 2 ;;
+      esac
+    done
+  done
+  test "$(jq -r .binding.receipt_commit_parent "$task_3")" = "$implementation_head"
+  test "$(jq -r .binding.implementation_tree "$task_3")" = "$(git -C "$root" rev-parse "$implementation_head^{tree}")"
   task_2_sha=$(shasum -a 256 "$default_task_2" | awk '{print $1}')
   test "$(jq -r .inputs.task_2_receipt_sha256 "$task_3")" = "$task_2_sha"
   test "$(jq -r .inputs.task_1_receipt_sha256 "$task_3")" = "$(shasum -a 256 "$default_task_1" | awk '{print $1}')"
   test "$(jq -r .inputs.correction_receipt_sha256 "$task_3")" = "$(shasum -a 256 "$default_correction" | awk '{print $1}')"
+  test "$("$ssot_validator" "$status_path" "$dashboard_path" "$worklog_path")" = P06_PHASE2_CORRECTION_OWNER_SSOT_PASS
   jq -r '.subject.sources[] | [.path,.sha256] | @tsv' "$task_3" | while IFS='	' read -r source_path source_sha; do
     test "$(shasum -a 256 "$source_path" | awk '{print $1}')" = "$source_sha"
   done
   subject_sha=$(jq -r '.subject.sources[] | [.path,.sha256] | @tsv' "$task_3" | LC_ALL=C sort | shasum -a 256 | awk '{print $1}')
   test "$subject_sha" = "$(jq -r .subject.sha256 "$task_3")"
-  test "$(printf '%s\n' "$(jq -r .evidence[0].output "$task_3")" | shasum -a 256 | awk '{print $1}')" = "$(jq -r .evidence[0].output_sha256 "$task_3")"
+  jq -c '.evidence[]' "$task_3" | while IFS= read -r evidence; do
+    test "$(printf '%s\n' "$(printf '%s\n' "$evidence" | jq -r .output)" | shasum -a 256 | awk '{print $1}')" = "$(printf '%s\n' "$evidence" | jq -r .output_sha256)"
+  done
   if test "$stage" = task-3-precommit; then
-    test "$head" = "$task_2_commit"
+    test "$head" = "$implementation_head"
   else
     task_3_commit=$(resolve_parent_bound_receipt "$task_3" "$task_3_rel" 3)
     test "$head" = "$task_3_commit"
@@ -397,6 +450,9 @@ case "$stage" in
   task-2)
     task_2_commit=$(validate_task_2)
     test "$head" = "$task_2_commit"
+    ;;
+  task-3-semantics)
+    test "$("$ssot_validator" "$status_path" "$dashboard_path" "$worklog_path")" = P06_PHASE2_CORRECTION_OWNER_SSOT_PASS
     ;;
   task-3-precommit|final)
     task_2_commit=$(validate_task_2)
