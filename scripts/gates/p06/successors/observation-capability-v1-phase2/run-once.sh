@@ -78,9 +78,9 @@ printf '(deny network*)\n(deny mach-lookup)\n' >>"$offline_profile"
 printf "$profile_base" "$escaped_root" "$escaped_command" "$escaped_root" >"$extract_profile"
 printf '(allow file-read* (literal "%s"))\n(deny network*)\n(deny mach-lookup)\n' "$escaped_auth" >>"$extract_profile"
 printf "$profile_base" "$escaped_root" "$escaped_command" "$escaped_root" >"$online_profile"
-printf '(allow network-outbound)\n(deny file-read* (subpath "/Users/ysorokin/Library/Keychains"))\n(deny mach-lookup (global-name-regex #"^com\\.apple\\.(security|SecurityAgent)"))\n' >>"$online_profile"
+printf '(allow network-outbound)\n(deny file-read* (subpath "/Users/ysorokin/Library/Keychains") (subpath "/Library/Keychains") (subpath "/System/Library/Keychains"))\n(deny mach-lookup (global-name-regex #"^com\\.apple\\.(security|SecurityAgent)"))\n' >>"$online_profile"
 printf "$profile_base" "$escaped_root" "$escaped_command" "$escaped_root" >"$keychain_profile"
-printf '(deny network*)\n(deny file-read* (subpath "/Users/ysorokin/Library/Keychains"))\n(deny mach-lookup (global-name-regex #"^com\\.apple\\.(security|SecurityAgent)"))\n' >>"$keychain_profile"
+printf '(deny network*)\n(deny file-read* (subpath "/Users/ysorokin/Library/Keychains") (subpath "/Library/Keychains") (subpath "/System/Library/Keychains"))\n(deny mach-lookup (global-name-regex #"^com\\.apple\\.(security|SecurityAgent)"))\n' >>"$keychain_profile"
 
 clean_offline() {
   env -i HOME="$temporary_root/home" CODEX_HOME="$temporary_root/codex-home" XDG_CONFIG_HOME="$temporary_root/xdg" PATH=/usr/bin:/bin \
@@ -130,16 +130,7 @@ test -f "$auth_source" && test ! -L "$auth_source" && test "$(stat -f %Lp "$auth
   exit(value.is_a?(String) && !value.empty? && !value.include?("\n") && !value.include?("\r") ? 0 : 2)
 ' "$auth_source"
 
-auth_digest() {
-  /usr/bin/sandbox-exec -f "$extract_profile" /usr/bin/ruby -rjson -rdigest -e '
-    parsed=JSON.parse(File.read(ARGV.fetch(0)))
-    value=parsed.dig("tokens","access_token")
-    exit 2 unless value.is_a?(String) && !value.empty? && !value.include?("\n") && !value.include?("\r")
-    parsed["tokens"]["access_token"]="TASKSEAL_REDACTED_ACCESS_TOKEN"
-    STDOUT.write(Digest::SHA256.hexdigest(JSON.generate(parsed)))
-  ' "$auth_source"
-}
-before_auth_digest=$(auth_digest)
+before_auth_metadata=$(stat -f '%d:%i:%z:%m:%c:%Lp' "$auth_source")
 before_binary=$(shasum -a 256 "$command" | awk '{print $1}')
 before_protected=$(protected_inventory)
 before_worktree=$(git -C "$root" status --porcelain=v1 | shasum -a 256 | awk '{print $1}')
@@ -233,16 +224,22 @@ if test "$extract_result" = EXTRACT_OK && test "$login_status" = 0; then
   fi
 fi
 
-after_binary=$(shasum -a 256 "$command" | awk '{print $1}')
-after_auth_digest=$(auth_digest)
-after_protected=$(protected_inventory)
-after_worktree=$(git -C "$root" status --porcelain=v1 | shasum -a 256 | awk '{print $1}')
+set +e
+after_binary=$(shasum -a 256 "$command" 2>/dev/null | awk '{print $1}')
+after_binary_status=$?
+after_auth_metadata=$(stat -f '%d:%i:%z:%m:%c:%Lp' "$auth_source" 2>/dev/null)
+after_auth_metadata_status=$?
+after_protected=$(protected_inventory 2>/dev/null)
+after_protected_status=$?
+after_worktree=$(git -C "$root" status --porcelain=v1 2>/dev/null | shasum -a 256 | awk '{print $1}')
+after_worktree_status=$?
+set -e
 binary_unchanged=false
 protected_state_unchanged=false
 worktree_unchanged=false
-test "$after_binary" = "$before_binary" && binary_unchanged=true
-test "$after_auth_digest" = "$before_auth_digest" && test "$after_protected" = "$before_protected" && protected_state_unchanged=true
-test "$after_worktree" = "$before_worktree" && worktree_unchanged=true
+test "$after_binary_status" = 0 && test "$after_binary" = "$before_binary" && binary_unchanged=true
+test "$after_auth_metadata_status" = 0 && test "$after_auth_metadata" = "$before_auth_metadata" && test "$after_protected_status" = 0 && test "$after_protected" = "$before_protected" && protected_state_unchanged=true
+test "$after_worktree_status" = 0 && test "$after_worktree" = "$before_worktree" && worktree_unchanged=true
 if test "$binary_unchanged" != true || test "$protected_state_unchanged" != true || test "$worktree_unchanged" != true; then
   native_observation=BOUNDARY_REFUSED
 fi
