@@ -394,20 +394,33 @@ validate_task_3() {
     (.binding.implementation_result_head | test("^[0-9a-f]{40}$")) and
     (.binding.implementation_tree | test("^[0-9a-f]{40}$")) and
     (.inputs | keys) == ["correction_receipt_path","correction_receipt_sha256","phase_2_checkpoint","phase_2_terminal_review","plan_checkpoint_path","plan_checkpoint_sha256","prior_task_3_receipt_path","prior_task_3_receipt_sha256","task_1_receipt_path","task_1_receipt_sha256","task_2_receipt_path","task_2_receipt_sha256","worklog_prefix_line_count","worklog_prefix_sha256"] and
+    .inputs.plan_checkpoint_path == "/Users/ysorokin/Documents/it/5-LVL - 2026/Temp in Projects/wisdom/taskseal/plans/2026-08-13-p06-phase2-evidence-correction.md" and
     .inputs.plan_checkpoint_sha256 == "1cc0164fe6aec201f69b09da212a7fbd79d19f5cef7d96eadde1dc68548fd07b" and
     .inputs.phase_2_checkpoint == "73d48ffbed1794c6691ba59be006aa096dcfcb22" and
     .inputs.phase_2_terminal_review == "BLOCKER" and
+    .inputs.correction_receipt_path == "reports/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/correction.json" and
+    .inputs.correction_receipt_sha256 == "8e039c31d16ff355cf0cdcd35f5113a3cb08e4210b77ea46e43877e42573d818" and
+    .inputs.task_1_receipt_path == "reports/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/task-1.json" and
+    .inputs.task_1_receipt_sha256 == "403a73a8513d84db52a91e386549c2348b7e8d7906aaccb4d5d872416e742346" and
+    .inputs.task_2_receipt_path == "reports/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/task-2.json" and
+    .inputs.task_2_receipt_sha256 == "611bb39a7ce04f090bc75a9a0db4c548cd0e6c7cbccb131239b4a40d3314ae1d" and
     .inputs.prior_task_3_receipt_path == "reports/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/task-3.json" and
     .inputs.prior_task_3_receipt_sha256 == "058277ec3385faca15d4ca71a021e7871af9fe2aac571fb3e33218b4cc9312cc" and
     .inputs.worklog_prefix_line_count == 110 and
     .inputs.worklog_prefix_sha256 == "fa0fef231880c923d8e0434526d111028f195abc9c23da8be4ef8507c85d13e3" and
     .controls == {owner_ssot_only:true,worklog_append_only:true,network_access:"not invoked",provider_or_codex_process:"not invoked",credential_or_keychain_read:"not invoked",historical_phase_1_t8_phase_2_mutation:false} and
+    (.subject | keys) == ["algorithm","sha256","sources"] and
+    .subject.algorithm == "sha256 of sorted path, tab, sha256, newline source records" and
+    ([.subject.sources[] | keys] | all(. == ["path","sha256"])) and
     [.subject.sources[].path] == [$dashboard_path,$status_path,$worklog_path] and
+    ([.evidence[] | keys] | all(. == ["command","exit","id","meaning","output","output_sha256"])) and
     [.evidence[].id] == ["P06-PHASE2-CORRECTION-T3-REVIEW1-RED-SSOT-SEMANTICS-V1","P06-PHASE2-CORRECTION-T3-REVIEW1-GREEN-SSOT-SEMANTICS-V1","P06-PHASE2-CORRECTION-T3-PRECOMMIT-GATE-PASS-V2"] and
     [.evidence[].command] == ["P06_PHASE2_CORRECTION_TEST_CASE=task_3_ssot sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/test-verify.sh","P06_PHASE2_CORRECTION_TEST_CASE=task_3_ssot sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/test-verify.sh","P06_PHASE2_CORRECTION_STAGE=task-3-precommit sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/verify.sh"] and
     [.evidence[].exit] == [1,0,0] and
     [.evidence[].output] == ["P06_EXPECTED_TASK3_SSOT_BASELINE_PASS","P06_PHASE2_CORRECTION_MUTATIONS_PASS","P06_PHASE2_EVIDENCE_CORRECTION_PASS"]
   ' "$task_3" >/dev/null
+  test "$(git -C "$root" rev-parse "$replaced_task_3_commit^")" = "$task_2_commit"
+  test "$(git -C "$root" diff-tree --no-commit-id --name-only --no-renames -r "$replaced_task_3_commit")" = "$task_3_rel"
   test "$(git -C "$root" show "$replaced_task_3_commit:$task_3_rel" | shasum -a 256 | awk '{print $1}')" = "$(jq -r .inputs.prior_task_3_receipt_sha256 "$task_3")"
   implementation_head=$(jq -r .binding.implementation_result_head "$task_3")
   git -C "$root" merge-base --is-ancestor "$replaced_task_3_commit" "$implementation_head"
