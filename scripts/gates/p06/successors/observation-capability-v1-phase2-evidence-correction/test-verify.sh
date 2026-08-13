@@ -253,7 +253,8 @@ task_2_committed_command_mutation_must_fail() {
   prepare_fixture_repository task-2-command
   sealed_receipt="$temporary_root/task-2-command-sealed.json"
   cp "$fixture_repository/reports/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/task-2.json" "$sealed_receipt"
-  git -C "$fixture_repository" reset --hard -q 363c38c887d16c1d3a511954a9295a5d2cca8816
+  fixture_implementation_head=$(jq -r .binding.implementation_result_head "$sealed_receipt")
+  git -C "$fixture_repository" reset --hard -q "$fixture_implementation_head"
   fixture_task_2="$fixture_repository/reports/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/task-2.json"
   jq '.evidence[0].command="sh altered-evidence-command"' "$sealed_receipt" >"$fixture_task_2"
   git -C "$fixture_repository" add -- "$fixture_task_2"
