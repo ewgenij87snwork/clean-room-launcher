@@ -5,7 +5,7 @@
   "result": "accepted",
   "acceptance": {
     "id": "P06-ZERO-AUTH-T3-LAUNCHER-ENVIRONMENT-CLOSURE-V1",
-    "operator_result": "Named routes refuse after consuming only the command token and generic routes after only the boundary plus executable, without reading or copying credential-shaped tails; every real external route still refuses before child birth; local commands remain available; the environment carries only an opaque provider-native preauthenticated-session availability state; and descendant execution is sealed.",
+    "operator_result": "Named routes refuse after consuming only supported selectors plus the command token and generic routes after only supported selectors plus the boundary and executable, without reading or copying credential-shaped tails; every real external route still refuses before child birth; selector-prefixed local commands preserve their prior parsing; the environment carries only an opaque provider-native preauthenticated-session availability state; and descendant execution is sealed.",
     "control_ids": [
       "AUTH-01"
     ],
@@ -21,16 +21,26 @@
       "P06-ZERO-AUTH-T3-GREEN-SOURCE-INVENTORY-V1",
       "P06-ZERO-AUTH-T3-GREEN-CLIPPY-V1",
       "P06-ZERO-AUTH-T3-FIX1-RED-REPLACEMENT-RECEIPT-V1",
-      "P06-ZERO-AUTH-T3-FIX1-GREEN-DESCENDANT-DURABILITY-V1"
+      "P06-ZERO-AUTH-T3-FIX1-GREEN-DESCENDANT-DURABILITY-V1",
+      "P06-ZERO-AUTH-T3-FIX2-RED-SELECTOR-TAIL-CONSUMPTION-V1",
+      "P06-ZERO-AUTH-T3-FIX2-RED-SELECTOR-REFUSAL-V1",
+      "P06-ZERO-AUTH-T3-FIX2-GREEN-UNCONSUMED-SELECTOR-TAIL-V1",
+      "P06-ZERO-AUTH-T3-FIX2-GREEN-SELECTOR-CALL-PATHS-V1",
+      "P06-ZERO-AUTH-T3-FIX2-GREEN-LOCAL-SELECTOR-PARSING-V1",
+      "P06-ZERO-AUTH-T3-FIX2-GREEN-OFFLINE-RELEVANT-SUITES-V1",
+      "P06-ZERO-AUTH-T3-FIX2-GREEN-SOURCE-INVENTORY-V1",
+      "P06-ZERO-AUTH-T3-FIX2-GREEN-CLIPPY-V1",
+      "P06-ZERO-AUTH-T3-FIX2-RED-REPLACEMENT-RECEIPT-V1",
+      "P06-ZERO-AUTH-T3-FIX2-GREEN-DESCENDANT-DURABILITY-V1"
     ]
   },
   "binding": {
     "scheme": "parent-bound-receipt.v2",
     "input_head": "3f2bda4dadd22395a9313e80b03b029b43e4a5f3",
-    "implementation_result_head": "f7ef62a8dcaa1ead6dde5783fb87362dea6582f9",
-    "implementation_tree": "5c6adc9a44cf483f70c2f294f45130648912609f",
-    "receipt_commit_parent": "f7ef62a8dcaa1ead6dde5783fb87362dea6582f9",
-    "replaces_receipt_commit": "487c762fb79429337b6067a80a9ab7c3de3a3178",
+    "implementation_result_head": "5bffe98e0cf1be37e3b888886f727f5c1e3751fd",
+    "implementation_tree": "91b8aff1882bbb561fbec76464f591ef67d49d3e",
+    "receipt_commit_parent": "5bffe98e0cf1be37e3b888886f727f5c1e3751fd",
+    "replaces_receipt_commit": "57a1e6121a521e089c8617939bd3b802db737570",
     "parent_task_receipt": {
       "path": "reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/task-2.json",
       "commit": "3f2bda4dadd22395a9313e80b03b029b43e4a5f3",
@@ -46,7 +56,7 @@
   },
   "subject": {
     "algorithm": "sha256 of sorted path, tab, sha256, newline repository records",
-    "sha256": "deea11f1a5eb16af549cdeb87a6a608bf35b47d44010861f6ce3ac13f96ceb5e",
+    "sha256": "eccaa30a441d9195b5957b9f9716420576994dbd74216d806f183ebd11bb15aa",
     "sources": [
       {
         "kind": "repository_implementation_commit",
@@ -56,7 +66,7 @@
       {
         "kind": "repository_implementation_commit",
         "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-3-receipt.sh",
-        "sha256": "52cee0629887e74b5632ee999bf3bc2e3a96311be1e2a8b5c073137c1b8bce50"
+        "sha256": "dacd01e57d5e44730206ace434aea7d7cd115a77ed02443a11d8c728ac6b322e"
       },
       {
         "kind": "repository_implementation_commit",
@@ -76,7 +86,7 @@
       {
         "kind": "repository_implementation_commit",
         "path": "src/cli/mod.rs",
-        "sha256": "63d4a04ec24922ae66fde928f14eb6e198d87f888c8134e1c052ddbf6839a08f"
+        "sha256": "f29084872034a865cf3d65493e552234792eb490d9dd90160ea90995cb74db0a"
       },
       {
         "kind": "repository_implementation_commit",
@@ -101,7 +111,7 @@
       {
         "kind": "repository_implementation_commit",
         "path": "tests/cli/argv_passthrough.rs",
-        "sha256": "fdb66286636049a0debf367ac98c9823b0db28a9d5e048eff5d9d9263cfed62a"
+        "sha256": "e00e4c38c6084fde01612ed36ad31acf64d2965fd380f4380173357875f7c42f"
       },
       {
         "kind": "repository_implementation_commit",
@@ -206,6 +216,86 @@
       "output": "P06_ZERO_AUTH_TASK_3_RECEIPT_DURABILITY_PASS",
       "output_sha256": "6611239986d8ef1e5d89d4d3ce74caef1948305d36b6d87e6045f1f5f9f39bc9",
       "meaning": "A no-network local clone added a real descendant commit and reproduced the parent-bound Task 3 receipt."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T3-FIX2-RED-SELECTOR-TAIL-CONSUMPTION-V1",
+      "command": "cargo test --offline --test cli argv_passthrough::selector_prefixed_refusal_does_not_consume_credential_shaped_tails -- --exact",
+      "exit": 101,
+      "output": "TaskSeal consumed a prohibited provider tail containing 2 unread values",
+      "output_sha256": "c80465777a3dcd248678302f7ea1774fb5e06c1c6a61d099799e8905265ed82f",
+      "meaning": "The poison iterator proved the supported JSON selector still caused cli::run to enumerate a value-bearing provider tail."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T3-FIX2-RED-SELECTOR-REFUSAL-V1",
+      "command": "cargo test --offline --test cli argv_passthrough::selector_prefixed_real_routes_refuse_before_child_birth -- --exact",
+      "exit": 101,
+      "output": "left: OUTPUT_UNSUPPORTED_FOR_COMMAND: codex; use human output; right: ZERO_AUTH_REFUSAL: provider-native preauthenticated session unavailable or ambiguous; continue locally",
+      "output_sha256": "2bcb72d075f078185495ee93bbf70085f3c0cf3de9541f0c4b1254977a271ae5",
+      "meaning": "The real selector-prefixed named route reached output rejection rather than the shared pre-birth zero-auth refusal."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T3-FIX2-GREEN-UNCONSUMED-SELECTOR-TAIL-V1",
+      "command": "cargo test --offline --test cli argv_passthrough::selector_prefixed_refusal_does_not_consume_credential_shaped_tails -- --exact",
+      "exit": 0,
+      "output": "test result: ok. 1 passed; 0 failed; 0 ignored",
+      "output_sha256": "e9452ac4fb913b961bfcddcb2990f876000c3af2780281421ed04e69499594c0",
+      "meaning": "The counting iterator observed exactly three reads for selector plus named command and four for selector plus generic boundary and executable, leaving both credential-shaped tails unread."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T3-FIX2-GREEN-SELECTOR-CALL-PATHS-V1",
+      "command": "cargo test --offline --test cli argv_passthrough::selector_prefixed_real_routes_refuse_before_child_birth -- --exact",
+      "exit": 0,
+      "output": "test result: ok. 1 passed; 0 failed; 0 ignored",
+      "output_sha256": "e9452ac4fb913b961bfcddcb2990f876000c3af2780281421ed04e69499594c0",
+      "meaning": "Real selector-prefixed named and generic routes carried prohibited values but returned the stable refusal without creating the fake-provider capture."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T3-FIX2-GREEN-LOCAL-SELECTOR-PARSING-V1",
+      "command": "cargo test --offline --test cli argv_passthrough::selector_prefixed_local_command_keeps_existing_output_refusal -- --exact",
+      "exit": 0,
+      "output": "test result: ok. 1 passed; 0 failed; 0 ignored",
+      "output_sha256": "e9452ac4fb913b961bfcddcb2990f876000c3af2780281421ed04e69499594c0",
+      "meaning": "A selector-prefixed local command retained the existing output-mode refusal after lazy external-route classification."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T3-FIX2-GREEN-OFFLINE-RELEVANT-SUITES-V1",
+      "command": "cargo test --test cli --test adapters --offline",
+      "exit": 0,
+      "output": "adapters: 31 passed; cli: 34 passed; 0 failed",
+      "output_sha256": "2ccca1ad09e2dd20a646f9557fa5b9ceefb1475708e12c73d9405b2515ee33a0",
+      "meaning": "The exact offline CLI and adapter suites passed after selector-aware lazy refusal."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T3-FIX2-GREEN-SOURCE-INVENTORY-V1",
+      "command": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-source-inventory.sh",
+      "exit": 0,
+      "output": "P06_ZERO_AUTH_SOURCE_INVENTORY_TEST_PASS",
+      "output_sha256": "ff2c843a18a4b76f59ff24589d0335a7057640cb926ea647f7246d40ae7b64af",
+      "meaning": "The governed executable and compiled-source inventory remained free of credential, provider-login and browser-flow execution paths after the selector fix."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T3-FIX2-GREEN-CLIPPY-V1",
+      "command": "cargo clippy --all-targets --offline -- -D warnings",
+      "exit": 0,
+      "output": "cargo clippy --all-targets --offline -- -D warnings: exit 0",
+      "output_sha256": "98f57ed33b0abfb146322bda89690a037b88bcbbbe93ad84019dc7199ae0eac4",
+      "meaning": "Every Rust target compiled under strict warning denial after the selector fix without network access."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T3-FIX2-RED-REPLACEMENT-RECEIPT-V1",
+      "command": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-3-receipt.sh",
+      "exit": 1,
+      "output": "P06_ZERO_AUTH_TASK_3_RECEIPT_REFUSAL:RECEIPT_CONTRACT",
+      "output_sha256": "99105b71affcc63e638e4be1bb9d98bd83aff56f72ed8e6d9e50d1e9e4874fb0",
+      "meaning": "The round-2 checker rejected the predecessor receipt because it lacked selector-tail and updated suite/topology evidence."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T3-FIX2-GREEN-DESCENDANT-DURABILITY-V1",
+      "command": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-3-receipt-durability.sh",
+      "exit": 0,
+      "output": "P06_ZERO_AUTH_TASK_3_RECEIPT_DURABILITY_PASS",
+      "output_sha256": "6611239986d8ef1e5d89d4d3ce74caef1948305d36b6d87e6045f1f5f9f39bc9",
+      "meaning": "A fresh no-network local clone added a real descendant commit and reproduced the round-2 parent-bound Task 3 receipt."
     }
   ],
   "seal_tdd": {
@@ -224,10 +314,15 @@
     "external_routes": [
       "NAMED",
       "GENERIC",
+      "SELECTOR_PREFIXED_NAMED",
+      "SELECTOR_PREFIXED_GENERIC",
       "DEVICE_HELPER",
       "BROWSER_HELPER",
       "RENAMED",
       "SYMLINKED"
+    ],
+    "supported_lazy_selectors": [
+      "--output json"
     ],
     "stable_refusal": "ZERO_AUTH_REFUSAL: provider-native preauthenticated session unavailable or ambiguous; continue locally",
     "local_commands_available": [
