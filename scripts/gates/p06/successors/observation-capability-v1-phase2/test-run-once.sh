@@ -46,7 +46,8 @@ done
 rg -n '/usr/bin/plutil -extract tokens\.access_token raw -expect string -n -o -' "$runner" >/dev/null
 rg -n 'LC_ALL=C /usr/bin/awk' "$runner" >/dev/null
 rg -n '\[\[:cntrl:\]\]' "$runner" >/dev/null
-rg -n 'printf "%s\\n",\$0' "$runner" >/dev/null
+rg -n 'buffer=\$0' "$runner" >/dev/null
+rg -n 'if \(!valid\) exit 2; printf "%s\\n",buffer' "$runner" >/dev/null
 if rg -n '/usr/bin/ruby -rjson|rubygems' "$runner"; then exit 2; fi
 if rg -n 'pipe-credential|credential=.*jq|credential=.*cat|export .*TOKEN|CODEX_ACCESS_TOKEN=' "$runner"; then exit 2; fi
 
