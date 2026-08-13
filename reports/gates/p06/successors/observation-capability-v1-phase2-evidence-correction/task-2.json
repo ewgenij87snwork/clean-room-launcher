@@ -9,13 +9,13 @@
     "mutation_pass_marker": "P06_PHASE2_CORRECTION_MUTATIONS_PASS"
   },
   "binding": {
-    "scheme": "parent-bound-receipt.v2",
-    "input_head": "26ab551b984cfb977eec945f0583ed9f382251f2",
-    "implementation_result_head": "363c38c887d16c1d3a511954a9295a5d2cca8816",
-    "implementation_tree": "afa66f89fff72ee7e0e093dde8cbcc9074616bfb",
-    "receipt_commit_parent": "363c38c887d16c1d3a511954a9295a5d2cca8816",
-    "replaces_receipt_commit": "26ab551b984cfb977eec945f0583ed9f382251f2",
-    "resolution": "The unique receipt-only child of implementation_result_head whose task-2 blob equals this receipt replaces the reviewed v1 receipt without self-reference."
+    "scheme": "parent-bound-receipt.v3",
+    "input_head": "193fe6394455bfbf0fb1c5ba52152be523fa6b8e",
+    "implementation_result_head": "2fbb66673e42de16d2a26c50d49dd62261bfd7d8",
+    "implementation_tree": "6da6e9c867ead57f3d52c59d3e5d3c76e10b4f78",
+    "receipt_commit_parent": "2fbb66673e42de16d2a26c50d49dd62261bfd7d8",
+    "replaces_receipt_commit": "193fe6394455bfbf0fb1c5ba52152be523fa6b8e",
+    "resolution": "The unique receipt-only child of implementation_result_head whose task-2 blob equals this receipt replaces the review-round-1 seal without self-reference."
   },
   "inputs": {
     "plan_checkpoint_path": "/Users/ysorokin/Documents/it/5-LVL - 2026/Temp in Projects/wisdom/taskseal/plans/2026-08-13-p06-phase2-evidence-correction.md",
@@ -30,7 +30,7 @@
   },
   "subject": {
     "algorithm": "sha256 of sorted path, tab, sha256, newline source records",
-    "sha256": "3487ddce8b8b9af84e2c3484324f8884ad6ed97c9e9f9bbd8441f6ec2de33c48",
+    "sha256": "f2a7c0152b59509abf4ced52dc61e8ea26a04deb121aa0b76ae6c5b67d6695fd",
     "sources": [
       {
         "path": "reports/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/correction.json",
@@ -38,11 +38,11 @@
       },
       {
         "path": "scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/test-verify.sh",
-        "sha256": "73caf471b05e501197af870a6cde031909b3a5c939aa3467f479861b894fd059"
+        "sha256": "bec5118961cd540f7d738ba0c016dd12ae01bc6ca3663067362bf2ccd25b6729"
       },
       {
         "path": "scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/verify.sh",
-        "sha256": "b020771e53fcd5345d4aadb67694512c7ddd049043564ddd0e1fea12ed0aa318"
+        "sha256": "758fc6a84a5f518aa24dbb9211824a1553500f6908ec0a8bb1d18fe269f33bf9"
       }
     ]
   },
@@ -110,6 +110,22 @@
       "output_sha256": "38d74c26976a46e8b16082c40da6a382c64333deb410783dbab45f927c6cfede",
       "output": "P06_PHASE2_CORRECTION_MUTATIONS_PASS",
       "meaning": "The replacement gate rejects all original and review-round-1 mutation cases with the exact GREEN marker."
+    },
+    {
+      "id": "P06-PHASE2-CORRECTION-T2-REVIEW2-RED-COMMAND-BINDING-V1",
+      "command": "P06_PHASE2_CORRECTION_TEST_CASE=task_2_command sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/test-verify.sh",
+      "exit": 1,
+      "output_sha256": "df412a932208e56d41c8a7d7eb3cef4559cc5a35cb71b35a338ff70cb547c7b9",
+      "output": "P06_EXPECTED_REFUSAL_MISSING:task_2_command",
+      "meaning": "The review-round-1 gate accepted a committed receipt-only child with an altered evidence command before exact command-array binding."
+    },
+    {
+      "id": "P06-PHASE2-CORRECTION-T2-REVIEW2-GREEN-MUTATIONS-PASS-V1",
+      "command": "sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/test-verify.sh",
+      "exit": 0,
+      "output_sha256": "38d74c26976a46e8b16082c40da6a382c64333deb410783dbab45f927c6cfede",
+      "output": "P06_PHASE2_CORRECTION_MUTATIONS_PASS",
+      "meaning": "The v3 replacement gate binds all ten ordered evidence commands and passes the complete mutation suite."
     }
   ],
   "controls": {
