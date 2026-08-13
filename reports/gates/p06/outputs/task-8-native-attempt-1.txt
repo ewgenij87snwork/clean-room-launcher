@@ -1,0 +1,9 @@
+native_process_exit=1
+native_observation=UNAVAILABLE
+failure_class=OS_SANDBOX_NETWORK_DENIED
+last_message=absent
+provider_response=absent
+user_auth_config_mutated=false
+temporary_auth_removed=true
+qualification=NOT_QUALIFIED
+stderr_sha256=363e9e023e55f56ef9ae62c38350608329bb486a5efb963b105132ec582e01e6
