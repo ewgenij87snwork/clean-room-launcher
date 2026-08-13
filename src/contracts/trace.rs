@@ -55,7 +55,7 @@ pub fn validate_control_map(rows: &[ControlRef]) -> Result<(), &'static str> {
             return Err("STALE_OR_CONFLICTING");
         }
     }
-    if rows.len() != 445 {
+    if rows.len() != 446 {
         return Err("CONTROL_COUNT");
     }
     Ok(())

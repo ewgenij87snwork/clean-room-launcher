@@ -20,6 +20,24 @@ def require_literal(text, literal, code)
   refuse(code) unless text.include?(literal)
 end
 
+def refuse_contradictory_permissions(text, code)
+  compact = text.gsub(/\s+/, " ")
+  affirmative = "(?:MAY|CAN|SHALL|WILL)"
+  forbidden_actions = [
+    /\b#{affirmative}\s+request\s+login\b/i,
+    /\b#{affirmative}\b.{0,80}\b(?:open|trigger)\b.{0,80}\bbrowser\b.{0,80}\b(?:OAuth|device)\b/i,
+    /\b#{affirmative}\s+invoke\s+provider\s+login\b/i,
+    /\b#{affirmative}\b.{0,80}\b(?:request|read|copy|store)\b.{0,80}\b(?:API\s+keys?|keys?|tokens?)\b/i,
+    /\b#{affirmative}\b.{0,80}\bfall\s+back\b.{0,80}\b(?:authentication|auth|billing)\b/i,
+    /\b#{affirmative}\b.{0,80}\bruntime\b.{0,80}\b(?:GitHub|stargazer)\b.{0,80}\bcheck\b/i,
+    /\b#{affirmative}\b.{0,80}\bautomatically\s+enable\b/i,
+    /\b#{affirmative}\b.{0,80}\bcontinue\b.{0,80}\bprovider\s+birth\b/i,
+    /\bTaskSeal\b.{0,80}\b(?:create|establish)\b.{0,80}\b(?:authentication|auth)\s+session\b/i,
+    /\blocal\s+TaskSeal\s+functionality\b.{0,80}\b(?:becomes|is)\s+unavailable\b/i
+  ]
+  refuse(code) if forbidden_actions.any? { |pattern| compact.match?(pattern) }
+end
+
 def section(text, heading, next_heading, code)
   start = text.index(heading)
   refuse(code) unless start
@@ -70,8 +88,10 @@ require_literal(od10, "local TaskSeal functionality remains available without qu
 require_literal(od10, "The\nthreshold is reconsideration eligibility only; it does not change runtime\nbehavior automatically.", "OD10_THRESHOLD_NON_AUTOMATIC")
 require_literal(od10, "MUST NOT perform a runtime GitHub or stargazer\ncount check", "OD10_NO_RUNTIME_GITHUB_CHECK")
 require_literal(od10, "MUST NOT automatically enable any login", "OD10_NO_AUTOMATIC_ENABLEMENT")
+refuse_contradictory_permissions(od10, "OD10_CONTRADICTORY_PERMISSION")
 
 laws = section(master, "## 4. Permanent product laws", "\n## 5.", "MASTER_LAWS_MISSING")
+require_literal(laws, "until dated public evidence records at least 50,000 public stargazers", "MASTER_DATED_PUBLIC_EVIDENCE")
 require_literal(laws, "at least 50,000 public stargazers", "MASTER_THRESHOLD")
 require_literal(laws, "**AND** the owner separately approves a named\n  superseding product decision", "MASTER_TWO_OWNER_GATES")
 require_literal(laws, "TaskSeal is zero-auth", "MASTER_ZERO_AUTH")
@@ -84,6 +104,7 @@ require_literal(laws, "MAY use only a provider-native preauthenticated session\n
 require_literal(laws, "unavailable or ambiguous session\n  state refuses before provider birth", "MASTER_FAIL_CLOSED_PROVIDER_BIRTH")
 require_literal(laws, "local TaskSeal functionality remains\n  available without qualification", "MASTER_LOCAL_CONTINUITY")
 require_literal(laws, "threshold is reconsideration eligibility\n  only, with no runtime GitHub/stargazer check and no automatic enablement", "MASTER_THRESHOLD_NON_AUTOMATIC")
+refuse_contradictory_permissions(laws, "MASTER_CONTRADICTORY_PERMISSION")
 require_literal(master, "446 canonical controls", "MASTER_CONTROL_COUNT")
 
 require_literal(trace, "**446\ncanonical controls total**", "TRACE_CONTROL_COUNT")

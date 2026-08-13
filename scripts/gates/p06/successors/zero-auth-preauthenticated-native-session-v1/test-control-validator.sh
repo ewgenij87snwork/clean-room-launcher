@@ -26,8 +26,14 @@ expect_refusal() {
   actual=$(run_validator "$@" 2>&1)
   status=$?
   set -e
-  test "$status" = 1
-  test "$actual" = "P06_ZERO_AUTH_CONTROL_REFUSAL:$expected"
+  if test "$status" != 1; then
+    printf '%s\n' "P06_ZERO_AUTH_EXPECTED_REFUSAL_MISSING:$expected"
+    exit 1
+  fi
+  if test "$actual" != "P06_ZERO_AUTH_CONTROL_REFUSAL:$expected"; then
+    printf '%s\n' "P06_ZERO_AUTH_WRONG_REFUSAL:$expected:$actual"
+    exit 1
+  fi
 }
 
 replace_once() {
@@ -42,6 +48,12 @@ replace_once() {
   ' "$path" "$old" "$new"
 }
 
+append_line() {
+  path=$1
+  line=$2
+  ruby -e 'File.open(ARGV[0], "ab") { |file| file.write("\n#{ARGV[1]}\n") }' "$path" "$line"
+}
+
 test "$(run_validator "$owner" "$master" "$trace" "$execution_map")" = P06_ZERO_AUTH_CONTROL_PASS
 
 fixture_root=$(mktemp -d "${TMPDIR:-/tmp}/taskseal-p06-zero-auth-control.XXXXXX")
@@ -50,6 +62,30 @@ cp "$owner" "$fixture_root/owner.md"
 cp "$master" "$fixture_root/master.md"
 cp "$trace" "$fixture_root/trace.md"
 cp "$execution_map" "$fixture_root/map.tsv"
+
+# Break caught: retaining every required sentence cannot mask a contradictory permission.
+cp "$fixture_root/owner.md" "$fixture_root/owner-provider-login-contradiction.md"
+append_line "$fixture_root/owner-provider-login-contradiction.md" \
+  'TaskSeal MAY invoke provider login.'
+expect_refusal OD10_CONTRADICTORY_PERMISSION \
+  "$fixture_root/owner-provider-login-contradiction.md" "$master" "$trace" "$execution_map"
+
+# Break caught: the permanent law must keep dated, public threshold evidence.
+cp "$fixture_root/master.md" "$fixture_root/master-dated-evidence.md"
+replace_once "$fixture_root/master-dated-evidence.md" \
+  'until dated public evidence records at least 50,000 public stargazers' \
+  'until the canonical repository reaches at least 50,000 public stargazers'
+expect_refusal MASTER_DATED_PUBLIC_EVIDENCE \
+  "$owner" "$fixture_root/master-dated-evidence.md" "$trace" "$execution_map"
+
+# Break caught: reaching the threshold cannot replace the separate named owner decision.
+cp "$fixture_root/owner.md" "$fixture_root/owner-separate-decision.md"
+replace_once "$fixture_root/owner-separate-decision.md" \
+  '**AND** separately approves
+a named superseding product decision' \
+  'and automatically changes the product decision'
+expect_refusal OD10_TWO_OWNER_GATES \
+  "$fixture_root/owner-separate-decision.md" "$master" "$trace" "$execution_map"
 
 # Break caught: the stargazer threshold must never become an automatic switch.
 cp "$fixture_root/owner.md" "$fixture_root/owner-threshold.md"
@@ -61,6 +97,39 @@ behavior automatically.' \
 expect_refusal OD10_THRESHOLD_NON_AUTOMATIC \
   "$fixture_root/owner-threshold.md" "$master" "$trace" "$execution_map"
 
+# Break caught: TaskSeal must not perform the runtime stargazer check itself.
+cp "$fixture_root/owner.md" "$fixture_root/owner-runtime-count.md"
+replace_once "$fixture_root/owner-runtime-count.md" \
+  'MUST NOT perform a runtime GitHub or stargazer
+count check' \
+  'MAY perform a runtime GitHub or stargazer count check'
+expect_refusal OD10_NO_RUNTIME_GITHUB_CHECK \
+  "$fixture_root/owner-runtime-count.md" "$master" "$trace" "$execution_map"
+
+# Break caught: threshold attainment cannot automatically enable an auth path.
+cp "$fixture_root/owner.md" "$fixture_root/owner-auto-enable.md"
+replace_once "$fixture_root/owner-auto-enable.md" \
+  'MUST NOT automatically enable any login' \
+  'MAY automatically enable login'
+expect_refusal OD10_NO_AUTOMATIC_ENABLEMENT \
+  "$fixture_root/owner-auto-enable.md" "$master" "$trace" "$execution_map"
+
+# Break caught: TaskSeal cannot request login.
+cp "$fixture_root/owner.md" "$fixture_root/owner-login.md"
+replace_once "$fixture_root/owner-login.md" \
+  'MUST NOT request login' \
+  'MAY request login'
+expect_refusal OD10_NO_LOGIN_REQUEST \
+  "$fixture_root/owner-login.md" "$master" "$trace" "$execution_map"
+
+# Break caught: TaskSeal cannot open or trigger browser OAuth/device flow.
+cp "$fixture_root/owner.md" "$fixture_root/owner-browser.md"
+replace_once "$fixture_root/owner-browser.md" \
+  'open or trigger a browser OAuth or device flow' \
+  'open a browser OAuth flow'
+expect_refusal OD10_NO_BROWSER_OAUTH_DEVICE \
+  "$fixture_root/owner-browser.md" "$master" "$trace" "$execution_map"
+
 # Break caught: TaskSeal must not regain ownership of keys or tokens.
 cp "$fixture_root/owner.md" "$fixture_root/owner-credential.md"
 replace_once "$fixture_root/owner-credential.md" \
@@ -68,6 +137,24 @@ replace_once "$fixture_root/owner-credential.md" \
   'MAY request, read, copy, or store API keys or tokens'
 expect_refusal OD10_ZERO_CREDENTIAL_OWNERSHIP \
   "$fixture_root/owner-credential.md" "$master" "$trace" "$execution_map"
+
+# Break caught: no authentication or billing fallback is available.
+cp "$fixture_root/owner.md" "$fixture_root/owner-auth-billing.md"
+replace_once "$fixture_root/owner-auth-billing.md" \
+  'MUST NOT fall back to any authentication or billing flow' \
+  'MAY fall back to an authentication or billing flow'
+expect_refusal OD10_NO_AUTH_BILLING_FALLBACK \
+  "$fixture_root/owner-auth-billing.md" "$master" "$trace" "$execution_map"
+
+# Break caught: only an independently established provider-native session is admissible.
+cp "$fixture_root/owner.md" "$fixture_root/owner-preauthenticated-only.md"
+replace_once "$fixture_root/owner-preauthenticated-only.md" \
+  'MAY
+use only a provider-native preauthenticated session that was independently
+established outside TaskSeal' \
+  'MAY use a TaskSeal-created authentication session'
+expect_refusal OD10_PREAUTHENTICATED_NATIVE_SESSION_ONLY \
+  "$fixture_root/owner-preauthenticated-only.md" "$master" "$trace" "$execution_map"
 
 # Break caught: unavailable or ambiguous native session state must refuse pre-birth.
 cp "$fixture_root/owner.md" "$fixture_root/owner-birth.md"
