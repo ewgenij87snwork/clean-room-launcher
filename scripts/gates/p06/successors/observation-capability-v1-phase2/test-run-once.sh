@@ -2,7 +2,6 @@
 set -eu
 root=$(CDPATH= cd -- "$(dirname -- "$0")/../../../../.." && pwd -P)
 runner="$root/scripts/gates/p06/successors/observation-capability-v1-phase2/run-once.sh"
-pipe_credential="$root/scripts/gates/p06/successors/observation-capability-v1-phase2/pipe-credential.sh"
 validate_write_set="$root/scripts/gates/p06/successors/observation-capability-v1-phase2/validate-write-set.sh"
 temporary_root=$(mktemp -d /tmp/taskseal-p06-phase2-test.XXXXXX)
 temporary_root=$(realpath "$temporary_root")
@@ -13,22 +12,6 @@ cleanup() {
   esac
 }
 trap cleanup EXIT HUP INT TERM
-
-synthetic_token='TASKSEAL_PHASE2_SYNTHETIC_CREDENTIAL_NEVER_LOG'
-printf '{"tokens":{"access_token":"%s"}}\n' "$synthetic_token" >"$temporary_root/auth.json"
-chmod 600 "$temporary_root/auth.json"
-printf '#!/bin/sh\nshasum -a 256 | awk '\''{print $1}'\''\n' >"$temporary_root/consumer.sh"
-chmod +x "$temporary_root/consumer.sh"
-expected_digest=$(printf '%s\n' "$synthetic_token" | shasum -a 256 | awk '{print $1}')
-test "$("$pipe_credential" "$temporary_root/auth.json" "$temporary_root/consumer.sh")" = "$expected_digest"
-
-printf '{"tokens":{"wrong_field":"%s"}}\n' "$synthetic_token" >"$temporary_root/wrong.json"
-chmod 600 "$temporary_root/wrong.json"
-set +e
-"$pipe_credential" "$temporary_root/wrong.json" "$temporary_root/consumer.sh" >/dev/null 2>&1
-wrong_field_status=$?
-set -e
-test "$wrong_field_status" -ne 0
 
 P06_CODEX_BIN=${P06_CODEX_BIN:-/Users/ysorokin/.local/bin/codex} "$runner" --preflight >"$temporary_root/preflight.txt"
 for fact in \
@@ -44,7 +27,21 @@ for fact in \
   'provider_route_started=false'; do
   rg -x "$fact" "$temporary_root/preflight.txt" >/dev/null
 done
-if rg -n "$synthetic_token|/Users/ysorokin/\.codex/auth\.json|Bearer |sk-[A-Za-z0-9]{20,}" "$temporary_root/preflight.txt"; then exit 2; fi
+if rg -n '/Users/ysorokin/\.codex/auth\.json|Bearer |sk-[A-Za-z0-9]{20,}' "$temporary_root/preflight.txt"; then exit 2; fi
+
+for source_pattern in \
+  '--real' \
+  'P06_PHASE2_AUTHORITY' \
+  'phase2-login-used' \
+  'phase2-model-used' \
+  'login .*--with-access-token' \
+  '\.tokens\.access_token' \
+  'allow network-outbound' \
+  'com\.apple\.securityd' \
+  'native_observation'; do
+  rg -n -- "$source_pattern" "$runner" >/dev/null
+done
+if rg -n 'pipe-credential|credential=.*jq|credential=.*cat|export .*TOKEN|CODEX_ACCESS_TOKEN=' "$runner"; then exit 2; fi
 
 printf '%s\n' \
   'scripts/gates/p06/successors/observation-capability-v1-phase2/run-once.sh' \
