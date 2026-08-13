@@ -1,5 +1,8 @@
 use taskseal::adapters::codex::{
-    context_canaries::{CanaryState, ContextLayer, observe_without_provider},
+    context_canaries::{
+        CanaryState, ContextLayer, NativeCanaryState, evaluate_native_observation,
+        observe_without_provider,
+    },
     identity::CodexTuple,
 };
 
@@ -72,4 +75,60 @@ fn a_nonexact_tuple_cannot_be_mistaken_for_a_bound_native_canary() {
     let observation = observe_without_provider(&tuple, ContextLayer::L0Safety, L0_NONCE_SHA256);
     assert_eq!(observation.state, CanaryState::Refused);
     assert!(!observation.exact_tuple_bound);
+}
+
+#[test]
+fn exact_native_observation_accepts_required_layers_without_forbidden_ambient() {
+    assert_eq!(
+        evaluate_native_observation(
+            &exact_tuple(),
+            &[L0_NONCE_SHA256, L2_NONCE_SHA256, L3_NONCE_SHA256],
+        ),
+        NativeCanaryState::Passed
+    );
+}
+
+#[test]
+fn native_observation_refuses_forbidden_ambient_or_wrong_tuple() {
+    assert_eq!(
+        evaluate_native_observation(
+            &exact_tuple(),
+            &[
+                L0_NONCE_SHA256,
+                L2_NONCE_SHA256,
+                L3_NONCE_SHA256,
+                FORBIDDEN_NONCE_SHA256,
+            ],
+        ),
+        NativeCanaryState::Refused
+    );
+    let mut wrong = exact_tuple();
+    wrong.version = (0, 148, 0);
+    assert_eq!(
+        evaluate_native_observation(
+            &wrong,
+            &[L0_NONCE_SHA256, L2_NONCE_SHA256, L3_NONCE_SHA256],
+        ),
+        NativeCanaryState::Refused
+    );
+}
+
+#[test]
+fn native_instruction_fixtures_bind_only_digest_codes() {
+    let fixtures = [
+        include_str!("../../../fixtures/adapters/codex/context-canaries/native/codex-home/AGENTS.md"),
+        include_str!("../../../fixtures/adapters/codex/context-canaries/native/project/AGENTS.md"),
+        include_str!("../../../fixtures/adapters/codex/context-canaries/native/project/task/AGENTS.md"),
+        include_str!("../../../fixtures/adapters/codex/context-canaries/native/ambient-home/AGENTS.md"),
+    ];
+    for (fixture, digest) in fixtures.into_iter().zip([
+        L0_NONCE_SHA256,
+        L2_NONCE_SHA256,
+        L3_NONCE_SHA256,
+        FORBIDDEN_NONCE_SHA256,
+    ]) {
+        assert!(fixture.contains(digest));
+        assert!(!fixture.contains("prompt="));
+        assert!(!fixture.contains("private="));
+    }
 }

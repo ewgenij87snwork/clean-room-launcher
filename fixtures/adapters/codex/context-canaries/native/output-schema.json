@@ -1,0 +1,1 @@
+{"type":"object","additionalProperties":false,"required":["instruction_codes"],"properties":{"instruction_codes":{"type":"array","items":{"type":"string","pattern":"^[0-9a-f]{64}$"},"uniqueItems":true}}}
