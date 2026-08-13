@@ -31,6 +31,27 @@ fn forbidden_ambient_canary_refuses_before_any_native_provider_process() {
 }
 
 #[test]
+fn forbidden_canary_refuses_before_required_layer_static_observations() {
+    let forbidden = observe_without_provider(
+        &exact_tuple(),
+        ContextLayer::ForbiddenAmbient,
+        FORBIDDEN_NONCE_SHA256,
+    );
+    assert_eq!(forbidden.state, CanaryState::Refused);
+    assert!(forbidden.exact_tuple_bound);
+
+    for (layer, nonce_digest) in [
+        (ContextLayer::L0Safety, L0_NONCE_SHA256),
+        (ContextLayer::L2Project, L2_NONCE_SHA256),
+        (ContextLayer::L3Task, L3_NONCE_SHA256),
+    ] {
+        let observation = observe_without_provider(&exact_tuple(), layer, nonce_digest);
+        assert_eq!(observation.state, CanaryState::Refused);
+        assert!(observation.exact_tuple_bound);
+    }
+}
+
+#[test]
 fn required_layer_canaries_remain_not_qualified_without_a_provider_process() {
     for (layer, nonce_digest) in [
         (ContextLayer::L0Safety, L0_NONCE_SHA256),
