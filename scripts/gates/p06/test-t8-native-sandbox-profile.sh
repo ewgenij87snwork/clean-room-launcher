@@ -27,10 +27,10 @@ test ! -e /tmp/taskseal-p06-t8-sandbox-outside-denied
 set +e
 /usr/bin/sandbox-exec -f "$profile" /bin/cat /Users/ysorokin/taskseal/Cargo.toml >/dev/null 2>&1
 read_status=$?
-/opt/homebrew/bin/timeout 2 /usr/bin/sandbox-exec -f "$offline_profile" /usr/bin/nc -l 127.0.0.1 49271 >/dev/null 2>&1
+/usr/bin/sandbox-exec -f "$offline_profile" /usr/bin/ruby -rsocket -e 'TCPServer.new("127.0.0.1", 0)' >"$temporary_root/network.stdout" 2>"$temporary_root/network.stderr"
 network_status=$?
 set -e
 test "$read_status" -ne 0
 test "$network_status" -ne 0
-test "$network_status" -ne 124
+rg -n 'Operation not permitted|Errno::EPERM' "$temporary_root/network.stderr" >/dev/null
 echo P06_T8_NATIVE_SANDBOX_PROFILE_PASS
