@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-root=$(CDPATH= cd -- "$(dirname -- "$0")/../../../../.." && pwd -P)
+root=$(CDPATH='' cd -- "$(dirname -- "$0")/../../../../.." && pwd -P)
 base=73d48ffbed1794c6691ba59be006aa096dcfcb22
 task_1_commit=09ec751eddc33b5c941393503271de0afcb70744
 correction_rel=reports/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/correction.json
@@ -164,9 +164,9 @@ predecessor_gate="$predecessor_root/$(jq -r .predecessor.gate_path "$correction"
 test "$(shasum -a 256 "$predecessor_gate" | awk '{print $1}')" = "$(jq -r .predecessor.gate_sha256 "$correction")"
 test "$(git -C "$root" rev-parse "$base:$(jq -r .predecessor.gate_path "$correction")")" = "$(jq -r .predecessor.gate_blob_oid "$correction")"
 if test -n "$phase_2_override"; then
-  predecessor_output=$(CDPATH= cd -- "$predecessor_root" && P06_PHASE2_RECEIPT="$phase_2_override" "$predecessor_gate")
+  predecessor_output=$(CDPATH='' cd -- "$predecessor_root" && P06_PHASE2_RECEIPT="$phase_2_override" "$predecessor_gate")
 else
-  predecessor_output=$(CDPATH= cd -- "$predecessor_root" && "$predecessor_gate")
+  predecessor_output=$(CDPATH='' cd -- "$predecessor_root" && "$predecessor_gate")
 fi
 test "$predecessor_output" = "$(jq -r .predecessor.pass_marker "$correction")"
 

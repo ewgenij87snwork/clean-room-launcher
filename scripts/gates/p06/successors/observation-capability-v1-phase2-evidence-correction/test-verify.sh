@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-root=$(CDPATH= cd -- "$(dirname -- "$0")/../../../../.." && pwd -P)
+root=$(CDPATH='' cd -- "$(dirname -- "$0")/../../../../.." && pwd -P)
 verify="$root/scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/verify.sh"
 correction="$root/reports/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/correction.json"
 task_1="$root/reports/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/task-1.json"
@@ -25,7 +25,7 @@ cleanup() {
 trap cleanup EXIT HUP INT TERM
 
 run_bootstrap_gate() {
-  P06_PHASE2_CORRECTION_STAGE=task-2-bootstrap "$verify" "$@"
+  P06_PHASE2_CORRECTION_STAGE=task-2-bootstrap "$verify"
 }
 
 run_bootstrap_gate >/dev/null
