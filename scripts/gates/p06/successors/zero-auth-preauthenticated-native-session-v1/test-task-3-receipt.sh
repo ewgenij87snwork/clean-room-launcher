@@ -48,6 +48,7 @@ jq -e \
       "P06-ZERO-AUTH-T3-FIX1-GREEN-OFFLINE-RELEVANT-SUITES-V1",
       "P06-ZERO-AUTH-T3-GREEN-SOURCE-INVENTORY-V1",
       "P06-ZERO-AUTH-T3-GREEN-CLIPPY-V1",
+      "P06-ZERO-AUTH-T3-FIX1-RED-REPLACEMENT-RECEIPT-V1",
       "P06-ZERO-AUTH-T3-FIX1-GREEN-DESCENDANT-DURABILITY-V1"
     ]
   } and
@@ -171,6 +172,14 @@ jq -e \
       meaning:"Every Rust target compiled under strict warning denial without network access."
     },
     {
+      id:"P06-ZERO-AUTH-T3-FIX1-RED-REPLACEMENT-RECEIPT-V1",
+      command:"scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-3-receipt.sh",
+      exit:1,
+      output:"P06_ZERO_AUTH_TASK_3_RECEIPT_REFUSAL:RECEIPT_CONTRACT",
+      output_sha256:"99105b71affcc63e638e4be1bb9d98bd83aff56f72ed8e6d9e50d1e9e4874fb0",
+      meaning:"The hardened checker rejected the predecessor receipt because it lacked lazy-tail, exact offline-suite and descendant-durability bindings."
+    },
+    {
       id:"P06-ZERO-AUTH-T3-FIX1-GREEN-DESCENDANT-DURABILITY-V1",
       command:"scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-3-receipt-durability.sh",
       exit:0,
@@ -221,9 +230,9 @@ test "$(git show "$input_head:$parent_receipt_rel" | shasum -a 256 | awk '{print
 git merge-base --is-ancestor 487c762fb79429337b6067a80a9ab7c3de3a3178 "$implementation_head" || refuse REPLACEMENT_LINEAGE
 test "$(git diff-tree --no-commit-id --name-only -r 487c762fb79429337b6067a80a9ab7c3de3a3178)" = "$receipt_rel" || refuse REPLACED_RECEIPT_NOT_RECEIPT_ONLY
 
-expected_paths='scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-3-receipt-durability.sh
+expected_paths='reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/task-3.json
+scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-3-receipt-durability.sh
 scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-3-receipt.sh
-reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/task-3.json
 src/adapters/environment.rs
 src/cli/dispatch.rs
 src/cli/help.rs
