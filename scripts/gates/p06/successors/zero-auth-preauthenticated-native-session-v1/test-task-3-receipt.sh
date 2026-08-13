@@ -30,21 +30,25 @@ jq -e \
   --arg input_head "$input_head" \
   --arg implementation_head "$implementation_head" \
   --arg implementation_tree "$implementation_tree" '
-  .schema_version == "taskseal.p06.zero-auth-preauthenticated-native-session-v1.task-receipt.v1" and
+  .schema_version == "taskseal.p06.zero-auth-preauthenticated-native-session-v1.task-receipt.v2" and
   .plan_id == "P06-ZERO-AUTH-PREAUTHENTICATED-NATIVE-SESSION-V1" and
   .task == 3 and .result == "accepted" and
   .acceptance == {
     id:"P06-ZERO-AUTH-T3-LAUNCHER-ENVIRONMENT-CLOSURE-V1",
-    operator_result:"Named, generic, device-helper, browser-helper, renamed and symlinked external routes share one stable zero-auth refusal before child birth; local commands remain available; and the environment contract carries only an opaque provider-native preauthenticated-session availability state with unavailable and ambiguous states refusing without fallback.",
+    operator_result:"Named routes refuse after consuming only the command token and generic routes after only the boundary plus executable, without reading or copying credential-shaped tails; every real external route still refuses before child birth; local commands remain available; the environment carries only an opaque provider-native preauthenticated-session availability state; and descendant execution is sealed.",
     control_ids:["AUTH-01"],
     evidence_ids:[
       "P06-ZERO-AUTH-T3-RED-STABLE-REFUSAL-V1",
       "P06-ZERO-AUTH-T3-RED-OPAQUE-SESSION-API-V1",
       "P06-ZERO-AUTH-T3-GREEN-CLI-CALL-PATHS-V1",
       "P06-ZERO-AUTH-T3-GREEN-OPAQUE-SESSION-V1",
-      "P06-ZERO-AUTH-T3-GREEN-RELEVANT-SUITES-V1",
+      "P06-ZERO-AUTH-T3-FIX1-RED-TAIL-CONSUMPTION-V1",
+      "P06-ZERO-AUTH-T3-FIX1-GREEN-UNCONSUMED-TAIL-V1",
+      "P06-ZERO-AUTH-T3-FIX1-GREEN-VALUE-BEARING-CALL-PATHS-V1",
+      "P06-ZERO-AUTH-T3-FIX1-GREEN-OFFLINE-RELEVANT-SUITES-V1",
       "P06-ZERO-AUTH-T3-GREEN-SOURCE-INVENTORY-V1",
-      "P06-ZERO-AUTH-T3-GREEN-CLIPPY-V1"
+      "P06-ZERO-AUTH-T3-GREEN-CLIPPY-V1",
+      "P06-ZERO-AUTH-T3-FIX1-GREEN-DESCENDANT-DURABILITY-V1"
     ]
   } and
   .binding == {
@@ -53,6 +57,7 @@ jq -e \
     implementation_result_head:$implementation_head,
     implementation_tree:$implementation_tree,
     receipt_commit_parent:$implementation_head,
+    replaces_receipt_commit:"487c762fb79429337b6067a80a9ab7c3de3a3178",
     parent_task_receipt:{
       path:"reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/task-2.json",
       commit:$input_head,
@@ -74,13 +79,16 @@ jq -e \
     "src/adapters/environment.rs",
     "src/cli/dispatch.rs",
     "src/cli/help.rs",
+    "src/cli/mod.rs",
+    "src/cli/parser.rs",
     "src/cli/process.rs",
     "tests/adapters/environment.rs",
+    "tests/cli.rs",
     "tests/cli/argv_passthrough.rs",
     "tests/cli/foreground_process.rs"
   ] and
-  ([.subject.sources[].path] | unique | length) == 9 and
-  ([.subject.sources[] | select(.kind == "repository_implementation_commit" and (.sha256 | test("^[0-9a-f]{64}$")))] | length) == 9 and
+  ([.subject.sources[].path] | unique | length) == 12 and
+  ([.subject.sources[] | select(.kind == "repository_implementation_commit" and (.sha256 | test("^[0-9a-f]{64}$")))] | length) == 12 and
   .evidence == [
     {
       id:"P06-ZERO-AUTH-T3-RED-STABLE-REFUSAL-V1",
@@ -115,12 +123,36 @@ jq -e \
       meaning:"The data-free available state passed while unavailable, ambiguous and wrong-identity inputs refused without a value or fallback path."
     },
     {
-      id:"P06-ZERO-AUTH-T3-GREEN-RELEVANT-SUITES-V1",
-      command:"cargo test --test cli --test adapters",
+      id:"P06-ZERO-AUTH-T3-FIX1-RED-TAIL-CONSUMPTION-V1",
+      command:"cargo test --offline --test cli argv_passthrough::provider_and_generic_refusal_do_not_consume_credential_shaped_tails -- --exact",
+      exit:101,
+      output:"TaskSeal consumed a prohibited provider tail containing 2 unread values",
+      output_sha256:"c80465777a3dcd248678302f7ea1774fb5e06c1c6a61d099799e8905265ed82f",
+      meaning:"The poison iterator proved cli::run eagerly enumerated a value-bearing provider tail before zero-auth refusal."
+    },
+    {
+      id:"P06-ZERO-AUTH-T3-FIX1-GREEN-UNCONSUMED-TAIL-V1",
+      command:"cargo test --offline --test cli argv_passthrough::provider_and_generic_refusal_do_not_consume_credential_shaped_tails -- --exact",
       exit:0,
-      output:"adapters: 31 passed; cli: 30 passed; 0 failed",
-      output_sha256:"8b0d473629b024fab4b51da8c52ce96a8ed6fb6e62b2151854093a8a16bee160",
-      meaning:"The complete CLI and adapter suites passed after closing external execution and replacing the environment contract."
+      output:"test result: ok. 1 passed; 0 failed; 0 ignored",
+      output_sha256:"e9452ac4fb913b961bfcddcb2990f876000c3af2780281421ed04e69499594c0",
+      meaning:"The counting iterator observed exactly one read for a named route and two for a generic route, leaving both credential-shaped tails unread."
+    },
+    {
+      id:"P06-ZERO-AUTH-T3-FIX1-GREEN-VALUE-BEARING-CALL-PATHS-V1",
+      command:"cargo test --offline --test cli argv_passthrough::named_and_generic_auth_routes_share_one_pre_birth_zero_auth_refusal -- --exact",
+      exit:0,
+      output:"test result: ok. 1 passed; 0 failed; 0 ignored",
+      output_sha256:"e9452ac4fb913b961bfcddcb2990f876000c3af2780281421ed04e69499594c0",
+      meaning:"Real named and generic binaries received value-bearing prohibited tails yet produced the stable refusal without creating the fake-provider capture."
+    },
+    {
+      id:"P06-ZERO-AUTH-T3-FIX1-GREEN-OFFLINE-RELEVANT-SUITES-V1",
+      command:"cargo test --test cli --test adapters --offline",
+      exit:0,
+      output:"adapters: 31 passed; cli: 31 passed; 0 failed",
+      output_sha256:"2adde19e405983dcab10bbca487d9159dc3d75b8adc1b7436c0bff27dc804587",
+      meaning:"The exact offline CLI and adapter command passed after lazy prefix refusal and the opaque environment contract."
     },
     {
       id:"P06-ZERO-AUTH-T3-GREEN-SOURCE-INVENTORY-V1",
@@ -137,6 +169,14 @@ jq -e \
       output:"cargo clippy --all-targets --offline -- -D warnings: exit 0",
       output_sha256:"98f57ed33b0abfb146322bda89690a037b88bcbbbe93ad84019dc7199ae0eac4",
       meaning:"Every Rust target compiled under strict warning denial without network access."
+    },
+    {
+      id:"P06-ZERO-AUTH-T3-FIX1-GREEN-DESCENDANT-DURABILITY-V1",
+      command:"scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-3-receipt-durability.sh",
+      exit:0,
+      output:"P06_ZERO_AUTH_TASK_3_RECEIPT_DURABILITY_PASS",
+      output_sha256:"6611239986d8ef1e5d89d4d3ce74caef1948305d36b6d87e6045f1f5f9f39bc9",
+      meaning:"A no-network local clone added a real descendant commit and reproduced the parent-bound Task 3 receipt."
     }
   ] and
   .seal_tdd == {
@@ -156,7 +196,8 @@ jq -e \
     stable_refusal:"ZERO_AUTH_REFUSAL: provider-native preauthenticated session unavailable or ambiguous; continue locally",
     local_commands_available:["status","scan","prepare","check"],
     environment_contract:"PROVIDER_NATIVE_PREAUTHENTICATED_SESSION",
-    transported_value_count:0,
+    provider_tail_values_consumed:0,
+    provider_tail_values_copied:0,
     unavailable_state:"REFUSED_PRE_BIRTH",
     ambiguous_state:"REFUSED_PRE_BIRTH",
     auth_or_billing_fallback:false,
@@ -165,10 +206,6 @@ jq -e \
     network_access:"not invoked",
     main_mutation:false,
     verification_environment_exceptions:[
-      {
-        test:"checked_in_authority_schema_accepts_only_the_exact_private_receipt",
-        reason:"The test requires authority.head to equal current HEAD, while the execution protocol authorizes continuation from accepted parent-bound task receipts and the owner-issued ignored authority remains fixed at the plan base."
-      },
       {
         test:"clean_public_inventory_passes",
         reason:"The working-tree public-boundary test sees the active ignored SDD ledger path .superpowers/sdd/.gitignore; that execution-only path is absent from Git subjects and release inventory."
@@ -181,14 +218,20 @@ test "$(git rev-parse "$implementation_head^{tree}")" = "$implementation_tree" |
 git merge-base --is-ancestor "$input_head" "$implementation_head" || refuse IMPLEMENTATION_LINEAGE
 test "$(git rev-parse "$input_head:$parent_receipt_rel")" = "$(jq -r '.binding.parent_task_receipt.blob_oid' "$receipt")" || refuse PARENT_RECEIPT_BLOB
 test "$(git show "$input_head:$parent_receipt_rel" | shasum -a 256 | awk '{print $1}')" = "$(jq -r '.binding.parent_task_receipt.sha256' "$receipt")" || refuse PARENT_RECEIPT_DIGEST
+git merge-base --is-ancestor 487c762fb79429337b6067a80a9ab7c3de3a3178 "$implementation_head" || refuse REPLACEMENT_LINEAGE
+test "$(git diff-tree --no-commit-id --name-only -r 487c762fb79429337b6067a80a9ab7c3de3a3178)" = "$receipt_rel" || refuse REPLACED_RECEIPT_NOT_RECEIPT_ONLY
 
 expected_paths='scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-3-receipt-durability.sh
 scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-3-receipt.sh
+reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/task-3.json
 src/adapters/environment.rs
 src/cli/dispatch.rs
 src/cli/help.rs
+src/cli/mod.rs
+src/cli/parser.rs
 src/cli/process.rs
 tests/adapters/environment.rs
+tests/cli.rs
 tests/cli/argv_passthrough.rs
 tests/cli/foreground_process.rs'
 test "$(git diff --name-only "$input_head..$implementation_head")" = "$expected_paths" || refuse IMPLEMENTATION_WRITE_SET
@@ -207,7 +250,7 @@ match_count=$(wc -l <"$scratch/matching-commits" | tr -d ' ')
 case "$match_count" in
   0)
     test "$(git rev-parse HEAD)" = "$implementation_head" || refuse UNCOMMITTED_RECEIPT_WRONG_HEAD
-    test "$(git status --porcelain=v1 --untracked-files=all)" = "?? $receipt_rel" || refuse UNCOMMITTED_RECEIPT_WRITE_SET
+    test "$(git status --porcelain=v1 --untracked-files=all)" = " M $receipt_rel" || refuse UNCOMMITTED_RECEIPT_WRITE_SET
     ;;
   1)
     receipt_commit=$(sed -n '1p' "$scratch/matching-commits")

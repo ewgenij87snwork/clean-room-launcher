@@ -14,7 +14,38 @@ pub(crate) mod state;
 use std::process::ExitCode;
 
 pub fn run(invoked_as: &str, args: impl IntoIterator<Item = String>) -> ExitCode {
-    let args = args.into_iter().collect::<Vec<_>>();
+    let mut source = args.into_iter();
+    let Some(first) = source.next() else {
+        return run_local(invoked_as, Vec::new());
+    };
+    if let Some(spec) = help::resolve(&first)
+        && matches!(
+            spec.command,
+            parser::Command::Provider | parser::Command::Generic
+        )
+    {
+        let generic_executable_present =
+            !matches!(spec.command, parser::Command::Generic) || source.next().is_some();
+        return external_refusal(spec.command, generic_executable_present);
+    }
+
+    run_local(
+        invoked_as,
+        std::iter::once(first).chain(source).collect::<Vec<_>>(),
+    )
+}
+
+fn external_refusal(command: parser::Command, generic_executable_present: bool) -> ExitCode {
+    match dispatch::run(command, generic_executable_present) {
+        Ok(exit) => exit,
+        Err(message) => {
+            eprintln!("{message}");
+            ExitCode::from(2)
+        }
+    }
+}
+
+fn run_local(invoked_as: &str, args: Vec<String>) -> ExitCode {
     let (output_mode, args) = match output::select(args) {
         Ok(selection) => selection,
         Err(message) => {
@@ -44,7 +75,7 @@ pub fn run(invoked_as: &str, args: impl IntoIterator<Item = String>) -> ExitCode
             return ExitCode::from(2);
         }
     }
-    let command = match parser::parse(args.clone()) {
+    let command = match parser::parse(&args) {
         Ok(command) => command,
         Err(message) => {
             eprintln!("{message}");
@@ -82,13 +113,7 @@ pub fn run(invoked_as: &str, args: impl IntoIterator<Item = String>) -> ExitCode
             return ExitCode::from(2);
         }
         parser::Command::Provider | parser::Command::Generic => {
-            return match dispatch::run(command, &args) {
-                Ok(exit) => exit,
-                Err(message) => {
-                    eprintln!("{message}");
-                    ExitCode::from(2)
-                }
-            };
+            unreachable!("external commands refuse before tail collection")
         }
         _ => println!("{invoked_as}: command accepted"),
     }

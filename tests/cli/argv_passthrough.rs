@@ -1,10 +1,14 @@
 use std::{
+    cell::Cell,
     ffi::OsString,
     fs,
     os::unix::fs::symlink,
     path::{Path, PathBuf},
     process::Command,
+    rc::Rc,
 };
+
+use super::cli_entry;
 
 const ZERO_AUTH_REFUSAL: &str = "ZERO_AUTH_REFUSAL: provider-native preauthenticated session unavailable or ambiguous; continue locally\n";
 
@@ -58,8 +62,19 @@ fn named_and_generic_auth_routes_share_one_pre_birth_zero_auth_refusal() {
 
     let cases = [
         vec!["codex".into(), "login".into()],
-        vec!["codex".into(), "login".into(), "--with-access-token".into()],
-        vec!["--".into(), "codex".into(), "login".into()],
+        vec![
+            "codex".into(),
+            "login".into(),
+            "--with-access-token".into(),
+            "named-token-value-must-not-be-read".into(),
+        ],
+        vec![
+            "--".into(),
+            "codex".into(),
+            "login".into(),
+            "--api-key".into(),
+            "generic-key-value-must-not-be-read".into(),
+        ],
         vec![
             "--".into(),
             device_provider.into_os_string(),
@@ -75,6 +90,62 @@ fn named_and_generic_auth_routes_share_one_pre_birth_zero_auth_refusal() {
     ];
     for args in cases {
         assert_zero_auth_refusal(args, provider_dir, &capture);
+    }
+}
+
+struct PoisonTail {
+    prefix: std::vec::IntoIter<String>,
+    next_calls: Rc<Cell<usize>>,
+    unread_tail: Vec<String>,
+}
+
+impl Iterator for PoisonTail {
+    type Item = String;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.next_calls.set(self.next_calls.get() + 1);
+        if let Some(value) = self.prefix.next() {
+            return Some(value);
+        }
+        panic!(
+            "TaskSeal consumed a prohibited provider tail containing {} unread values",
+            self.unread_tail.len()
+        );
+    }
+}
+
+#[test]
+fn provider_and_generic_refusal_do_not_consume_credential_shaped_tails() {
+    // Break caught: collecting or cloning argv reads API-key/token values before zero-auth refusal.
+    for (prefix, unread_tail, expected_calls) in [
+        (
+            vec!["codex".to_owned()],
+            vec![
+                "--api-key".to_owned(),
+                "named-key-value-must-not-be-read".to_owned(),
+            ],
+            1,
+        ),
+        (
+            vec!["--".to_owned(), "codex".to_owned()],
+            vec![
+                "--access-token".to_owned(),
+                "generic-token-value-must-not-be-read".to_owned(),
+            ],
+            2,
+        ),
+    ] {
+        let next_calls = Rc::new(Cell::new(0));
+        let exit = cli_entry::run(
+            "tseal",
+            PoisonTail {
+                prefix: prefix.into_iter(),
+                next_calls: Rc::clone(&next_calls),
+                unread_tail,
+            },
+        );
+        assert_eq!(exit, std::process::ExitCode::from(2));
+        assert_eq!(next_calls.get(), expected_calls);
     }
 }
 

@@ -1,5 +1,9 @@
 #[path = "cli/argv_passthrough.rs"]
 mod argv_passthrough;
+#[allow(clippy::duplicate_mod)] // Real cli::run is imported to test lazy argv consumption.
+#[path = "../src/cli/mod.rs"]
+mod cli_entry;
+#[allow(clippy::duplicate_mod)] // consent.rs is also nested under the real CLI module above.
 #[path = "cli/consent_security.rs"]
 mod consent_security;
 #[path = "cli/doctor.rs"]
@@ -20,4 +24,5 @@ mod saved_start_call_path;
 mod saved_starts;
 #[path = "../src/cli/state.rs"]
 #[allow(dead_code)]
+#[allow(clippy::duplicate_mod)] // state.rs is also nested under the real CLI module above.
 mod state;
