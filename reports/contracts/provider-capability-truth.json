@@ -1,5 +1,24 @@
 {
-  "schema_version": "taskseal.provider-capability-truth.v1",
+  "schema_version": "taskseal.provider-capability-truth.v2",
+  "authority": {
+    "classification": "HISTORICAL_ONLY_NON_AUTHORITATIVE",
+    "superseded_by": [
+      "OD-10",
+      "AUTH-01"
+    ],
+    "current_auth_fingerprint_claim": "ABSENT",
+    "historical_auth_fingerprint_claim": {
+      "authority": "NON_AUTHORITATIVE",
+      "source_commit": "2d29ecfef073c5ad1a04d3acb96a6ccb48261ce6",
+      "source_blob_oid": "d35eecaf1cc14ff0007b0ce584109f6cc8a4c237",
+      "source_sha256": "fc79f7813cea234ca46fd20dcd0f56c777f1aeffaa465168dbd8643be118f202",
+      "json_pointers": [
+        "/persistent_subjects/codex_auth_sha256_before",
+        "/persistent_subjects/codex_auth_sha256_after"
+      ]
+    },
+    "rule": "The predecessor Git object preserves provenance only. TaskSeal does not read, retain, compare, or authorize provider access from an authentication fingerprint."
+  },
   "observed_at": "2026-08-12T05:51:18Z",
   "model_invoked": false,
   "provider_spend": false,
@@ -71,8 +90,6 @@
   "persistent_subjects": {
     "codex_config_sha256_before": "2631c0bd3619858155251e47a6968659507bd7b9b29262d926a56421b46d81ba",
     "codex_config_sha256_after": "2631c0bd3619858155251e47a6968659507bd7b9b29262d926a56421b46d81ba",
-    "codex_auth_sha256_before": "47817d76e216483058efded1ff7f8b0a1c095838858797219ae8013eb43ba241",
-    "codex_auth_sha256_after": "47817d76e216483058efded1ff7f8b0a1c095838858797219ae8013eb43ba241",
     "source_skill_sha256_before": "7cb8fa1b2a0c635b5c61ffe1da7b8594a7ea0fce5b71e8d523e2025d88b2a05e",
     "source_skill_sha256_after": "7cb8fa1b2a0c635b5c61ffe1da7b8594a7ea0fce5b71e8d523e2025d88b2a05e",
     "git_head_before": "ca59f88582cb4f51d2fb16340928f66919ff3195",
