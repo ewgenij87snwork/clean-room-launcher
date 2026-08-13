@@ -1,0 +1,11 @@
+native_process_exit=1
+native_observation=UNAVAILABLE
+required_layers_observed=0/3
+forbidden_ambient_observed=false
+provider_response=absent
+binary_unchanged=true
+user_auth_config_unchanged=true
+worktree_unchanged=true
+temporary_auth_removed=true
+raw_output_removed=true
+qualification=NOT_QUALIFIED
