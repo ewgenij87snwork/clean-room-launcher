@@ -249,6 +249,27 @@ historical_change_then_revert_must_fail() {
   fi
 }
 
+task_2_committed_command_mutation_must_fail() {
+  prepare_fixture_repository task-2-command
+  sealed_receipt="$temporary_root/task-2-command-sealed.json"
+  cp "$fixture_repository/reports/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/task-2.json" "$sealed_receipt"
+  git -C "$fixture_repository" reset --hard -q 363c38c887d16c1d3a511954a9295a5d2cca8816
+  fixture_task_2="$fixture_repository/reports/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/task-2.json"
+  jq '.evidence[0].command="sh altered-evidence-command"' "$sealed_receipt" >"$fixture_task_2"
+  git -C "$fixture_repository" add -- "$fixture_task_2"
+  git -C "$fixture_repository" commit -q -m 'fixture: receipt-only task2 command mutation'
+  set +e
+  (CDPATH='' cd -- "$fixture_repository" && \
+    P06_PHASE2_CORRECTION_STAGE=task-2 \
+    sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/verify.sh) >/dev/null 2>&1
+  mutation_status=$?
+  set -e
+  if test "$mutation_status" = 0; then
+    printf '%s\n' P06_EXPECTED_REFUSAL_MISSING:task_2_command >&2
+    return 1
+  fi
+}
+
 phase_2_mutation_must_fail privacy '.controls.credential_retained=true'
 phase_2_mutation_must_fail protected_state '.controls.protected_state_unchanged=false'
 phase_2_mutation_must_fail classification '.product.qualification="QUALIFIED"'
@@ -285,6 +306,9 @@ if run_selected task_3_interstitial; then
 fi
 if run_selected historical_revert; then
   historical_change_then_revert_must_fail
+fi
+if run_selected task_2_command; then
+  task_2_committed_command_mutation_must_fail
 fi
 
 printf '%s\n' reports/gates/p06/task-8-rooted-disposition.json >"$temporary_root/changed-paths.txt"
