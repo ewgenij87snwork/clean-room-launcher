@@ -73,12 +73,14 @@ cp "$root/fixtures/adapters/codex/context-canaries/native/ambient-home/AGENTS.md
 cp "$root/fixtures/adapters/codex/context-canaries/native/project/AGENTS.md" "$temporary_root/project/AGENTS.md"
 cp "$root/fixtures/adapters/codex/context-canaries/native/project/task/AGENTS.md" "$temporary_root/project/task/AGENTS.md"
 cp "$root/fixtures/adapters/codex/context-canaries/native/output-schema.json" "$temporary_root/output-schema.json"
-git init -q "$temporary_root/project"
+env -i HOME="$temporary_root/ambient-home" XDG_CONFIG_HOME="$temporary_root/xdg" PATH=/usr/bin:/bin GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null git init -q "$temporary_root/project"
 profile="$temporary_root/native.sb"
+offline_profile="$temporary_root/offline.sb"
 escaped_root=$(printf '%s' "$temporary_root" | sed 's/[\\"]/\\&/g')
 printf '(version 1)\n(deny default)\n(import "system.sb")\n(allow file-read*)\n(allow process*)\n(allow sysctl-read)\n(allow file-write* (subpath "%s"))\n(allow network-outbound)\n' "$escaped_root" >"$profile"
+printf '(version 1)\n(deny default)\n(import "system.sb")\n(allow file-read*)\n(allow process*)\n(allow sysctl-read)\n(allow file-write* (subpath "%s"))\n(deny network*)\n' "$escaped_root" >"$offline_profile"
 
-(cd "$temporary_root/project/task" && env -i HOME="$temporary_root/ambient-home" CODEX_HOME="$temporary_root/codex-home" PATH=/usr/bin:/bin "$command" debug prompt-input "Return only supplied canary codes.") >"$temporary_root/prompt-input.json" 2>"$temporary_root/prompt-input.stderr"
+(cd "$temporary_root/project/task" && env -i HOME="$temporary_root/ambient-home" CODEX_HOME="$temporary_root/codex-home" PATH=/usr/bin:/bin /usr/bin/sandbox-exec -f "$offline_profile" "$command" debug prompt-input "Return only supplied canary codes.") >"$temporary_root/prompt-input.json" 2>"$temporary_root/prompt-input.stderr"
 l0=f7b586cf98ee8c8f2ba2ea22d9a24c4a05f59a5b30ec93b25fbe54c1f1ce3914
 l2=4395db3ed4c16654d9c9a5d0af713a0d6019c0fdc6c18a10acbd5f69bd688a6b
 l3=7e4b5c4f10b7a5601d19f0b9e9cc96cec0d1b7a791d1bfd02c12e63d601aeb21

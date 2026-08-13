@@ -9,9 +9,10 @@ test "$before" = "19c4f144c5226a9f17c58e6f0fa854843b0f77a6eb420f40e2745a12f10f5d
 test "$(env -i PATH=/usr/bin:/bin "$command" --version)" = "codex-cli 0.147.0"
 
 temporary_root=$(mktemp -d /tmp/taskseal-p06-t8-root.XXXXXX)
+temporary_root=$(realpath "$temporary_root")
 cleanup() {
   case "$temporary_root" in
-    /tmp/taskseal-p06-t8-root.*) rm -rf -- "$temporary_root" ;;
+    /private/tmp/taskseal-p06-t8-root.*) rm -rf -- "$temporary_root" ;;
     *) return 99 ;;
   esac
 }
@@ -21,10 +22,13 @@ cp "$root/fixtures/adapters/codex/context-canaries/native/codex-home/AGENTS.md" 
 cp "$root/fixtures/adapters/codex/context-canaries/native/ambient-home/AGENTS.md" "$temporary_root/ambient-home/AGENTS.md"
 cp "$root/fixtures/adapters/codex/context-canaries/native/project/AGENTS.md" "$temporary_root/project/AGENTS.md"
 cp "$root/fixtures/adapters/codex/context-canaries/native/project/task/AGENTS.md" "$temporary_root/project/task/AGENTS.md"
+offline_profile="$temporary_root/offline.sb"
+escaped_root=$(printf '%s' "$temporary_root" | sed 's/[\\"]/\\&/g')
+printf '(version 1)\n(deny default)\n(import "system.sb")\n(allow file-read*)\n(allow process*)\n(allow sysctl-read)\n(allow file-write* (subpath "%s"))\n(deny network*)\n' "$escaped_root" >"$offline_profile"
 
 render_prompt() {
   destination=$1
-  (cd "$temporary_root/project/task" && env -i HOME="$temporary_root/ambient-home" CODEX_HOME="$temporary_root/codex-home" PATH=/usr/bin:/bin /usr/bin/sandbox-exec -p '(version 1)(allow default)(deny network*)' "$command" debug prompt-input "Return only supplied canary codes.") >"$destination" 2>/dev/null
+  (cd "$temporary_root/project/task" && env -i HOME="$temporary_root/ambient-home" CODEX_HOME="$temporary_root/codex-home" PATH=/usr/bin:/bin /usr/bin/sandbox-exec -f "$offline_profile" "$command" debug prompt-input "Return only supplied canary codes.") >"$destination" 2>/dev/null
 }
 count_code() {
   code=$1
@@ -43,7 +47,7 @@ test "$(count_code "$l2" "$temporary_root/unrooted.json")" = 0
 test "$(count_code "$l3" "$temporary_root/unrooted.json")" = 1
 test "$(count_code "$forbidden" "$temporary_root/unrooted.json")" = 0
 
-git init -q "$temporary_root/project"
+env -i HOME="$temporary_root/ambient-home" XDG_CONFIG_HOME="$temporary_root/xdg" PATH=/usr/bin:/bin GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null git init -q "$temporary_root/project"
 render_prompt "$temporary_root/rooted.json"
 test "$(count_code "$l0" "$temporary_root/rooted.json")" = 1
 test "$(count_code "$l2" "$temporary_root/rooted.json")" = 1
