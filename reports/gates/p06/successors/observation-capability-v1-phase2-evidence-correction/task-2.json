@@ -9,12 +9,13 @@
     "mutation_pass_marker": "P06_PHASE2_CORRECTION_MUTATIONS_PASS"
   },
   "binding": {
-    "scheme": "parent-bound-receipt.v1",
-    "input_head": "09ec751eddc33b5c941393503271de0afcb70744",
-    "implementation_result_head": "fd39d7ca9e9e540bf8e1f1bac1ba81f23ed01944",
-    "implementation_tree": "227d81782dd1d55e56b922451bde7519c0af54e8",
-    "receipt_commit_parent": "fd39d7ca9e9e540bf8e1f1bac1ba81f23ed01944",
-    "resolution": "The containing receipt commit must have implementation_result_head as its first parent. The result head is reproducible without embedding the self-referential containing commit."
+    "scheme": "parent-bound-receipt.v2",
+    "input_head": "26ab551b984cfb977eec945f0583ed9f382251f2",
+    "implementation_result_head": "363c38c887d16c1d3a511954a9295a5d2cca8816",
+    "implementation_tree": "afa66f89fff72ee7e0e093dde8cbcc9074616bfb",
+    "receipt_commit_parent": "363c38c887d16c1d3a511954a9295a5d2cca8816",
+    "replaces_receipt_commit": "26ab551b984cfb977eec945f0583ed9f382251f2",
+    "resolution": "The unique receipt-only child of implementation_result_head whose task-2 blob equals this receipt replaces the reviewed v1 receipt without self-reference."
   },
   "inputs": {
     "plan_checkpoint_path": "/Users/ysorokin/Documents/it/5-LVL - 2026/Temp in Projects/wisdom/taskseal/plans/2026-08-13-p06-phase2-evidence-correction.md",
@@ -29,7 +30,7 @@
   },
   "subject": {
     "algorithm": "sha256 of sorted path, tab, sha256, newline source records",
-    "sha256": "53f096c07aa7ee4c77c2c093a0a25cedca8fc8778dce3d76adc2cd995fb0f52d",
+    "sha256": "3487ddce8b8b9af84e2c3484324f8884ad6ed97c9e9f9bbd8441f6ec2de33c48",
     "sources": [
       {
         "path": "reports/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/correction.json",
@@ -37,11 +38,11 @@
       },
       {
         "path": "scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/test-verify.sh",
-        "sha256": "9c7bc692cd3c64f1a882ccc45f92582d2c370e7fed629dfcb819d7db9aa148be"
+        "sha256": "73caf471b05e501197af870a6cde031909b3a5c939aa3467f479861b894fd059"
       },
       {
         "path": "scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/verify.sh",
-        "sha256": "478262724d37a1d4faae670fb1b3adb19a04f5bad75550ec679e25341b899944"
+        "sha256": "b020771e53fcd5345d4aadb67694512c7ddd049043564ddd0e1fea12ed0aa318"
       }
     ]
   },
@@ -61,6 +62,54 @@
       "output_sha256": "38d74c26976a46e8b16082c40da6a382c64333deb410783dbab45f927c6cfede",
       "output": "P06_PHASE2_CORRECTION_MUTATIONS_PASS",
       "meaning": "The suite exercised the real predecessor and correction gates and rejected every required mutation class."
+    },
+    {
+      "id": "P06-PHASE2-CORRECTION-T2-REVIEW1-RED-TASK2-TREE-V1",
+      "command": "P06_PHASE2_CORRECTION_TEST_CASE=task_2_tree sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/test-verify.sh",
+      "exit": 1,
+      "output_sha256": "e77201ae4ac856fbdcb789522b1e9c247403d4d309043006be7b177024459230",
+      "output": "P06_EXPECTED_REFUSAL_MISSING:task_2_tree",
+      "meaning": "The reviewed verifier accepted a Task 2 implementation-tree mutation before the replacement binding fix."
+    },
+    {
+      "id": "P06-PHASE2-CORRECTION-T2-REVIEW1-RED-TASK2-PRIVACY-V1",
+      "command": "P06_PHASE2_CORRECTION_TEST_CASE=task_2_privacy sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/test-verify.sh",
+      "exit": 1,
+      "output_sha256": "a8f629cada202a61d079114f11693299ac595180afda72d860a2445140c1ae00",
+      "output": "P06_EXPECTED_REFUSAL_MISSING:task_2_privacy",
+      "meaning": "The reviewed verifier accepted credential-shaped material in the unchecked Task 2 receipt before the privacy fix."
+    },
+    {
+      "id": "P06-PHASE2-CORRECTION-T2-REVIEW1-RED-CURRENT-SUBJECT-V1",
+      "command": "P06_PHASE2_CORRECTION_TEST_CASE=current_subject sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/test-verify.sh",
+      "exit": 1,
+      "output_sha256": "776db4f60f4c5e667f9f1cb28434ec81988b35f4bf13416120de029df4fe7257",
+      "output": "P06_EXPECTED_REFUSAL_MISSING:current_subject",
+      "meaning": "The reviewed verifier accepted current subject bytes that differed from the committed Task 2 subject digests."
+    },
+    {
+      "id": "P06-PHASE2-CORRECTION-T2-REVIEW1-RED-TASK3-INTERSTITIAL-V1",
+      "command": "P06_PHASE2_CORRECTION_TEST_CASE=task_3_interstitial sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/test-verify.sh",
+      "exit": 1,
+      "output_sha256": "52656493501b8a1bda1e502ca021d798d34ffaa490e84a749bb647d6731f8809",
+      "output": "P06_EXPECTED_REFUSAL_MISSING:task_3_interstitial",
+      "meaning": "A disposable full gate accepted Task 3 after an interstitial successor commit before the exact-anchor fix."
+    },
+    {
+      "id": "P06-PHASE2-CORRECTION-T2-REVIEW1-RED-HISTORICAL-REVERT-V1",
+      "command": "P06_PHASE2_CORRECTION_TEST_CASE=historical_revert sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/test-verify.sh",
+      "exit": 1,
+      "output_sha256": "dd2d948c17f48797e6e1416e535bc8985d0e8496d6f66b4459f1135929ece7f5",
+      "output": "P06_EXPECTED_REFUSAL_MISSING:historical_change_then_revert",
+      "meaning": "A disposable full-history fixture changed and restored Phase 1 while the endpoint-only collector still passed."
+    },
+    {
+      "id": "P06-PHASE2-CORRECTION-T2-REVIEW1-GREEN-MUTATIONS-PASS-V1",
+      "command": "sh scripts/gates/p06/successors/observation-capability-v1-phase2-evidence-correction/test-verify.sh",
+      "exit": 0,
+      "output_sha256": "38d74c26976a46e8b16082c40da6a382c64333deb410783dbab45f927c6cfede",
+      "output": "P06_PHASE2_CORRECTION_MUTATIONS_PASS",
+      "meaning": "The replacement gate rejects all original and review-round-1 mutation cases with the exact GREEN marker."
     }
   ],
   "controls": {
