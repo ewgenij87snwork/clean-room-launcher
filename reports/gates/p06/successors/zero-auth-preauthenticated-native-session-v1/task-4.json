@@ -34,6 +34,7 @@
       "P06-ZERO-AUTH-T4-FIX5-GREEN-FINAL-INGESTION-CLOSURE-V1",
       "P06-ZERO-AUTH-T4-FIX5-GREEN-GATE-MUTATIONS-V1",
       "P06-ZERO-AUTH-T4-FIX5-RED-REPLACEMENT-RECEIPT-V1",
+      "P06-ZERO-AUTH-T4-FIX5-RED-SOURCE-INVENTORY-ALLOWLIST-V1",
       "P06-ZERO-AUTH-T4-FIX5-GREEN-SOLE-GATE-V1",
       "P06-ZERO-AUTH-T4-FIX5-GREEN-DESCENDANT-DURABILITY-V1"
     ]
@@ -41,17 +42,17 @@
   "binding": {
     "scheme": "parent-bound-receipt.v2",
     "input_head": "6a54523b4dbf8869ca7035a7dc42df88ac11c45a",
-    "implementation_result_head": "91ec3fc4b07501e4bb36c74a7d2659754151fb25",
-    "implementation_tree": "ef5cd805989c3d6ef8a77cd94562697d05b98e43",
-    "receipt_commit_parent": "91ec3fc4b07501e4bb36c74a7d2659754151fb25",
-    "replaces_receipt_commit": "98df95640e07e7b529f1eb501d83ca0b8f86cef3",
+    "implementation_result_head": "fbe8c368de935ef49649b90039c4d2b5ce0f67af",
+    "implementation_tree": "d08e783cb4500c81d6929a3a9eb0210841ad8617",
+    "receipt_commit_parent": "fbe8c368de935ef49649b90039c4d2b5ce0f67af",
+    "replaces_receipt_commit": "b5e65f6ed67a501f3f92a23dc21c8d2ed3d2d1e7",
     "parent_task_receipt": {
       "path": "reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/task-3.json",
       "commit": "6a54523b4dbf8869ca7035a7dc42df88ac11c45a",
       "blob_oid": "08febe5afe412e00e46f32d4c915f94e6cbe209d",
       "sha256": "8916cd8d268d91988931985ffb952b95fde491445f84ddbfa9a1c22352a68de8"
     },
-    "resolution": "Resolve exactly one commit in input_head..tip whose task-4 receipt blob equals these bytes; it must be a single-parent receipt-only child of implementation_result_head and replace receipt-only 98df956. Repository subjects are read from that implementation commit, while the accepted Task 3 receipt is read from input_head."
+    "resolution": "Resolve exactly one commit in input_head..tip whose task-4 receipt blob equals these bytes; it must be a single-parent receipt-only child of implementation_result_head and replace receipt-only b5e65f6. Repository subjects are read from that implementation commit, while the accepted Task 3 receipt is read from input_head."
   },
   "inputs": {
     "plan_checkpoint_path": "/Users/ysorokin/Documents/it/5-LVL - 2026/Temp in Projects/wisdom/taskseal/plans/2026-08-13-p06-zero-auth-preauthenticated-native-session-v1.md",
@@ -60,7 +61,7 @@
   },
   "subject": {
     "algorithm": "sha256 of sorted path, tab, sha256, newline repository records",
-    "sha256": "fb5b17901254ddd24e0c6ce9baaa754a16c64c122d9e283e8eb85135596f7f68",
+    "sha256": "13b9c2f20da80795b7c751ae594b7e2ae7fedad3f95bc89963d291476cfb5c41",
     "sources": [
       {
         "kind": "repository_implementation_commit",
@@ -95,7 +96,7 @@
       {
         "kind": "repository_implementation_commit",
         "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/source-inventory-allowlist.json",
-        "sha256": "3654fc251ab343260e3e9c122299652ceddfe214826554f1664ed05665487330"
+        "sha256": "759bd8f76c187ac7ca107126cc07dd2d0a8899f955ed3809be0a66ef5e357209"
       },
       {
         "kind": "repository_implementation_commit",
@@ -105,7 +106,7 @@
       {
         "kind": "repository_implementation_commit",
         "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-4-receipt.sh",
-        "sha256": "818c9a65a225ceafee6158f61c0240b55e278650ece5a6eea011b8226b6e3186"
+        "sha256": "5e2cfc83df61675d4106374cf92d0aade806d30842dabf23651f86e864d2de9d"
       },
       {
         "kind": "repository_implementation_commit",
@@ -330,6 +331,14 @@
       "output": "P06_ZERO_AUTH_TASK_4_RECEIPT_REFUSAL:RECEIPT_CONTRACT",
       "output_sha256": "83b45149afb5e944ec80635c75db0137640b84eea964af5858a98e9f0400b735",
       "meaning": "At the final ingestion implementation HEAD, the tightened checker rejected the preceding Task 4 receipt before replacement evidence was sealed."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T4-FIX5-RED-SOURCE-INVENTORY-ALLOWLIST-V1",
+      "command": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/verify.sh",
+      "exit": 1,
+      "output": "P06_ZERO_AUTH_SOURCE_REFUSAL:TOKEN_INPUT:scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-4-receipt.sh\nP06_ZERO_AUTH_GATE_REFUSAL:SOURCE_INVENTORY",
+      "output_sha256": "a141379a8a5b3a32ed24b84505ae182addb4ec107380cc069b8c0826a7a96783",
+      "meaning": "The sole gate refused because the expanded receipt checker contained exact rejected access-token selector assertions before that inert evidence file had an exact-digest TOKEN_INPUT allowlist entry."
     },
     {
       "id": "P06-ZERO-AUTH-T4-FIX5-GREEN-SOLE-GATE-V1",
