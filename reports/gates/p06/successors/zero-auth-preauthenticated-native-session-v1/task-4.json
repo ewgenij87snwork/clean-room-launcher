@@ -16,6 +16,8 @@
       "P06-ZERO-AUTH-T4-GREEN-EXACT-TRANSCRIPTS-V1",
       "P06-ZERO-AUTH-T4-RED-MISSING-CONSOLIDATED-VERIFIER-V1",
       "P06-ZERO-AUTH-T4-GREEN-GATE-MUTATIONS-V1",
+      "P06-ZERO-AUTH-T4-FIX1-RED-UNOWNED-FMT-SCOPE-V1",
+      "P06-ZERO-AUTH-T4-FIX1-GREEN-OWNED-FMT-SCOPE-V1",
       "P06-ZERO-AUTH-T4-GREEN-SOLE-GATE-V1",
       "P06-ZERO-AUTH-T4-GREEN-DESCENDANT-DURABILITY-V1"
     ]
@@ -23,16 +25,17 @@
   "binding": {
     "scheme": "parent-bound-receipt.v2",
     "input_head": "6a54523b4dbf8869ca7035a7dc42df88ac11c45a",
-    "implementation_result_head": "d72260fcea023fdc22692958d544b9894431e8ec",
-    "implementation_tree": "ef8bb9738dfceb168425f7d39a25c223b2805ffd",
-    "receipt_commit_parent": "d72260fcea023fdc22692958d544b9894431e8ec",
+    "implementation_result_head": "8666d3b4a6fcd57576e4e6ad389caacabc61046f",
+    "implementation_tree": "0e1607c179e55c6b84e7c9fc2532204f0b96186a",
+    "receipt_commit_parent": "8666d3b4a6fcd57576e4e6ad389caacabc61046f",
+    "replaces_receipt_commit": "f7a7d1bf1d22216e1c9b61313885aaacd9194d81",
     "parent_task_receipt": {
       "path": "reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/task-3.json",
       "commit": "6a54523b4dbf8869ca7035a7dc42df88ac11c45a",
       "blob_oid": "08febe5afe412e00e46f32d4c915f94e6cbe209d",
       "sha256": "8916cd8d268d91988931985ffb952b95fde491445f84ddbfa9a1c22352a68de8"
     },
-    "resolution": "Resolve exactly one commit in input_head..tip whose task-4 receipt blob equals these bytes; it must be a single-parent receipt-only child of implementation_result_head. Repository subjects are read from that implementation commit, while the accepted Task 3 receipt is read from input_head."
+    "resolution": "Resolve exactly one commit in input_head..tip whose task-4 receipt blob equals these bytes; it must be a single-parent receipt-only child of implementation_result_head and replace receipt-only f7a7d1b. Repository subjects are read from that implementation commit, while the accepted Task 3 receipt is read from input_head."
   },
   "inputs": {
     "plan_checkpoint_path": "/Users/ysorokin/Documents/it/5-LVL - 2026/Temp in Projects/wisdom/taskseal/plans/2026-08-13-p06-zero-auth-preauthenticated-native-session-v1.md",
@@ -41,7 +44,7 @@
   },
   "subject": {
     "algorithm": "sha256 of sorted path, tab, sha256, newline repository records",
-    "sha256": "b0f636ae09c94880a7381911930c699099847a8b7807cf663c2fb66ec775945c",
+    "sha256": "5871801b338698ff21910ab3e93dee06f90bdd046f54af902809441ebe9d4f18",
     "sources": [
       {
         "kind": "repository_implementation_commit",
@@ -71,7 +74,7 @@
       {
         "kind": "repository_implementation_commit",
         "path": "reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/consolidated.json",
-        "sha256": "743cbedb00dc1d623d2287e1070cac65c8fd44e614d299333476a519b089e8fe"
+        "sha256": "34f42754c08ba533e76be15f04f6a3c20d505189529ad89cc601bb0528d9edc9"
       },
       {
         "kind": "repository_implementation_commit",
@@ -81,7 +84,7 @@
       {
         "kind": "repository_implementation_commit",
         "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-4-receipt.sh",
-        "sha256": "8aec5cb73ea5b1cc7525957f08ed1f96dbd3e97a959340471e9b16cf864511c2"
+        "sha256": "a69448eaaaf0592f814ce0ef66f695082ab9bc6cd45f240fbfff3fc6ef30b37e"
       },
       {
         "kind": "repository_implementation_commit",
@@ -91,7 +94,7 @@
       {
         "kind": "repository_implementation_commit",
         "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/verify.sh",
-        "sha256": "2f5b322135adb6c56a12c3163f620a3efc572c67bf6c37709681ae9641cf674e"
+        "sha256": "b571cf44f265bd6b47ec418e9d07d9d95e8f43a5d004583469ae9f7bfe825068"
       },
       {
         "kind": "repository_implementation_commit",
@@ -137,6 +140,22 @@
       "output": "P06_ZERO_AUTH_GATE_MUTATIONS_PASS",
       "output_sha256": "b8c5990f4f0299c2a4617fcbdafd5246a7cd8fe9959a0603f88d0c4a9356140f",
       "meaning": "The non-overlapping metadata mutation suite refused checkpoint, receipt, control, write-set and worklog-prefix changes, rejected invalid/duplicate tail events, and accepted a valid appended terminal-review event."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T4-FIX1-RED-UNOWNED-FMT-SCOPE-V1",
+      "command": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/verify.sh",
+      "exit": 1,
+      "output": "cargo fmt --check found pre-existing formatting drift outside Task 4 write-set",
+      "output_sha256": "7c70d617a790ed55c12053aadb346e22ee98b8ea5ea1bbcde69dddfdd1771990",
+      "meaning": "The first sole-gate run stopped because the global formatting command covered unrelated accepted files outside Task 4 ownership; no retry or out-of-scope formatting mutation occurred."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T4-FIX1-GREEN-OWNED-FMT-SCOPE-V1",
+      "command": "rustfmt --edition 2024 --check src/cli/screen.rs tests/cli/first_screen.rs",
+      "exit": 0,
+      "output": "rustfmt --edition 2024 --check src/cli/screen.rs tests/cli/first_screen.rs: exit 0",
+      "output_sha256": "58f9c9da880035f81f586dca1710748262092d9defe16c0313544fedb5978039",
+      "meaning": "The changed-input formatting command checks exactly the Task 4-owned Rust files and passed without touching predecessor code."
     },
     {
       "id": "P06-ZERO-AUTH-T4-GREEN-SOLE-GATE-V1",
