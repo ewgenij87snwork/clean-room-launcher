@@ -196,6 +196,15 @@ fn run_local(invoked_as: &str, args: Vec<String>) -> ExitCode {
                     Ok(screen::UnqualifiedAction::ContinueLocally) => {
                         return run_taskseal_owned_local(invoked_as, parser::Command::Status);
                     }
+                    Ok(screen::UnqualifiedAction::LaunchCodex) => {
+                        return match process::launch_codex(&[]) {
+                            Ok(exit) => exit,
+                            Err(message) => {
+                                eprintln!("{message}");
+                                ExitCode::from(2)
+                            }
+                        };
+                    }
                     Ok(screen::UnqualifiedAction::Stop) => {}
                     Err(_) => {
                         eprintln!("INTERACTIVE_INPUT_FAILED");

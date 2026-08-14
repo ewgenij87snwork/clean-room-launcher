@@ -3,7 +3,7 @@ TaskSeal · provider qualification required
 Project  project://offerstream
 Preview  18 KB at start · 43 KB less (read-only measurement)
 Skills   5 summaries now · 38 load on use · 4 unavailable  Review
-Provider Codex · P06_REQUIRED · nothing launched
+Provider Codex · local launcher ready · nothing launched
 Writes   .taskseal/project.json + .taskseal/out/ · nothing yet
 Leaves   ~/.codex · ~/.claude · Git/provider state unchanged
 

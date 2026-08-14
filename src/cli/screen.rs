@@ -16,6 +16,7 @@ pub struct RenderContext {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum UnqualifiedAction {
     ContinueLocally,
+    LaunchCodex,
     Stop,
 }
 
@@ -26,10 +27,18 @@ pub fn terminal_is_interactive() -> bool {
 pub fn read_unqualified_action() -> io::Result<UnqualifiedAction> {
     let mut input = String::new();
     let bytes_read = std::io::stdin().read_line(&mut input)?;
-    if bytes_read > 0 && input.trim().is_empty() {
-        Ok(UnqualifiedAction::ContinueLocally)
-    } else {
+    if bytes_read == 0 {
         Ok(UnqualifiedAction::Stop)
+    } else {
+        Ok(parse_unqualified_action(&input))
+    }
+}
+
+pub fn parse_unqualified_action(input: &str) -> UnqualifiedAction {
+    match input.trim() {
+        "" | "1" => UnqualifiedAction::ContinueLocally,
+        "2" => UnqualifiedAction::LaunchCodex,
+        _ => UnqualifiedAction::Stop,
     }
 }
 
@@ -61,7 +70,7 @@ pub fn render_unqualified_for(ready: PrepareReady, context: RenderContext) -> Ve
         format!("Preview  {}", ready.preview),
         format!("Skills   {}  Review", ready.skills),
         format!(
-            "Provider {} · P06_REQUIRED · nothing launched",
+            "Provider {} · local launcher ready · nothing launched",
             ready.provider
         ),
         "Writes   .taskseal/project.json + .taskseal/out/ · nothing yet".to_owned(),
@@ -76,14 +85,16 @@ pub fn render_unqualified_for(ready: PrepareReady, context: RenderContext) -> Ve
     } else if context.plain {
         lines.extend([
             "1. Continue locally  Recommended".to_owned(),
+            "2. Launch Codex".to_owned(),
             String::new(),
-            "Enter continue locally".to_owned(),
+            "Enter continue locally · 2 launch Codex".to_owned(),
         ]);
     } else {
         lines.extend([
             "› Continue locally  Recommended".to_owned(),
+            "  Launch Codex".to_owned(),
             String::new(),
-            "Enter continue locally".to_owned(),
+            "Enter continue locally · 2 launch Codex".to_owned(),
         ]);
     }
     if context.width >= 80 {

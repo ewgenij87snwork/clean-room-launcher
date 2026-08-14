@@ -10,7 +10,8 @@ Skills
 5 summaries now · 38 load on use · 4
 unavailable Review
 Provider
-Codex · P06_REQUIRED · nothing launched
+Codex · local launcher ready · nothing
+launched
 Writes
 .taskseal/project.json + .taskseal/out/
 · nothing yet
@@ -19,5 +20,6 @@ Leaves
 state unchanged
 
 › Continue locally  Recommended
+  Launch Codex
 
-Enter continue locally
+Enter continue locally · 2 launch Codex

@@ -1,4 +1,7 @@
-use std::process::Command;
+use std::{fs, process::Command};
+
+#[cfg(unix)]
+use std::os::unix::fs::PermissionsExt;
 
 #[path = "../../src/cli/screen.rs"]
 #[allow(dead_code)]
@@ -89,6 +92,41 @@ fn real_tty_enter_dispatches_the_taskseal_owned_local_continuation() {
     assert_zero_auth_actions(session);
 }
 
+#[cfg(target_os = "macos")]
+#[test]
+fn real_tty_second_choice_launches_the_local_codex_child() {
+    let root = std::env::temp_dir().join(format!("taskseal-screen-codex-{}", std::process::id()));
+    let _ = fs::remove_dir_all(&root);
+    fs::create_dir_all(&root).unwrap();
+    let capture = root.join("capture");
+    let codex = root.join("codex");
+    fs::write(&codex, "#!/bin/sh\nprintf launched > \"$TASKSEAL_CAPTURE_PATH\"\n").unwrap();
+    fs::set_permissions(&codex, fs::Permissions::from_mode(0o755)).unwrap();
+
+    let output = Command::new("/usr/bin/expect")
+        .args([
+            "-c",
+            concat!(
+                "set timeout 5\n",
+                "spawn -noecho $env(TSEAL_TEST_BIN)\n",
+                "expect \"2 launch Codex\"\n",
+                "send \"2\\r\"\n",
+                "expect eof\n",
+            ),
+        ])
+        .env("TSEAL_TEST_BIN", env!("CARGO_BIN_EXE_tseal"))
+        .env("TASKSEAL_CAPTURE_PATH", &capture)
+        .env("PATH", &root)
+        .env("COLUMNS", "80")
+        .env("TERM", "xterm-256color")
+        .output()
+        .unwrap();
+
+    assert_eq!(output.status.code(), Some(0));
+    assert_eq!(fs::read_to_string(&capture).unwrap(), "launched");
+    let _ = fs::remove_dir_all(root);
+}
+
 #[test]
 fn captured_non_tty_run_emits_exact_local_continuity_without_a_prompt() {
     // Break caught: automation receives an interactive or credential-acquisition route.
@@ -101,7 +139,7 @@ fn captured_non_tty_run_emits_exact_local_continuity_without_a_prompt() {
         include_str!("../../fixtures/cli/first-screen-unqualified-non-tty.txt")
     );
     assert!(screen.lines().all(|line| line.chars().count() <= 80));
-    assert!(screen.contains("P06_REQUIRED"));
+    assert!(screen.contains("local launcher ready"));
     assert!(!screen.contains("Enter"));
     assert!(!screen.contains('›'));
     assert_zero_auth_actions(&screen);
@@ -152,4 +190,16 @@ fn plain_interactive_tty_has_exact_numbered_local_choices() {
     );
     assert!(!actual.contains('›'));
     assert_zero_auth_actions(&actual);
+}
+
+#[test]
+fn launch_codex_requires_the_explicit_second_choice() {
+    assert_eq!(
+        screen::parse_unqualified_action("2"),
+        screen::UnqualifiedAction::LaunchCodex
+    );
+    assert_eq!(
+        screen::parse_unqualified_action(""),
+        screen::UnqualifiedAction::ContinueLocally
+    );
 }
