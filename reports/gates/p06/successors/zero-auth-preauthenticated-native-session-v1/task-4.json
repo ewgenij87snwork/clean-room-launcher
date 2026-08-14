@@ -5,7 +5,7 @@
   "result": "accepted",
   "acceptance": {
     "id": "P06-ZERO-AUTH-T4-LOCAL-UX-CONSOLIDATED-CLOSURE-V1",
-    "operator_result": "The unqualified TTY, narrow, plain and non-TTY screens explicitly continue locally without a provider credential, configuration or documentation action; non-TTY never prompts. One offline successor gate binds OD-10/AUTH-01, current source and public inventories, every zero-auth call path, immutable Git history/write-set, all four parent-bound receipts and their topology, plus a sealed owner-worklog prefix whose valid append-only tail can receive the terminal review event without changing the PENDING checkpoint.",
+    "operator_result": "The unqualified TTY, narrow, plain and non-TTY screens explicitly continue locally without a login, setup/settings/configuration, API-key or documentation action; non-TTY never prompts. A real macOS PTY binary session selects the TTY transcript, waits for Enter and dispatches the TaskSeal-owned status continuation in-process. One offline successor gate binds OD-10/AUTH-01, current source and public inventories, every zero-auth call path, immutable Git history/write-set, all four parent-bound receipts and their topology, plus a sealed owner-worklog prefix whose valid append-only tail can receive the terminal review event without changing the PENDING checkpoint.",
     "control_ids": [
       "ADP-05",
       "AUTH-01",
@@ -23,23 +23,29 @@
       "P06-ZERO-AUTH-T4-FIX3-RED-SOURCE-SCANNER-SELF-MATCH-V1",
       "P06-ZERO-AUTH-T4-FIX3-GREEN-CURRENT-SOURCE-INVENTORY-V1",
       "P06-ZERO-AUTH-T4-GREEN-SOLE-GATE-V1",
-      "P06-ZERO-AUTH-T4-GREEN-DESCENDANT-DURABILITY-V1"
+      "P06-ZERO-AUTH-T4-GREEN-DESCENDANT-DURABILITY-V1",
+      "P06-ZERO-AUTH-T4-FIX4-RED-SEMANTIC-CTA-AND-COSMETIC-ENTER-V1",
+      "P06-ZERO-AUTH-T4-FIX4-GREEN-REAL-TTY-LOCAL-DISPATCH-V1",
+      "P06-ZERO-AUTH-T4-FIX4-GREEN-GATE-MUTATIONS-V1",
+      "P06-ZERO-AUTH-T4-FIX4-RED-REPLACEMENT-RECEIPT-V1",
+      "P06-ZERO-AUTH-T4-FIX4-GREEN-SOLE-GATE-V1",
+      "P06-ZERO-AUTH-T4-FIX4-GREEN-DESCENDANT-DURABILITY-V1"
     ]
   },
   "binding": {
     "scheme": "parent-bound-receipt.v2",
     "input_head": "6a54523b4dbf8869ca7035a7dc42df88ac11c45a",
-    "implementation_result_head": "28e992a2e56ca3625909a11236d05affbed02e6f",
-    "implementation_tree": "ebdfa24bcce3f2fe288cd9bf3d67403c1418515b",
-    "receipt_commit_parent": "28e992a2e56ca3625909a11236d05affbed02e6f",
-    "replaces_receipt_commit": "95529ea783007d374bac6bddd990fe7f013b3e84",
+    "implementation_result_head": "963b5c2f4f6afe935cf623daa80adbe1ab7e273e",
+    "implementation_tree": "4f81c56b7b084d5c37d226d3560a424f638917c1",
+    "receipt_commit_parent": "963b5c2f4f6afe935cf623daa80adbe1ab7e273e",
+    "replaces_receipt_commit": "cfecf25a8d7eac2c67e5feb67030d98b6f1dfa3a",
     "parent_task_receipt": {
       "path": "reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/task-3.json",
       "commit": "6a54523b4dbf8869ca7035a7dc42df88ac11c45a",
       "blob_oid": "08febe5afe412e00e46f32d4c915f94e6cbe209d",
       "sha256": "8916cd8d268d91988931985ffb952b95fde491445f84ddbfa9a1c22352a68de8"
     },
-    "resolution": "Resolve exactly one commit in input_head..tip whose task-4 receipt blob equals these bytes; it must be a single-parent receipt-only child of implementation_result_head and replace receipt-only 95529ea. Repository subjects are read from that implementation commit, while the accepted Task 3 receipt is read from input_head."
+    "resolution": "Resolve exactly one commit in input_head..tip whose task-4 receipt blob equals these bytes; it must be a single-parent receipt-only child of implementation_result_head and replace receipt-only cfecf25. Repository subjects are read from that implementation commit, while the accepted Task 3 receipt is read from input_head."
   },
   "inputs": {
     "plan_checkpoint_path": "/Users/ysorokin/Documents/it/5-LVL - 2026/Temp in Projects/wisdom/taskseal/plans/2026-08-13-p06-zero-auth-preauthenticated-native-session-v1.md",
@@ -48,12 +54,12 @@
   },
   "subject": {
     "algorithm": "sha256 of sorted path, tab, sha256, newline repository records",
-    "sha256": "41ff81cf2904c15d4ba10a3f824c0bd3cb696b9dba55c871b18045a040647ad0",
+    "sha256": "af906252f7cb38b49d278a9ed0c996d702b2c97bb2606d40cc18b1ffef5c7d9e",
     "sources": [
       {
         "kind": "repository_implementation_commit",
         "path": "fixtures/cli/first-screen-unqualified-narrow.txt",
-        "sha256": "85a1c1eea3707c95ab9b68aa771b3cc4c0f928cf2ffde2ddd5b6ae7b0704ebcf"
+        "sha256": "89289d95a67501e446c4eae4debe739b78652ea7e246835c97fc814b1481a2b2"
       },
       {
         "kind": "repository_implementation_commit",
@@ -63,12 +69,12 @@
       {
         "kind": "repository_implementation_commit",
         "path": "fixtures/cli/first-screen-unqualified-plain.txt",
-        "sha256": "b2cb9c2db649a79f136ed9d785a62d319eedc3788e9270a062c66226ac3cbd0a"
+        "sha256": "d57208b7fb3f5a97b8a8c64fa7d874a27aee5e5832d93d7fd146d5a34bfb4371"
       },
       {
         "kind": "repository_implementation_commit",
         "path": "fixtures/cli/first-screen-unqualified-tty.txt",
-        "sha256": "847c65e3b8c2d5ea778de2d00a0509020ad78839653704a77f57f0505ae793cf"
+        "sha256": "5c8bbdea3c033746f4eb9d34327299bd7e24b16ef03226cdcbf3505d76404fd8"
       },
       {
         "kind": "repository_implementation_commit",
@@ -78,7 +84,7 @@
       {
         "kind": "repository_implementation_commit",
         "path": "reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/consolidated.json",
-        "sha256": "f8c317147a136669c4fcbda14a21a134bbac6de8d6a71316a490c29caf2defb1"
+        "sha256": "73ed738e358910f948661c7e3dc7094179b60ee9196cd191d8a3ca354500d635"
       },
       {
         "kind": "repository_implementation_commit",
@@ -88,27 +94,32 @@
       {
         "kind": "repository_implementation_commit",
         "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-4-receipt.sh",
-        "sha256": "912c1db5640b319885b0ceb5b5fbfe11ca89d2bbcc093bd719760b426c5ffd26"
+        "sha256": "cb5126da86d699acd7303416ca741c91a11fa8f37ce72a27ff1cc189bf622958"
       },
       {
         "kind": "repository_implementation_commit",
         "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-verify.sh",
-        "sha256": "88ef17422e28acad32ab9cf926ea61186c9c211cd949148e6e0f51854e7f0fb8"
+        "sha256": "1ce68af6fddb101cdab7ea996a148ea017e3b4541b3be1793a85fe24b0609ced"
       },
       {
         "kind": "repository_implementation_commit",
         "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/verify.sh",
-        "sha256": "be1d1df990005c568c7d4d4577d7f0a86530e40c1ba5b10fc0d6dcae116ad8d7"
+        "sha256": "c65e3765402d011583c46a9fd4bc1393588922b4ba8c3a2a0e74652ce302e0ca"
+      },
+      {
+        "kind": "repository_implementation_commit",
+        "path": "src/cli/mod.rs",
+        "sha256": "1bb11a84f08f265c8e7a5984ffec12567e2752c9542d646af2f5184304b0d651"
       },
       {
         "kind": "repository_implementation_commit",
         "path": "src/cli/screen.rs",
-        "sha256": "f2fb415ec1238504618af8ef996f3f069ca7922b03fa3f2897c87eda3e3f6547"
+        "sha256": "d0d4325eef403b649b72ae384bed8381692e5da4ab82ac9a5b2859bbff2e2c40"
       },
       {
         "kind": "repository_implementation_commit",
         "path": "tests/cli/first_screen.rs",
-        "sha256": "2f057b39f1b17bace1362498ab9f6827c72602c7e6da3fe5b5299a8e855bc6d5"
+        "sha256": "f7855ceacd3f88b8c3ad66d92a531de84e08882b080762ae49ab3e8dd2af8087"
       }
     ]
   },
@@ -208,6 +219,54 @@
       "output": "P06_ZERO_AUTH_TASK_4_RECEIPT_DURABILITY_PASS",
       "output_sha256": "841416c45acc4134e8ece2f0c3c03f3156a028404432d8c9a70d4c1d1210d020",
       "meaning": "A local no-network clone added a real descendant commit and reproduced the parent-bound Task 4 receipt."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T4-FIX4-RED-SEMANTIC-CTA-AND-COSMETIC-ENTER-V1",
+      "command": "CARGO_INCREMENTAL=0 cargo test --offline --test cli first_screen -- --test-threads=1",
+      "exit": 101,
+      "output": "test result: FAILED. 1 passed; 4 failed; 0 ignored; 0 measured; 32 filtered out",
+      "output_sha256": "1b255500eddd9dcc54048c3515014c10d64ae766a6382227495fcdb79f8d010d",
+      "meaning": "The review-focused RED kept non-TTY safe but failed every interactive fixture on the setup/configuration action and failed the real PTY proof because the binary exited without dispatching Enter."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T4-FIX4-GREEN-REAL-TTY-LOCAL-DISPATCH-V1",
+      "command": "CARGO_INCREMENTAL=0 cargo test --offline --test cli first_screen -- --test-threads=1",
+      "exit": 0,
+      "output": "test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 32 filtered out",
+      "output_sha256": "c43227fc62f67ad5e77883ac59b60b4779b126566a87fcd4e20b6ed6526ea334",
+      "meaning": "Exact TTY, narrow, plain and captured non-TTY transcripts pass semantic CTA refusal; a real macOS PTY binary session selects TTY mode, waits for Enter and reaches the shared TaskSeal-owned status dispatcher in-process."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T4-FIX4-GREEN-GATE-MUTATIONS-V1",
+      "command": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-verify.sh",
+      "exit": 0,
+      "output": "P06_ZERO_AUTH_GATE_MUTATIONS_PASS",
+      "output_sha256": "b8c5990f4f0299c2a4617fcbdafd5246a7cd8fe9959a0603f88d0c4a9356140f",
+      "meaning": "The non-overlapping metadata mutations additionally refuse removal of the real TTY Enter dispatch binding and the setup/settings/configuration semantic CTA class."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T4-FIX4-RED-REPLACEMENT-RECEIPT-V1",
+      "command": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-4-receipt.sh",
+      "exit": 1,
+      "output": "P06_ZERO_AUTH_TASK_4_RECEIPT_REFUSAL:RECEIPT_CONTRACT",
+      "output_sha256": "83b45149afb5e944ec80635c75db0137640b84eea964af5858a98e9f0400b735",
+      "meaning": "At the new implementation HEAD, the tightened receipt checker rejected the predecessor Task 4 receipt before replacement evidence was sealed."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T4-FIX4-GREEN-SOLE-GATE-V1",
+      "command": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/verify.sh",
+      "exit": 0,
+      "output": "P06_ZERO_AUTH_PREAUTHENTICATED_NATIVE_SESSION_V1_PASS",
+      "output_sha256": "d3886f15e1c3a16f998ead34e9696664e546a0aa5c11fe57d8a5e5f5fdc88bd7",
+      "meaning": "The sole offline gate accepted the executable local-continuity repair together with controls, inventories, full zero-auth paths, immutable history/write-set, receipt topology and the sealed owner-SSOT prefix."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T4-FIX4-GREEN-DESCENDANT-DURABILITY-V1",
+      "command": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-4-receipt-durability.sh",
+      "exit": 0,
+      "output": "P06_ZERO_AUTH_TASK_4_RECEIPT_DURABILITY_PASS",
+      "output_sha256": "841416c45acc4134e8ece2f0c3c03f3156a028404432d8c9a70d4c1d1210d020",
+      "meaning": "A local no-network clone added a real descendant after the replacement receipt and reproduced its unique parent-bound topology and subjects."
     }
   ],
   "seal_tdd": {
@@ -230,12 +289,15 @@
     ],
     "prohibited_cta_classes": [
       "LOGIN",
-      "SETTINGS",
+      "SETUP_SETTINGS_CONFIGURATION",
       "API_KEY",
       "DOCUMENTATION"
     ],
     "prohibited_cta_present": false,
     "non_tty_prompt": false,
+    "real_tty_mode_selected": true,
+    "real_tty_enter_dispatch": "TASKSEAL_OWNED_STATUS_IN_PROCESS",
+    "semantic_cta_regression": true,
     "task_receipts_validated": [
       1,
       2,
