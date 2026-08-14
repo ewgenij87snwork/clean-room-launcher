@@ -12,6 +12,7 @@ fixture_supported = "alpha-macos-aarch64"
 fixture_unsupported = "unsupported-linux-riscv64"
 fixture_missing_runner = "missing-runner-windows-aarch64"
 fixture_disposition = "unsupported targets are excluded"
+target_entry_policy = "CI selects only names listed in qualified_targets and verifies qualification_status"
 
 [[targets]]
 name = "alpha-macos-aarch64"

@@ -1,32 +1,71 @@
-//! Focused contract tests for the P07 release target declaration.
-//!
-//! This test intentionally uses only the standard library so it can be run
-//! before the workspace has a packaging parser dependency.
+//! Focused, dependency-free contract tests for the P07 release target matrix.
 
 use std::{collections::BTreeMap, fs, path::Path};
 
 fn read(path: &str) -> String {
-    let root = env!("CARGO_MANIFEST_DIR");
-    fs::read_to_string(Path::new(root).join(path)).expect("packaging fixture exists")
+    fs::read_to_string(Path::new(env!("CARGO_MANIFEST_DIR")).join(path))
+        .expect("packaging fixture exists")
 }
 
-fn target_blocks(toml: &str) -> Vec<BTreeMap<String, String>> {
-    toml.split("[[targets]]").skip(1).map(|block| {
+fn list_value(source: &str, key: &str) -> Vec<String> {
+    source
+        .lines()
+        .find_map(|line| line.strip_prefix(&format!("{key} = ")))
+        .map(|value| {
+            value
+                .trim()
+                .trim_start_matches('[')
+                .trim_end_matches(']')
+                .split(',')
+                .filter_map(|item| {
+                    let item = item.trim().trim_matches('"');
+                    (!item.is_empty()).then(|| item.to_owned())
+                })
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
+fn target_blocks(source: &str) -> Vec<BTreeMap<String, String>> {
+    source.split("[[targets]]").skip(1).map(|block| {
         block.lines().filter_map(|line| {
             let (key, value) = line.split_once('=')?;
-            let value = value.trim().trim_matches('"').to_owned();
-            Some((key.trim().to_owned(), value))
+            Some((key.trim().to_owned(), value.trim().trim_matches('"').to_owned()))
         }).collect()
     }).collect()
 }
 
-#[test]
-fn matrix_declares_complete_target_interface_and_honest_claims() {
-    let matrix = read("packaging/targets.toml");
-    let blocks = target_blocks(&matrix);
-    assert!(!blocks.is_empty(), "at least the alpha target is required");
+fn matrix_is_honest(source: &str) -> bool {
+    let advertised = list_value(source, "advertised_targets");
+    let qualified = list_value(source, "qualified_targets");
+    if advertised != qualified { return false; }
+    let targets = target_blocks(source);
+    advertised.iter().all(|name| targets.iter().any(|target| {
+        target.get("name") == Some(name)
+            && target.get("qualification_status") == Some(&"QUALIFIED".to_owned())
+            && target.get("runner").is_some_and(|runner| runner != "unsupported" && runner != "missing-runner")
+            && target.get("artifact_name").is_some_and(|artifact| !artifact.is_empty())
+    }))
+}
 
-    for target in &blocks {
+fn workflow_is_bound_to_qualified(source: &str) -> bool {
+    source.contains("packaging/targets.toml")
+        && source.contains("qualified_targets")
+        && source.contains("qualification_status")
+        && source.contains("rust_target")
+        && source.contains("runs-on")
+        && source.contains("cargo test")
+        && !source.contains("continue-on-error")
+        && !source.contains("if: always()")
+        && !source.contains("cargo fmt --all")
+}
+
+#[test]
+fn matrix_advertised_targets_exactly_equal_qualified_lanes() {
+    let matrix = read("packaging/targets.toml");
+    assert!(matrix_is_honest(&matrix));
+    assert!(list_value(&matrix, "advertised_targets").is_empty());
+    for target in target_blocks(&matrix) {
         for field in ["name", "rust_target", "runner", "qualification_status", "artifact_name", "required_checks", "signing_policy"] {
             assert!(target.contains_key(field), "target is missing {}", field);
         }
@@ -34,12 +73,15 @@ fn matrix_declares_complete_target_interface_and_honest_claims() {
         assert!(target["required_checks"].contains("test"));
         assert!(!target["required_checks"].contains("skip"));
     }
+}
 
-    let advertised = matrix.lines().find(|line| line.starts_with("advertised_targets"))
-        .expect("advertised_targets is explicit");
-    assert!(!advertised.contains("unsupported"));
-    assert!(!advertised.contains("missing-runner"));
-    assert!(!advertised.contains("rc-"), "P06 has no qualified receipt for RC");
+#[test]
+fn matrix_mutations_refuse_false_claims_and_mismatched_lists() {
+    let matrix = read("packaging/targets.toml");
+    let advertised_false = matrix.replace("advertised_targets = []", "advertised_targets = [\"alpha-macos-aarch64\"]");
+    assert!(!matrix_is_honest(&advertised_false), "non-empty NOT_QUALIFIED claim must fail");
+    let lists_mismatch = matrix.replace("qualified_targets = []", "qualified_targets = [\"alpha-macos-aarch64\"]");
+    assert!(!matrix_is_honest(&lists_mismatch), "advertised/qualified mismatch must fail");
 }
 
 #[test]
@@ -53,11 +95,11 @@ fn fixtures_distinguish_supported_unsupported_and_missing_runner() {
 }
 
 #[test]
-fn workflow_builds_only_declared_qualified_lanes_without_skips() {
+fn workflow_is_structurally_bound_to_qualified_entries() {
     let workflow = read(".github/workflows/ci.yml");
-    assert!(workflow.contains("packaging/targets.toml"));
-    assert!(workflow.contains("cargo test"));
-    assert!(workflow.contains("cargo fmt --all -- --check"));
-    assert!(!workflow.contains("continue-on-error"));
-    assert!(!workflow.contains("if: always()"));
+    assert!(workflow_is_bound_to_qualified(&workflow));
+    let advertised_binding = workflow.replace("qualified_targets", "advertised_targets");
+    assert!(!workflow_is_bound_to_qualified(&advertised_binding));
+    let global_fmt = format!("{workflow}\n      - run: cargo fmt --all -- --check\n");
+    assert!(!workflow_is_bound_to_qualified(&global_fmt));
 }

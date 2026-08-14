@@ -10,6 +10,7 @@
   },
   "binding": {
     "input_head": "ea551a35b058b19e402071cfc07d34862ec9216b",
+    "continuation_head": "5249fd4c86760563b1f4306b74ee5e35fa949b4b",
     "implementation_files": [
       ".github/workflows/ci.yml",
       "packaging/targets.toml",
@@ -31,6 +32,13 @@
       "meaning": "Supported, unsupported and missing-runner matrix behavior plus workflow no-skip checks pass."
     },
     {
+      "id": "EVD-P07-T1-R1-MUTATIONS-GREEN",
+      "command": "CARGO_MANIFEST_DIR=\"$PWD\" rustc --test tests/packaging/target_matrix.rs -o /tmp/p07-target-matrix-r1 && /tmp/p07-target-matrix-r1",
+      "exit": 0,
+      "output": "4 passed; 0 failed",
+      "meaning": "Mutated non-empty NOT_QUALIFIED advertised claim, advertised/qualified mismatch, advertised-only workflow binding and global fmt command are all refused by focused tests."
+    },
+    {
       "id": "EVD-P07-T1-FMT-BOUNDARY",
       "command": "cargo fmt --all -- --check",
       "exit": 1,
@@ -38,9 +46,9 @@
     }
   ],
   "subjects": {
-    "packaging/targets.toml": "c86dd1855da9752695aff2dd97e0d561894cfd9504e69097da77af28a2302272",
-    ".github/workflows/ci.yml": "fa0efe7a9ec92d16608e1658de4bd866d051b9e1b06d0d1d3ccb32c43cc6f97d",
-    "tests/packaging/target_matrix.rs": "ecb72b2ddaa08b047a271760aca44252030a2b0aac76bd9e048772313d14c3eb"
+    "packaging/targets.toml": "392a949ea9957c304fd2413fd91d1a01e546fc108b21f644a5912ca9f3543dec",
+    ".github/workflows/ci.yml": "05496881dc3fdc5af344badb61582ae3f7cccd54512136d74c55c014aee619dd",
+    "tests/packaging/target_matrix.rs": "c366fc4d362e82e9587d61a7140a0c9c07b6bdd8ebcc5071fc07ef0210e8a7a4"
   },
   "qualification": "NOT_QUALIFIED",
   "claims": {

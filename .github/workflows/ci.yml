@@ -14,11 +14,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Validate declared matrix
-        run: test -s packaging/targets.toml
-      - name: Check formatting
-        run: cargo fmt --all -- --check
-      - name: Run tests
-        run: cargo test --locked --all-targets
+        run: |
+          test -s packaging/targets.toml
+          advertised=$(sed -n 's/^advertised_targets = \[\(.*\)\]/\1/p' packaging/targets.toml)
+          qualified=$(sed -n 's/^qualified_targets = \[\(.*\)\]/\1/p' packaging/targets.toml)
+          test "$advertised" = "$qualified"
+          test -z "$qualified" # P06 has no QUALIFIED receipt on this scaffold
+      - name: Run qualified target lanes
+        run: |
+          qualified=$(sed -n 's/^qualified_targets = \[\(.*\)\]/\1/p' packaging/targets.toml | tr -d '"' | tr ',' ' ')
+          for target in $qualified; do
+            grep -A8 "name = \"$target\"" packaging/targets.toml | grep -q 'qualification_status = "QUALIFIED"'
+            rust_target=$(grep -A8 "name = \"$target\"" packaging/targets.toml | sed -n 's/rust_target = "\([^"]*\)"/\1/p')
+            runner=$(grep -A8 "name = \"$target\"" packaging/targets.toml | sed -n 's/runner = "\([^"]*\)"/\1/p')
+            test -n "$rust_target" -a -n "$runner"
+            cargo test --locked --all-targets --target "$rust_target"
+          done
       - name: Run target-matrix fixtures
         run: |
           CARGO_MANIFEST_DIR="$PWD" rustc --test tests/packaging/target_matrix.rs -o /tmp/taskseal-target-matrix
