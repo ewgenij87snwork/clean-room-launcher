@@ -1,0 +1,31 @@
+name: Release candidate verification
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  release-candidate:
+    name: Verify release candidate (no-skip)
+    runs-on: ubuntu-latest
+    env:
+      TASKSEAL_SUBJECT_DIGEST: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify source checks
+        run: scripts/release-build/verify-source.sh --subject-digest "$TASKSEAL_SUBJECT_DIGEST"
+      - name: p02-gate
+        run: TASKSEAL_SUBJECT_DIGEST="$TASKSEAL_SUBJECT_DIGEST" scripts/gates/p02/verify.sh
+      - name: p03-gate
+        run: TASKSEAL_SUBJECT_DIGEST="$TASKSEAL_SUBJECT_DIGEST" scripts/gates/p03/verify.sh
+      - name: p04-gate
+        run: TASKSEAL_SUBJECT_DIGEST="$TASKSEAL_SUBJECT_DIGEST" scripts/gates/p04/verify.sh
+      - name: p05-gate
+        run: TASKSEAL_SUBJECT_DIGEST="$TASKSEAL_SUBJECT_DIGEST" scripts/gates/p05/verify.sh
+      - name: p06-gate
+        run: TASKSEAL_SUBJECT_DIGEST="$TASKSEAL_SUBJECT_DIGEST" scripts/gates/p06/verify.sh
+      - name: p07-gate
+        run: TASKSEAL_SUBJECT_DIGEST="$TASKSEAL_SUBJECT_DIGEST" scripts/release-build/verify-source.sh --subject-digest "$TASKSEAL_SUBJECT_DIGEST"

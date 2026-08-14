@@ -1,0 +1,5 @@
+jobs:
+  poisoned:
+    if: false
+    steps:
+      - run: echo gate

@@ -1,0 +1,6 @@
+jobs:
+  poisoned:
+    steps:
+      - run: echo p02-gate
+        env:
+          TASKSEAL_SUBJECT_DIGEST: abc

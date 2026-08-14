@@ -1,0 +1,5 @@
+jobs:
+  poisoned:
+    steps:
+      - run: echo gate
+        continue-on-error: true
