@@ -100,7 +100,11 @@ fn real_tty_second_choice_launches_the_local_codex_child() {
     fs::create_dir_all(&root).unwrap();
     let capture = root.join("capture");
     let codex = root.join("codex");
-    fs::write(&codex, "#!/bin/sh\nprintf launched > \"$TASKSEAL_CAPTURE_PATH\"\n").unwrap();
+    fs::write(
+        &codex,
+        "#!/bin/sh\nprintf launched > \"$TASKSEAL_CAPTURE_PATH\"\n",
+    )
+    .unwrap();
     fs::set_permissions(&codex, fs::Permissions::from_mode(0o755)).unwrap();
 
     let output = Command::new("/usr/bin/expect")
