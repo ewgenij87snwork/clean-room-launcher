@@ -151,7 +151,8 @@ EOF
 test "$(printf '%b' "$subject_records" | shasum -a 256 | awk '{print $1}')" = "$(jq -r '.subject.sha256' "$receipt")" || refuse SUBJECT_AGGREGATE
 
 tree_tuple=$(git ls-tree "$implementation_head" -- scripts/probe/provider-capabilities.sh)
-test "$tree_tuple" = "100755 blob e3089827b02914093474b72607d7b6a41547316a\tscripts/probe/provider-capabilities.sh" || refuse PUBLIC_PROBE_TUPLE
+expected_tree_tuple=$(printf '100755 blob e3089827b02914093474b72607d7b6a41547316a\tscripts/probe/provider-capabilities.sh')
+test "$tree_tuple" = "$expected_tree_tuple" || refuse PUBLIC_PROBE_TUPLE
 test "$(git ls-tree -r "$implementation_head" -- scripts/probe | wc -l | tr -d ' ')" = 1 || refuse PUBLIC_PROBE_DESCENDANTS
 test "$(git show "$implementation_head:scripts/probe/provider-capabilities.sh" | shasum -a 256 | awk '{print $1}')" = bfa281f230109be7927e82e3e263beb7f890e87a1d15e9c1adbdf5e98f7f536b || refuse PUBLIC_PROBE_CONTENT
 
