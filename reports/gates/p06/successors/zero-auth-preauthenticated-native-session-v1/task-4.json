@@ -20,6 +20,8 @@
       "P06-ZERO-AUTH-T4-FIX1-GREEN-OWNED-FMT-SCOPE-V1",
       "P06-ZERO-AUTH-T4-FIX2-RED-UNGOVERNED-PUBLIC-INVENTORY-V1",
       "P06-ZERO-AUTH-T4-FIX2-GREEN-GOVERNED-PUBLIC-INVENTORY-V1",
+      "P06-ZERO-AUTH-T4-FIX3-RED-SOURCE-SCANNER-SELF-MATCH-V1",
+      "P06-ZERO-AUTH-T4-FIX3-GREEN-CURRENT-SOURCE-INVENTORY-V1",
       "P06-ZERO-AUTH-T4-GREEN-SOLE-GATE-V1",
       "P06-ZERO-AUTH-T4-GREEN-DESCENDANT-DURABILITY-V1"
     ]
@@ -27,17 +29,17 @@
   "binding": {
     "scheme": "parent-bound-receipt.v2",
     "input_head": "6a54523b4dbf8869ca7035a7dc42df88ac11c45a",
-    "implementation_result_head": "f70e7b9996aa7598ec734379a83a506263cc8901",
-    "implementation_tree": "7bbcfeef623f2464d4927aced7fa92edddfa4fae",
-    "receipt_commit_parent": "f70e7b9996aa7598ec734379a83a506263cc8901",
-    "replaces_receipt_commit": "4ef2a33943689b468f8679f86de52930a3677175",
+    "implementation_result_head": "28e992a2e56ca3625909a11236d05affbed02e6f",
+    "implementation_tree": "ebdfa24bcce3f2fe288cd9bf3d67403c1418515b",
+    "receipt_commit_parent": "28e992a2e56ca3625909a11236d05affbed02e6f",
+    "replaces_receipt_commit": "95529ea783007d374bac6bddd990fe7f013b3e84",
     "parent_task_receipt": {
       "path": "reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/task-3.json",
       "commit": "6a54523b4dbf8869ca7035a7dc42df88ac11c45a",
       "blob_oid": "08febe5afe412e00e46f32d4c915f94e6cbe209d",
       "sha256": "8916cd8d268d91988931985ffb952b95fde491445f84ddbfa9a1c22352a68de8"
     },
-    "resolution": "Resolve exactly one commit in input_head..tip whose task-4 receipt blob equals these bytes; it must be a single-parent receipt-only child of implementation_result_head and replace receipt-only 4ef2a33. Repository subjects are read from that implementation commit, while the accepted Task 3 receipt is read from input_head."
+    "resolution": "Resolve exactly one commit in input_head..tip whose task-4 receipt blob equals these bytes; it must be a single-parent receipt-only child of implementation_result_head and replace receipt-only 95529ea. Repository subjects are read from that implementation commit, while the accepted Task 3 receipt is read from input_head."
   },
   "inputs": {
     "plan_checkpoint_path": "/Users/ysorokin/Documents/it/5-LVL - 2026/Temp in Projects/wisdom/taskseal/plans/2026-08-13-p06-zero-auth-preauthenticated-native-session-v1.md",
@@ -46,7 +48,7 @@
   },
   "subject": {
     "algorithm": "sha256 of sorted path, tab, sha256, newline repository records",
-    "sha256": "605686cd5ad953d4055dc0f456251c4cc6816b841d44eb278f6e4bc389dd2349",
+    "sha256": "41ff81cf2904c15d4ba10a3f824c0bd3cb696b9dba55c871b18045a040647ad0",
     "sources": [
       {
         "kind": "repository_implementation_commit",
@@ -86,7 +88,7 @@
       {
         "kind": "repository_implementation_commit",
         "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-4-receipt.sh",
-        "sha256": "2e8319b19043920301ecf94dcf0088997e074092fad1b36c6d38f830fe20d7ab"
+        "sha256": "912c1db5640b319885b0ceb5b5fbfe11ca89d2bbcc093bd719760b426c5ffd26"
       },
       {
         "kind": "repository_implementation_commit",
@@ -96,7 +98,7 @@
       {
         "kind": "repository_implementation_commit",
         "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/verify.sh",
-        "sha256": "5dacf9a31297dffddd580d39bce07c5a916ae8eb0b56bda436d03f38f79acc0a"
+        "sha256": "be1d1df990005c568c7d4d4577d7f0a86530e40c1ba5b10fc0d6dcae116ad8d7"
       },
       {
         "kind": "repository_implementation_commit",
@@ -174,6 +176,22 @@
       "output": "PUBLIC_BOUNDARY_PASS",
       "output_sha256": "8a2596d35cd02570cdff13102a64a0790947075783c9fee1c47651aaeb1b85c1",
       "meaning": "The current immutable Git release inventory passes the public-boundary checker; executable gate/evidence sources remain covered separately by the closed source inventory and receipt topology."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T4-FIX3-RED-SOURCE-SCANNER-SELF-MATCH-V1",
+      "command": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/verify.sh",
+      "exit": 1,
+      "output": "P06_ZERO_AUTH_SOURCE_REFUSAL:CREDENTIAL_EXTRACTION:scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/verify.sh",
+      "output_sha256": "23d74ba5046c2d46cac9be8f7fde4a38c830ace3727ed73a61d83d7882daa280",
+      "meaning": "The current scanner caught the verifier after an explanatory comment created a deny-pattern self-match; no scanner rule was weakened and no allowlist exception was added."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T4-FIX3-GREEN-CURRENT-SOURCE-INVENTORY-V1",
+      "command": "ruby scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/source-inventory.rb .",
+      "exit": 0,
+      "output": "P06_ZERO_AUTH_SOURCE_INVENTORY_PASS",
+      "output_sha256": "c26ada13069c9313b3692931e2784b7095cbef3d8e1ca11cf6a1402e3ab3531d",
+      "meaning": "Removing the nonessential comment term restored a clean current tracked-source scan without adding an exception."
     },
     {
       "id": "P06-ZERO-AUTH-T4-GREEN-SOLE-GATE-V1",
