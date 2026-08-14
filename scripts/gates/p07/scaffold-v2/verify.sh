@@ -39,9 +39,9 @@ def regular(rel):
 def load(data):
     try: return json.loads(data.decode(), object_pairs_hook=lambda pairs: dict(pairs))
     except Exception as exc: raise Refused("JSON") from exc
-def run(*args, **kw):
+def run(stage, *args, **kw):
     p = subprocess.run(args, cwd=root, text=True, capture_output=True, **kw)
-    if p.returncode: raise Refused("FOCUSED")
+    if p.returncode: raise Refused(stage)
     return p
 
 try:
@@ -59,15 +59,16 @@ try:
         if hashlib.sha256(blob).hexdigest() != digest or regular(path) != blob: raise Refused("RECEIPT_DIGEST")
     for task in (1, 2, 3):
         projection = regular(f"reports/gates/p07/scaffold-v2/task-{task}.json")
-        p = run(sys.executable, "scripts/gates/p07/scaffold-v2/normalize.py", "--root", str(root), "--task", str(task))
+        p = run(f"PROJECTION_T{task}", sys.executable, "scripts/gates/p07/scaffold-v2/normalize.py", "--root", str(root), "--task", str(task))
         if p.stdout.encode() != projection: raise Refused("PROJECTION")
-    p = run(sys.executable, "scripts/gates/p07/scaffold-v2/test-normalize.py")
+    p = run("NORMALIZER_FOCUSED", sys.executable, "scripts/gates/p07/scaffold-v2/test-normalize.py")
     if "P07_SCAFFOLD_V2_NORMALIZER_MUTATIONS_PASS" not in p.stdout: raise Refused("NORMALIZER")
-    for source, output in (("tests/packaging/target_matrix.rs", "/tmp/p07-exact-t1"), ("tests/packaging/no_skip.rs", "/tmp/p07-exact-t2"), ("tests/packaging/artifact_layout.rs", "/tmp/p07-exact-t3")):
-        run("rustc", "--test", source, "-o", output)
-        run(output)
+    compile_env = {**os.environ, "CARGO_MANIFEST_DIR": str(root)}
+    for task, (source, output) in enumerate((("tests/packaging/target_matrix.rs", "/tmp/p07-exact-t1"), ("tests/packaging/no_skip.rs", "/tmp/p07-exact-t2"), ("tests/packaging/artifact_layout.rs", "/tmp/p07-exact-t3")), 1):
+        run(f"FOCUSED_COMPILE_T{task}", "rustc", "--test", source, "-o", output, env=compile_env)
+        run(f"FOCUSED_RUN_T{task}", output)
     verifier = os.environ.get("P07_EXACT_CURRENT_VERIFIER", "scripts/release-build/verify-source.sh")
-    run(verifier, "--workflow", ".github/workflows/release-candidate.yml", "--subject-digest", git("rev-parse", "HEAD").strip(), "--scaffold")
+    run("SOURCE_VERIFIER", verifier, "--workflow", ".github/workflows/release-candidate.yml", "--subject-digest", git("rev-parse", "HEAD").strip(), "--scaffold")
     result = {"qualification":"NOT_QUALIFIED", "p07":"3/8", "overall":"3/7", "tasks":[1,2,3]}
     print(json.dumps(result, sort_keys=True, separators=(",", ":")))
     print("P07_EXACT_CURRENT_PREFLIGHT_PASS" if os.environ["P07_EXACT_CURRENT_MODE"] == "preflight" else "P07_PACKAGING_SCAFFOLD_EXACT_CURRENT_PASS")
