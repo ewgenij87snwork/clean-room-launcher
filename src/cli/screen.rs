@@ -64,7 +64,7 @@ pub fn render_unqualified(ready: PrepareReady) -> Vec<String> {
 
 pub fn render_unqualified_for(ready: PrepareReady, context: RenderContext) -> Vec<String> {
     let mut lines = vec![
-        "TaskSeal · provider qualification required".to_owned(),
+        "TaskSeal · local-first launcher".to_owned(),
         String::new(),
         format!("Project  {}", ready.project),
         format!("Preview  {}", ready.preview),

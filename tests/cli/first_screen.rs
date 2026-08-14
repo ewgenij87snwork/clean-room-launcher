@@ -76,7 +76,7 @@ fn real_tty_enter_dispatches_the_taskseal_owned_local_continuation() {
     assert!(output.stderr.is_empty());
     let transcript = String::from_utf8(output.stdout).unwrap().replace('\r', "");
     let screen_start = transcript
-        .find("TaskSeal · provider qualification required")
+        .find("TaskSeal · local-first launcher")
         .expect("real PTY output must select the interactive screen");
     let session = &transcript[screen_start..];
     assert!(

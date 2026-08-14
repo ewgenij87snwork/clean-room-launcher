@@ -1,4 +1,4 @@
-TaskSeal · provider qualification required
+TaskSeal · local-first launcher
 
 Project  project://offerstream
 Preview  18 KB at start · 43 KB less (read-only measurement)

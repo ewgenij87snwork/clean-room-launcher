@@ -1,5 +1,4 @@
-TaskSeal · provider qualification
-required
+TaskSeal · local-first launcher
 
 Project
 project://offerstream
