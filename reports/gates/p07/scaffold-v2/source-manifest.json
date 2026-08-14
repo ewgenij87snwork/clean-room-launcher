@@ -1,0 +1,8 @@
+{
+  "schema_version": "taskseal.p07.scaffold-v2.source-manifest.v1",
+  "entries": [
+    {"task": 1, "path": "reports/gates/p07/task-1.json", "commit": "fd43bb83074e1dd75b5d7f44d9973f790e746a80", "sha256": "3d06a78a25f463405d8ee3ce8a31e344f38d698fce3b3d303a73e5dcd2b35f06", "implementation_selector": "correction_implementation_head"},
+    {"task": 2, "path": "reports/gates/p07/task-2.json", "commit": "cee78ac90ae9a4dc3b07518089df26c8d64f68d1", "sha256": "3f2e59a113bcb38c6a53b14d8ee70c37823a29cdc2ef603d1b26b6da9f1d571a", "implementation_selector": "implementation_head"},
+    {"task": 3, "path": "reports/gates/p07/task-3.json", "commit": "0d5b7fbc9a079e8816bf4acfef6ee0e5b741a123", "sha256": "26d05b906e14c6c9aeaf24b392082578ac788689b4cac7a088b80da170e2caef", "implementation_selector": "implementation_head"}
+  ]
+}
