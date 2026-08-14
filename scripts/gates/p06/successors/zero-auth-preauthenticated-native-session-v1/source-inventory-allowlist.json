@@ -98,6 +98,12 @@
       "rationale": "Offline receipt checker: matched terms are sealed evidence labels and JSON equality assertions; it invokes Git/JQ/hash tools only and no provider interface."
     },
     {
+      "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-4-receipt-durability.sh",
+      "sha256": "91a8c70997f74a68ded69d865236c7336ad836ff3645fef1d99f804be014add2",
+      "matched_classes": ["CREDENTIAL_COPY"],
+      "rationale": "Offline receipt-ancestry mutation: a local copy rebuilds a disposable receipt-only Git fixture and never reads, copies, or transports a credential."
+    },
+    {
       "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-verify.sh",
       "sha256": "b65ffe7a069f7720d5e79282087e1dda4e26b50d2fd74fcd3f7d814971d0a59f",
       "matched_classes": ["CREDENTIAL_EXTRACTION", "TOKEN_INPUT"],

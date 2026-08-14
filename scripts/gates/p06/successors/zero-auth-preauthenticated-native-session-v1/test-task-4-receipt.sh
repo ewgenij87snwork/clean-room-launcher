@@ -23,12 +23,18 @@ cd "$root"
 
 implementation_head=$(jq -er '.binding.implementation_result_head' "$receipt") || refuse IMPLEMENTATION_HEAD
 implementation_tree=$(jq -er '.binding.implementation_tree' "$receipt") || refuse IMPLEMENTATION_TREE
+predecessor_receipt_commit=$(jq -er '.binding.predecessor_task_receipt.commit' "$receipt") || refuse PREDECESSOR_RECEIPT_COMMIT
+predecessor_receipt_blob=$(jq -er '.binding.predecessor_task_receipt.blob_oid' "$receipt") || refuse PREDECESSOR_RECEIPT_BLOB
+predecessor_receipt_sha256=$(jq -er '.binding.predecessor_task_receipt.sha256' "$receipt") || refuse PREDECESSOR_RECEIPT_DIGEST
 
 jq -e \
   --arg input_head "$input_head" \
   --arg correction_input_head "$correction_input_head" \
   --arg implementation_head "$implementation_head" \
-  --arg implementation_tree "$implementation_tree" '
+  --arg implementation_tree "$implementation_tree" \
+  --arg predecessor_receipt_commit "$predecessor_receipt_commit" \
+  --arg predecessor_receipt_blob "$predecessor_receipt_blob" \
+  --arg predecessor_receipt_sha256 "$predecessor_receipt_sha256" '
   keys == ["acceptance","binding","evidence","inputs","invariant","plan_id","preserved_controls","result","schema_version","seal_tdd","subject","task"] and
   .schema_version == "taskseal.p06.zero-auth-preauthenticated-native-session-v1.task-receipt.v2" and
   .plan_id == "P06-ZERO-AUTH-PREAUTHENTICATED-NATIVE-SESSION-V1" and
@@ -51,12 +57,12 @@ jq -e \
     implementation_result_head:$implementation_head,
     implementation_tree:$implementation_tree,
     receipt_commit_parent:$implementation_head,
-    replaces_receipt_commit:"96687d9d40804d3751263b4a8c93ee4d95c2b4d1",
+    replaces_receipt_commit:$predecessor_receipt_commit,
     predecessor_task_receipt:{
       path:"reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/task-4.json",
-      commit:"96687d9d40804d3751263b4a8c93ee4d95c2b4d1",
-      blob_oid:"17b805f4dd2516ba0b412b70a6c45591b4106001",
-      sha256:"98baf6328c73b4196c6d2c7fbec333b4adf61cfad4c2ef65ced745c7aea84dcd"
+      commit:$predecessor_receipt_commit,
+      blob_oid:$predecessor_receipt_blob,
+      sha256:$predecessor_receipt_sha256
     },
     parent_task_receipt:{
       path:"reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/task-3.json",
@@ -65,6 +71,9 @@ jq -e \
       sha256:"8916cd8d268d91988931985ffb952b95fde491445f84ddbfa9a1c22352a68de8"
     }
   } and
+  (.binding.predecessor_task_receipt.commit | test("^[0-9a-f]{40}$")) and
+  (.binding.predecessor_task_receipt.blob_oid | test("^[0-9a-f]{40}$")) and
+  (.binding.predecessor_task_receipt.sha256 | test("^[0-9a-f]{64}$")) and
   .inputs == {
     plan_checkpoint_path:"/Users/ysorokin/Documents/it/5-LVL - 2026/Temp in Projects/wisdom/taskseal/plans/2026-08-13-p06-zero-auth-preauthenticated-native-session-v1.md",
     plan_checkpoint_sha256:"b26939c0863cb8760baa89418d2817ddc732ab5cf5b1551d08218ef585f1ed68",
@@ -130,7 +139,7 @@ test "$(git rev-parse "$implementation_head^{tree}")" = "$implementation_tree" |
 git merge-base --is-ancestor "$correction_input_head" "$implementation_head" || refuse CORRECTION_LINEAGE
 test -z "$(git rev-list --min-parents=2 "$correction_input_head..$implementation_head")" || refuse IMPLEMENTATION_MERGE
 
-predecessor_receipt_commit=$(jq -r '.binding.predecessor_task_receipt.commit' "$receipt")
+test "$(git rev-parse "$implementation_head^")" = "$predecessor_receipt_commit" || refuse PREDECESSOR_RECEIPT_ANCESTRY
 test "$(git rev-parse "$predecessor_receipt_commit:$receipt_rel")" = "$(jq -r '.binding.predecessor_task_receipt.blob_oid' "$receipt")" || refuse PREDECESSOR_RECEIPT_BLOB
 test "$(git show "$predecessor_receipt_commit:$receipt_rel" | shasum -a 256 | awk '{print $1}')" = "$(jq -r '.binding.predecessor_task_receipt.sha256' "$receipt")" || refuse PREDECESSOR_RECEIPT_DIGEST
 test "$(git rev-parse "$input_head:$parent_receipt_rel")" = "$(jq -r '.binding.parent_task_receipt.blob_oid' "$receipt")" || refuse PARENT_RECEIPT_BLOB
