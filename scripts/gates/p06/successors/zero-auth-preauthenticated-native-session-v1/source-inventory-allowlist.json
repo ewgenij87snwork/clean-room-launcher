@@ -98,20 +98,14 @@
       "rationale": "Offline receipt checker: matched terms are sealed evidence labels and JSON equality assertions; it invokes Git/JQ/hash tools only and no provider interface."
     },
     {
-      "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-4-receipt.sh",
-      "sha256": "45e9f7ea01e9859401896e92eeb2a479d28078a22a5943a1ba3a40e648bab4d7",
-      "matched_classes": ["TOKEN_INPUT"],
-      "rationale": "Offline receipt checker: access-token flags are exact rejected-selector evidence assertions; the script reads no credential value and exposes no provider interface."
-    },
-    {
       "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-verify.sh",
-      "sha256": "a0ca36f515a041e7f02b2122d39f08ed742a4dfd9b7b9061148c7aee4a38c7ca",
+      "sha256": "b65ffe7a069f7720d5e79282087e1dda4e26b50d2fd74fcd3f7d814971d0a59f",
       "matched_classes": ["CREDENTIAL_EXTRACTION", "TOKEN_INPUT"],
       "rationale": "Offline metadata mutation suite: matched access-token text is removed from disposable JSON copies to prove the gate refuses weakened evidence; it reads no credential source and starts no provider."
     },
     {
       "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/verify.sh",
-      "sha256": "45ad66b7b1d44d2e60c142a002ad2c76dacfd1b5dd37fce703e5d81a9320b21f",
+      "sha256": "03d711c5975ee3f102f66555920c33a68da53df446fcce758859d11e0b9f4f1d",
       "matched_classes": ["TOKEN_INPUT"],
       "rationale": "Offline consolidated verifier: access-token forms are exact refused-selector metadata assertions; the script reads no credential value and exposes no provider interface."
     },

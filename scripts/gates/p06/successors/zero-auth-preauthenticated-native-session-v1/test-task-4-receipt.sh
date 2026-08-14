@@ -51,12 +51,12 @@ jq -e \
     implementation_result_head:$implementation_head,
     implementation_tree:$implementation_tree,
     receipt_commit_parent:$implementation_head,
-    replaces_receipt_commit:"6e7c31fa97c36486d66a013d3bc11f2b5579fbd9",
+    replaces_receipt_commit:"96687d9d40804d3751263b4a8c93ee4d95c2b4d1",
     predecessor_task_receipt:{
       path:"reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/task-4.json",
-      commit:"6e7c31fa97c36486d66a013d3bc11f2b5579fbd9",
-      blob_oid:"e6ee2ef198dd81c3b191907e1a6b9577ebd3ac3d",
-      sha256:"fcadc7d994988142a0b893be011a0fc5f6d2443cbb095a4b4721fa7f60e15c37"
+      commit:"96687d9d40804d3751263b4a8c93ee4d95c2b4d1",
+      blob_oid:"17b805f4dd2516ba0b412b70a6c45591b4106001",
+      sha256:"98baf6328c73b4196c6d2c7fbec333b4adf61cfad4c2ef65ced745c7aea84dcd"
     },
     parent_task_receipt:{
       path:"reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/task-3.json",
