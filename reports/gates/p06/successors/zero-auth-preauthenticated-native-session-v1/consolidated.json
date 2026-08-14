@@ -153,26 +153,21 @@
       "src/adapters/identity.rs::require_preauthenticated_session"
     ],
     "inventory": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/entrypoint-inventory.json",
-    "shell_source_scope": "RECURSIVE_GIT_TRACKED_REGULAR_SOURCES_UNDER_SCRIPTS_PROBE",
-    "shell_source_inventory": "CLOSED_PATH_AND_MODE_LIST",
-    "shell_extensions": [
-      ".sh",
-      ".bash",
-      ".zsh"
-    ],
-    "shell_regular_modes": [
-      "100644",
-      "100755"
-    ],
-    "extensionless_tracked_path": "REFUSED_REGARDLESS_OF_CONTENT",
-    "shell_symlink_or_mode_violation": "REFUSED_REGARDLESS_OF_EXTENSION",
-    "provider_command_positions": "ALL_STATIC_DIRECT_WITH_MULTILINE_CONTINUATIONS",
-    "ambiguous_provider_dispatch": "REFUSED",
-    "guard_requirement": "SAME_FILE_EXECUTABLE_GUARD_BEFORE_EVERY_BIRTH_OCCURRENCE",
-    "tracked_probe_shell_source_count": 1,
+    "public_probe_treeish": "HEAD_COMMITTED_IMPLEMENTATION_TREE",
+    "public_probe_path": "scripts/probe/provider-capabilities.sh",
+    "public_probe_mode": "100755",
+    "public_probe_object_type": "blob",
+    "public_probe_blob_oid": "e3089827b02914093474b72607d7b6a41547316a",
+    "public_probe_content_sha256": "bfa281f230109be7927e82e3e263beb7f890e87a1d15e9c1adbdf5e98f7f536b",
+    "public_probe_purpose": "Observe provider capabilities only after opaque preauthenticated-session availability is established.",
+    "public_probe_scope": "V0_1_PUBLIC_PROBE_EXECUTABLE",
+    "tracked_public_probe_descendant_count": 1,
+    "unexpected_public_probe_descendant": "REFUSED",
+    "public_probe_tuple_mismatch": "REFUSED",
+    "generic_shell_analysis_claimed": false,
     "cli_entrypoint_count": 2,
-    "provider_birth_count": 5,
-    "future_unguarded_route_allowed": false
+    "rust_provider_birth_count": 1,
+    "future_unguarded_rust_route_allowed": false
   },
   "git": {
     "input_head": "6a54523b4dbf8869ca7035a7dc42df88ac11c45a",
@@ -187,6 +182,7 @@
       "fixtures/cli/first-screen-unqualified.txt",
       "reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/consolidated.json",
       "reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/task-4.json",
+      "scripts/check-public-boundary.sh",
       "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/entrypoint-inventory.json",
       "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/entrypoint-inventory.rb",
       "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/source-inventory-allowlist.json",

@@ -1,5 +1,5 @@
 {
-  "schema_version": "taskseal.p06.zero-auth.entrypoint-inventory.v1",
+  "schema_version": "taskseal.p06.zero-auth.entrypoint-inventory.v2",
   "cli_boundary": {
     "source": "src/cli/mod.rs",
     "sensitive_predicate": "zero_auth::is_sensitive_argument(&argument)",
@@ -18,60 +18,27 @@
       }
     ]
   },
-  "shell_source_policy": {
-    "root": "scripts/probe",
-    "inventory": "GIT_TRACKED_RECURSIVE",
-    "extensions": [
-      ".sh",
-      ".bash",
-      ".zsh"
-    ],
-    "regular_modes": [
-      "100644",
-      "100755"
-    ],
-    "extensionless_tracked_path": "REFUSED_REGARDLESS_OF_CONTENT",
-    "non_regular_or_symlink": "REFUSED_REGARDLESS_OF_EXTENSION",
-    "provider_command_positions": "ALL_STATIC_DIRECT_WITH_MULTILINE_CONTINUATIONS",
-    "ambiguous_dispatch": "REFUSED",
-    "guard": "SAME_FILE_EXECUTABLE_BEFORE_EVERY_BIRTH_OCCURRENCE"
+  "public_probe": {
+    "path": "scripts/probe/provider-capabilities.sh",
+    "mode": "100755",
+    "object_type": "blob",
+    "blob_oid": "e3089827b02914093474b72607d7b6a41547316a",
+    "content_sha256": "bfa281f230109be7927e82e3e263beb7f890e87a1d15e9c1adbdf5e98f7f536b",
+    "purpose": "Observe provider capabilities only after opaque preauthenticated-session availability is established.",
+    "scope": "V0_1_PUBLIC_PROBE_EXECUTABLE"
   },
-  "shell_sources": [
-    {
-      "path": "scripts/probe/provider-capabilities.sh",
-      "mode": "100755"
-    }
-  ],
-  "provider_births": [
-    {
-      "path": "scripts/probe/provider-capabilities.sh",
-      "line": "version=$(codex --version)"
-    },
-    {
-      "path": "scripts/probe/provider-capabilities.sh",
-      "line": "start_json=$(CODEX_HOME=\"$ephemeral_home\" codex debug prompt-input 'TASKSEAL_START_PROBE')"
-    },
-    {
-      "path": "scripts/probe/provider-capabilities.sh",
-      "line": "invoked_json=$(CODEX_HOME=\"$ephemeral_home\" codex debug prompt-input '$taskseal-canary TASKSEAL_CANARY_TRIGGER')"
-    },
-    {
-      "path": "scripts/probe/provider-capabilities.sh",
-      "line": "version=$(claude --version)"
-    },
-    {
-      "path": "src/adapters/identity.rs",
-      "line": "let output = Command::new(&real_executable)"
-    }
-  ],
-  "provider_guards": [
-    {
-      "path": "scripts/probe/provider-capabilities.sh",
-      "marker": "require_preauthenticated_session \"$preauthenticated_session\""
-    },
-    {
-      "path": "src/adapters/identity.rs",
-      "marker": "require_preauthenticated_session(session)"
-    }
-  ]
+  "rust_identity_boundary": {
+    "provider_births": [
+      {
+        "path": "src/adapters/identity.rs",
+        "line": "let output = Command::new(&real_executable)"
+      }
+    ],
+    "provider_guards": [
+      {
+        "path": "src/adapters/identity.rs",
+        "marker": "require_preauthenticated_session(session)"
+      }
+    ]
+  }
 }
