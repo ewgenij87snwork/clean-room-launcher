@@ -68,23 +68,29 @@
       "P06-ZERO-AUTH-T4-FIX8-GREEN-CLOSED-SHELL-SOURCE-INVENTORY-V1",
       "P06-ZERO-AUTH-T4-FIX8-RED-REPLACEMENT-RECEIPT-V1",
       "P06-ZERO-AUTH-T4-FIX8-GREEN-SOLE-GATE-V1",
-      "P06-ZERO-AUTH-T4-FIX8-GREEN-DESCENDANT-DURABILITY-V1"
+      "P06-ZERO-AUTH-T4-FIX8-GREEN-DESCENDANT-DURABILITY-V1",
+      "P06-ZERO-AUTH-T4-FIX9-RED-PROVIDER-INVENTORY-COMPLETENESS-V1",
+      "P06-ZERO-AUTH-T4-FIX9-GREEN-STATIC-DIRECT-AND-PATH-HAZARDS-V1",
+      "P06-ZERO-AUTH-T4-FIX9-GREEN-GATE-MUTATIONS-V1",
+      "P06-ZERO-AUTH-T4-FIX9-RED-REPLACEMENT-RECEIPT-V1",
+      "P06-ZERO-AUTH-T4-FIX9-GREEN-SOLE-GATE-V1",
+      "P06-ZERO-AUTH-T4-FIX9-GREEN-DESCENDANT-DURABILITY-V1"
     ]
   },
   "binding": {
     "scheme": "parent-bound-receipt.v2",
     "input_head": "6a54523b4dbf8869ca7035a7dc42df88ac11c45a",
-    "implementation_result_head": "c2ddbf1111300b9dc5d5a54bc31765a57777bbb5",
-    "implementation_tree": "42e459d3bacb73c09a08653cd3c40b1787f70d90",
-    "receipt_commit_parent": "c2ddbf1111300b9dc5d5a54bc31765a57777bbb5",
-    "replaces_receipt_commit": "1f82eb2650a86a07094e0a9bf0a4a2f0a54d728a",
+    "implementation_result_head": "6daec07d464894a2a7ca0e2d2653643dbbcb661e",
+    "implementation_tree": "86531094fbddd82cdb8450143f92382c87920e2d",
+    "receipt_commit_parent": "6daec07d464894a2a7ca0e2d2653643dbbcb661e",
+    "replaces_receipt_commit": "16903809695cb8a0b35546b34d1e7fae94907c3d",
     "parent_task_receipt": {
       "path": "reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/task-3.json",
       "commit": "6a54523b4dbf8869ca7035a7dc42df88ac11c45a",
       "blob_oid": "08febe5afe412e00e46f32d4c915f94e6cbe209d",
       "sha256": "8916cd8d268d91988931985ffb952b95fde491445f84ddbfa9a1c22352a68de8"
     },
-    "resolution": "Resolve exactly one commit in input_head..tip whose task-4 receipt blob equals these bytes; it must be a single-parent receipt-only child of implementation_result_head and replace receipt-only 1f82eb2. Repository subjects are read from that implementation commit, while the accepted Task 3 receipt is read from input_head."
+    "resolution": "Resolve exactly one commit in input_head..tip whose task-4 receipt blob equals these bytes; it must be a single-parent receipt-only child of implementation_result_head and replace receipt-only 1690380. Repository subjects are read from that implementation commit, while the accepted Task 3 receipt is read from input_head."
   },
   "inputs": {
     "plan_checkpoint_path": "/Users/ysorokin/Documents/it/5-LVL - 2026/Temp in Projects/wisdom/taskseal/plans/2026-08-13-p06-zero-auth-preauthenticated-native-session-v1.md",
@@ -93,7 +99,7 @@
   },
   "subject": {
     "algorithm": "sha256 of sorted path, tab, sha256, newline repository records",
-    "sha256": "36b1ef53bbabb01ff8fd6d5724c74583a3ee0a9c47476cdeb97b868a81f6266b",
+    "sha256": "104397890b45ea3d2a37c1f1750213d322f3435d15893a3a66ca62d7eed15db7",
     "sources": [
       {
         "kind": "repository_implementation_commit",
@@ -123,27 +129,27 @@
       {
         "kind": "repository_implementation_commit",
         "path": "reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/consolidated.json",
-        "sha256": "845374d7714bb6c9b5f5c0301ae48e2d3d3dd8835f852b853f068d5d34711ce5"
+        "sha256": "2f5c9e6d11ca28fad9d1ab6e9c097d045a20ac8c5607292546714ff19a5dc9dc"
       },
       {
         "kind": "repository_implementation_commit",
         "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/entrypoint-inventory.json",
-        "sha256": "5b6956a0b9923709848d8988547a28347215a99958b80f999eed1cc1f417eec8"
+        "sha256": "f4127a6c85f15348a631554943684dab3a95da11e7052257aca3adbeadc3bb6e"
       },
       {
         "kind": "repository_implementation_commit",
         "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/entrypoint-inventory.rb",
-        "sha256": "af122fa17e4c09ee34644ff5f4d7641272d75b96b87055fec870779bd6eb7f02"
+        "sha256": "0cda25e7ea44ffb8d38eb2c9c5788a87e034ec8279149dc4dbd2dd3e4820c33e"
       },
       {
         "kind": "repository_implementation_commit",
         "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/source-inventory-allowlist.json",
-        "sha256": "c82f1d8a92c230dea00aa326d0243e359cbfddde2d907550de984aeb88f352fd"
+        "sha256": "b286c282505fe2c57c0ad084a5e780f2f8e9cfb79053a466ed52923da60b2051"
       },
       {
         "kind": "repository_implementation_commit",
         "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-entrypoint-inventory.sh",
-        "sha256": "f994a2dc342944cf9ab9313efb66140cae2c88b2cbfd6540b4bc9b18943611b1"
+        "sha256": "aba44d0289dbc7b023c5c73988ba4faded90fddc7562d61324cbfe55b620f371"
       },
       {
         "kind": "repository_implementation_commit",
@@ -153,17 +159,17 @@
       {
         "kind": "repository_implementation_commit",
         "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-4-receipt.sh",
-        "sha256": "00e5722c0e9541096a73bedf99ba7f147fcdec79cc080920f2773b2a6198c40e"
+        "sha256": "45e9f7ea01e9859401896e92eeb2a479d28078a22a5943a1ba3a40e648bab4d7"
       },
       {
         "kind": "repository_implementation_commit",
         "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-verify.sh",
-        "sha256": "ce4883557cf4b29019b555f50786da0079153376deaf6b52d8604b6b36d74b04"
+        "sha256": "a0ca36f515a041e7f02b2122d39f08ed742a4dfd9b7b9061148c7aee4a38c7ca"
       },
       {
         "kind": "repository_implementation_commit",
         "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/verify.sh",
-        "sha256": "30d1d11c914705574cb2d3f4bf5e83ce6a55af80459dcc0b65b8a9b25e92f9e8"
+        "sha256": "45ad66b7b1d44d2e60c142a002ad2c76dacfd1b5dd37fce703e5d81a9320b21f"
       },
       {
         "kind": "repository_implementation_commit",
@@ -713,6 +719,54 @@
       "output": "P06_ZERO_AUTH_TASK_4_RECEIPT_DURABILITY_PASS",
       "output_sha256": "841416c45acc4134e8ece2f0c3c03f3156a028404432d8c9a70d4c1d1210d020",
       "meaning": "A local no-network clone added a descendant after the provider-inventory replacement receipt and reproduced its unique parent-bound topology and 32 committed subject sources."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T4-FIX9-RED-PROVIDER-INVENTORY-COMPLETENESS-V1",
+      "command": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-entrypoint-inventory.sh",
+      "exit": 1,
+      "output": "P06_ZERO_AUTH_EXPECTED_ENTRYPOINT_REFUSAL_MISSING:extensionless_sourceable_path",
+      "output_sha256": "64775e02e213aaedaf69d5adaf0b20b2f981d2f53dba833e51d846bdf485c287",
+      "meaning": "The focused completeness RED introduced representative static direct command-position and path-hazard fixtures; its first uncovered case proved that a tracked extensionless sourceable path without a shell shebang silently bypassed the predecessor inventory."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T4-FIX9-GREEN-STATIC-DIRECT-AND-PATH-HAZARDS-V1",
+      "command": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-entrypoint-inventory.sh",
+      "exit": 0,
+      "output": "P06_ZERO_AUTH_ENTRYPOINT_INVENTORY_TEST_PASS",
+      "output_sha256": "e3d44805a657e669eea8cc62bc1593df506cdbeb3ea480fb5a14b2a92c773646",
+      "meaning": "The lexical inventory now detects bare, exec, -p, env, quoted-path-basename and multiline Codex/Claude command positions, rejects ambiguous dispatch forms, ignores provider words used only as quoted arguments, and refuses extensionless regular, symlink and gitlink paths independent of extension."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T4-FIX9-GREEN-GATE-MUTATIONS-V1",
+      "command": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-verify.sh",
+      "exit": 0,
+      "output": "P06_ZERO_AUTH_GATE_MUTATIONS_PASS",
+      "output_sha256": "b8c5990f4f0299c2a4617fcbdafd5246a7cd8fe9959a0603f88d0c4a9356140f",
+      "meaning": "The consolidated metadata mutations bind all static direct provider command positions, multiline normalization, content-independent extensionless refusal, extension-independent mode refusal and ambiguous-dispatch refusal."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T4-FIX9-RED-REPLACEMENT-RECEIPT-V1",
+      "command": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-4-receipt.sh",
+      "exit": 1,
+      "output": "P06_ZERO_AUTH_TASK_4_RECEIPT_REFUSAL:RECEIPT_CONTRACT",
+      "output_sha256": "83b45149afb5e944ec80635c75db0137640b84eea964af5858a98e9f0400b735",
+      "meaning": "At implementation HEAD 6daec07, the tightened checker rejected the predecessor receipt before the completeness evidence and exact parent binding were sealed."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T4-FIX9-GREEN-SOLE-GATE-V1",
+      "command": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/verify.sh",
+      "exit": 0,
+      "output": "P06_ZERO_AUTH_PREAUTHENTICATED_NATIVE_SESSION_V1_PASS",
+      "output_sha256": "d3886f15e1c3a16f998ead34e9696664e546a0aa5c11fe57d8a5e5f5fdc88bd7",
+      "meaning": "The sole offline gate accepted provider-inventory completeness together with all prior zero-auth controls, inventories, receipts, immutable history/write-set, sealed SSOT prefix and pending terminal-review topology."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T4-FIX9-GREEN-DESCENDANT-DURABILITY-V1",
+      "command": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-4-receipt-durability.sh",
+      "exit": 0,
+      "output": "P06_ZERO_AUTH_TASK_4_RECEIPT_DURABILITY_PASS",
+      "output_sha256": "841416c45acc4134e8ece2f0c3c03f3156a028404432d8c9a70d4c1d1210d020",
+      "meaning": "A local no-network descendant reproduces the unique receipt-only parent binding and committed 32-source subject after the completeness seal."
     }
   ],
   "seal_tdd": {
@@ -798,8 +852,10 @@
       "100644",
       "100755"
     ],
-    "extensionless_probe_shell_source": "REFUSED",
-    "probe_shell_symlink_or_mode_violation": "REFUSED",
+    "extensionless_probe_tracked_path": "REFUSED_REGARDLESS_OF_CONTENT",
+    "probe_shell_symlink_or_mode_violation": "REFUSED_REGARDLESS_OF_EXTENSION",
+    "provider_command_positions": "ALL_STATIC_DIRECT_WITH_MULTILINE_CONTINUATIONS",
+    "ambiguous_provider_dispatch": "REFUSED",
     "provider_guard_requirement": "SAME_FILE_EXECUTABLE_GUARD_BEFORE_EVERY_BIRTH_OCCURRENCE",
     "tracked_probe_shell_source_count": 1,
     "cli_entrypoint_count": 2,
