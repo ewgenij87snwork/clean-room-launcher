@@ -168,6 +168,7 @@ done
 receipt_blob=$(git hash-object "$receipt")
 receipt_commits=""
 for commit in $(git rev-list --reverse "$correction_input_head..HEAD"); do
+  test "$(git diff-tree --no-commit-id --name-only -r "$commit" -- "$receipt_rel")" = "$receipt_rel" || continue
   if test "$(git rev-parse "$commit:$receipt_rel" 2>/dev/null || true)" = "$receipt_blob"; then
     receipt_commits="${receipt_commits}${commit}\n"
   fi
