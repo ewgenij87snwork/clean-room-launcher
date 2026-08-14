@@ -76,6 +76,8 @@ def main() -> int:
         m("extra manifest key", lambda r: mutate_manifest(r, lambda x: x["entries"][0].__setitem__("extra", True)))
         m("duplicate manifest task", lambda r: mutate_manifest(r, lambda x: x["entries"][1].__setitem__("task", 1)))
         m("duplicate manifest path", lambda r: mutate_manifest(r, lambda x: x["entries"][1].__setitem__("path", x["entries"][0]["path"])))
+        m("null manifest entry", lambda r: mutate_manifest(r, lambda x: x["entries"].__setitem__(1, None)))
+        m("scalar manifest entry", lambda r: mutate_manifest(r, lambda x: x["entries"].__setitem__(1, "task-2")))
         m("wrong selector", lambda r: mutate_manifest(r, lambda x: x["entries"][0].__setitem__("implementation_selector", "implementation_head")))
         m("source receipt subject mutation", lambda r: source(r).write_text(source(r).read_text().replace("392a949", "492a949", 1)))
         m("source receipt task mutation", lambda r: source(r).write_text(source(r).read_text().replace('"task": 1', '"task": 2', 1)))

@@ -112,12 +112,12 @@ def validate_manifest(root: Path) -> None:
     if set(data) != MANIFEST_KEYS or data["schema_version"] != "taskseal.p07.scaffold-v2.source-manifest.v1":
         raise Refused("manifest shape")
     entries = data["entries"]
-    if not isinstance(entries, list) or [e.get("task") for e in entries] != [1, 2, 3]:
+    if not isinstance(entries, list) or any(not isinstance(entry, dict) or set(entry) != ENTRY_KEYS for entry in entries):
+        raise Refused("manifest tasks")
+    if [entry["task"] for entry in entries] != [1, 2, 3]:
         raise Refused("manifest tasks")
     seen_paths: set[str] = set()
     for task, entry in enumerate(entries, 1):
-        if not isinstance(entry, dict) or set(entry) != ENTRY_KEYS:
-            raise Refused("manifest entry shape")
         profile = SOURCE_PROFILES[task]
         if entry != {"task": task, "path": profile["path"], "commit": profile["commit"], "sha256": profile["sha256"], "implementation_selector": profile["selector"]}:
             raise Refused("manifest identity")
