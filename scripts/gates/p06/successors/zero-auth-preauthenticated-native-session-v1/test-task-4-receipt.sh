@@ -208,7 +208,7 @@ jq -e \
     "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/verify.sh",
     "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-4-receipt-durability.sh"
   ] and
-  [.evidence[].exit] == [101,0,1,0,1,0,1,0,1,0,0,0,101,0,0,1,0,0,101,0,0,1,1,0,0,101,0,0,0,0,1,0,0,101,0,0,101,0,101,0,1,0,0,1,0,0,1,0,1,0,1,0,1,0,1,0,1,0,0] and
+  [.evidence[].exit] == [101,0,1,0,1,0,1,0,1,0,0,0,101,0,0,1,0,0,101,0,0,1,1,0,0,101,0,0,0,0,1,0,0,101,0,0,101,0,101,0,1,0,0,1,0,0,1,0,1,0,1,0,1,0,1,0,0] and
   [.evidence[].output] == [
     "error[E0425]: RenderContext and render_unqualified_for are absent",
     "test result: ok. 4 passed; 0 failed; 0 ignored",

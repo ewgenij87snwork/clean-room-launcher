@@ -99,7 +99,7 @@
     },
     {
       "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-4-receipt.sh",
-      "sha256": "09aa7ff906471e53415ac9368d835f42df8f4dcb56d26bbf02ff96016166e16f",
+      "sha256": "00e5722c0e9541096a73bedf99ba7f147fcdec79cc080920f2773b2a6198c40e",
       "matched_classes": ["TOKEN_INPUT"],
       "rationale": "Offline receipt checker: access-token flags are exact rejected-selector evidence assertions; the script reads no credential value and exposes no provider interface."
     },
