@@ -51,12 +51,12 @@ jq -e \
     implementation_result_head:$implementation_head,
     implementation_tree:$implementation_tree,
     receipt_commit_parent:$implementation_head,
-    replaces_receipt_commit:$correction_input_head,
+    replaces_receipt_commit:"73345be84c8e67638718e1360b568365796662a9",
     predecessor_task_receipt:{
       path:"reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/task-4.json",
-      commit:$correction_input_head,
-      blob_oid:"d868cfabeed248ed4aa19c29aabb420f9d753927",
-      sha256:"0a04f635e9d754b57caadbe263d594f3936dc41104b65450b5c98db46c050258"
+      commit:"73345be84c8e67638718e1360b568365796662a9",
+      blob_oid:"9d5c252d046e52eb83e04f961ccfe78e9cb23590",
+      sha256:"cb9ce76b35afe199b1012d50af2c8e610fa091aa2297f30ab39014d4c7b6f966"
     },
     parent_task_receipt:{
       path:"reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/task-3.json",
@@ -130,8 +130,9 @@ test "$(git rev-parse "$implementation_head^{tree}")" = "$implementation_tree" |
 git merge-base --is-ancestor "$correction_input_head" "$implementation_head" || refuse CORRECTION_LINEAGE
 test -z "$(git rev-list --min-parents=2 "$correction_input_head..$implementation_head")" || refuse IMPLEMENTATION_MERGE
 
-test "$(git rev-parse "$correction_input_head:$receipt_rel")" = "$(jq -r '.binding.predecessor_task_receipt.blob_oid' "$receipt")" || refuse PREDECESSOR_RECEIPT_BLOB
-test "$(git show "$correction_input_head:$receipt_rel" | shasum -a 256 | awk '{print $1}')" = "$(jq -r '.binding.predecessor_task_receipt.sha256' "$receipt")" || refuse PREDECESSOR_RECEIPT_DIGEST
+predecessor_receipt_commit=$(jq -r '.binding.predecessor_task_receipt.commit' "$receipt")
+test "$(git rev-parse "$predecessor_receipt_commit:$receipt_rel")" = "$(jq -r '.binding.predecessor_task_receipt.blob_oid' "$receipt")" || refuse PREDECESSOR_RECEIPT_BLOB
+test "$(git show "$predecessor_receipt_commit:$receipt_rel" | shasum -a 256 | awk '{print $1}')" = "$(jq -r '.binding.predecessor_task_receipt.sha256' "$receipt")" || refuse PREDECESSOR_RECEIPT_DIGEST
 test "$(git rev-parse "$input_head:$parent_receipt_rel")" = "$(jq -r '.binding.parent_task_receipt.blob_oid' "$receipt")" || refuse PARENT_RECEIPT_BLOB
 
 expected_paths=$(git diff --name-only "$correction_input_head..$implementation_head")
