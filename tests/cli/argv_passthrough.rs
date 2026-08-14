@@ -236,12 +236,12 @@ fn provider_and_generic_refusal_do_not_consume_credential_shaped_tails() {
     // Break caught: collecting or cloning argv reads API-key/token values before zero-auth refusal.
     for (prefix, unread_tail, expected_calls) in [
         (
-            vec!["codex".to_owned()],
+            vec!["codex".to_owned(), "--".to_owned(), "--api-key".to_owned()],
             vec![
                 "--api-key".to_owned(),
                 "named-key-value-must-not-be-read".to_owned(),
             ],
-            1,
+            3,
         ),
         (
             vec!["--".to_owned(), "codex".to_owned()],
@@ -389,7 +389,10 @@ fn unqualified_provider_route_refuses_before_ambient_path_can_spawn() {
         .output()
         .expect("tseal must run");
     assert_eq!(output.status.code(), Some(2));
-    assert_eq!(String::from_utf8(output.stderr).unwrap(), ZERO_AUTH_REFUSAL);
+    assert_eq!(
+        String::from_utf8(output.stderr).unwrap(),
+        "LOCAL_CODEX_BOUNDARY_REQUIRED: use tseal codex -- [ARGS...]\n"
+    );
     assert!(!capture.exists());
     assert_eq!(fs::read(codex).unwrap(), before);
 }

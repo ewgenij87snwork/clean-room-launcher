@@ -23,6 +23,9 @@ pub fn run(invoked_as: &str, args: impl IntoIterator<Item = String>) -> ExitCode
     }) else {
         return run_local(invoked_as, Vec::new());
     };
+    if first == "codex" {
+        return run_codex(&mut source);
+    }
     if let Some(exit) = external_prefix(&first) {
         return exit;
     }
@@ -50,6 +53,37 @@ pub fn run(invoked_as: &str, args: impl IntoIterator<Item = String>) -> ExitCode
     match local_prefix(first, &mut source) {
         Ok(args) => run_local(invoked_as, args),
         Err(exit) => exit,
+    }
+}
+
+fn run_codex(source: &mut impl Iterator<Item = String>) -> ExitCode {
+    let Some(boundary) = (match next_argument(source) {
+        Ok(argument) => argument,
+        Err(exit) => return exit,
+    }) else {
+        eprintln!("LOCAL_CODEX_BOUNDARY_REQUIRED: use tseal codex -- [ARGS...]");
+        return ExitCode::from(2);
+    };
+    if boundary != "--" {
+        if boundary == "login" {
+            return external_refusal(parser::Command::Provider, false);
+        }
+        eprintln!("LOCAL_CODEX_BOUNDARY_REQUIRED: use tseal codex -- [ARGS...]");
+        return ExitCode::from(2);
+    }
+    let mut args = Vec::new();
+    while let Some(argument) = match next_argument(source) {
+        Ok(argument) => argument,
+        Err(exit) => return exit,
+    } {
+        args.push(argument);
+    }
+    match process::launch_codex(&args) {
+        Ok(exit) => exit,
+        Err(message) => {
+            eprintln!("{message}");
+            ExitCode::from(2)
+        }
     }
 }
 
