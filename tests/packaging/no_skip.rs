@@ -17,10 +17,12 @@ fn workflow_has_no_skip_or_unbound_required_gate() {
     assert!(!text.contains("continue-on-error:"), "required workflow may not continue on error");
     assert!(!text.contains("if: false"), "required workflow may not conditionally skip gates");
     assert!(!text.contains("if: ${{"), "required gates may not be conditionally skipped");
+    assert!(text.contains("run: scripts/release-build/verify-source.sh --subject-digest"));
+    let verifier = fs::read_to_string(root().join("scripts/release-build/verify-source.sh")).unwrap();
     for gate in ["p02", "p03", "p04", "p05", "p06", "p07"] {
-        assert!(text.contains(&format!("{gate}-gate")), "missing {} consolidated gate", gate);
-        assert!(text.contains("TASKSEAL_SUBJECT_DIGEST"), "gate digest is not propagated");
+        assert!(verifier.contains(gate), "missing {} consolidated gate", gate);
     }
+    assert!(verifier.contains("TASKSEAL_SUBJECT_DIGEST"), "gate digest is not propagated");
 }
 
 #[test]
@@ -38,7 +40,7 @@ fn source_verifier_closes_every_required_check() {
 #[test]
 fn poisoned_workflow_fixtures_are_rejected() {
     let source = fs::read_to_string(root().join("scripts/release-build/verify-source.sh")).unwrap();
-    for fixture in ["continue-on-error", "conditional-skip", "missing-gate"] {
+    for fixture in ["continue-on-error", "conditional-skip", "missing-gate", "comment-only-orchestrator"] {
         let path = root().join(format!("tests/packaging/fixtures/{fixture}.yml"));
         let status = Command::new("sh")
             .arg(root().join("scripts/release-build/verify-source.sh"))

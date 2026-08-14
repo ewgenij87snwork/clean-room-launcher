@@ -39,9 +39,10 @@ fi
 
 results=$(mktemp "${TMPDIR:-/tmp}/taskseal-release-results.XXXXXX")
 logs=$(mktemp "${TMPDIR:-/tmp}/taskseal-release-logs.XXXXXX")
+wfclean=$(mktemp "${TMPDIR:-/tmp}/taskseal-release-workflow.XXXXXX")
 cleanup() {
-  case "$results:$logs" in
-    "${TMPDIR:-/tmp}"/taskseal-release-results.*:"${TMPDIR:-/tmp}"/taskseal-release-logs.*) rm -f -- "$results" "$logs" ;;
+  case "$results:$logs:$wfclean" in
+    "${TMPDIR:-/tmp}"/taskseal-release-results.*:"${TMPDIR:-/tmp}"/taskseal-release-logs.*:"${TMPDIR:-/tmp}"/taskseal-release-workflow.*) rm -f -- "$results" "$logs" "$wfclean" ;;
     *) echo "REFUSED_UNSAFE_TEMP_CLEANUP" >&2; exit 70 ;;
   esac
 }
@@ -67,15 +68,13 @@ run_one() {
 # Structural validation is recorded, then all gates and checks still run.
 if [ ! -s "$workflow" ]; then record workflow 66 NOT_QUALIFIED; failed=1
 else
-  if grep -qE 'continue-on-error:|^[[:space:]]*if:|^[[:space:]]*-[[:space:]]*if:' "$workflow"; then
+  awk '!/^[[:space:]]*#/' "$workflow" >"$wfclean"
+  if grep -qE 'continue-on-error:|^[[:space:]]*if:|^[[:space:]]*-[[:space:]]*if:' "$wfclean"; then
     record workflow-no-skip 67 NOT_QUALIFIED; failed=1
   else record workflow-no-skip 0 PASS; fi
-  for gate in p02 p03 p04 p05 p06 p07; do
-    if grep -q "${gate}-gate" "$workflow"; then record "workflow-$gate" 0 PASS
-    else record "workflow-$gate" 68 NOT_QUALIFIED; failed=1; fi
-  done
-  if grep -q 'TASKSEAL_SUBJECT_DIGEST' "$workflow"; then record workflow-digest 0 PASS
-  else record workflow-digest 69 NOT_QUALIFIED; failed=1; fi
+  if grep -q 'run: scripts/release-build/verify-source.sh --subject-digest' "$wfclean" &&
+     grep -q 'TASKSEAL_SUBJECT_DIGEST' "$wfclean"; then record workflow-orchestrator 0 PASS
+  else record workflow-orchestrator 69 NOT_QUALIFIED; failed=1; fi
 fi
 
 # Every P02-P07 slot is attempted (P06 qualification remains NOT_QUALIFIED on
@@ -83,11 +82,7 @@ fi
 # NOT_QUALIFIED, never a skip. P07 is this orchestrator, so its own slot is
 # represented by the source checks below rather than recursive invocation.
 for gate in p02 p03 p04 p05 p06 p07; do
-  if [ "$gate" = p07 ]; then
-    if [ "$scaffold" -eq 1 ]; then record p07-gate 0 PASS
-    else record p07-gate 0 PASS
-    fi
-  elif [ -x "$gate_dir/$gate/verify.sh" ]; then
+  if [ -x "$gate_dir/$gate/verify.sh" ]; then
     run_one "$gate-gate" "$gate_dir/$gate/verify.sh"
   else
     record "$gate-gate" 127 NOT_QUALIFIED; failed=1
