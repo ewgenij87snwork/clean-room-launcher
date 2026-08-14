@@ -22,9 +22,9 @@
     "scheme": "parent-bound-corrective-receipt.v3",
     "input_head": "6a54523b4dbf8869ca7035a7dc42df88ac11c45a",
     "correction_input_head": "707db75475879a95ccf53bc295088362e3f3a560",
-    "implementation_result_head": "7658466d1b3fbe19b78dc6fe5b17a9eb8ff872b3",
-    "implementation_tree": "7cd6610f4f31097092b171cba8f9f17bfa7b3055",
-    "receipt_commit_parent": "7658466d1b3fbe19b78dc6fe5b17a9eb8ff872b3",
+    "implementation_result_head": "a1e260041f65bbffb2ce8f3b2dc46d55dd69fc22",
+    "implementation_tree": "b2e3e27f6cb73f8d9c7b8b85f8c00d2af1910063",
+    "receipt_commit_parent": "a1e260041f65bbffb2ce8f3b2dc46d55dd69fc22",
     "replaces_receipt_commit": "96687d9d40804d3751263b4a8c93ee4d95c2b4d1",
     "predecessor_task_receipt": {
       "path": "reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/task-4.json",
@@ -71,7 +71,7 @@
   },
   "subject": {
     "algorithm": "sha256 of sorted path, tab, sha256, newline correction records",
-    "sha256": "1fc0d46f8b10f3590a6309e94153363d3468c02df2122a7c76589b907cdb9de0",
+    "sha256": "c7bdd2cbec69666ebe24a6e872bc7ad670c1f595b5d0084a409f8f6c23b7749e",
     "sources": [
       {
         "kind": "repository_implementation_commit",
@@ -81,7 +81,7 @@
       {
         "kind": "repository_implementation_commit",
         "path": "reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/task-4.json",
-        "sha256": "98baf6328c73b4196c6d2c7fbec333b4adf61cfad4c2ef65ced745c7aea84dcd"
+        "sha256": "fd625bdc57b29817906d7186674de13e2904f8dab43eebade1b57dcaf0504b68"
       },
       {
         "kind": "repository_implementation_commit",
@@ -111,7 +111,7 @@
       {
         "kind": "repository_implementation_commit",
         "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-4-receipt.sh",
-        "sha256": "06069587d44d398c1eb2f70d5694120194732130a0491a8b1137fbfa9a6e1891"
+        "sha256": "7f349a944b0d6e2b88ed6295fb74058eb4ed5b3f82efd69251c8a474bf2c0819"
       },
       {
         "kind": "repository_implementation_commit",
