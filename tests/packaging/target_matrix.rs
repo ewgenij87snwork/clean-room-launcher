@@ -106,3 +106,17 @@ fn workflow_is_structurally_bound_to_qualified_entries() {
     let global_fmt = format!("{workflow}\n      - run: cargo fmt --all -- --check\n");
     assert!(!workflow_is_bound_to_qualified(&global_fmt));
 }
+
+#[test]
+fn receipt_separates_implementation_and_receipt_only_seal_heads() {
+    let receipt = read("reports/gates/p07/task-1.json");
+    for field in [
+        "\"input_head\": \"ea551a35b058b19e402071cfc07d34862ec9216b\"",
+        "\"accepted_initial_head\": \"5249fd4c86760563b1f4306b74ee5e35fa949b4b\"",
+        "\"correction_implementation_head\":",
+        "\"receipt_seal_role\": \"receipt-only-child\"",
+    ] {
+        assert!(receipt.contains(field), "receipt binding field missing: {}", field);
+    }
+    assert!(!receipt.contains("\"result_head\": \"55b5dda9d3f432349c308ad9cfe69785571c1b72\""));
+}
