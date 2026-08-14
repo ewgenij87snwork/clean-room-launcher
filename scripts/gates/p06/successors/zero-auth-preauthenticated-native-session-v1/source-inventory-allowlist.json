@@ -92,6 +92,12 @@
       "rationale": "Offline receipt checker: matched terms are sealed evidence labels and JSON equality assertions; it invokes Git/JQ/hash tools only and no provider interface."
     },
     {
+      "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-4-receipt.sh",
+      "sha256": "7008e2c53044de9d2801442c9256d4eeec0780de01c317301171f619fc8b547b",
+      "matched_classes": ["TOKEN_INPUT"],
+      "rationale": "Offline receipt checker: access-token flags are exact rejected-selector evidence assertions; the script reads no credential value and exposes no provider interface."
+    },
+    {
       "path": "scripts/gates/p06/t6-codex-auth-verify.sh",
       "sha256": "4e19dd31b9923e56251cb25a0af7aa4692f576a0b9ea424e763f3038650e0d41",
       "matched_classes": ["CREDENTIAL_EXTRACTION"],
