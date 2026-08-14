@@ -52,7 +52,11 @@ def require_hex(value, length, label):
     if not isinstance(value, str) or len(value) != length or any(c not in "0123456789abcdef" for c in value):
         raise ValueError(f"{label} must be lowercase {length}-hex")
 
-required_top = {"schema_version", "plan_id", "task", "result", "acceptance", "binding", "evidence", "subjects", "qualification", "controls"}
+required_top = {
+    1: {"schema_version", "plan_id", "task", "result", "acceptance", "binding", "evidence", "subjects", "qualification", "claims", "controls"},
+    2: {"schema_version", "plan_id", "task", "result", "acceptance", "binding", "evidence", "subjects", "qualification", "controls"},
+    3: {"schema_version", "plan_id", "task", "result", "acceptance", "binding", "evidence", "subjects", "qualification", "claims", "controls"},
+}
 expected_inputs = {1: "ea551a35b058b19e402071cfc07d34862ec9216b", 2: "fd43bb83074e1dd75b5d7f44d9973f790e746a80", 3: "cee78ac90ae9a4dc3b07518089df26c8d64f68d1"}
 expected_acceptance = {1: "ACC-P07-T1", 2: "ACC-P07-T2", 3: "ACC-P07-T3"}
 focused = {
@@ -66,7 +70,7 @@ for task in (1, 2, 3):
     receipt_path = root / f"reports/gates/p07/task-{task}.json"
     try:
         data = json.loads(receipt_path.read_text())
-        if set(data) != required_top:
+        if set(data) != required_top[task]:
             raise ValueError("receipt top-level schema is not exact")
         if data["schema_version"] != "taskseal.p07.task-receipt.v1" or data["plan_id"] != "P07-PACKAGING-SCAFFOLD-V1" or data["task"] != task or data["result"] != "accepted":
             raise ValueError("receipt identity/result mismatch")
