@@ -5,7 +5,7 @@
   "result": "accepted",
   "acceptance": {
     "id": "P06-ZERO-AUTH-T4-LOCAL-UX-CONSOLIDATED-CLOSURE-V1",
-    "operator_result": "The unqualified TTY, narrow, plain and non-TTY screens explicitly continue locally without a login, setup/settings/configuration, API-key or documentation action; non-TTY never prompts. A real macOS PTY binary session selects the TTY transcript, waits for Enter and dispatches the TaskSeal-owned status continuation in-process. Every argument read for local, unknown and selector routing now crosses one allocation-free pre-dispatch boundary: credential-shaped values refuse with one stable sanitized error before copying or echoing, later tails stay unread, and allowed local arguments remain available. Saved-start access-token argv refuses before deserialization, hashing, lock, serialization or write. Identity resolution and the provider capability probe require an opaque preauthenticated-session state before executable discovery or provider birth; unavailable, ambiguous and missing states are proven with fake capture paths to birth no process. A closed inventory binds both CLI entrypoints and all five provider births and refuses future unguarded routes. One offline successor gate binds OD-10/AUTH-01, current source, public and entrypoint inventories, every zero-auth call path, immutable Git history/write-set, all four parent-bound receipts and their topology, plus a sealed owner-worklog prefix whose valid append-only tail can receive the terminal review event without changing the PENDING checkpoint.",
+    "operator_result": "The unqualified TTY, narrow, plain and non-TTY screens explicitly continue locally without a login, setup/settings/configuration, API-key or documentation action; non-TTY never prompts. A real macOS PTY binary session selects the TTY transcript, waits for Enter and dispatches the TaskSeal-owned status continuation in-process. Every argument read for local, unknown and selector routing now crosses one allocation-free pre-dispatch boundary: credential-shaped values refuse with one stable sanitized error before copying or echoing, later tails stay unread, and allowed local arguments remain available. Saved-start access-token argv refuses before deserialization, hashing, lock, serialization or write. Identity resolution and the provider capability probe require an opaque preauthenticated-session state before executable discovery or provider birth; unavailable, ambiguous and missing states are proven with fake capture paths to birth no process. The closed inventory binds both CLI entrypoints and all five provider births. Its shell-source layer recursively enumerates the Git index below scripts/probe, admits only tracked regular .sh/.bash/.zsh sources in modes 100644/100755, refuses extensionless shell shebangs, symlinks and other modes, and requires a structural same-file guard before every direct static Codex/Claude birth occurrence. Tracked sources are closed by path and mode, including non-executable and sourceable files; untracked files are outside the release inventory. scripts/runtime remains outside provider inventory and is separately refused as an unallowlisted public path. One offline successor gate binds OD-10/AUTH-01, current source, public and entrypoint inventories, every zero-auth call path, immutable Git history/write-set, all four parent-bound receipts and their topology, plus a sealed owner-worklog prefix whose valid append-only tail can receive the terminal review event without changing the PENDING checkpoint.",
     "control_ids": [
       "ADP-05",
       "AUTH-01",
@@ -57,23 +57,34 @@
       "P06-ZERO-AUTH-T4-FIX7-GREEN-GATE-MUTATIONS-V1",
       "P06-ZERO-AUTH-T4-FIX7-RED-REPLACEMENT-RECEIPT-V1",
       "P06-ZERO-AUTH-T4-FIX7-GREEN-SOLE-GATE-V1",
-      "P06-ZERO-AUTH-T4-FIX7-GREEN-DESCENDANT-DURABILITY-V1"
+      "P06-ZERO-AUTH-T4-FIX7-GREEN-DESCENDANT-DURABILITY-V1",
+      "P06-ZERO-AUTH-T4-FIX8-RED-NESTED-TRACKED-SHELL-V1",
+      "P06-ZERO-AUTH-T4-FIX8-GREEN-RECURSIVE-TRACKED-SHELL-V1",
+      "P06-ZERO-AUTH-T4-FIX8-RED-MISSING-SHELL-POLICY-V1",
+      "P06-ZERO-AUTH-T4-FIX8-GREEN-SHELL-POLICY-AND-PUBLIC-RUNTIME-V1",
+      "P06-ZERO-AUTH-T4-FIX8-RED-RUNTIME-PUBLIC-BOUNDARY-METADATA-V1",
+      "P06-ZERO-AUTH-T4-FIX8-GREEN-GATE-MUTATIONS-V1",
+      "P06-ZERO-AUTH-T4-FIX8-RED-CLOSED-SHELL-SOURCE-INVENTORY-V1",
+      "P06-ZERO-AUTH-T4-FIX8-GREEN-CLOSED-SHELL-SOURCE-INVENTORY-V1",
+      "P06-ZERO-AUTH-T4-FIX8-RED-REPLACEMENT-RECEIPT-V1",
+      "P06-ZERO-AUTH-T4-FIX8-GREEN-SOLE-GATE-V1",
+      "P06-ZERO-AUTH-T4-FIX8-GREEN-DESCENDANT-DURABILITY-V1"
     ]
   },
   "binding": {
     "scheme": "parent-bound-receipt.v2",
     "input_head": "6a54523b4dbf8869ca7035a7dc42df88ac11c45a",
-    "implementation_result_head": "db6de6a6c8769a34c51e5d239306aa03306b56eb",
-    "implementation_tree": "bc1fb230b1708f72de454567ab61cbf7f423add3",
-    "receipt_commit_parent": "db6de6a6c8769a34c51e5d239306aa03306b56eb",
-    "replaces_receipt_commit": "0e695fa2d4933ffa4e34791ba3eeb090005b2c86",
+    "implementation_result_head": "c2ddbf1111300b9dc5d5a54bc31765a57777bbb5",
+    "implementation_tree": "42e459d3bacb73c09a08653cd3c40b1787f70d90",
+    "receipt_commit_parent": "c2ddbf1111300b9dc5d5a54bc31765a57777bbb5",
+    "replaces_receipt_commit": "1f82eb2650a86a07094e0a9bf0a4a2f0a54d728a",
     "parent_task_receipt": {
       "path": "reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/task-3.json",
       "commit": "6a54523b4dbf8869ca7035a7dc42df88ac11c45a",
       "blob_oid": "08febe5afe412e00e46f32d4c915f94e6cbe209d",
       "sha256": "8916cd8d268d91988931985ffb952b95fde491445f84ddbfa9a1c22352a68de8"
     },
-    "resolution": "Resolve exactly one commit in input_head..tip whose task-4 receipt blob equals these bytes; it must be a single-parent receipt-only child of implementation_result_head and replace receipt-only 0e695fa. Repository subjects are read from that implementation commit, while the accepted Task 3 receipt is read from input_head."
+    "resolution": "Resolve exactly one commit in input_head..tip whose task-4 receipt blob equals these bytes; it must be a single-parent receipt-only child of implementation_result_head and replace receipt-only 1f82eb2. Repository subjects are read from that implementation commit, while the accepted Task 3 receipt is read from input_head."
   },
   "inputs": {
     "plan_checkpoint_path": "/Users/ysorokin/Documents/it/5-LVL - 2026/Temp in Projects/wisdom/taskseal/plans/2026-08-13-p06-zero-auth-preauthenticated-native-session-v1.md",
@@ -82,7 +93,7 @@
   },
   "subject": {
     "algorithm": "sha256 of sorted path, tab, sha256, newline repository records",
-    "sha256": "1377dbb479c7dd3d86ea462bd98dd44f91b6d093d3a192b2489e0c060033e8a6",
+    "sha256": "36b1ef53bbabb01ff8fd6d5724c74583a3ee0a9c47476cdeb97b868a81f6266b",
     "sources": [
       {
         "kind": "repository_implementation_commit",
@@ -112,27 +123,27 @@
       {
         "kind": "repository_implementation_commit",
         "path": "reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/consolidated.json",
-        "sha256": "c2e2b8261eb980291f3e4e426d11fc09549f01004644cefdef7dfd4a97d42192"
+        "sha256": "845374d7714bb6c9b5f5c0301ae48e2d3d3dd8835f852b853f068d5d34711ce5"
       },
       {
         "kind": "repository_implementation_commit",
         "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/entrypoint-inventory.json",
-        "sha256": "36ad4f4b551288aa88654498718c534ead440ec71935452dcb6c5df793fb122e"
+        "sha256": "5b6956a0b9923709848d8988547a28347215a99958b80f999eed1cc1f417eec8"
       },
       {
         "kind": "repository_implementation_commit",
         "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/entrypoint-inventory.rb",
-        "sha256": "9f1fce7a9dde895ded3fb53f70b680a6ab4d83bffde2e3abc7fd8522d4d2ba36"
+        "sha256": "af122fa17e4c09ee34644ff5f4d7641272d75b96b87055fec870779bd6eb7f02"
       },
       {
         "kind": "repository_implementation_commit",
         "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/source-inventory-allowlist.json",
-        "sha256": "cad8277416f8631e678c853d458a40fc6fb981851f95c687f1dad79e40519e32"
+        "sha256": "c82f1d8a92c230dea00aa326d0243e359cbfddde2d907550de984aeb88f352fd"
       },
       {
         "kind": "repository_implementation_commit",
         "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-entrypoint-inventory.sh",
-        "sha256": "c8ba01bbf7f85de0ca2c3dbcb379744bc0eb9972f24cb3a694be33514ebebd07"
+        "sha256": "f994a2dc342944cf9ab9313efb66140cae2c88b2cbfd6540b4bc9b18943611b1"
       },
       {
         "kind": "repository_implementation_commit",
@@ -142,17 +153,17 @@
       {
         "kind": "repository_implementation_commit",
         "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-4-receipt.sh",
-        "sha256": "277dbd6999d1372bc7dec0abe3bd1bebc0321814871873b9e4aed5cda06a5a4f"
+        "sha256": "00e5722c0e9541096a73bedf99ba7f147fcdec79cc080920f2773b2a6198c40e"
       },
       {
         "kind": "repository_implementation_commit",
         "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-verify.sh",
-        "sha256": "0c5dc092ff5cb1f1ec6d92933f8b103ae53ad899cd9bd694eadaea86eb79e1e9"
+        "sha256": "ce4883557cf4b29019b555f50786da0079153376deaf6b52d8604b6b36d74b04"
       },
       {
         "kind": "repository_implementation_commit",
         "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/verify.sh",
-        "sha256": "440875228c5af097ac1691251b8c08d0cb2650da79ae95d27ba0a348a2874b84"
+        "sha256": "30d1d11c914705574cb2d3f4bf5e83ce6a55af80459dcc0b65b8a9b25e92f9e8"
       },
       {
         "kind": "repository_implementation_commit",
@@ -614,6 +625,94 @@
       "output": "P06_ZERO_AUTH_TASK_4_RECEIPT_DURABILITY_PASS",
       "output_sha256": "841416c45acc4134e8ece2f0c3c03f3156a028404432d8c9a70d4c1d1210d020",
       "meaning": "A local no-network clone added a descendant after the final-boundary replacement receipt and reproduced its unique parent-bound topology and 32 committed subject sources."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T4-FIX8-RED-NESTED-TRACKED-SHELL-V1",
+      "command": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-entrypoint-inventory.sh",
+      "exit": 1,
+      "output": "P06_ZERO_AUTH_EXPECTED_ENTRYPOINT_REFUSAL_MISSING:nested_nonexec_sh",
+      "output_sha256": "7a8d28a633d35786166318645b0564e1cc03f4bf40c8b2554ddc2bb7eaaba912",
+      "meaning": "A tracked non-executable nested scripts/probe shell source containing a direct static provider birth passed the prior top-level filesystem glob, reproducing the review finding."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T4-FIX8-GREEN-RECURSIVE-TRACKED-SHELL-V1",
+      "command": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-entrypoint-inventory.sh",
+      "exit": 0,
+      "output": "P06_ZERO_AUTH_ENTRYPOINT_INVENTORY_TEST_PASS",
+      "output_sha256": "e3d44805a657e669eea8cc62bc1593df506cdbeb3ea480fb5a14b2a92c773646",
+      "meaning": "Recursive Git-index enumeration now covers tracked regular .sh, .bash and .zsh sources regardless of executable bit and refuses nested unguarded direct static births."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T4-FIX8-RED-MISSING-SHELL-POLICY-V1",
+      "command": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-entrypoint-inventory.sh",
+      "exit": 1,
+      "output": "P06_ZERO_AUTH_EXPECTED_ENTRYPOINT_REFUSAL_MISSING:missing_shell_source_policy",
+      "output_sha256": "4907d542ee8127ecdc22fdff5e9d57de86d0a9b176840389e4fa494013c55cac",
+      "meaning": "The inventory mutation proved that recursive tracked-source, accepted-mode, extensionless-source and same-file guard rules were not yet sealed as closed inventory policy."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T4-FIX8-GREEN-SHELL-POLICY-AND-PUBLIC-RUNTIME-V1",
+      "command": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-entrypoint-inventory.sh",
+      "exit": 0,
+      "output": "P06_ZERO_AUTH_ENTRYPOINT_INVENTORY_TEST_PASS",
+      "output_sha256": "e3d44805a657e669eea8cc62bc1593df506cdbeb3ea480fb5a14b2a92c773646",
+      "meaning": "Closed policy now refuses extensionless shell shebangs, tracked symlinks and gitlink modes, commented/missing/moved guards, and accepts duplicate birth occurrences only when every occurrence follows a structural same-file guard. scripts/runtime stays outside provider inventory and is refused by the public boundary."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T4-FIX8-RED-RUNTIME-PUBLIC-BOUNDARY-METADATA-V1",
+      "command": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-verify.sh",
+      "exit": 1,
+      "output": "P06_ZERO_AUTH_EXPECTED_REFUSAL_MISSING:runtime_public_boundary",
+      "output_sha256": "cf5aad3613b4737502affc4b7aa267afa98a3f42b895603bfcdaa3536740b056",
+      "meaning": "The consolidated mutation proved the prior gate did not bind scripts/runtime as a forbidden tracked public prefix."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T4-FIX8-GREEN-GATE-MUTATIONS-V1",
+      "command": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-verify.sh",
+      "exit": 0,
+      "output": "P06_ZERO_AUTH_GATE_MUTATIONS_PASS",
+      "output_sha256": "b8c5990f4f0299c2a4617fcbdafd5246a7cd8fe9959a0603f88d0c4a9356140f",
+      "meaning": "The consolidated mutation suite binds the recursive tracked shell inventory, guard-before-every-birth rule, extensionless refusal and scripts/runtime public-boundary-only disposition."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T4-FIX8-RED-CLOSED-SHELL-SOURCE-INVENTORY-V1",
+      "command": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-entrypoint-inventory.sh",
+      "exit": 1,
+      "output": "P06_ZERO_AUTH_EXPECTED_ENTRYPOINT_REFUSAL_MISSING:tracked_shell_source_not_in_inventory",
+      "output_sha256": "03983eb65451c8a54ea78709739c0b3af61c06bc65d15c46e30e53f754a2f550",
+      "meaning": "A benign tracked nested shell source initially passed because source discovery was dynamic but its path and mode were not yet closed in the inventory."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T4-FIX8-GREEN-CLOSED-SHELL-SOURCE-INVENTORY-V1",
+      "command": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-entrypoint-inventory.sh",
+      "exit": 0,
+      "output": "P06_ZERO_AUTH_ENTRYPOINT_INVENTORY_TEST_PASS",
+      "output_sha256": "e3d44805a657e669eea8cc62bc1593df506cdbeb3ea480fb5a14b2a92c773646",
+      "meaning": "The final inventory closes every tracked scripts/probe shell source by path and Git mode; untracked source is explicitly excluded and does not affect the release inventory."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T4-FIX8-RED-REPLACEMENT-RECEIPT-V1",
+      "command": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-4-receipt.sh",
+      "exit": 1,
+      "output": "P06_ZERO_AUTH_TASK_4_RECEIPT_REFUSAL:RECEIPT_CONTRACT",
+      "output_sha256": "83b45149afb5e944ec80635c75db0137640b84eea964af5858a98e9f0400b735",
+      "meaning": "The tightened receipt checker rejected the preceding Task 4 receipt before the recursive tracked shell inventory and its adversarial evidence were sealed."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T4-FIX8-GREEN-SOLE-GATE-V1",
+      "command": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/verify.sh",
+      "exit": 0,
+      "output": "P06_ZERO_AUTH_PREAUTHENTICATED_NATIVE_SESSION_V1_PASS",
+      "output_sha256": "d3886f15e1c3a16f998ead34e9696664e546a0aa5c11fe57d8a5e5f5fdc88bd7",
+      "meaning": "The sole offline gate accepted the recursive Git-tracked provider inventory, same-file occurrence-aware pre-birth guards, scripts/runtime public refusal and all prior zero-auth closure controls."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T4-FIX8-GREEN-DESCENDANT-DURABILITY-V1",
+      "command": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-4-receipt-durability.sh",
+      "exit": 0,
+      "output": "P06_ZERO_AUTH_TASK_4_RECEIPT_DURABILITY_PASS",
+      "output_sha256": "841416c45acc4134e8ece2f0c3c03f3156a028404432d8c9a70d4c1d1210d020",
+      "meaning": "A local no-network clone added a descendant after the provider-inventory replacement receipt and reproduced its unique parent-bound topology and 32 committed subject sources."
     }
   ],
   "seal_tdd": {
@@ -688,9 +787,28 @@
     ],
     "refused_session_process_birth": false,
     "entrypoint_inventory": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/entrypoint-inventory.json",
+    "probe_shell_source_scope": "RECURSIVE_GIT_TRACKED_REGULAR_SOURCES_UNDER_SCRIPTS_PROBE",
+    "probe_shell_source_inventory": "CLOSED_PATH_AND_MODE_LIST",
+    "probe_shell_extensions": [
+      ".sh",
+      ".bash",
+      ".zsh"
+    ],
+    "probe_shell_regular_modes": [
+      "100644",
+      "100755"
+    ],
+    "extensionless_probe_shell_source": "REFUSED",
+    "probe_shell_symlink_or_mode_violation": "REFUSED",
+    "provider_guard_requirement": "SAME_FILE_EXECUTABLE_GUARD_BEFORE_EVERY_BIRTH_OCCURRENCE",
+    "tracked_probe_shell_source_count": 1,
     "cli_entrypoint_count": 2,
     "provider_birth_count": 5,
     "future_unguarded_route_allowed": false,
+    "scripts_runtime_provider_inventory": "EXCLUDED",
+    "public_boundary_forbidden_tracked_prefixes": [
+      "scripts/runtime/"
+    ],
     "task_receipts_validated": [
       1,
       2,
