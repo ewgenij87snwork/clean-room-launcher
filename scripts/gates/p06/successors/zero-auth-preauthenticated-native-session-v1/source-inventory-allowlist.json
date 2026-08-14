@@ -81,9 +81,9 @@
     },
     {
       "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-entrypoint-inventory.sh",
-      "sha256": "aba44d0289dbc7b023c5c73988ba4faded90fddc7562d61324cbfe55b620f371",
+      "sha256": "1a1be0c976d32da5ed0e178cea8e2ceb52132c8961a8c411e893e912c6846340",
       "matched_classes": ["CREDENTIAL_COPY"],
-      "rationale": "Offline inventory mutation suite: local file copies build a disposable source fixture whose provider births and pre-birth guards are parsed as text and never executed."
+      "rationale": "Offline exact-tree mutation suite: local file copies build disposable committed fixtures whose path, mode, object and content tuples are inspected and never executed."
     },
     {
       "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-source-inventory.sh",
