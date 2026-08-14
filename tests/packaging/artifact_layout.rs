@@ -35,4 +35,17 @@ fn production_verifier_rejects_generated_poison_archives() {
     }
 }
 #[test]
+fn canonical_and_alias_parser_behavior_matches_on_status_json_selector() {
+    let build = Command::new("cargo").args(["build", "--locked", "--release", "--bin", "taskseal", "--bin", "tseal"]).env("CARGO_NET_OFFLINE", "true").output().unwrap();
+    assert!(build.status.success(), "offline binary build failed: {}", String::from_utf8_lossy(&build.stderr));
+    let bin = root().join("target/release");
+    let run = |name: &str| Command::new(bin.join(name)).args(["--output", "json", "status"]).output().unwrap();
+    let canonical = run("taskseal");
+    let alias = run("tseal");
+    assert_eq!(canonical.status.code(), alias.status.code());
+    assert_eq!(canonical.stdout, alias.stdout);
+    assert_eq!(canonical.stderr, alias.stderr);
+    assert_eq!(canonical.status.code(), Some(2));
+}
+#[test]
 fn script_is_executable_and_shell_valid() { assert!(Command::new("bash").args(["-n", root().join("packaging/build-artifacts.sh").to_str().unwrap()]).status().unwrap().success()); }
