@@ -18,6 +18,8 @@
       "P06-ZERO-AUTH-T4-GREEN-GATE-MUTATIONS-V1",
       "P06-ZERO-AUTH-T4-FIX1-RED-UNOWNED-FMT-SCOPE-V1",
       "P06-ZERO-AUTH-T4-FIX1-GREEN-OWNED-FMT-SCOPE-V1",
+      "P06-ZERO-AUTH-T4-FIX2-RED-UNGOVERNED-PUBLIC-INVENTORY-V1",
+      "P06-ZERO-AUTH-T4-FIX2-GREEN-GOVERNED-PUBLIC-INVENTORY-V1",
       "P06-ZERO-AUTH-T4-GREEN-SOLE-GATE-V1",
       "P06-ZERO-AUTH-T4-GREEN-DESCENDANT-DURABILITY-V1"
     ]
@@ -25,17 +27,17 @@
   "binding": {
     "scheme": "parent-bound-receipt.v2",
     "input_head": "6a54523b4dbf8869ca7035a7dc42df88ac11c45a",
-    "implementation_result_head": "8666d3b4a6fcd57576e4e6ad389caacabc61046f",
-    "implementation_tree": "0e1607c179e55c6b84e7c9fc2532204f0b96186a",
-    "receipt_commit_parent": "8666d3b4a6fcd57576e4e6ad389caacabc61046f",
-    "replaces_receipt_commit": "f7a7d1bf1d22216e1c9b61313885aaacd9194d81",
+    "implementation_result_head": "f70e7b9996aa7598ec734379a83a506263cc8901",
+    "implementation_tree": "7bbcfeef623f2464d4927aced7fa92edddfa4fae",
+    "receipt_commit_parent": "f70e7b9996aa7598ec734379a83a506263cc8901",
+    "replaces_receipt_commit": "4ef2a33943689b468f8679f86de52930a3677175",
     "parent_task_receipt": {
       "path": "reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/task-3.json",
       "commit": "6a54523b4dbf8869ca7035a7dc42df88ac11c45a",
       "blob_oid": "08febe5afe412e00e46f32d4c915f94e6cbe209d",
       "sha256": "8916cd8d268d91988931985ffb952b95fde491445f84ddbfa9a1c22352a68de8"
     },
-    "resolution": "Resolve exactly one commit in input_head..tip whose task-4 receipt blob equals these bytes; it must be a single-parent receipt-only child of implementation_result_head and replace receipt-only f7a7d1b. Repository subjects are read from that implementation commit, while the accepted Task 3 receipt is read from input_head."
+    "resolution": "Resolve exactly one commit in input_head..tip whose task-4 receipt blob equals these bytes; it must be a single-parent receipt-only child of implementation_result_head and replace receipt-only 4ef2a33. Repository subjects are read from that implementation commit, while the accepted Task 3 receipt is read from input_head."
   },
   "inputs": {
     "plan_checkpoint_path": "/Users/ysorokin/Documents/it/5-LVL - 2026/Temp in Projects/wisdom/taskseal/plans/2026-08-13-p06-zero-auth-preauthenticated-native-session-v1.md",
@@ -44,7 +46,7 @@
   },
   "subject": {
     "algorithm": "sha256 of sorted path, tab, sha256, newline repository records",
-    "sha256": "5871801b338698ff21910ab3e93dee06f90bdd046f54af902809441ebe9d4f18",
+    "sha256": "605686cd5ad953d4055dc0f456251c4cc6816b841d44eb278f6e4bc389dd2349",
     "sources": [
       {
         "kind": "repository_implementation_commit",
@@ -74,7 +76,7 @@
       {
         "kind": "repository_implementation_commit",
         "path": "reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/consolidated.json",
-        "sha256": "34f42754c08ba533e76be15f04f6a3c20d505189529ad89cc601bb0528d9edc9"
+        "sha256": "f8c317147a136669c4fcbda14a21a134bbac6de8d6a71316a490c29caf2defb1"
       },
       {
         "kind": "repository_implementation_commit",
@@ -84,17 +86,17 @@
       {
         "kind": "repository_implementation_commit",
         "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-4-receipt.sh",
-        "sha256": "a69448eaaaf0592f814ce0ef66f695082ab9bc6cd45f240fbfff3fc6ef30b37e"
+        "sha256": "2e8319b19043920301ecf94dcf0088997e074092fad1b36c6d38f830fe20d7ab"
       },
       {
         "kind": "repository_implementation_commit",
         "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-verify.sh",
-        "sha256": "6896e7273d01182a8f60cd52e42bfd1029b649f819b634ce3d82c9504fb60391"
+        "sha256": "88ef17422e28acad32ab9cf926ea61186c9c211cd949148e6e0f51854e7f0fb8"
       },
       {
         "kind": "repository_implementation_commit",
         "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/verify.sh",
-        "sha256": "b571cf44f265bd6b47ec418e9d07d9d95e8f43a5d004583469ae9f7bfe825068"
+        "sha256": "5dacf9a31297dffddd580d39bce07c5a916ae8eb0b56bda436d03f38f79acc0a"
       },
       {
         "kind": "repository_implementation_commit",
@@ -158,6 +160,22 @@
       "meaning": "The changed-input formatting command checks exactly the Task 4-owned Rust files and passed without touching predecessor code."
     },
     {
+      "id": "P06-ZERO-AUTH-T4-FIX2-RED-UNGOVERNED-PUBLIC-INVENTORY-V1",
+      "command": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/verify.sh",
+      "exit": 1,
+      "output": "full Git archive public scan matched pre-existing evidence path identifiers outside the governed release inventory",
+      "output_sha256": "757974f062fc1feac811514dbddd4b65360364b7e7eeda77df5cdaea1c10ddb0",
+      "meaning": "The second sole-gate run reached and passed all zero-auth tests, then proved that an ungoverned full archive conflates sealed gate/receipt identifier text with public release material."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T4-FIX2-GREEN-GOVERNED-PUBLIC-INVENTORY-V1",
+      "command": "git archive HEAD governed release paths | scripts/check-public-boundary.sh --root <archive>",
+      "exit": 0,
+      "output": "PUBLIC_BOUNDARY_PASS",
+      "output_sha256": "8a2596d35cd02570cdff13102a64a0790947075783c9fee1c47651aaeb1b85c1",
+      "meaning": "The current immutable Git release inventory passes the public-boundary checker; executable gate/evidence sources remain covered separately by the closed source inventory and receipt topology."
+    },
+    {
       "id": "P06-ZERO-AUTH-T4-GREEN-SOLE-GATE-V1",
       "command": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/verify.sh",
       "exit": 0,
@@ -212,7 +230,7 @@
       "OD-10"
     ],
     "source_inventory": "CURRENT_TRACKED_INVENTORY",
-    "public_boundary_inventory": "CURRENT_GIT_RECEIPT_HEAD",
+    "public_boundary_inventory": "CURRENT_GIT_GOVERNED_RELEASE_INVENTORY",
     "full_zero_auth_call_paths": true,
     "git_history_immutable": true,
     "implementation_write_set_closed": true,
