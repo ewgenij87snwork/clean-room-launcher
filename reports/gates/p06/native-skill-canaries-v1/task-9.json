@@ -1,7 +1,7 @@
 {
   "schema_version": "taskseal.codex-native-skill-canaries-receipt.v1",
   "task": 9,
-  "subject": "dbbe03685bf14d83a33a9591e5422e58a244281d",
+  "subject": "2609b2b1f9687923deb48a93adbbf513cee2706a",
   "result": "sealed_negative",
   "qualification": "NOT_QUALIFIED",
   "tuple": {"provider_id":"codex","artifact_digest":"19c4f144c5226a9f17c58e6f0fa854843b0f77a6eb420f40e2745a12f10f5d37","version":[0,147,0],"os":"macos","arch":"aarch64"},
