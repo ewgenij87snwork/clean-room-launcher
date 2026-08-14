@@ -22,15 +22,15 @@
     "scheme": "parent-bound-corrective-receipt.v3",
     "input_head": "6a54523b4dbf8869ca7035a7dc42df88ac11c45a",
     "correction_input_head": "707db75475879a95ccf53bc295088362e3f3a560",
-    "implementation_result_head": "a1e260041f65bbffb2ce8f3b2dc46d55dd69fc22",
-    "implementation_tree": "b2e3e27f6cb73f8d9c7b8b85f8c00d2af1910063",
-    "receipt_commit_parent": "a1e260041f65bbffb2ce8f3b2dc46d55dd69fc22",
-    "replaces_receipt_commit": "96687d9d40804d3751263b4a8c93ee4d95c2b4d1",
+    "implementation_result_head": "885178e70e8e0a9a4ccc9eb53720457b1946ac8a",
+    "implementation_tree": "3bfe09fac734e54bbf3df53d381a88f3a8efc089",
+    "receipt_commit_parent": "885178e70e8e0a9a4ccc9eb53720457b1946ac8a",
+    "replaces_receipt_commit": "42a022235ae8eaf10ad1d022fbc8187ef93ce9a5",
     "predecessor_task_receipt": {
       "path": "reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/task-4.json",
-      "commit": "96687d9d40804d3751263b4a8c93ee4d95c2b4d1",
-      "blob_oid": "17b805f4dd2516ba0b412b70a6c45591b4106001",
-      "sha256": "98baf6328c73b4196c6d2c7fbec333b4adf61cfad4c2ef65ced745c7aea84dcd"
+      "commit": "42a022235ae8eaf10ad1d022fbc8187ef93ce9a5",
+      "blob_oid": "b7e8006556ae8bde753e3afafce02c1fa45cad03",
+      "sha256": "354bc8f51b65c7c2b0223befed54375fbfec04e0b96ae38cbc70508bd3edb393"
     },
     "parent_task_receipt": {
       "path": "reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/task-3.json",
@@ -71,7 +71,7 @@
   },
   "subject": {
     "algorithm": "sha256 of sorted path, tab, sha256, newline correction records",
-    "sha256": "c7bdd2cbec69666ebe24a6e872bc7ad670c1f595b5d0084a409f8f6c23b7749e",
+    "sha256": "6794383e11c33b81e965e614fe3c068b773abd86a0ec35dbba651e20b5f8b50d",
     "sources": [
       {
         "kind": "repository_implementation_commit",
@@ -81,7 +81,7 @@
       {
         "kind": "repository_implementation_commit",
         "path": "reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/task-4.json",
-        "sha256": "fd625bdc57b29817906d7186674de13e2904f8dab43eebade1b57dcaf0504b68"
+        "sha256": "354bc8f51b65c7c2b0223befed54375fbfec04e0b96ae38cbc70508bd3edb393"
       },
       {
         "kind": "repository_implementation_commit",
@@ -101,7 +101,7 @@
       {
         "kind": "repository_implementation_commit",
         "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/source-inventory-allowlist.json",
-        "sha256": "33dce9da068e74166ad48ee9eccd6f73cf57ccb8c6f056ad740e2fb6e4aa9681"
+        "sha256": "26e1136688d6af9b51326b4dae07dbfe5e8478e72c3dc1e8af7008cf15c57f4d"
       },
       {
         "kind": "repository_implementation_commit",
@@ -110,8 +110,13 @@
       },
       {
         "kind": "repository_implementation_commit",
+        "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-4-receipt-durability.sh",
+        "sha256": "91a8c70997f74a68ded69d865236c7336ad836ff3645fef1d99f804be014add2"
+      },
+      {
+        "kind": "repository_implementation_commit",
         "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-4-receipt.sh",
-        "sha256": "7f349a944b0d6e2b88ed6295fb74058eb4ed5b3f82efd69251c8a474bf2c0819"
+        "sha256": "940fc6877201bd45778e343d484402d667b0a8793820bd61c7c6dfd0eb3c01f2"
       },
       {
         "kind": "repository_implementation_commit",
