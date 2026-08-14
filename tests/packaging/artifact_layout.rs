@@ -3,7 +3,7 @@ fn root() -> std::path::PathBuf { Path::new(env!("CARGO_MANIFEST_DIR")).to_path_
 #[test]
 fn build_script_declares_safe_deterministic_complete_layout() {
     let script = fs::read_to_string(root().join("packaging/build-artifacts.sh")).unwrap();
-    for needle in ["cargo build --locked", "source_commit=", "rust_toolchain=", "qualification=NOT_QUALIFIED", "signing=unsigned-preview-only", "mtime=0", "info.uid = info.gid = 0", "bin/taskseal", "bin/tseal", "LICENSE", "NOTICE", "gzip.GzipFile"] { assert!(script.contains(needle), "missing layout control: {}", needle); }
+    for needle in ["cargo build --locked", "source_commit=", "rust_toolchain=", "rustc=", "cargo=", "python=", "qualification=NOT_QUALIFIED", "signing=unsigned-preview-only", "mtime=0", "info.uid = info.gid = 0", "bin/taskseal", "bin/tseal", "LICENSE", "NOTICE", "gzip.GzipFile"] { assert!(script.contains(needle), "missing layout control: {}", needle); }
 }
 #[test]
 fn archive_fixture_names_are_path_safe_and_complete() {
@@ -19,6 +19,19 @@ fn poisoned_fixtures_are_rejected_by_contract() {
         if file.contains("wrong-binary") { assert!(!text.lines().any(|l| l == "bin/taskseal")); }
         if file.contains("missing-license") { assert!(!text.lines().any(|l| l == "LICENSE")); }
         if file.contains("nondeterministic") { assert!(text.contains("mtime=now")); }
+    }
+}
+#[test]
+fn production_verifier_rejects_generated_poison_archives() {
+    let verifier = root().join("packaging/verify-artifact.py");
+    let maker = root().join("tests/packaging/fixtures/make_poison_archive.py");
+    let temp = std::env::temp_dir().join(format!("taskseal-poison-{}", std::process::id()));
+    let _ = fs::create_dir_all(&temp);
+    for kind in ["traversal", "wrong-name", "missing-license", "metadata"] {
+        let archive = temp.join(format!("{kind}.tar.gz"));
+        assert!(Command::new("python3").args([maker.to_str().unwrap(), kind, archive.to_str().unwrap()]).status().unwrap().success());
+        let status = Command::new("python3").args([verifier.to_str().unwrap(), archive.to_str().unwrap()]).status().unwrap();
+        assert!(!status.success(), "poison archive unexpectedly accepted: {}", kind);
     }
 }
 #[test]

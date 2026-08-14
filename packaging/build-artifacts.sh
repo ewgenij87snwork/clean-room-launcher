@@ -4,19 +4,25 @@ root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)
 out_dir=${1:-"$root/target/artifacts"}
 target=${TASKSEAL_TARGET:-}
 version=$(sed -n 's/^version = "\([^"]*\)"/\1/p' "$root/Cargo.toml" | head -1)
-commit=${TASKSEAL_SOURCE_COMMIT:-$(git -C "$root" rev-parse HEAD)}
+commit=${TASKSEAL_SOURCE_COMMIT:-}
+if [[ -z "$commit" && -d "$root/.git" ]]; then commit=$(git -C "$root" rev-parse HEAD); fi
 toolchain=$(sed -n 's/^channel = "\([^"]*\)"/\1/p' "$root/rust-toolchain.toml" | head -1)
 [[ $commit =~ ^[0-9a-f]{40}$|^[0-9a-f]{64}$ ]] || { echo "invalid source commit" >&2; exit 2; }
-[[ "$commit" == "$(git -C "$root" rev-parse HEAD)" ]] || { echo "source commit must equal checked-out HEAD" >&2; exit 2; }
-git -C "$root" diff --quiet || { echo "tracked source changes prevent exact binding" >&2; exit 2; }
+if [[ -d "$root/.git" ]]; then
+  [[ "$commit" == "$(git -C "$root" rev-parse HEAD)" ]] || { echo "source commit must equal checked-out HEAD" >&2; exit 2; }
+  git -C "$root" diff --quiet || { echo "tracked source changes prevent exact binding" >&2; exit 2; }
+fi
 [[ -f "$root/LICENSE" ]] || { echo "LICENSE is required" >&2; exit 2; }
 [[ -n "$version" && -n "$toolchain" ]] || { echo "version/toolchain metadata missing" >&2; exit 2; }
 if [[ -n "$target" ]]; then
-  cargo_args=(--target "$target"); target_label=$target; binary="$root/target/$target/release/taskseal"
+  cargo_args=(--target "$target"); target_label=$target
 else
-  cargo_args=(); target_label=$(rustc -vV | sed -n 's/^host: //p'); binary="$root/target/release/taskseal"
+  cargo_args=(); target_label=$(rustc -vV | sed -n 's/^host: //p')
 fi
 [[ $target_label =~ ^[A-Za-z0-9._-]+$ ]] || { echo "unsafe target label" >&2; exit 2; }
+target_dir=${CARGO_TARGET_DIR:-"$root/target"}
+binary="$target_dir/${target:+$target/}release/taskseal"
+export CARGO_NET_OFFLINE=${CARGO_NET_OFFLINE:-true} LC_ALL=C TZ=UTC SOURCE_DATE_EPOCH=0
 cargo build --locked --release --bin taskseal "${cargo_args[@]}"
 [[ -x "$binary" ]] || { echo "built taskseal binary not found" >&2; exit 2; }
 mkdir -p "$out_dir"
@@ -27,7 +33,11 @@ install -m 0755 "$binary" "$stage/bin/taskseal"
 install -m 0755 "$binary" "$stage/bin/tseal"
 install -m 0644 "$root/LICENSE" "$stage/LICENSE"
 printf 'TaskSeal v%s local unsigned preview artifact.\nCanonical executable: bin/taskseal\nCompatibility executable: bin/tseal (byte-identical copy)\n' "$version" > "$stage/NOTICE"
-printf 'version=%s\nsource_commit=%s\nrust_toolchain=%s\ntarget=%s\nqualification=NOT_QUALIFIED\nsigning=unsigned-preview-only\ndependencies=cargo-lock\n' "$version" "$commit" "$toolchain" "$target_label" > "$stage/VERSION"
+script_sha=$(shasum -a 256 "$root/packaging/build-artifacts.sh" | awk '{print $1}')
+rustc_version=$(rustc --version)
+cargo_version=$(cargo --version)
+python_version=$(python3 --version)
+printf 'version=%s\nsource_commit=%s\nrust_toolchain=%s\ntarget=%s\nrustc=%s\ncargo=%s\npython=%s\npackaging_script_sha256=%s\narchive_profile=normalized-local-toolchain\nqualification=NOT_QUALIFIED\nsigning=unsigned-preview-only\ndependencies=cargo-lock\n' "$version" "$commit" "$toolchain" "$target_label" "$rustc_version" "$cargo_version" "$python_version" "$script_sha" > "$stage/VERSION"
 install -m 0644 "$root/CHANGELOG.md" "$stage/share/doc/taskseal/CHANGELOG.md"
 archive="$out_dir/taskseal-v$version-$target_label.tar.gz"
 python3 - "$stage" "$archive" <<'PY'
@@ -40,6 +50,7 @@ for base, dirs, files in os.walk(stage):
         path = os.path.join(base, name)
         rel = os.path.relpath(path, os.path.dirname(stage)).replace(os.sep, "/")
         entries.append((rel, path))
+entries.sort(key=lambda item: (item[0].count("/"), item[0]))
 with open(archive, "wb") as raw:
     with gzip.GzipFile(fileobj=raw, mode="wb", filename="", mtime=0) as gz:
         with tarfile.open(fileobj=gz, mode="w", format=tarfile.PAX_FORMAT) as tar:
