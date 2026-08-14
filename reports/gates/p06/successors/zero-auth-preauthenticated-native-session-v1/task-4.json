@@ -22,15 +22,15 @@
     "scheme": "parent-bound-corrective-receipt.v3",
     "input_head": "6a54523b4dbf8869ca7035a7dc42df88ac11c45a",
     "correction_input_head": "707db75475879a95ccf53bc295088362e3f3a560",
-    "implementation_result_head": "3a5d52bed76b393f2a58ff082976187e57cc26b7",
-    "implementation_tree": "c9d5341a7ec688c86762abebcf9baf65f80ec74e",
-    "receipt_commit_parent": "3a5d52bed76b393f2a58ff082976187e57cc26b7",
-    "replaces_receipt_commit": "707db75475879a95ccf53bc295088362e3f3a560",
+    "implementation_result_head": "b1140d6fad31f855dd824477269658ccf54ad4a6",
+    "implementation_tree": "af6bf7376eab113f4cb8f23acb2412231694c218",
+    "receipt_commit_parent": "b1140d6fad31f855dd824477269658ccf54ad4a6",
+    "replaces_receipt_commit": "73345be84c8e67638718e1360b568365796662a9",
     "predecessor_task_receipt": {
       "path": "reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/task-4.json",
-      "commit": "707db75475879a95ccf53bc295088362e3f3a560",
-      "blob_oid": "d868cfabeed248ed4aa19c29aabb420f9d753927",
-      "sha256": "0a04f635e9d754b57caadbe263d594f3936dc41104b65450b5c98db46c050258"
+      "commit": "73345be84c8e67638718e1360b568365796662a9",
+      "blob_oid": "9d5c252d046e52eb83e04f961ccfe78e9cb23590",
+      "sha256": "cb9ce76b35afe199b1012d50af2c8e610fa091aa2297f30ab39014d4c7b6f966"
     },
     "parent_task_receipt": {
       "path": "reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/task-3.json",
@@ -71,12 +71,17 @@
   },
   "subject": {
     "algorithm": "sha256 of sorted path, tab, sha256, newline correction records",
-    "sha256": "e856a33459c744664406dc9404ec966cfbd94f638144ffe08e2b0e98c40245fe",
+    "sha256": "c0aacc5c448cdf7297f27af41096a835eb92ddd1f27e839c1f7350e365111584",
     "sources": [
       {
         "kind": "repository_implementation_commit",
         "path": "reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/consolidated.json",
         "sha256": "2b9abf13c29821846aadd6f9ddb2797f68c38de2209e7b1fb75b26c3ce71613f"
+      },
+      {
+        "kind": "repository_implementation_commit",
+        "path": "reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/task-4.json",
+        "sha256": "cb9ce76b35afe199b1012d50af2c8e610fa091aa2297f30ab39014d4c7b6f966"
       },
       {
         "kind": "repository_implementation_commit",
@@ -101,7 +106,7 @@
       {
         "kind": "repository_implementation_commit",
         "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-4-receipt.sh",
-        "sha256": "db7bdfd9caae6eb4571f20f9788ab3417a0f6d810e54c48c84ea39c759ae9d76"
+        "sha256": "ffe34047f3bd9429742c4da86d04adfba52f3cefe1b19f5dce9678e6b4cd8a42"
       },
       {
         "kind": "repository_implementation_commit",
@@ -146,7 +151,7 @@
       "exit": 1,
       "output": "P06_ZERO_AUTH_TASK_4_RECEIPT_REFUSAL:RECEIPT_CONTRACT",
       "output_sha256": "83b45149afb5e944ec80635c75db0137640b84eea964af5858a98e9f0400b735",
-      "meaning": "At implementation HEAD 3a5d52b, the new receipt validator rejected the predecessor broad shell-completeness receipt before reseal."
+      "meaning": "At implementation HEAD 3a5d52b, the new receipt validator rejected the predecessor broad shell-completeness receipt before reseal. A literal-tab comparison defect in the first seal was then corrected and bound before this replacement."
     },
     {
       "id": "P06-ZERO-AUTH-T4-FIX10-GREEN-SOLE-GATE-V2",
