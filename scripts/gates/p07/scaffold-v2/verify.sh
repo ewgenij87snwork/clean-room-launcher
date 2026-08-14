@@ -10,6 +10,7 @@ if [ "$#" -ne 0 ]; then
   exit 1
 fi
 export P07_V2_ROOT="$ROOT"
+export P07_V2_GATE_SCRIPT="$0"
 python3 - <<'PY'
 import hashlib, json, os, subprocess, sys
 from pathlib import Path
@@ -65,10 +66,10 @@ def check():
   for task, entry in enumerate(entries, 1):
     if set(entry) != {"task", "path", "commit", "sha256", "implementation_selector"} or entry["task"] != task:
       raise Refused("MANIFEST_ENTRIES")
+    if entry["path"] in paths: raise Refused("MANIFEST_DUPLICATE")
     profile = profiles[task]
     if (entry["path"], entry["commit"], entry["sha256"]) != profile:
       raise Refused("SOURCE_IDENTITY")
-    if entry["path"] in paths: raise Refused("MANIFEST_DUPLICATE")
     paths.append(entry["path"])
     blob = git("show", f"{entry['commit']}:{entry['path']}").encode()
     if hashlib.sha256(blob).hexdigest() != entry["sha256"] or regular(entry["path"]) != blob:
@@ -105,16 +106,23 @@ def check():
       raise Refused("BOUNDARY")
     if not value.get("evidence_ids") or len(value["evidence_ids"]) != len(set(value["evidence_ids"])):
       raise Refused("ACCEPTANCE_EVIDENCE")
-  if os.environ.get("P07_V2_FIXTURE_MODE") != "1":
-    for command in (
-      [sys.executable, "scripts/gates/p07/scaffold-v2/test-normalize.py"],
-      ["rustc", "--test", "tests/packaging/target_matrix.rs", "-o", "/tmp/p07-v2-t1",],
-      ["rustc", "--test", "tests/packaging/no_skip.rs", "-o", "/tmp/p07-v2-t2",],
-      ["rustc", "--test", "tests/packaging/artifact_layout.rs", "-o", "/tmp/p07-v2-t3",],
-      ["scripts/release-build/verify-source.sh", "--scaffold", "--subject-digest", git("rev-parse", "HEAD").strip()],
-    ):
-      if subprocess.run(command, cwd=root).returncode:
-        raise Refused("FOCUSED_TEST")
+  gate_source = Path(os.environ.get("P07_V2_GATE_SCRIPT", "scripts/gates/p07/scaffold-v2/verify.sh")).read_text()
+  if "P07_PACKAGING_SCAFFOLD_V2_PASS" not in gate_source or "P07_" + "PASS" in gate_source:
+    raise Refused("OUTPUT_BOUNDARY")
+  focused = (
+    ("tests/packaging/target_matrix.rs", "/tmp/p07-v2-t1"),
+    ("tests/packaging/no_skip.rs", "/tmp/p07-v2-t2"),
+    ("tests/packaging/artifact_layout.rs", "/tmp/p07-v2-t3"),
+  )
+  for source, output in focused:
+    if subprocess.run(["rustc", "--test", source, "-o", output], cwd=root).returncode:
+      raise Refused("FOCUSED_COMPILE")
+    if subprocess.run([output], cwd=root).returncode:
+      raise Refused("FOCUSED_RUN")
+  verifier = os.environ.get("P07_V2_VERIFY_SOURCE", "scripts/release-build/verify-source.sh")
+  scaffold = subprocess.run([verifier, "--scaffold", "--subject-digest", git("rev-parse", "HEAD").strip()], cwd=root, text=True, capture_output=True)
+  if scaffold.returncode or "P07_SCAFFOLD_VALIDATION_PASS" not in scaffold.stdout:
+    raise Refused("SCAFFOLD_STRUCTURAL")
   return {"qualification":"NOT_QUALIFIED", "p07":"3/8", "overall":"3/7", "tasks":[1,2,3]}
 try:
   result = check()
