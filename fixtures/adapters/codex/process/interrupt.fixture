@@ -1,0 +1,5 @@
+case=interrupt
+argv_digest=sha256:redacted
+exit=130
+signal=SIGINT
+terminal_restored=true

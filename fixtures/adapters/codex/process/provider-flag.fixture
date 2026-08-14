@@ -1,0 +1,5 @@
+case=provider-flag
+argv_digest=sha256:redacted
+exit=0
+signal=none
+terminal_restored=true

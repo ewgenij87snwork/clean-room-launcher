@@ -1,0 +1,4 @@
+case=provider-failure
+protected_before=sha256:redacted
+protected_after=sha256:redacted
+taskseal_ephemeral_removed=true
