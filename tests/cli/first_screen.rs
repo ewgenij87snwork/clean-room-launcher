@@ -26,7 +26,11 @@ fn assert_zero_auth_actions(screen: &str) {
         "login",
         "log in",
         "sign in",
+        "setup",
         "settings",
+        "configure",
+        "configuration",
+        "preferences",
         "api key",
         "api-key",
         "documentation",
@@ -37,6 +41,52 @@ fn assert_zero_auth_actions(screen: &str) {
         );
     }
     assert!(screen.contains("Continue locally"));
+}
+
+#[cfg(target_os = "macos")]
+#[test]
+fn real_tty_enter_dispatches_the_taskseal_owned_local_continuation() {
+    // Break caught: the interactive CTA is only rendered and the real CLI exits before Enter.
+    let output = Command::new("/usr/bin/expect")
+        .args([
+            "-c",
+            concat!(
+                "set timeout 5\n",
+                "spawn -noecho $env(TSEAL_TEST_BIN)\n",
+                "expect {\n",
+                "  \"Enter continue locally\" {}\n",
+                "  timeout { exit 124 }\n",
+                "  eof { exit 125 }\n",
+                "}\n",
+                "send \"\\r\"\n",
+                "expect eof\n",
+            ),
+        ])
+        .env("TSEAL_TEST_BIN", env!("CARGO_BIN_EXE_tseal"))
+        .env("COLUMNS", "80")
+        .env("TERM", "xterm-256color")
+        .env_remove("NO_COLOR")
+        .output()
+        .unwrap();
+
+    assert_eq!(output.status.code(), Some(0));
+    assert!(output.stderr.is_empty());
+    let transcript = String::from_utf8(output.stdout).unwrap().replace('\r', "");
+    let screen_start = transcript
+        .find("TaskSeal · provider qualification required")
+        .expect("real PTY output must select the interactive screen");
+    let session = &transcript[screen_start..];
+    assert!(
+        session.starts_with(include_str!(
+            "../../fixtures/cli/first-screen-unqualified-tty.txt"
+        )),
+        "real PTY transcript did not match the exact TTY fixture:\n{session}"
+    );
+    assert!(
+        session.contains("tseal: command accepted\n"),
+        "real Enter did not reach the TaskSeal-owned local dispatcher:\n{session}"
+    );
+    assert_zero_auth_actions(session);
 }
 
 #[test]

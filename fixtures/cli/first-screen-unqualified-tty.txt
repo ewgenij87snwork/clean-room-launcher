@@ -8,7 +8,5 @@ Writes   .taskseal/project.json + .taskseal/out/ · nothing yet
 Leaves   ~/.codex · ~/.claude · Git/provider state unchanged
 
 › Continue locally  Recommended
-  Review or change setup
-  Exit
 
-Enter continue locally · Esc exit
+Enter continue locally

@@ -67,6 +67,12 @@ expect_refusal implementation_write_set
 jq '.verification.public_boundary_paths |= map(select(. != "src"))' "$report" >"$fixture_report"
 expect_refusal public_boundary_inventory
 
+jq 'del(.local_continuity.real_tty_enter_dispatch)' "$report" >"$fixture_report"
+expect_refusal real_tty_enter_dispatch
+
+jq '.local_continuity.prohibited_cta_classes |= map(select(. != "SETUP_SETTINGS_CONFIGURATION"))' "$report" >"$fixture_report"
+expect_refusal semantic_configuration_cta
+
 jq '.result="PASS"' "$report" >"$fixture_report"
 expect_refusal premature_plan_pass
 

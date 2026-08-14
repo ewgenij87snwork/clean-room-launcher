@@ -38,17 +38,20 @@ jq -e '
     {task:4,path:"reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/task-4.json",binding:"PARENT_BOUND_REPLACEMENT_RECEIPT_V2_RESOLVED_BY_GATE"}
   ] and
   .transcripts == [
-    {mode:"TTY_80",path:"fixtures/cli/first-screen-unqualified-tty.txt",sha256:"847c65e3b8c2d5ea778de2d00a0509020ad78839653704a77f57f0505ae793cf"},
-    {mode:"TTY_40_NARROW",path:"fixtures/cli/first-screen-unqualified-narrow.txt",sha256:"85a1c1eea3707c95ab9b68aa771b3cc4c0f928cf2ffde2ddd5b6ae7b0704ebcf"},
-    {mode:"PLAIN_TTY_80",path:"fixtures/cli/first-screen-unqualified-plain.txt",sha256:"b2cb9c2db649a79f136ed9d785a62d319eedc3788e9270a062c66226ac3cbd0a"},
+    {mode:"TTY_80",path:"fixtures/cli/first-screen-unqualified-tty.txt",sha256:"5c8bbdea3c033746f4eb9d34327299bd7e24b16ef03226cdcbf3505d76404fd8"},
+    {mode:"TTY_40_NARROW",path:"fixtures/cli/first-screen-unqualified-narrow.txt",sha256:"89289d95a67501e446c4eae4debe739b78652ea7e246835c97fc814b1481a2b2"},
+    {mode:"PLAIN_TTY_80",path:"fixtures/cli/first-screen-unqualified-plain.txt",sha256:"d57208b7fb3f5a97b8a8c64fa7d874a27aee5e5832d93d7fd146d5a34bfb4371"},
     {mode:"NON_TTY_80",path:"fixtures/cli/first-screen-unqualified-non-tty.txt",sha256:"f54f17b1d9d2576f2fb9f31ca2799dd94b5b69824dfdb610918f9a2e46f9e20b"}
   ] and
   .local_continuity == {
     default_action:"Continue locally",
     local_commands:["status","scan","prepare","check"],
-    prohibited_cta_classes:["LOGIN","SETTINGS","API_KEY","DOCUMENTATION"],
+    prohibited_cta_classes:["LOGIN","SETUP_SETTINGS_CONFIGURATION","API_KEY","DOCUMENTATION"],
     prohibited_cta_present:false,
-    non_tty_prompt:false
+    non_tty_prompt:false,
+    real_tty_mode_selected:true,
+    real_tty_enter_dispatch:"TASKSEAL_OWNED_STATUS_IN_PROCESS",
+    semantic_cta_regression:"tests/cli/first_screen.rs::assert_zero_auth_actions"
   } and
   .owner_ssot == {
     worklog_prefix:{
@@ -76,6 +79,7 @@ jq -e '
     "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-4-receipt.sh",
     "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-verify.sh",
     "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/verify.sh",
+    "src/cli/mod.rs",
     "src/cli/screen.rs",
     "tests/cli/first_screen.rs"
   ] and
@@ -160,7 +164,7 @@ test "$control_output" = P06_ZERO_AUTH_CONTROL_PASS || refuse CONTROL_OUTPUT
 source_output=$(ruby "$root/$successor/source-inventory.rb" "$root") || refuse SOURCE_INVENTORY
 test "$source_output" = P06_ZERO_AUTH_SOURCE_INVENTORY_PASS || refuse SOURCE_INVENTORY_OUTPUT
 
-rustfmt --edition 2024 --check src/cli/screen.rs tests/cli/first_screen.rs
+rustfmt --edition 2024 --check src/cli/mod.rs src/cli/screen.rs tests/cli/first_screen.rs
 cargo clippy --all-targets --locked --offline -- -D warnings
 cargo test --locked --offline --test cli --test adapters --test trace_metadata
 

@@ -1,4 +1,4 @@
-use std::io::IsTerminal;
+use std::io::{self, IsTerminal};
 
 pub struct PrepareReady {
     pub provider: &'static str,
@@ -13,13 +13,33 @@ pub struct RenderContext {
     pub plain: bool,
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum UnqualifiedAction {
+    ContinueLocally,
+    Stop,
+}
+
+pub fn terminal_is_interactive() -> bool {
+    std::io::stdin().is_terminal() && std::io::stdout().is_terminal()
+}
+
+pub fn read_unqualified_action() -> io::Result<UnqualifiedAction> {
+    let mut input = String::new();
+    let bytes_read = std::io::stdin().read_line(&mut input)?;
+    if bytes_read > 0 && input.trim().is_empty() {
+        Ok(UnqualifiedAction::ContinueLocally)
+    } else {
+        Ok(UnqualifiedAction::Stop)
+    }
+}
+
 pub fn render_unqualified(ready: PrepareReady) -> Vec<String> {
     let width = std::env::var("COLUMNS")
         .ok()
         .and_then(|value| value.parse::<usize>().ok())
         .filter(|width| *width >= 20)
         .unwrap_or(80);
-    let interactive = std::io::stdout().is_terminal();
+    let interactive = terminal_is_interactive();
     let plain = !interactive
         || std::env::var_os("NO_COLOR").is_some()
         || std::env::var("TERM").is_ok_and(|term| term.eq_ignore_ascii_case("dumb"));
@@ -56,18 +76,14 @@ pub fn render_unqualified_for(ready: PrepareReady, context: RenderContext) -> Ve
     } else if context.plain {
         lines.extend([
             "1. Continue locally  Recommended".to_owned(),
-            "2. Review or change setup".to_owned(),
-            "3. Exit".to_owned(),
             String::new(),
-            "Enter number · Esc exit".to_owned(),
+            "Enter continue locally".to_owned(),
         ]);
     } else {
         lines.extend([
             "› Continue locally  Recommended".to_owned(),
-            "  Review or change setup".to_owned(),
-            "  Exit".to_owned(),
             String::new(),
-            "Enter continue locally · Esc exit".to_owned(),
+            "Enter continue locally".to_owned(),
         ]);
     }
     if context.width >= 80 {

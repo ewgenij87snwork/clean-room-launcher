@@ -19,7 +19,5 @@ Leaves
 state unchanged
 
 › Continue locally  Recommended
-  Review or change setup
-  Exit
 
-Enter continue locally · Esc exit
+Enter continue locally

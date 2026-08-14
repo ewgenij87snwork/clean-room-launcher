@@ -43,7 +43,13 @@ jq -e \
     "P06-ZERO-AUTH-T4-FIX3-RED-SOURCE-SCANNER-SELF-MATCH-V1",
     "P06-ZERO-AUTH-T4-FIX3-GREEN-CURRENT-SOURCE-INVENTORY-V1",
     "P06-ZERO-AUTH-T4-GREEN-SOLE-GATE-V1",
-    "P06-ZERO-AUTH-T4-GREEN-DESCENDANT-DURABILITY-V1"
+    "P06-ZERO-AUTH-T4-GREEN-DESCENDANT-DURABILITY-V1",
+    "P06-ZERO-AUTH-T4-FIX4-RED-SEMANTIC-CTA-AND-COSMETIC-ENTER-V1",
+    "P06-ZERO-AUTH-T4-FIX4-GREEN-REAL-TTY-LOCAL-DISPATCH-V1",
+    "P06-ZERO-AUTH-T4-FIX4-GREEN-GATE-MUTATIONS-V1",
+    "P06-ZERO-AUTH-T4-FIX4-RED-REPLACEMENT-RECEIPT-V1",
+    "P06-ZERO-AUTH-T4-FIX4-GREEN-SOLE-GATE-V1",
+    "P06-ZERO-AUTH-T4-FIX4-GREEN-DESCENDANT-DURABILITY-V1"
   ] and
   .binding == {
     scheme:"parent-bound-receipt.v2",
@@ -51,14 +57,14 @@ jq -e \
     implementation_result_head:$implementation_head,
     implementation_tree:$implementation_tree,
     receipt_commit_parent:$implementation_head,
-    replaces_receipt_commit:"95529ea783007d374bac6bddd990fe7f013b3e84",
+    replaces_receipt_commit:"cfecf25a8d7eac2c67e5feb67030d98b6f1dfa3a",
     parent_task_receipt:{
       path:"reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/task-3.json",
       commit:$input_head,
       blob_oid:"08febe5afe412e00e46f32d4c915f94e6cbe209d",
       sha256:"8916cd8d268d91988931985ffb952b95fde491445f84ddbfa9a1c22352a68de8"
     },
-    resolution:"Resolve exactly one commit in input_head..tip whose task-4 receipt blob equals these bytes; it must be a single-parent receipt-only child of implementation_result_head and replace receipt-only 95529ea. Repository subjects are read from that implementation commit, while the accepted Task 3 receipt is read from input_head."
+    resolution:"Resolve exactly one commit in input_head..tip whose task-4 receipt blob equals these bytes; it must be a single-parent receipt-only child of implementation_result_head and replace receipt-only cfecf25. Repository subjects are read from that implementation commit, while the accepted Task 3 receipt is read from input_head."
   } and
   .inputs == {
     plan_checkpoint_path:"/Users/ysorokin/Documents/it/5-LVL - 2026/Temp in Projects/wisdom/taskseal/plans/2026-08-13-p06-zero-auth-preauthenticated-native-session-v1.md",
@@ -78,11 +84,12 @@ jq -e \
     "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-4-receipt.sh",
     "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-verify.sh",
     "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/verify.sh",
+    "src/cli/mod.rs",
     "src/cli/screen.rs",
     "tests/cli/first_screen.rs"
   ] and
-  ([.subject.sources[].path] | unique | length) == 12 and
-  ([.subject.sources[] | select(.kind == "repository_implementation_commit" and (.sha256 | test("^[0-9a-f]{64}$")))] | length) == 12 and
+  ([.subject.sources[].path] | unique | length) == 13 and
+  ([.subject.sources[] | select(.kind == "repository_implementation_commit" and (.sha256 | test("^[0-9a-f]{64}$")))] | length) == 13 and
   [.evidence[].id] == .acceptance.evidence_ids and
   [.evidence[].command] == [
     "CARGO_INCREMENTAL=0 cargo test --offline --test cli first_screen:: -- --test-threads=1",
@@ -96,9 +103,15 @@ jq -e \
     "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/verify.sh",
     "ruby scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/source-inventory.rb .",
     "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/verify.sh",
+    "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-4-receipt-durability.sh",
+    "CARGO_INCREMENTAL=0 cargo test --offline --test cli first_screen -- --test-threads=1",
+    "CARGO_INCREMENTAL=0 cargo test --offline --test cli first_screen -- --test-threads=1",
+    "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-verify.sh",
+    "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-4-receipt.sh",
+    "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/verify.sh",
     "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-4-receipt-durability.sh"
   ] and
-  [.evidence[].exit] == [101,0,1,0,1,0,1,0,1,0,0,0] and
+  [.evidence[].exit] == [101,0,1,0,1,0,1,0,1,0,0,0,101,0,0,1,0,0] and
   [.evidence[].output] == [
     "error[E0425]: RenderContext and render_unqualified_for are absent",
     "test result: ok. 4 passed; 0 failed; 0 ignored",
@@ -110,6 +123,12 @@ jq -e \
     "PUBLIC_BOUNDARY_PASS",
     "P06_ZERO_AUTH_SOURCE_REFUSAL:CREDENTIAL_EXTRACTION:scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/verify.sh",
     "P06_ZERO_AUTH_SOURCE_INVENTORY_PASS",
+    "P06_ZERO_AUTH_PREAUTHENTICATED_NATIVE_SESSION_V1_PASS",
+    "P06_ZERO_AUTH_TASK_4_RECEIPT_DURABILITY_PASS",
+    "test result: FAILED. 1 passed; 4 failed; 0 ignored; 0 measured; 32 filtered out",
+    "test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 32 filtered out",
+    "P06_ZERO_AUTH_GATE_MUTATIONS_PASS",
+    "P06_ZERO_AUTH_TASK_4_RECEIPT_REFUSAL:RECEIPT_CONTRACT",
     "P06_ZERO_AUTH_PREAUTHENTICATED_NATIVE_SESSION_V1_PASS",
     "P06_ZERO_AUTH_TASK_4_RECEIPT_DURABILITY_PASS"
   ] and
@@ -126,9 +145,12 @@ jq -e \
   .controls == {
     unqualified_default_action:"CONTINUE_LOCALLY",
     exact_transcripts:["TTY_80","TTY_40_NARROW","PLAIN_TTY_80","NON_TTY_80"],
-    prohibited_cta_classes:["LOGIN","SETTINGS","API_KEY","DOCUMENTATION"],
+    prohibited_cta_classes:["LOGIN","SETUP_SETTINGS_CONFIGURATION","API_KEY","DOCUMENTATION"],
     prohibited_cta_present:false,
     non_tty_prompt:false,
+    real_tty_mode_selected:true,
+    real_tty_enter_dispatch:"TASKSEAL_OWNED_STATUS_IN_PROCESS",
+    semantic_cta_regression:true,
     task_receipts_validated:[1,2,3,4],
     governed_controls:["ADP-05","AUTH-01","OD-10"],
     source_inventory:"CURRENT_TRACKED_INVENTORY",
@@ -151,8 +173,8 @@ test "$(git rev-parse "$implementation_head^{tree}")" = "$implementation_tree" |
 git merge-base --is-ancestor "$input_head" "$implementation_head" || refuse IMPLEMENTATION_LINEAGE
 test "$(git rev-parse "$input_head:$parent_receipt_rel")" = "$(jq -r '.binding.parent_task_receipt.blob_oid' "$receipt")" || refuse PARENT_RECEIPT_BLOB
 test "$(git show "$input_head:$parent_receipt_rel" | shasum -a 256 | awk '{print $1}')" = "$(jq -r '.binding.parent_task_receipt.sha256' "$receipt")" || refuse PARENT_RECEIPT_DIGEST
-git merge-base --is-ancestor 95529ea783007d374bac6bddd990fe7f013b3e84 "$implementation_head" || refuse REPLACEMENT_LINEAGE
-test "$(git diff-tree --no-commit-id --name-only -r 95529ea783007d374bac6bddd990fe7f013b3e84)" = "$receipt_rel" || refuse REPLACED_RECEIPT_NOT_RECEIPT_ONLY
+git merge-base --is-ancestor cfecf25a8d7eac2c67e5feb67030d98b6f1dfa3a "$implementation_head" || refuse REPLACEMENT_LINEAGE
+test "$(git diff-tree --no-commit-id --name-only -r cfecf25a8d7eac2c67e5feb67030d98b6f1dfa3a)" = "$receipt_rel" || refuse REPLACED_RECEIPT_NOT_RECEIPT_ONLY
 
 expected_paths='fixtures/cli/first-screen-unqualified-narrow.txt
 fixtures/cli/first-screen-unqualified-non-tty.txt
@@ -165,6 +187,7 @@ scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-t
 scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-4-receipt.sh
 scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-verify.sh
 scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/verify.sh
+src/cli/mod.rs
 src/cli/screen.rs
 tests/cli/first_screen.rs'
 test "$(git diff --name-only "$input_head..$implementation_head")" = "$expected_paths" || refuse IMPLEMENTATION_WRITE_SET

@@ -11,6 +11,7 @@ mod starts;
 #[allow(dead_code)] // T8 is the first user-flow consumer; T7 seals the store and its TDD contract.
 pub(crate) mod state;
 
+use std::io::Write;
 use std::process::ExitCode;
 
 pub fn run(invoked_as: &str, args: impl IntoIterator<Item = String>) -> ExitCode {
@@ -118,6 +119,22 @@ fn run_local(invoked_as: &str, args: Vec<String>) -> ExitCode {
                 skills: "5 summaries now · 38 load on use · 4 unavailable",
             });
             println!("{}", screen.join("\n"));
+            if screen::terminal_is_interactive() {
+                if std::io::stdout().flush().is_err() {
+                    eprintln!("INTERACTIVE_OUTPUT_FAILED");
+                    return ExitCode::from(2);
+                }
+                match screen::read_unqualified_action() {
+                    Ok(screen::UnqualifiedAction::ContinueLocally) => {
+                        return run_taskseal_owned_local(invoked_as, parser::Command::Status);
+                    }
+                    Ok(screen::UnqualifiedAction::Stop) => {}
+                    Err(_) => {
+                        eprintln!("INTERACTIVE_INPUT_FAILED");
+                        return ExitCode::from(2);
+                    }
+                }
+            }
         }
         parser::Command::Doctor => match doctor::run(&args[1..]) {
             Ok(report) => println!("{report}"),
@@ -140,8 +157,23 @@ fn run_local(invoked_as: &str, args: Vec<String>) -> ExitCode {
         parser::Command::Provider | parser::Command::Generic => {
             unreachable!("external commands refuse before tail collection")
         }
-        _ => println!("{invoked_as}: command accepted"),
+        command => return run_taskseal_owned_local(invoked_as, command),
     }
 
+    ExitCode::SUCCESS
+}
+
+fn run_taskseal_owned_local(invoked_as: &str, command: parser::Command) -> ExitCode {
+    assert!(matches!(
+        command,
+        parser::Command::Status
+            | parser::Command::Scan
+            | parser::Command::Init
+            | parser::Command::Prepare
+            | parser::Command::Check
+            | parser::Command::Explain
+            | parser::Command::Inspect
+    ));
+    println!("{invoked_as}: command accepted");
     ExitCode::SUCCESS
 }
