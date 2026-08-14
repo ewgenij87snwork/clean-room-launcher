@@ -6,11 +6,11 @@
   "acceptance": {
     "id": "ACC-P07-T1",
     "operator_result": "The alpha target matrix declares the complete target interface, keeps unsupported and missing-runner fixtures out of advertised claims, and has no RC claim without a P06 QUALIFIED receipt.",
-    "evidence_ids": ["EVD-P07-T1-RED", "EVD-P07-T1-GREEN", "EVD-P07-T1-FMT-BOUNDARY"]
+    "evidence_ids": ["EVD-P07-T1-RED", "EVD-P07-T1-GREEN", "EVD-P07-T1-R1-MUTATIONS-GREEN", "EVD-P07-T1-R2-RUNNER-MUTATIONS-GREEN", "EVD-P07-T1-FMT-BOUNDARY"]
   },
   "binding": {
     "input_head": "ea551a35b058b19e402071cfc07d34862ec9216b",
-    "continuation_head": "5249fd4c86760563b1f4306b74ee5e35fa949b4b",
+    "continuation_head": "224095f295fbd76b36a2b19f29606fb32d2ed0cb",
     "implementation_files": [
       ".github/workflows/ci.yml",
       "packaging/targets.toml",
@@ -39,6 +39,13 @@
       "meaning": "Mutated non-empty NOT_QUALIFIED advertised claim, advertised/qualified mismatch, advertised-only workflow binding and global fmt command are all refused by focused tests."
     },
     {
+      "id": "EVD-P07-T1-R2-RUNNER-MUTATIONS-GREEN",
+      "command": "CARGO_MANIFEST_DIR=\"$PWD\" rustc --test tests/packaging/target_matrix.rs -o /tmp/p07-target-matrix-r2 && /tmp/p07-target-matrix-r2",
+      "exit": 0,
+      "output": "4 passed; 0 failed",
+      "meaning": "The workflow is bound to matrix.runner for qualified lanes; mutation to hardcoded ubuntu-latest is refused, while the empty qualified matrix remains honest under P06 NOT_QUALIFIED."
+    },
+    {
       "id": "EVD-P07-T1-FMT-BOUNDARY",
       "command": "cargo fmt --all -- --check",
       "exit": 1,
@@ -47,8 +54,8 @@
   ],
   "subjects": {
     "packaging/targets.toml": "392a949ea9957c304fd2413fd91d1a01e546fc108b21f644a5912ca9f3543dec",
-    ".github/workflows/ci.yml": "05496881dc3fdc5af344badb61582ae3f7cccd54512136d74c55c014aee619dd",
-    "tests/packaging/target_matrix.rs": "c366fc4d362e82e9587d61a7140a0c9c07b6bdd8ebcc5071fc07ef0210e8a7a4"
+    ".github/workflows/ci.yml": "df90fae71de0b9063ab2964725030e850c9e3aae6d30f54b9ac7d34c9fe17541",
+    "tests/packaging/target_matrix.rs": "269f4bb788615ffa29fc09ede7e1220502dae5f746cd576fc65cf037a3629819"
   },
   "qualification": "NOT_QUALIFIED",
   "claims": {

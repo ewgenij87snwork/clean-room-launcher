@@ -53,7 +53,8 @@ fn workflow_is_bound_to_qualified(source: &str) -> bool {
         && source.contains("qualified_targets")
         && source.contains("qualification_status")
         && source.contains("rust_target")
-        && source.contains("runs-on")
+        && source.contains("runs-on: ${{ matrix.runner }}")
+        && source.contains("matrix:")
         && source.contains("cargo test")
         && !source.contains("continue-on-error")
         && !source.contains("if: always()")
@@ -100,6 +101,8 @@ fn workflow_is_structurally_bound_to_qualified_entries() {
     assert!(workflow_is_bound_to_qualified(&workflow));
     let advertised_binding = workflow.replace("qualified_targets", "advertised_targets");
     assert!(!workflow_is_bound_to_qualified(&advertised_binding));
+    let hardcoded_runner = workflow.replace("runs-on: ${{ matrix.runner }}", "runs-on: ubuntu-latest");
+    assert!(!workflow_is_bound_to_qualified(&hardcoded_runner));
     let global_fmt = format!("{workflow}\n      - run: cargo fmt --all -- --check\n");
     assert!(!workflow_is_bound_to_qualified(&global_fmt));
 }
