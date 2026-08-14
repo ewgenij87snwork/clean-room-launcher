@@ -148,13 +148,13 @@ jq -e \
     "test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 32 filtered out",
     "P06_ZERO_AUTH_GATE_MUTATIONS_PASS",
     "P06_ZERO_AUTH_TASK_4_RECEIPT_REFUSAL:RECEIPT_CONTRACT",
-    "P06_ZERO_AUTH_SOURCE_REFUSAL:TOKEN_INPUT:scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-4-receipt.sh\nP06_ZERO_AUTH_GATE_REFUSAL:SOURCE_INVENTORY",
     "P06_ZERO_AUTH_PREAUTHENTICATED_NATIVE_SESSION_V1_PASS",
     "P06_ZERO_AUTH_TASK_4_RECEIPT_DURABILITY_PASS",
     "test result: FAILED. 0 passed; 4 failed; 0 ignored; 0 measured; 37 filtered out",
     "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 37 filtered out",
     "P06_ZERO_AUTH_GATE_MUTATIONS_PASS",
     "P06_ZERO_AUTH_TASK_4_RECEIPT_REFUSAL:RECEIPT_CONTRACT",
+    "P06_ZERO_AUTH_SOURCE_REFUSAL:TOKEN_INPUT:scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-4-receipt.sh\nP06_ZERO_AUTH_GATE_REFUSAL:SOURCE_INVENTORY",
     "P06_ZERO_AUTH_PREAUTHENTICATED_NATIVE_SESSION_V1_PASS",
     "P06_ZERO_AUTH_TASK_4_RECEIPT_DURABILITY_PASS"
   ] and
