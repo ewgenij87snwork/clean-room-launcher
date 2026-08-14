@@ -5,7 +5,7 @@
   "result": "accepted",
   "acceptance": {
     "id": "P06-ZERO-AUTH-T4-LOCAL-UX-CONSOLIDATED-CLOSURE-V1",
-    "operator_result": "The unqualified TTY, narrow, plain and non-TTY screens explicitly continue locally without a login, setup/settings/configuration, API-key or documentation action; non-TTY never prompts. A real macOS PTY binary session selects the TTY transcript, waits for Enter and dispatches the TaskSeal-owned status continuation in-process. One offline successor gate binds OD-10/AUTH-01, current source and public inventories, every zero-auth call path, immutable Git history/write-set, all four parent-bound receipts and their topology, plus a sealed owner-worklog prefix whose valid append-only tail can receive the terminal review event without changing the PENDING checkpoint.",
+    "operator_result": "The unqualified TTY, narrow, plain and non-TTY screens explicitly continue locally without a login, setup/settings/configuration, API-key or documentation action; non-TTY never prompts. A real macOS PTY binary session selects the TTY transcript, waits for Enter and dispatches the TaskSeal-owned status continuation in-process. Unsupported selector, selector-local, argless-local and unknown-command routes stop at their minimal routing prefix without consuming or copying credential-shaped tails; saved-start access-token argv refuses from raw bytes before deserialization or argv hashing while valid local commands and saved starts remain available. One offline successor gate binds OD-10/AUTH-01, current source and public inventories, every zero-auth call path, immutable Git history/write-set, all four parent-bound receipts and their topology, plus a sealed owner-worklog prefix whose valid append-only tail can receive the terminal review event without changing the PENDING checkpoint.",
     "control_ids": [
       "ADP-05",
       "AUTH-01",
@@ -29,23 +29,29 @@
       "P06-ZERO-AUTH-T4-FIX4-GREEN-GATE-MUTATIONS-V1",
       "P06-ZERO-AUTH-T4-FIX4-RED-REPLACEMENT-RECEIPT-V1",
       "P06-ZERO-AUTH-T4-FIX4-GREEN-SOLE-GATE-V1",
-      "P06-ZERO-AUTH-T4-FIX4-GREEN-DESCENDANT-DURABILITY-V1"
+      "P06-ZERO-AUTH-T4-FIX4-GREEN-DESCENDANT-DURABILITY-V1",
+      "P06-ZERO-AUTH-T4-FIX5-RED-FINAL-INGESTION-CLOSURE-V1",
+      "P06-ZERO-AUTH-T4-FIX5-GREEN-FINAL-INGESTION-CLOSURE-V1",
+      "P06-ZERO-AUTH-T4-FIX5-GREEN-GATE-MUTATIONS-V1",
+      "P06-ZERO-AUTH-T4-FIX5-RED-REPLACEMENT-RECEIPT-V1",
+      "P06-ZERO-AUTH-T4-FIX5-GREEN-SOLE-GATE-V1",
+      "P06-ZERO-AUTH-T4-FIX5-GREEN-DESCENDANT-DURABILITY-V1"
     ]
   },
   "binding": {
     "scheme": "parent-bound-receipt.v2",
     "input_head": "6a54523b4dbf8869ca7035a7dc42df88ac11c45a",
-    "implementation_result_head": "963b5c2f4f6afe935cf623daa80adbe1ab7e273e",
-    "implementation_tree": "4f81c56b7b084d5c37d226d3560a424f638917c1",
-    "receipt_commit_parent": "963b5c2f4f6afe935cf623daa80adbe1ab7e273e",
-    "replaces_receipt_commit": "cfecf25a8d7eac2c67e5feb67030d98b6f1dfa3a",
+    "implementation_result_head": "91ec3fc4b07501e4bb36c74a7d2659754151fb25",
+    "implementation_tree": "ef5cd805989c3d6ef8a77cd94562697d05b98e43",
+    "receipt_commit_parent": "91ec3fc4b07501e4bb36c74a7d2659754151fb25",
+    "replaces_receipt_commit": "98df95640e07e7b529f1eb501d83ca0b8f86cef3",
     "parent_task_receipt": {
       "path": "reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/task-3.json",
       "commit": "6a54523b4dbf8869ca7035a7dc42df88ac11c45a",
       "blob_oid": "08febe5afe412e00e46f32d4c915f94e6cbe209d",
       "sha256": "8916cd8d268d91988931985ffb952b95fde491445f84ddbfa9a1c22352a68de8"
     },
-    "resolution": "Resolve exactly one commit in input_head..tip whose task-4 receipt blob equals these bytes; it must be a single-parent receipt-only child of implementation_result_head and replace receipt-only cfecf25. Repository subjects are read from that implementation commit, while the accepted Task 3 receipt is read from input_head."
+    "resolution": "Resolve exactly one commit in input_head..tip whose task-4 receipt blob equals these bytes; it must be a single-parent receipt-only child of implementation_result_head and replace receipt-only 98df956. Repository subjects are read from that implementation commit, while the accepted Task 3 receipt is read from input_head."
   },
   "inputs": {
     "plan_checkpoint_path": "/Users/ysorokin/Documents/it/5-LVL - 2026/Temp in Projects/wisdom/taskseal/plans/2026-08-13-p06-zero-auth-preauthenticated-native-session-v1.md",
@@ -54,7 +60,7 @@
   },
   "subject": {
     "algorithm": "sha256 of sorted path, tab, sha256, newline repository records",
-    "sha256": "af906252f7cb38b49d278a9ed0c996d702b2c97bb2606d40cc18b1ffef5c7d9e",
+    "sha256": "fb5b17901254ddd24e0c6ce9baaa754a16c64c122d9e283e8eb85135596f7f68",
     "sources": [
       {
         "kind": "repository_implementation_commit",
@@ -84,7 +90,12 @@
       {
         "kind": "repository_implementation_commit",
         "path": "reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/consolidated.json",
-        "sha256": "73ed738e358910f948661c7e3dc7094179b60ee9196cd191d8a3ca354500d635"
+        "sha256": "35071268e0548d90808546a73c55fb5f5b41e49a73d603c990a80e703525579a"
+      },
+      {
+        "kind": "repository_implementation_commit",
+        "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/source-inventory-allowlist.json",
+        "sha256": "3654fc251ab343260e3e9c122299652ceddfe214826554f1664ed05665487330"
       },
       {
         "kind": "repository_implementation_commit",
@@ -94,22 +105,22 @@
       {
         "kind": "repository_implementation_commit",
         "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-4-receipt.sh",
-        "sha256": "cb5126da86d699acd7303416ca741c91a11fa8f37ce72a27ff1cc189bf622958"
+        "sha256": "818c9a65a225ceafee6158f61c0240b55e278650ece5a6eea011b8226b6e3186"
       },
       {
         "kind": "repository_implementation_commit",
         "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-verify.sh",
-        "sha256": "1ce68af6fddb101cdab7ea996a148ea017e3b4541b3be1793a85fe24b0609ced"
+        "sha256": "876c1dcd7de72878d2789a086708de80bfc59f0004057a5d42b7c3950ff3979d"
       },
       {
         "kind": "repository_implementation_commit",
         "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/verify.sh",
-        "sha256": "c65e3765402d011583c46a9fd4bc1393588922b4ba8c3a2a0e74652ce302e0ca"
+        "sha256": "d9172c0c341458adf83843d4fca3c8a8f50cbefb22eb65406b97da4c7b228dab"
       },
       {
         "kind": "repository_implementation_commit",
         "path": "src/cli/mod.rs",
-        "sha256": "1bb11a84f08f265c8e7a5984ffec12567e2752c9542d646af2f5184304b0d651"
+        "sha256": "ad697fc76a3b5ba2528b81d2bdd50074c5ba687a78d199c94651fbef10e232ae"
       },
       {
         "kind": "repository_implementation_commit",
@@ -118,8 +129,28 @@
       },
       {
         "kind": "repository_implementation_commit",
+        "path": "src/cli/state.rs",
+        "sha256": "604960c296005aa87fb2806a589205a0c6ac30eebdfe7f1cc3922d2ee8d7bb21"
+      },
+      {
+        "kind": "repository_implementation_commit",
+        "path": "tests/cli/argv_passthrough.rs",
+        "sha256": "600a90098904e286f57121abe56b44a6c57e4c319c429260ca253adc8f3aee20"
+      },
+      {
+        "kind": "repository_implementation_commit",
         "path": "tests/cli/first_screen.rs",
         "sha256": "f7855ceacd3f88b8c3ad66d92a531de84e08882b080762ae49ab3e8dd2af8087"
+      },
+      {
+        "kind": "repository_implementation_commit",
+        "path": "tests/cli/saved_start_call_path.rs",
+        "sha256": "aec04337b77d09c0e612c4710da8ba5110d560e56bea9250d458591ebe39260d"
+      },
+      {
+        "kind": "repository_implementation_commit",
+        "path": "tests/cli/saved_starts.rs",
+        "sha256": "54ed02b5aa03bd94c44b2b45f69ae304ff040304e0b547125f160292ddb59a1d"
       }
     ]
   },
@@ -267,6 +298,54 @@
       "output": "P06_ZERO_AUTH_TASK_4_RECEIPT_DURABILITY_PASS",
       "output_sha256": "841416c45acc4134e8ece2f0c3c03f3156a028404432d8c9a70d4c1d1210d020",
       "meaning": "A local no-network clone added a real descendant after the replacement receipt and reproduced its unique parent-bound topology and subjects."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T4-FIX5-RED-FINAL-INGESTION-CLOSURE-V1",
+      "command": "CARGO_INCREMENTAL=0 cargo test --offline --test cli final_zero_auth_ingestion -- --test-threads=1",
+      "exit": 101,
+      "output": "test result: FAILED. 0 passed; 4 failed; 0 ignored; 0 measured; 37 filtered out",
+      "output_sha256": "3304bde505e107acd537600caac72d7fa1a744c223fcde3f43acb5b700ef847f",
+      "meaning": "The final focused RED proved eager CLI tail collection, missing access-token save refusal, JSON deserialization before raw sensitive-state refusal, and argv hashing before the saved-start call path refused."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T4-FIX5-GREEN-FINAL-INGESTION-CLOSURE-V1",
+      "command": "CARGO_INCREMENTAL=0 cargo test --offline --test cli final_zero_auth_ingestion -- --test-threads=1",
+      "exit": 0,
+      "output": "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 37 filtered out",
+      "output_sha256": "4478ad28a1c0ea3eb0a6831aeef548144534566f2fd3c7761318f353bb1e7bab",
+      "meaning": "Minimal-prefix CLI routing leaves all tested credential tails unread; access-token saved starts refuse before creation; raw malformed sensitive state refuses before JSON parsing; and the real saved-start call path refuses without reaching argv hashing or changing state."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T4-FIX5-GREEN-GATE-MUTATIONS-V1",
+      "command": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-verify.sh",
+      "exit": 0,
+      "output": "P06_ZERO_AUTH_GATE_MUTATIONS_PASS",
+      "output_sha256": "b8c5990f4f0299c2a4617fcbdafd5246a7cd8fe9959a0603f88d0c4a9356140f",
+      "meaning": "The non-overlapping metadata suite additionally refuses removal of unread-tail zero counts, pre-deserialization/pre-hash saved-start phase, or either required access-token selector."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T4-FIX5-RED-REPLACEMENT-RECEIPT-V1",
+      "command": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-4-receipt.sh",
+      "exit": 1,
+      "output": "P06_ZERO_AUTH_TASK_4_RECEIPT_REFUSAL:RECEIPT_CONTRACT",
+      "output_sha256": "83b45149afb5e944ec80635c75db0137640b84eea964af5858a98e9f0400b735",
+      "meaning": "At the final ingestion implementation HEAD, the tightened checker rejected the preceding Task 4 receipt before replacement evidence was sealed."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T4-FIX5-GREEN-SOLE-GATE-V1",
+      "command": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/verify.sh",
+      "exit": 0,
+      "output": "P06_ZERO_AUTH_PREAUTHENTICATED_NATIVE_SESSION_V1_PASS",
+      "output_sha256": "d3886f15e1c3a16f998ead34e9696664e546a0aa5c11fe57d8a5e5f5fdc88bd7",
+      "meaning": "The sole offline gate accepted final ingestion closure together with valid local behavior, controls, inventories, all zero-auth call paths, immutable history/write-set, receipt topology and sealed SSOT prefix."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T4-FIX5-GREEN-DESCENDANT-DURABILITY-V1",
+      "command": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-4-receipt-durability.sh",
+      "exit": 0,
+      "output": "P06_ZERO_AUTH_TASK_4_RECEIPT_DURABILITY_PASS",
+      "output_sha256": "841416c45acc4134e8ece2f0c3c03f3156a028404432d8c9a70d4c1d1210d020",
+      "meaning": "A local no-network clone added a real descendant after the final replacement receipt and reproduced its unique parent-bound topology and expanded subjects."
     }
   ],
   "seal_tdd": {
@@ -298,6 +377,20 @@
     "real_tty_mode_selected": true,
     "real_tty_enter_dispatch": "TASKSEAL_OWNED_STATUS_IN_PROCESS",
     "semantic_cta_regression": true,
+    "cli_credential_tail_values_consumed": 0,
+    "cli_credential_tail_values_copied": 0,
+    "cli_unread_tail_routes": [
+      "UNSUPPORTED_SELECTOR",
+      "SELECTOR_PREFIXED_LOCAL",
+      "TASKSEAL_OWNED_LOCAL",
+      "UNKNOWN_COMMAND"
+    ],
+    "saved_start_sensitive_selectors": [
+      "--with-access-token",
+      "--access-token"
+    ],
+    "saved_start_refusal_phase": "BEFORE_DESERIALIZATION_OR_ARGV_HASH",
+    "valid_local_behavior_preserved": true,
     "task_receipts_validated": [
       1,
       2,
