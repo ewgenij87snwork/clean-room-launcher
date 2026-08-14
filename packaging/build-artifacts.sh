@@ -57,7 +57,7 @@ with open(archive, "wb") as raw:
             for rel, path in entries:
                 info = tar.gettarinfo(path, arcname=rel)
                 info.uid = info.gid = 0; info.uname = info.gname = ""; info.mtime = 0
-                info.mode = 0o755 if rel.endswith("/bin/taskseal") or rel.endswith("/bin/tseal") else 0o644
+                info.mode = 0o755 if info.isdir() or rel.endswith("/bin/taskseal") or rel.endswith("/bin/tseal") else 0o644
                 if info.isfile():
                     with open(path, "rb") as data: tar.addfile(info, data)
                 else: tar.addfile(info)

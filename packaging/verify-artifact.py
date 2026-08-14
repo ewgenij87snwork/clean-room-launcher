@@ -20,7 +20,7 @@ try:
         for m, rel in zip([m for m in members if m.name != root], rels):
             if m.name.startswith("/") or ".." in m.name.split("/"): fail("path traversal")
             if m.uid != 0 or m.gid != 0 or m.mtime != 0: fail("non-normalized ownership or timestamp")
-            expected_mode = 0o755 if rel in ("bin/taskseal", "bin/tseal") else 0o644
+            expected_mode = 0o755 if m.isdir() or rel in ("bin/taskseal", "bin/tseal") else 0o644
             if m.mode != expected_mode: fail("non-normalized mode")
             if rel.endswith("/taskseal") or rel.endswith("/tseal"):
                 if not m.isfile(): fail("binary is not a regular file")
