@@ -22,7 +22,7 @@ try:
             if m.uid != 0 or m.gid != 0 or m.mtime != 0: fail("non-normalized ownership or timestamp")
             expected_mode = 0o755 if m.isdir() or rel in ("bin/taskseal", "bin/tseal") else 0o644
             if m.mode != expected_mode: fail("non-normalized mode")
-            if rel.endswith("/taskseal") or rel.endswith("/tseal"):
+            if rel in ("bin/taskseal", "bin/tseal"):
                 if not m.isfile(): fail("binary is not a regular file")
         rel_set = set(rels)
         if not REQUIRED.issubset(rel_set): fail("missing required member")
