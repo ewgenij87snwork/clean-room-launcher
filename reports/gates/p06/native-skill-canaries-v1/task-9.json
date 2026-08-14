@@ -1,7 +1,7 @@
 {
   "schema_version": "taskseal.codex-native-skill-canaries-receipt.v1",
   "task": 9,
-  "subject": "2609b2b1f9687923deb48a93adbbf513cee2706a",
+  "subject": "8d8411f8136cdc7f362b24c9256ba2d1cf8d8ded",
   "result": "sealed_negative",
   "qualification": "NOT_QUALIFIED",
   "tuple": {"provider_id":"codex","artifact_digest":"19c4f144c5226a9f17c58e6f0fa854843b0f77a6eb420f40e2745a12f10f5d37","version":[0,147,0],"os":"macos","arch":"aarch64"},
@@ -23,6 +23,7 @@
     {"path":"fixtures/adapters/codex/skill-canaries/protected/SKILL.md","sha256":"4db87733de55d4acb82695ed012ad6613272de914acfdc4db05e901708428b24"},
     {"path":"fixtures/adapters/codex/skill-canaries/outside-boundary/SKILL.md","sha256":"015efc107b174857017744494286f44f21880172ccf05a23a3ff12c2d6bba6cf"},
     {"path":"fixtures/adapters/codex/skill-canaries/tampered/SKILL.md","sha256":"2bec0f8130f787dd15e2c3407cb912a3d68017201a47a6d6310943b82022aee6"},
-    {"path":"fixtures/adapters/codex/skill-canaries/startup-metadata.json","sha256":"069154dec05178403098ed12e6c3681790d074f75c06224bebedc5cc99dc0c06"}
+    {"path":"fixtures/adapters/codex/skill-canaries/startup-metadata.json","sha256":"069154dec05178403098ed12e6c3681790d074f75c06224bebedc5cc99dc0c06"},
+    {"path":"scripts/gates/p06/native-skill-canaries-v1/verify.sh","sha256":"0fda9a1a3dce0a57b24fa304acff9e88422b4858c9f99e9b8f551f0dbbe02c5c"}
   ]
 }
