@@ -1,0 +1,28 @@
+{
+  "schema_version": "taskseal.codex-native-skill-canaries-receipt.v1",
+  "task": 9,
+  "subject": "dbbe03685bf14d83a33a9591e5422e58a244281d",
+  "result": "sealed_negative",
+  "qualification": "NOT_QUALIFIED",
+  "tuple": {"provider_id":"codex","artifact_digest":"19c4f144c5226a9f17c58e6f0fa854843b0f77a6eb420f40e2745a12f10f5d37","version":[0,147,0],"os":"macos","arch":"aarch64"},
+  "canaries": [
+    {"case":"needed","status":"NOT_OBSERVED"}, {"case":"unused","status":"NOT_OBSERVED"},
+    {"case":"protected","status":"REFUSED"}, {"case":"outside_boundary","status":"REFUSED"}, {"case":"tampered","status":"REFUSED"}
+  ],
+  "native_processes": 0,
+  "network": "NOT_ATTEMPTED",
+  "raw_output_retained": false,
+  "body_bytes_read_or_injected": false,
+  "all_admitted_names_accounted": true,
+  "refusal_reason": "No bounded provider-native observation was retained; deterministic preflight proves only metadata-only local projection and static refusals.",
+  "sources": [
+    {"path":"tests/adapters.rs","sha256":"7b1fdeb7b7a6e477a36a18f8faf86e71b7cc6a77f0fd90d692f3116ecf5a0c57"},
+    {"path":"tests/adapters/codex/skill_canaries.rs","sha256":"9c17def4c787bd89d862fd19e271dde0043c38e82f7cb960f9a53956db8d9750"},
+    {"path":"fixtures/adapters/codex/skill-canaries/needed/SKILL.md","sha256":"7de5fc6286ca46515ba0cb7e91291d364e261d12f9973e09e45d20569f896e88"},
+    {"path":"fixtures/adapters/codex/skill-canaries/unused/SKILL.md","sha256":"3169e84b7fc6971d4b809879244fd0442517c4691539a36781eca148ce6937d8"},
+    {"path":"fixtures/adapters/codex/skill-canaries/protected/SKILL.md","sha256":"4db87733de55d4acb82695ed012ad6613272de914acfdc4db05e901708428b24"},
+    {"path":"fixtures/adapters/codex/skill-canaries/outside-boundary/SKILL.md","sha256":"015efc107b174857017744494286f44f21880172ccf05a23a3ff12c2d6bba6cf"},
+    {"path":"fixtures/adapters/codex/skill-canaries/tampered/SKILL.md","sha256":"2bec0f8130f787dd15e2c3407cb912a3d68017201a47a6d6310943b82022aee6"},
+    {"path":"fixtures/adapters/codex/skill-canaries/startup-metadata.json","sha256":"069154dec05178403098ed12e6c3681790d074f75c06224bebedc5cc99dc0c06"}
+  ]
+}

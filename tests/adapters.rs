@@ -6,6 +6,8 @@ mod codex_environment;
 mod codex_identity;
 #[path = "adapters/codex/placement.rs"]
 mod codex_placement;
+#[path = "adapters/codex/skill_canaries.rs"]
+mod codex_skill_canaries;
 #[path = "adapters/environment.rs"]
 mod environment;
 #[path = "adapters/identity.rs"]
