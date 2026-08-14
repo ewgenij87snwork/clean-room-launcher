@@ -1,0 +1,36 @@
+{
+  "schema_version": "taskseal.p07.task-receipt.v1",
+  "plan_id": "P07-PACKAGING-SCAFFOLD-V1",
+  "task": 3,
+  "result": "accepted",
+  "acceptance": {
+    "id": "ACC-P07-T3",
+    "operator_result": "A local unsigned NOT_QUALIFIED archive contains one canonical taskseal executable, a byte-identical safe tseal copy, LICENSE, NOTICE and source/toolchain/version metadata; two equivalent locked builds are byte-reproducible.",
+    "evidence_ids": ["EVD-P07-T3-RED", "EVD-P07-T3-GREEN", "EVD-P07-T3-BUILD-C", "EVD-P07-T3-BUILD-D", "EVD-P07-T3-ARCHIVE-SAFETY"]
+  },
+  "binding": {
+    "input_head": "cee78ac90ae9a4dc3b07518089df26c8d64f68d1",
+    "implementation_head": "19260917749988429ae917b8b2405559ad2b1e5f",
+    "receipt_seal_role": "receipt-only-child",
+    "implementation_files": ["packaging/build-artifacts.sh", "tests/packaging/artifact_layout.rs", "tests/packaging/fixtures/archive-layout.txt", "tests/packaging/fixtures/archive-path-traversal.txt", "tests/packaging/fixtures/archive-wrong-binary.txt", "tests/packaging/fixtures/archive-missing-license.txt", "tests/packaging/fixtures/archive-nondeterministic-metadata.txt"]
+  },
+  "evidence": [
+    {"id": "EVD-P07-T3-RED", "command": "CARGO_MANIFEST_DIR=\"$PWD\" rustc --test tests/packaging/artifact_layout.rs -o /tmp/p07-artifact-layout-red", "exit": 1, "meaning": "Focused contract failed before Task 3 artifact scaffold existed."},
+    {"id": "EVD-P07-T3-GREEN", "command": "CARGO_MANIFEST_DIR=\"$PWD\" rustc --test tests/packaging/artifact_layout.rs -o /tmp/p07-artifact-layout-final && /tmp/p07-artifact-layout-final", "exit": 0, "output": "4 passed; 0 failed", "meaning": "Layout, path-safety fixtures, poisoned fixtures and shell contract pass."},
+    {"id": "EVD-P07-T3-BUILD-C", "command": "packaging/build-artifacts.sh /tmp/p07-artifacts-c.PSvZeL", "exit": 0, "output": "archive sha256 e69956adf601f6f02f7689e1f55e86dd5583c409e4665d4fe94f6fb67c79da80; QUALIFICATION=NOT_QUALIFIED", "meaning": "Locked release build generated complete local unsigned preview."},
+    {"id": "EVD-P07-T3-BUILD-D", "command": "packaging/build-artifacts.sh /tmp/p07-artifacts-d.s2QIV6", "exit": 0, "output": "archive sha256 e69956adf601f6f02f7689e1f55e86dd5583c409e4665d4fe94f6fb67c79da80; QUALIFICATION=NOT_QUALIFIED", "meaning": "Equivalent clean output directory reproduced identical bytes."},
+    {"id": "EVD-P07-T3-ARCHIVE-SAFETY", "command": "python3 tarfile inspection of both archives", "exit": 0, "output": "no absolute/.. paths; taskseal and tseal byte-identical; LICENSE NOTICE VERSION present", "meaning": "Archive extraction surface and named executable behavior are safe and complete."}
+  ],
+  "subjects": {
+    "packaging/build-artifacts.sh": "f7e99da454c42658eab7a4995c59b37f0ff729421d2c876e06eda3332252680c",
+    "tests/packaging/artifact_layout.rs": "6d4ac68188fab583c8c549aeca10859593ab922a3a423dde8e8ca693d825efac",
+    "tests/packaging/fixtures/archive-layout.txt": "ac62e17d432dc029bf472a728db359a7004e9f7c559935803a885ff647061178",
+    "tests/packaging/fixtures/archive-path-traversal.txt": "0af2c1affd8c8dc04992f1d1f81ca8f5c4d6998e5719eb342f6bccbe7dfc1cb8",
+    "tests/packaging/fixtures/archive-wrong-binary.txt": "f3170538e1d8ec16e531159fcf9115c2f8f185e2fb306de2d3e326252cd1ddfd",
+    "tests/packaging/fixtures/archive-missing-license.txt": "025ec39822ffd96bf7aec5e76b4df98328b86712e7a3f73e6feb20645da08cea",
+    "tests/packaging/fixtures/archive-nondeterministic-metadata.txt": "0326a3a5da12e5069f93e92f7efc6c9e6abba1846434b7658037748562daafd2"
+  },
+  "qualification": "NOT_QUALIFIED",
+  "claims": {"archive": "local unsigned preview only", "source_commit": "19260917749988429ae917b8b2405559ad2b1e5f", "target": "aarch64-apple-darwin", "reproducible": true},
+  "controls": {"locked_dependencies": true, "exact_source_head": true, "normalized_metadata": true, "path_safe": true, "canonical_taskseal": true, "safe_tseal_copy": true, "license_and_notices": true, "publication": false, "network": false, "signing": false, "main_mutation": false, "qualification_truthful": true}
+}
