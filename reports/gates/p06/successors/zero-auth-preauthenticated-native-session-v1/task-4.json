@@ -5,7 +5,7 @@
   "result": "accepted",
   "acceptance": {
     "id": "P06-ZERO-AUTH-T4-LOCAL-UX-CONSOLIDATED-CLOSURE-V1",
-    "operator_result": "The unqualified TTY, narrow, plain and non-TTY screens explicitly continue locally without a login, setup/settings/configuration, API-key or documentation action; non-TTY never prompts. A real macOS PTY binary session selects the TTY transcript, waits for Enter and dispatches the TaskSeal-owned status continuation in-process. Unsupported selector, selector-local, argless-local and unknown-command routes stop at their minimal routing prefix without consuming or copying credential-shaped tails; plain and selector-prefixed generic routes now refuse at the boundary without reading any executable-position or later value. Saved-start access-token argv refuses from raw bytes before deserialization or argv hashing, and both inline access-token forms are explicitly proven to refuse before lock, serialization or any write while valid local commands and saved starts remain available. One offline successor gate binds OD-10/AUTH-01, current source and public inventories, every zero-auth call path, immutable Git history/write-set, all four parent-bound receipts and their topology, plus a sealed owner-worklog prefix whose valid append-only tail can receive the terminal review event without changing the PENDING checkpoint.",
+    "operator_result": "The unqualified TTY, narrow, plain and non-TTY screens explicitly continue locally without a login, setup/settings/configuration, API-key or documentation action; non-TTY never prompts. A real macOS PTY binary session selects the TTY transcript, waits for Enter and dispatches the TaskSeal-owned status continuation in-process. Every argument read for local, unknown and selector routing now crosses one allocation-free pre-dispatch boundary: credential-shaped values refuse with one stable sanitized error before copying or echoing, later tails stay unread, and allowed local arguments remain available. Saved-start access-token argv refuses before deserialization, hashing, lock, serialization or write. Identity resolution and the provider capability probe require an opaque preauthenticated-session state before executable discovery or provider birth; unavailable, ambiguous and missing states are proven with fake capture paths to birth no process. A closed inventory binds both CLI entrypoints and all five provider births and refuses future unguarded routes. One offline successor gate binds OD-10/AUTH-01, current source, public and entrypoint inventories, every zero-auth call path, immutable Git history/write-set, all four parent-bound receipts and their topology, plus a sealed owner-worklog prefix whose valid append-only tail can receive the terminal review event without changing the PENDING checkpoint.",
     "control_ids": [
       "ADP-05",
       "AUTH-01",
@@ -44,23 +44,36 @@
       "P06-ZERO-AUTH-T4-FIX6-GREEN-GATE-MUTATIONS-V1",
       "P06-ZERO-AUTH-T4-FIX6-RED-REPLACEMENT-RECEIPT-V1",
       "P06-ZERO-AUTH-T4-FIX6-GREEN-SOLE-GATE-V1",
-      "P06-ZERO-AUTH-T4-FIX6-GREEN-DESCENDANT-DURABILITY-V1"
+      "P06-ZERO-AUTH-T4-FIX6-GREEN-DESCENDANT-DURABILITY-V1",
+      "P06-ZERO-AUTH-T4-FIX7-RED-SHARED-PREDISPATCH-BOUNDARY-V1",
+      "P06-ZERO-AUTH-T4-FIX7-GREEN-SHARED-PREDISPATCH-BOUNDARY-V1",
+      "P06-ZERO-AUTH-T4-FIX7-GREEN-LOCAL-ARGUMENT-PRESERVATION-V1",
+      "P06-ZERO-AUTH-T4-FIX7-RED-IDENTITY-PRE-BIRTH-GUARD-V1",
+      "P06-ZERO-AUTH-T4-FIX7-GREEN-IDENTITY-PRE-BIRTH-GUARD-V1",
+      "P06-ZERO-AUTH-T4-FIX7-RED-PROVIDER-PRE-BIRTH-GUARD-V1",
+      "P06-ZERO-AUTH-T4-FIX7-GREEN-PROVIDER-PRE-BIRTH-GUARD-V1",
+      "P06-ZERO-AUTH-T4-FIX7-RED-ENTRYPOINT-INVENTORY-V1",
+      "P06-ZERO-AUTH-T4-FIX7-GREEN-ENTRYPOINT-INVENTORY-V1",
+      "P06-ZERO-AUTH-T4-FIX7-GREEN-GATE-MUTATIONS-V1",
+      "P06-ZERO-AUTH-T4-FIX7-RED-REPLACEMENT-RECEIPT-V1",
+      "P06-ZERO-AUTH-T4-FIX7-GREEN-SOLE-GATE-V1",
+      "P06-ZERO-AUTH-T4-FIX7-GREEN-DESCENDANT-DURABILITY-V1"
     ]
   },
   "binding": {
     "scheme": "parent-bound-receipt.v2",
     "input_head": "6a54523b4dbf8869ca7035a7dc42df88ac11c45a",
-    "implementation_result_head": "2e0cbdc72a8d452d9f232f90e5900f29f058eddc",
-    "implementation_tree": "eaa5565e0df9131df337cd213e70d31c67f8b35c",
-    "receipt_commit_parent": "2e0cbdc72a8d452d9f232f90e5900f29f058eddc",
-    "replaces_receipt_commit": "3bb2f07f1ace70b952176c8da0f54893d789dd65",
+    "implementation_result_head": "db6de6a6c8769a34c51e5d239306aa03306b56eb",
+    "implementation_tree": "bc1fb230b1708f72de454567ab61cbf7f423add3",
+    "receipt_commit_parent": "db6de6a6c8769a34c51e5d239306aa03306b56eb",
+    "replaces_receipt_commit": "0e695fa2d4933ffa4e34791ba3eeb090005b2c86",
     "parent_task_receipt": {
       "path": "reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/task-3.json",
       "commit": "6a54523b4dbf8869ca7035a7dc42df88ac11c45a",
       "blob_oid": "08febe5afe412e00e46f32d4c915f94e6cbe209d",
       "sha256": "8916cd8d268d91988931985ffb952b95fde491445f84ddbfa9a1c22352a68de8"
     },
-    "resolution": "Resolve exactly one commit in input_head..tip whose task-4 receipt blob equals these bytes; it must be a single-parent receipt-only child of implementation_result_head and replace receipt-only 3bb2f07. Repository subjects are read from that implementation commit, while the accepted Task 3 receipt is read from input_head."
+    "resolution": "Resolve exactly one commit in input_head..tip whose task-4 receipt blob equals these bytes; it must be a single-parent receipt-only child of implementation_result_head and replace receipt-only 0e695fa. Repository subjects are read from that implementation commit, while the accepted Task 3 receipt is read from input_head."
   },
   "inputs": {
     "plan_checkpoint_path": "/Users/ysorokin/Documents/it/5-LVL - 2026/Temp in Projects/wisdom/taskseal/plans/2026-08-13-p06-zero-auth-preauthenticated-native-session-v1.md",
@@ -69,7 +82,7 @@
   },
   "subject": {
     "algorithm": "sha256 of sorted path, tab, sha256, newline repository records",
-    "sha256": "5dd2d53741243223545604898b5abbaca55c07a66d10111d79fc6310448d3b12",
+    "sha256": "1377dbb479c7dd3d86ea462bd98dd44f91b6d093d3a192b2489e0c060033e8a6",
     "sources": [
       {
         "kind": "repository_implementation_commit",
@@ -99,12 +112,27 @@
       {
         "kind": "repository_implementation_commit",
         "path": "reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/consolidated.json",
-        "sha256": "ccc0537ee1da879b9ab198d01c4e9599a393885f96e325251c145e585b58cb5f"
+        "sha256": "c2e2b8261eb980291f3e4e426d11fc09549f01004644cefdef7dfd4a97d42192"
+      },
+      {
+        "kind": "repository_implementation_commit",
+        "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/entrypoint-inventory.json",
+        "sha256": "36ad4f4b551288aa88654498718c534ead440ec71935452dcb6c5df793fb122e"
+      },
+      {
+        "kind": "repository_implementation_commit",
+        "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/entrypoint-inventory.rb",
+        "sha256": "9f1fce7a9dde895ded3fb53f70b680a6ab4d83bffde2e3abc7fd8522d4d2ba36"
       },
       {
         "kind": "repository_implementation_commit",
         "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/source-inventory-allowlist.json",
-        "sha256": "9261885cbbefd3bf4c14a3e80c3409bfd3889a6b923647a2eae2ae9add425be2"
+        "sha256": "cad8277416f8631e678c853d458a40fc6fb981851f95c687f1dad79e40519e32"
+      },
+      {
+        "kind": "repository_implementation_commit",
+        "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-entrypoint-inventory.sh",
+        "sha256": "c8ba01bbf7f85de0ca2c3dbcb379744bc0eb9972f24cb3a694be33514ebebd07"
       },
       {
         "kind": "repository_implementation_commit",
@@ -114,22 +142,52 @@
       {
         "kind": "repository_implementation_commit",
         "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-4-receipt.sh",
-        "sha256": "702f47c52905a0ffc741ac23a7111136d28219a4f1a92225429a8a73fd4e2c20"
+        "sha256": "277dbd6999d1372bc7dec0abe3bd1bebc0321814871873b9e4aed5cda06a5a4f"
       },
       {
         "kind": "repository_implementation_commit",
         "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-verify.sh",
-        "sha256": "5c225ceddda0aadafa7fc18a7b657d8134f4cf377afa3a08b3ac57bbfccec1c7"
+        "sha256": "0c5dc092ff5cb1f1ec6d92933f8b103ae53ad899cd9bd694eadaea86eb79e1e9"
       },
       {
         "kind": "repository_implementation_commit",
         "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/verify.sh",
-        "sha256": "2e635f9f7af1f042d378effa53a08b61eae0fadc221ce01a4fdf71226deec140"
+        "sha256": "440875228c5af097ac1691251b8c08d0cb2650da79ae95d27ba0a348a2874b84"
+      },
+      {
+        "kind": "repository_implementation_commit",
+        "path": "scripts/probe/provider-capabilities.sh",
+        "sha256": "bfa281f230109be7927e82e3e263beb7f890e87a1d15e9c1adbdf5e98f7f536b"
+      },
+      {
+        "kind": "repository_implementation_commit",
+        "path": "src/adapters/codex/identity.rs",
+        "sha256": "3dbda3377e35f7b3bd8b4c4932404edf92ef0e1d34ccd79dfcfe4b495b8a0c8d"
+      },
+      {
+        "kind": "repository_implementation_commit",
+        "path": "src/adapters/environment.rs",
+        "sha256": "ef76ec9a0b60c50399e1812efcce74c1db9663d3d2324ac3473ba43c71b93520"
+      },
+      {
+        "kind": "repository_implementation_commit",
+        "path": "src/adapters/identity.rs",
+        "sha256": "1b8ea778b6207debb7f169d224d467041e57825eff37e56f21df908d6a505d51"
+      },
+      {
+        "kind": "repository_implementation_commit",
+        "path": "src/adapters/mod.rs",
+        "sha256": "3ce2910f9120f264fd71757a890dff57f8546270ac33d06fca2a86c0736984d7"
+      },
+      {
+        "kind": "repository_implementation_commit",
+        "path": "src/adapters/session.rs",
+        "sha256": "d92d85912f11b9571498f1afd6fc9f725df32339040c19dcac8e286c2d14aeee"
       },
       {
         "kind": "repository_implementation_commit",
         "path": "src/cli/mod.rs",
-        "sha256": "12d3b9177c9603add14418ade69c58243ed7c87f7f67f8c1504584af8dc648de"
+        "sha256": "1679036262dd5d2c8d1bef46121849f9699ec37f1902354adebff25a57ad0270"
       },
       {
         "kind": "repository_implementation_commit",
@@ -139,12 +197,32 @@
       {
         "kind": "repository_implementation_commit",
         "path": "src/cli/state.rs",
-        "sha256": "604960c296005aa87fb2806a589205a0c6ac30eebdfe7f1cc3922d2ee8d7bb21"
+        "sha256": "ae5414e805e1929a2e21771e88dcec76f05af70fe600aef899526cc2a11671ed"
+      },
+      {
+        "kind": "repository_implementation_commit",
+        "path": "src/cli/zero_auth.rs",
+        "sha256": "f8904ca808d3d30cebd541e5e41ef6cffb16d93c60c634bd9873c32aa92fb3c9"
+      },
+      {
+        "kind": "repository_implementation_commit",
+        "path": "tests/adapters/codex/identity.rs",
+        "sha256": "9f08cecd7fce45a7712aaaeb50b2464967ea713e5ef6e50d9016b14d92cb0a8e"
+      },
+      {
+        "kind": "repository_implementation_commit",
+        "path": "tests/adapters/identity.rs",
+        "sha256": "0641fe05cf008cbab03613f58f012b5e71690845742eb5489ef0ef686c7dbcc4"
+      },
+      {
+        "kind": "repository_implementation_commit",
+        "path": "tests/cli.rs",
+        "sha256": "d1ef3b83937f324f4213ade45e872bcd1bb053224af100a3c689199cd2f4e2eb"
       },
       {
         "kind": "repository_implementation_commit",
         "path": "tests/cli/argv_passthrough.rs",
-        "sha256": "be300aeda0c888018c780a55155dc834add95936d93eea0172db85ffb8ac11fa"
+        "sha256": "89b679cab624d8dc734ee06e613b3ebafc95871dc8e85b7c49ad3fc527025396"
       },
       {
         "kind": "repository_implementation_commit",
@@ -160,6 +238,11 @@
         "kind": "repository_implementation_commit",
         "path": "tests/cli/saved_starts.rs",
         "sha256": "2ea37528e100f12aeae5af78b70b902d211279e36dbcd0f61a033b1572fb7f3e"
+      },
+      {
+        "kind": "repository_implementation_commit",
+        "path": "tests/contracts/provider_capability_truth.rs",
+        "sha256": "9e7b8d04d96739863faaacdee620011e38857408416fda570c7da01e3e014fb7"
       }
     ]
   },
@@ -427,6 +510,110 @@
       "output": "P06_ZERO_AUTH_TASK_4_RECEIPT_DURABILITY_PASS",
       "output_sha256": "841416c45acc4134e8ece2f0c3c03f3156a028404432d8c9a70d4c1d1210d020",
       "meaning": "A local no-network clone added a real descendant after the final-security replacement receipt and reproduced its unique parent-bound topology and expanded subjects."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T4-FIX7-RED-SHARED-PREDISPATCH-BOUNDARY-V1",
+      "command": "CARGO_INCREMENTAL=0 cargo test --offline --test cli argv_passthrough::final_zero_auth_shared_predispatch_boundary_covers_every_argument_route -- --exact --test-threads=1",
+      "exit": 101,
+      "output": "test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 44 filtered out",
+      "output_sha256": "45e5185fc736a6aafcf1e435883daf814f85eb931f46b2fc93f68fa4110c7489",
+      "meaning": "Poison-tail coverage reproduced that argument-bearing help, inspect, doctor, start, output and unknown routes could consume and echo credential-shaped arguments before one shared boundary existed."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T4-FIX7-GREEN-SHARED-PREDISPATCH-BOUNDARY-V1",
+      "command": "CARGO_INCREMENTAL=0 cargo test --offline --test cli argv_passthrough::final_zero_auth_shared_predispatch_boundary_covers_every_argument_route -- --exact --test-threads=1",
+      "exit": 0,
+      "output": "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 44 filtered out",
+      "output_sha256": "231d1387f06c8e30da9467ec3491627ef0abb744783794aa947a00ff59fbf855",
+      "meaning": "Every CLI iterator read now crosses the allocation-free sensitive-argument predicate, returning exit 2 and one stable sanitized refusal before the argument can be copied into dispatch state or echoed."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T4-FIX7-GREEN-LOCAL-ARGUMENT-PRESERVATION-V1",
+      "command": "CARGO_INCREMENTAL=0 cargo test --offline --test cli final_zero_auth_shared_ -- --test-threads=1",
+      "exit": 0,
+      "output": "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out",
+      "output_sha256": "983dd33eda4ca7ae561b5b5d26e069134381527e35f01c9641c03e5b632676d8",
+      "meaning": "The combined shared-boundary slice also proves ordinary non-sensitive local help and inspect arguments preserve their prior behavior."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T4-FIX7-RED-IDENTITY-PRE-BIRTH-GUARD-V1",
+      "command": "CARGO_INCREMENTAL=0 cargo test --offline --test adapters identity::provider_identity_refuses_opaque_session_states_before_process_birth -- --exact --test-threads=1",
+      "exit": 101,
+      "output": "error[E0061]: resolve_identity and resolve_installed_tuple rejected 6 opaque session arguments",
+      "output_sha256": "2d84ed9d9a6231c8adff27ff9a8eaf4ff3637d10840585f62a18eb17ba575f51",
+      "meaning": "The focused compile RED proved identity resolution exposed no opaque session argument and therefore could not enforce unavailable or ambiguous refusal before process birth."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T4-FIX7-GREEN-IDENTITY-PRE-BIRTH-GUARD-V1",
+      "command": "CARGO_INCREMENTAL=0 cargo test --offline --test adapters identity::provider_identity_refuses_opaque_session_states_before_process_birth -- --exact --test-threads=1",
+      "exit": 0,
+      "output": "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 31 filtered out",
+      "output_sha256": "aa487000b4343ec9b7163ad1dd891ea6ba3e032f4d3ae449784ad5c85619ee35",
+      "meaning": "Unavailable and ambiguous opaque identity states return exact stable errors before canonicalization, executable inspection or a harmless capture fixture can be born."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T4-FIX7-RED-PROVIDER-PRE-BIRTH-GUARD-V1",
+      "command": "CARGO_INCREMENTAL=0 cargo test --offline --test provider_capability_truth provider_probe_requires_opaque_preauthentication_before_process_birth -- --exact --test-threads=1",
+      "exit": 101,
+      "output": "test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 4 filtered out",
+      "output_sha256": "3bd9116956f89b22f9b75fee4c04b3a07742adee36558393e407d3b220ad597b",
+      "meaning": "The harmless first-in-PATH capture executable was born when the probe had no preauthenticated-session argument, reproducing the missing fail-before-birth boundary without invoking a real provider."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T4-FIX7-GREEN-PROVIDER-PRE-BIRTH-GUARD-V1",
+      "command": "CARGO_INCREMENTAL=0 cargo test --offline --test provider_capability_truth provider_probe_requires_opaque_preauthentication_before_process_birth -- --exact --test-threads=1",
+      "exit": 0,
+      "output": "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 4 filtered out",
+      "output_sha256": "b21a127d9aedee606a209c96cb9d70599c709564388cb346ae52de5c87a97f72",
+      "meaning": "Missing, unavailable and ambiguous probe states now return exit 78 and exact stable errors before root resolution, fixture loading or capture-process birth."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T4-FIX7-RED-ENTRYPOINT-INVENTORY-V1",
+      "command": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-entrypoint-inventory.sh",
+      "exit": 1,
+      "output": "P06_ZERO_AUTH_RED_ENTRYPOINT_INVENTORY_MISSING",
+      "output_sha256": "b8796032fcae3ee89d444cb018508db2defde46104410d7a7fe143578b392ea1",
+      "meaning": "The inventory TDD target refused before a closed CLI-entrypoint and provider-birth inventory or validator existed."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T4-FIX7-GREEN-ENTRYPOINT-INVENTORY-V1",
+      "command": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-entrypoint-inventory.sh",
+      "exit": 0,
+      "output": "P06_ZERO_AUTH_ENTRYPOINT_INVENTORY_TEST_PASS",
+      "output_sha256": "e3d44805a657e669eea8cc62bc1593df506cdbeb3ea480fb5a14b2a92c773646",
+      "meaning": "The executable inventory binds two real CLI argument sources, the only shared iterator read, all five provider births and both guards; mutations remove a guard and add an unguarded birth and are refused."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T4-FIX7-GREEN-GATE-MUTATIONS-V1",
+      "command": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-verify.sh",
+      "exit": 0,
+      "output": "P06_ZERO_AUTH_GATE_MUTATIONS_PASS",
+      "output_sha256": "b8c5990f4f0299c2a4617fcbdafd5246a7cd8fe9959a0603f88d0c4a9356140f",
+      "meaning": "The non-overlapping consolidated mutations additionally refuse omitted dispatch routes, any copied or echoed credential-shaped argument, lost local behavior, weakened opaque states, process birth and incomplete inventory counts."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T4-FIX7-RED-REPLACEMENT-RECEIPT-V1",
+      "command": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-4-receipt.sh",
+      "exit": 1,
+      "output": "P06_ZERO_AUTH_TASK_4_RECEIPT_REFUSAL:RECEIPT_CONTRACT",
+      "output_sha256": "83b45149afb5e944ec80635c75db0137640b84eea964af5858a98e9f0400b735",
+      "meaning": "The tightened final-boundary receipt checker rejected the preceding receipt before the shared dispatch boundary, opaque pre-birth guards, exhaustive inventory and their TDD evidence were sealed."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T4-FIX7-GREEN-SOLE-GATE-V1",
+      "command": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/verify.sh",
+      "exit": 0,
+      "output": "P06_ZERO_AUTH_PREAUTHENTICATED_NATIVE_SESSION_V1_PASS",
+      "output_sha256": "d3886f15e1c3a16f998ead34e9696664e546a0aa5c11fe57d8a5e5f5fdc88bd7",
+      "meaning": "The sole offline gate accepted shared CLI and provider-birth boundaries, exhaustive inventory, controls, source/public inventories, every zero-auth call path, immutable history/write-set, receipt topology and the sealed SSOT prefix."
+    },
+    {
+      "id": "P06-ZERO-AUTH-T4-FIX7-GREEN-DESCENDANT-DURABILITY-V1",
+      "command": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-4-receipt-durability.sh",
+      "exit": 0,
+      "output": "P06_ZERO_AUTH_TASK_4_RECEIPT_DURABILITY_PASS",
+      "output_sha256": "841416c45acc4134e8ece2f0c3c03f3156a028404432d8c9a70d4c1d1210d020",
+      "meaning": "A local no-network clone added a descendant after the final-boundary replacement receipt and reproduced its unique parent-bound topology and 32 committed subject sources."
     }
   ],
   "seal_tdd": {
@@ -470,6 +657,17 @@
     ],
     "cli_generic_post_boundary_values_consumed": 0,
     "cli_generic_post_boundary_values_copied": 0,
+    "shared_predispatch_boundary": "src/cli/zero_auth.rs",
+    "cli_argument_routes": [
+      "HELP_ALIASES",
+      "EXPLAIN_INSPECT",
+      "DOCTOR_START",
+      "OUTPUT_FORMAT",
+      "OUTPUT_COMMAND",
+      "UNKNOWN_COMMAND"
+    ],
+    "cli_credential_shaped_values_echoed": 0,
+    "non_sensitive_local_arguments_preserved": true,
     "saved_start_sensitive_selectors": [
       "--with-access-token",
       "--access-token",
@@ -480,6 +678,19 @@
     "saved_start_save_refusal_phase": "BEFORE_LOCK_SERIALIZATION_OR_WRITE",
     "inline_saved_start_existing_green": true,
     "valid_local_behavior_preserved": true,
+    "opaque_preauthenticated_session": "ProviderNativePreauthenticatedSession",
+    "identity_prebirth_guard": true,
+    "provider_probe_prebirth_guard": true,
+    "refused_session_states": [
+      "MISSING",
+      "UNAVAILABLE",
+      "AMBIGUOUS"
+    ],
+    "refused_session_process_birth": false,
+    "entrypoint_inventory": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/entrypoint-inventory.json",
+    "cli_entrypoint_count": 2,
+    "provider_birth_count": 5,
+    "future_unguarded_route_allowed": false,
     "task_receipts_validated": [
       1,
       2,
