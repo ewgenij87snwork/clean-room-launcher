@@ -1,0 +1,53 @@
+{
+  "schema_version": "taskseal.p06.zero-auth.entrypoint-inventory.v1",
+  "cli_boundary": {
+    "source": "src/cli/mod.rs",
+    "sensitive_predicate": "zero_auth::is_sensitive_argument(&argument)",
+    "stable_refusal": "ZERO_AUTH_ARGUMENT_REFUSAL: sensitive argument refused before dispatch; continue locally",
+    "iterator_reads": [
+      "source.next()"
+    ],
+    "entrypoints": [
+      {
+        "path": "src/bin/taskseal.rs",
+        "line": "cli::run(\"taskseal\", std::env::args().skip(1))"
+      },
+      {
+        "path": "src/bin/tseal.rs",
+        "line": "cli::run(\"tseal\", std::env::args().skip(1))"
+      }
+    ]
+  },
+  "provider_births": [
+    {
+      "path": "scripts/probe/provider-capabilities.sh",
+      "line": "version=$(codex --version)"
+    },
+    {
+      "path": "scripts/probe/provider-capabilities.sh",
+      "line": "start_json=$(CODEX_HOME=\"$ephemeral_home\" codex debug prompt-input 'TASKSEAL_START_PROBE')"
+    },
+    {
+      "path": "scripts/probe/provider-capabilities.sh",
+      "line": "invoked_json=$(CODEX_HOME=\"$ephemeral_home\" codex debug prompt-input '$taskseal-canary TASKSEAL_CANARY_TRIGGER')"
+    },
+    {
+      "path": "scripts/probe/provider-capabilities.sh",
+      "line": "version=$(claude --version)"
+    },
+    {
+      "path": "src/adapters/identity.rs",
+      "line": "let output = Command::new(&real_executable)"
+    }
+  ],
+  "provider_guards": [
+    {
+      "path": "scripts/probe/provider-capabilities.sh",
+      "marker": "require_preauthenticated_session \"$preauthenticated_session\""
+    },
+    {
+      "path": "src/adapters/identity.rs",
+      "marker": "require_preauthenticated_session(session)"
+    }
+  ]
+}

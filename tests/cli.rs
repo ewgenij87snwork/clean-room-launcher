@@ -26,3 +26,6 @@ mod saved_starts;
 #[allow(dead_code)]
 #[allow(clippy::duplicate_mod)] // state.rs is also nested under the real CLI module above.
 mod state;
+#[path = "../src/cli/zero_auth.rs"]
+#[allow(dead_code)]
+mod zero_auth;

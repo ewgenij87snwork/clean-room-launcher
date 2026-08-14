@@ -22,7 +22,7 @@ test -f "$worklog" || refuse WORKLOG_MISSING
 cd "$root"
 
 jq -e '
-  keys == ["checkpoint","controls","git","ingestion_closure","local_continuity","owner_ssot","plan_id","result","schema_version","task_receipts","terminal_review","transcripts","verification"] and
+  keys == ["checkpoint","controls","dispatch_boundary","git","ingestion_closure","local_continuity","owner_ssot","plan_id","provider_birth_boundary","result","schema_version","task_receipts","terminal_review","transcripts","verification"] and
   .schema_version == "taskseal.p06.zero-auth-preauthenticated-native-session-v1.consolidated.v1" and
   .plan_id == "P06-ZERO-AUTH-PREAUTHENTICATED-NATIVE-SESSION-V1" and
   .result == "IMPLEMENTED_REVIEW_PENDING" and
@@ -65,6 +65,32 @@ jq -e '
     valid_local_commands_preserved:["status","scan","prepare","check","starts","start","help","doctor"],
     valid_saved_starts_preserved:true
   } and
+  .dispatch_boundary == {
+    source:"src/cli/zero_auth.rs",
+    phase:"BEFORE_LOCAL_UNKNOWN_OR_SELECTOR_DISPATCH",
+    argument_routes:["HELP_ALIASES","EXPLAIN_INSPECT","DOCTOR_START","OUTPUT_FORMAT","OUTPUT_COMMAND","UNKNOWN_COMMAND"],
+    credential_shaped_values_consumed:0,
+    credential_shaped_values_copied:0,
+    credential_shaped_values_echoed:0,
+    non_sensitive_local_arguments_preserved:true,
+    entrypoints:["src/bin/taskseal.rs","src/bin/tseal.rs"]
+  } and
+  .provider_birth_boundary == {
+    opaque_state:"ProviderNativePreauthenticatedSession",
+    available:"ALLOW",
+    missing:"REFUSED_PRE_BIRTH",
+    unavailable:"REFUSED_PRE_BIRTH",
+    ambiguous:"REFUSED_PRE_BIRTH",
+    negative_process_birth:false,
+    guards:[
+      "scripts/probe/provider-capabilities.sh::require_preauthenticated_session",
+      "src/adapters/identity.rs::require_preauthenticated_session"
+    ],
+    inventory:"scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/entrypoint-inventory.json",
+    cli_entrypoint_count:2,
+    provider_birth_count:5,
+    future_unguarded_route_allowed:false
+  } and
   .owner_ssot == {
     worklog_prefix:{
       path:"/Users/ysorokin/Documents/it/5-LVL - 2026/Temp in Projects/wisdom/taskseal/TASKSEAL-WORKLOG.jsonl",
@@ -87,18 +113,32 @@ jq -e '
     "fixtures/cli/first-screen-unqualified.txt",
     "reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/consolidated.json",
     "reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/task-4.json",
+    "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/entrypoint-inventory.json",
+    "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/entrypoint-inventory.rb",
     "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/source-inventory-allowlist.json",
+    "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-entrypoint-inventory.sh",
     "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-4-receipt-durability.sh",
     "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-4-receipt.sh",
     "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-verify.sh",
     "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/verify.sh",
+    "scripts/probe/provider-capabilities.sh",
+    "src/adapters/codex/identity.rs",
+    "src/adapters/environment.rs",
+    "src/adapters/identity.rs",
+    "src/adapters/mod.rs",
+    "src/adapters/session.rs",
     "src/cli/mod.rs",
     "src/cli/screen.rs",
     "src/cli/state.rs",
+    "src/cli/zero_auth.rs",
+    "tests/adapters/codex/identity.rs",
+    "tests/adapters/identity.rs",
+    "tests/cli.rs",
     "tests/cli/argv_passthrough.rs",
     "tests/cli/first_screen.rs",
     "tests/cli/saved_start_call_path.rs",
-    "tests/cli/saved_starts.rs"
+    "tests/cli/saved_starts.rs",
+    "tests/contracts/provider_capability_truth.rs"
   ] and
   .verification == {
     sole_gate:"scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/verify.sh",
@@ -181,11 +221,23 @@ test "$control_output" = P06_ZERO_AUTH_CONTROL_PASS || refuse CONTROL_OUTPUT
 source_output=$(ruby "$root/$successor/source-inventory.rb" "$root") || refuse SOURCE_INVENTORY
 test "$source_output" = P06_ZERO_AUTH_SOURCE_INVENTORY_PASS || refuse SOURCE_INVENTORY_OUTPUT
 
-rustfmt --edition 2024 --check src/cli/mod.rs src/cli/screen.rs src/cli/state.rs \
+entrypoint_output=$(ruby "$root/$successor/entrypoint-inventory.rb" \
+  "$root" "$root/$successor/entrypoint-inventory.json") || refuse ENTRYPOINT_INVENTORY
+test "$entrypoint_output" = P06_ZERO_AUTH_ENTRYPOINT_INVENTORY_PASS || refuse ENTRYPOINT_INVENTORY_OUTPUT
+
+rustfmt --edition 2024 --check --config skip_children=true \
+  src/adapters/codex/identity.rs src/adapters/environment.rs src/adapters/identity.rs \
+  src/adapters/mod.rs src/adapters/session.rs \
+  src/cli/mod.rs src/cli/screen.rs src/cli/state.rs src/cli/zero_auth.rs \
+  tests/adapters/codex/identity.rs tests/adapters/identity.rs tests/cli.rs \
   tests/cli/argv_passthrough.rs tests/cli/first_screen.rs \
-  tests/cli/saved_start_call_path.rs tests/cli/saved_starts.rs
+  tests/cli/saved_start_call_path.rs tests/cli/saved_starts.rs \
+  tests/contracts/provider_capability_truth.rs
 cargo clippy --all-targets --locked --offline -- -D warnings
 cargo test --locked --offline --test cli --test adapters --test trace_metadata
+cargo test --locked --offline --test provider_capability_truth \
+  provider_probe_requires_opaque_preauthentication_before_process_birth \
+  -- --exact --test-threads=1
 
 scratch=$(mktemp -d "${TMPDIR:-/tmp}/taskseal-p06-zero-auth-public.XXXXXX")
 trap 'rm -rf "$scratch"' EXIT HUP INT TERM

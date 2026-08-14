@@ -80,6 +80,12 @@
       "rationale": "Offline policy mutation suite: provider-login, browser, and credential phrases are inert document fixtures consumed only by the Ruby validator."
     },
     {
+      "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-entrypoint-inventory.sh",
+      "sha256": "c8ba01bbf7f85de0ca2c3dbcb379744bc0eb9972f24cb3a694be33514ebebd07",
+      "matched_classes": ["CREDENTIAL_COPY"],
+      "rationale": "Offline inventory mutation suite: local file copies build a disposable source fixture whose provider births and pre-birth guards are parsed as text and never executed."
+    },
+    {
       "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-source-inventory.sh",
       "sha256": "3403659d97fa9973393b401b0aab6dc08bcef9c5f5746fb4fc253fcf85a8f5ef",
       "matched_classes": ["AUTH_FILE", "CREDENTIAL_EXTRACTION", "CREDENTIAL_COPY", "PROVIDER_LOGIN", "BROWSER_AUTH", "TOKEN_INPUT"],
@@ -93,19 +99,19 @@
     },
     {
       "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-4-receipt.sh",
-      "sha256": "702f47c52905a0ffc741ac23a7111136d28219a4f1a92225429a8a73fd4e2c20",
+      "sha256": "277dbd6999d1372bc7dec0abe3bd1bebc0321814871873b9e4aed5cda06a5a4f",
       "matched_classes": ["TOKEN_INPUT"],
       "rationale": "Offline receipt checker: access-token flags are exact rejected-selector evidence assertions; the script reads no credential value and exposes no provider interface."
     },
     {
       "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-verify.sh",
-      "sha256": "5c225ceddda0aadafa7fc18a7b657d8134f4cf377afa3a08b3ac57bbfccec1c7",
+      "sha256": "0c5dc092ff5cb1f1ec6d92933f8b103ae53ad899cd9bd694eadaea86eb79e1e9",
       "matched_classes": ["CREDENTIAL_EXTRACTION", "TOKEN_INPUT"],
       "rationale": "Offline metadata mutation suite: matched access-token text is removed from disposable JSON copies to prove the gate refuses weakened evidence; it reads no credential source and starts no provider."
     },
     {
       "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/verify.sh",
-      "sha256": "2e635f9f7af1f042d378effa53a08b61eae0fadc221ce01a4fdf71226deec140",
+      "sha256": "440875228c5af097ac1691251b8c08d0cb2650da79ae95d27ba0a348a2874b84",
       "matched_classes": ["TOKEN_INPUT"],
       "rationale": "Offline consolidated verifier: access-token forms are exact refused-selector metadata assertions; the script reads no credential value and exposes no provider interface."
     },
@@ -141,9 +147,15 @@
     },
     {
       "path": "src/cli/state.rs",
-      "sha256": "604960c296005aa87fb2806a589205a0c6ac30eebdfe7f1cc3922d2ee8d7bb21",
+      "sha256": "ae5414e805e1929a2e21771e88dcec76f05af70fe600aef899526cc2a11671ed",
       "matched_classes": ["TOKEN_INPUT"],
       "rationale": "Compiled state code contains a deny-list that rejects saved arguments with token/API-key/password spellings; it never reads environment credentials or starts a process."
+    },
+    {
+      "path": "src/cli/zero_auth.rs",
+      "sha256": "f8904ca808d3d30cebd541e5e41ef6cffb16d93c60c634bd9873c32aa92fb3c9",
+      "matched_classes": ["TOKEN_INPUT"],
+      "rationale": "Allocation-free pre-dispatch deny predicate recognizes credential-shaped CLI arguments solely to refuse them before routing; it reads no credential source and starts no process."
     }
   ]
 }

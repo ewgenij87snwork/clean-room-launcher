@@ -11,6 +11,8 @@ use std::{
 use super::cli_entry;
 
 const ZERO_AUTH_REFUSAL: &str = "ZERO_AUTH_REFUSAL: provider-native preauthenticated session unavailable or ambiguous; continue locally\n";
+const ZERO_AUTH_ARGUMENT_REFUSAL: &str =
+    "ZERO_AUTH_ARGUMENT_REFUSAL: sensitive argument refused before dispatch; continue locally\n";
 
 fn scratch(name: &str) -> PathBuf {
     let path = std::env::temp_dir().join(format!("taskseal-{name}-{}", std::process::id()));
@@ -155,6 +157,77 @@ fn final_zero_auth_generic_boundary_stops_before_executable_position() {
         assert_eq!(output.status.code(), Some(2));
         assert!(output.stdout.is_empty());
         assert_eq!(String::from_utf8(output.stderr).unwrap(), ZERO_AUTH_REFUSAL);
+    }
+}
+
+#[test]
+fn final_zero_auth_shared_predispatch_boundary_covers_every_argument_route() {
+    // Break caught: a local/unknown/selector parser ingests or echoes a sensitive argument.
+    for (prefix, expected_calls) in [
+        (vec!["help", "--access-token"], 2),
+        (vec!["--help", "--access-token"], 2),
+        (vec!["-h", "--access-token"], 2),
+        (vec!["inspect", "--access-token"], 2),
+        (vec!["explain", "--access-token"], 2),
+        (vec!["doctor", "--root", "--access-token"], 3),
+        (vec!["start", "1", "--access-token"], 3),
+        (vec!["--output", "--access-token"], 2),
+        (vec!["--output", "json", "--access-token"], 3),
+        (vec!["--access-token"], 1),
+    ] {
+        let next_calls = Rc::new(Cell::new(0));
+        let exit = cli_entry::run(
+            "tseal",
+            PoisonTail {
+                prefix: prefix
+                    .into_iter()
+                    .map(str::to_owned)
+                    .collect::<Vec<_>>()
+                    .into_iter(),
+                next_calls: Rc::clone(&next_calls),
+                unread_tail: vec!["sensitive-value-must-remain-unread".to_owned()],
+            },
+        );
+        assert_eq!(exit, std::process::ExitCode::from(2));
+        assert_eq!(next_calls.get(), expected_calls);
+    }
+
+    for args in [
+        vec!["help", "--access-token=must-not-be-echoed"],
+        vec!["inspect", "--with-access-token=must-not-be-echoed"],
+        vec!["doctor", "--root", "--api-key=must-not-be-echoed"],
+        vec!["start", "1", "--token=must-not-be-echoed"],
+        vec!["--output", "--access-token=must-not-be-echoed"],
+        vec!["--output", "json", "--secret=must-not-be-echoed"],
+        vec!["--password=must-not-be-echoed"],
+    ] {
+        let output = Command::new(env!("CARGO_BIN_EXE_tseal"))
+            .args(args)
+            .output()
+            .expect("tseal must run");
+        assert_eq!(output.status.code(), Some(2));
+        assert!(output.stdout.is_empty());
+        assert_eq!(
+            String::from_utf8(output.stderr).unwrap(),
+            ZERO_AUTH_ARGUMENT_REFUSAL
+        );
+    }
+}
+
+#[test]
+fn final_zero_auth_shared_boundary_preserves_non_sensitive_local_arguments() {
+    for args in [vec!["help", "inspect"], vec!["inspect", "--help"]] {
+        let output = Command::new(env!("CARGO_BIN_EXE_tseal"))
+            .args(args)
+            .output()
+            .expect("tseal must run");
+        assert_eq!(output.status.code(), Some(0));
+        assert!(
+            String::from_utf8(output.stdout)
+                .unwrap()
+                .contains("TaskSeal inspect")
+        );
+        assert!(output.stderr.is_empty());
     }
 }
 

@@ -10,26 +10,36 @@ mod screen;
 mod starts;
 #[allow(dead_code)] // T8 is the first user-flow consumer; T7 seals the store and its TDD contract.
 pub(crate) mod state;
+mod zero_auth;
 
 use std::io::Write;
 use std::process::ExitCode;
 
 pub fn run(invoked_as: &str, args: impl IntoIterator<Item = String>) -> ExitCode {
     let mut source = args.into_iter();
-    let Some(first) = source.next() else {
+    let Some(first) = (match next_argument(&mut source) {
+        Ok(argument) => argument,
+        Err(exit) => return exit,
+    }) else {
         return run_local(invoked_as, Vec::new());
     };
-    if let Some(exit) = external_prefix(&first, &mut source) {
+    if let Some(exit) = external_prefix(&first) {
         return exit;
     }
     if first == "--output"
-        && let Some(format) = source.next()
+        && let Some(format) = (match next_argument(&mut source) {
+            Ok(argument) => argument,
+            Err(exit) => return exit,
+        })
     {
         if format != "json" {
             return run_local(invoked_as, vec![first, format]);
         }
-        if let Some(command) = source.next() {
-            if let Some(exit) = external_prefix(&command, &mut source) {
+        if let Some(command) = match next_argument(&mut source) {
+            Ok(argument) => argument,
+            Err(exit) => return exit,
+        } {
+            if let Some(exit) = external_prefix(&command) {
                 return exit;
             }
             return run_local(invoked_as, vec![first, format, command]);
@@ -37,21 +47,42 @@ pub fn run(invoked_as: &str, args: impl IntoIterator<Item = String>) -> ExitCode
         return run_local(invoked_as, vec![first, format]);
     }
 
-    run_local(invoked_as, local_prefix(first, &mut source))
+    match local_prefix(first, &mut source) {
+        Ok(args) => run_local(invoked_as, args),
+        Err(exit) => exit,
+    }
 }
 
-fn local_prefix(first: String, source: &mut impl Iterator<Item = String>) -> Vec<String> {
+fn next_argument(source: &mut impl Iterator<Item = String>) -> Result<Option<String>, ExitCode> {
+    match source.next() {
+        Some(argument) if zero_auth::is_sensitive_argument(&argument) => {
+            eprintln!("{}", zero_auth::ARGUMENT_REFUSAL);
+            Err(ExitCode::from(2))
+        }
+        argument => Ok(argument),
+    }
+}
+
+fn local_prefix(
+    first: String,
+    source: &mut impl Iterator<Item = String>,
+) -> Result<Vec<String>, ExitCode> {
     let additional = match first.as_str() {
         "help" | "--help" | "-h" | "explain" | "inspect" => 1,
         "doctor" | "start" => 2,
         _ => 0,
     };
-    std::iter::once(first)
-        .chain(source.take(additional))
-        .collect()
+    let mut args = vec![first];
+    for _ in 0..additional {
+        let Some(argument) = next_argument(source)? else {
+            break;
+        };
+        args.push(argument);
+    }
+    Ok(args)
 }
 
-fn external_prefix(command: &str, _source: &mut impl Iterator<Item = String>) -> Option<ExitCode> {
+fn external_prefix(command: &str) -> Option<ExitCode> {
     let spec = help::resolve(command)?;
     if !matches!(
         spec.command,

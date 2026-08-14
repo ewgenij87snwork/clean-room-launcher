@@ -1,6 +1,7 @@
 use taskseal::{
     adapters::{
         codex::identity::{CodexTupleError, bind_resolved_tuple, resolve_installed_tuple},
+        environment::ProviderNativePreauthenticatedSession,
         identity::ProviderIdentity,
     },
     contracts::adapter::AdapterDeclaration,
@@ -50,7 +51,11 @@ fn refuses_the_next_codex_version_without_a_new_tuple_receipt() {
 #[test]
 fn resolver_entrypoint_refuses_before_a_missing_command_can_be_bound() {
     assert!(matches!(
-        resolve_installed_tuple(&declaration(), std::path::Path::new("missing-codex")),
+        resolve_installed_tuple(
+            ProviderNativePreauthenticatedSession::Available,
+            &declaration(),
+            std::path::Path::new("missing-codex"),
+        ),
         Err(CodexTupleError::Identity(_))
     ));
 }
@@ -70,7 +75,12 @@ fn resolver_rejects_an_altered_declaration_before_touching_the_command() {
     let mut altered = declaration();
     altered.version_range = ">=0.148.0".into();
     assert_eq!(
-        resolve_installed_tuple(&altered, std::path::Path::new("missing-codex")).unwrap_err(),
+        resolve_installed_tuple(
+            ProviderNativePreauthenticatedSession::Available,
+            &altered,
+            std::path::Path::new("missing-codex"),
+        )
+        .unwrap_err(),
         CodexTupleError::DeclarationMismatch
     );
 }

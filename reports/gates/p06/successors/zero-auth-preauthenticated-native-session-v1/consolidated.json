@@ -11,6 +11,26 @@
     "AUTH-01",
     "OD-10"
   ],
+  "dispatch_boundary": {
+    "source": "src/cli/zero_auth.rs",
+    "phase": "BEFORE_LOCAL_UNKNOWN_OR_SELECTOR_DISPATCH",
+    "argument_routes": [
+      "HELP_ALIASES",
+      "EXPLAIN_INSPECT",
+      "DOCTOR_START",
+      "OUTPUT_FORMAT",
+      "OUTPUT_COMMAND",
+      "UNKNOWN_COMMAND"
+    ],
+    "credential_shaped_values_consumed": 0,
+    "credential_shaped_values_copied": 0,
+    "credential_shaped_values_echoed": 0,
+    "non_sensitive_local_arguments_preserved": true,
+    "entrypoints": [
+      "src/bin/taskseal.rs",
+      "src/bin/tseal.rs"
+    ]
+  },
   "task_receipts": [
     {
       "task": 1,
@@ -121,6 +141,22 @@
     "mutable_tail_hashed": false,
     "terminal_review_event_may_append": true
   },
+  "provider_birth_boundary": {
+    "opaque_state": "ProviderNativePreauthenticatedSession",
+    "available": "ALLOW",
+    "missing": "REFUSED_PRE_BIRTH",
+    "unavailable": "REFUSED_PRE_BIRTH",
+    "ambiguous": "REFUSED_PRE_BIRTH",
+    "negative_process_birth": false,
+    "guards": [
+      "scripts/probe/provider-capabilities.sh::require_preauthenticated_session",
+      "src/adapters/identity.rs::require_preauthenticated_session"
+    ],
+    "inventory": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/entrypoint-inventory.json",
+    "cli_entrypoint_count": 2,
+    "provider_birth_count": 5,
+    "future_unguarded_route_allowed": false
+  },
   "git": {
     "input_head": "6a54523b4dbf8869ca7035a7dc42df88ac11c45a",
     "input_tree": "7f3b2870967dbf8864e65bf15b02e7661b7b1995",
@@ -134,18 +170,32 @@
       "fixtures/cli/first-screen-unqualified.txt",
       "reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/consolidated.json",
       "reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/task-4.json",
+      "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/entrypoint-inventory.json",
+      "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/entrypoint-inventory.rb",
       "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/source-inventory-allowlist.json",
+      "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-entrypoint-inventory.sh",
       "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-4-receipt-durability.sh",
       "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-4-receipt.sh",
       "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-verify.sh",
       "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/verify.sh",
+      "scripts/probe/provider-capabilities.sh",
+      "src/adapters/codex/identity.rs",
+      "src/adapters/environment.rs",
+      "src/adapters/identity.rs",
+      "src/adapters/mod.rs",
+      "src/adapters/session.rs",
       "src/cli/mod.rs",
       "src/cli/screen.rs",
       "src/cli/state.rs",
+      "src/cli/zero_auth.rs",
+      "tests/adapters/codex/identity.rs",
+      "tests/adapters/identity.rs",
+      "tests/cli.rs",
       "tests/cli/argv_passthrough.rs",
       "tests/cli/first_screen.rs",
       "tests/cli/saved_start_call_path.rs",
-      "tests/cli/saved_starts.rs"
+      "tests/cli/saved_starts.rs",
+      "tests/contracts/provider_capability_truth.rs"
     ]
   },
   "verification": {

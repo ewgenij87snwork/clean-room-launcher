@@ -1,5 +1,6 @@
 use crate::{
     adapters::identity::{AdapterError, ProviderIdentity, resolve_identity, revalidate_identity},
+    adapters::session::ProviderNativePreauthenticatedSession,
     contracts::adapter::AdapterDeclaration,
 };
 use std::path::Path;
@@ -25,11 +26,13 @@ pub enum CodexTupleError {
 }
 
 pub fn resolve_installed_tuple(
+    session: ProviderNativePreauthenticatedSession,
     declaration: &AdapterDeclaration,
     command: &Path,
 ) -> Result<CodexTuple, CodexTupleError> {
     validate_approved_declaration(declaration)?;
-    let identity = resolve_identity(declaration, command).map_err(CodexTupleError::Identity)?;
+    let identity =
+        resolve_identity(session, declaration, command).map_err(CodexTupleError::Identity)?;
     revalidate_identity(&identity).map_err(CodexTupleError::Identity)?;
     bind_resolved_tuple(declaration, &identity)
 }

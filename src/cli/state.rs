@@ -258,31 +258,8 @@ impl StateStore {
 }
 
 fn contains_sensitive_value(argv: &[String]) -> bool {
-    argv.iter().any(|value| {
-        let value = value.to_ascii_lowercase();
-        value.starts_with("sk-")
-            || value.starts_with("bearer ")
-            || [
-                "--token",
-                "--with-access-token",
-                "--access-token",
-                "--api-key",
-                "--api_key",
-                "--password",
-                "--secret",
-            ]
-            .contains(&value.as_str())
-            || [
-                "token=",
-                "token:",
-                "api-key=",
-                "api_key=",
-                "password=",
-                "secret=",
-            ]
-            .iter()
-            .any(|needle| value.contains(needle))
-    })
+    argv.iter()
+        .any(|value| super::zero_auth::is_sensitive_argument(value))
 }
 
 fn contains_sensitive_bytes(bytes: &[u8]) -> bool {

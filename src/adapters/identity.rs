@@ -1,3 +1,7 @@
+use super::session::{
+    PreauthenticatedSessionError, ProviderNativePreauthenticatedSession,
+    require_preauthenticated_session,
+};
 use crate::{contracts::adapter::AdapterDeclaration, core::inventory::sha256_hex};
 use std::{
     fmt,
@@ -27,6 +31,8 @@ pub enum AdapterError {
     PolicyIdentityMismatch,
     InvalidPolicy,
     RequiredAuthMissing,
+    ProviderNativePreauthenticatedSessionUnavailable,
+    ProviderNativePreauthenticatedSessionAmbiguous,
 }
 impl fmt::Display for AdapterError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -40,15 +46,30 @@ impl fmt::Display for AdapterError {
             Self::PolicyIdentityMismatch => "POLICY_IDENTITY_MISMATCH",
             Self::InvalidPolicy => "INVALID_ENVIRONMENT_POLICY",
             Self::RequiredAuthMissing => "REQUIRED_AUTH_MISSING",
+            Self::ProviderNativePreauthenticatedSessionUnavailable => {
+                "PROVIDER_NATIVE_PREAUTHENTICATED_SESSION_UNAVAILABLE"
+            }
+            Self::ProviderNativePreauthenticatedSessionAmbiguous => {
+                "PROVIDER_NATIVE_PREAUTHENTICATED_SESSION_AMBIGUOUS"
+            }
         })
     }
 }
 impl std::error::Error for AdapterError {}
 
 pub fn resolve_identity(
+    session: ProviderNativePreauthenticatedSession,
     declaration: &AdapterDeclaration,
     command: &Path,
 ) -> Result<ProviderIdentity, AdapterError> {
+    require_preauthenticated_session(session).map_err(|error| match error {
+        PreauthenticatedSessionError::Unavailable => {
+            AdapterError::ProviderNativePreauthenticatedSessionUnavailable
+        }
+        PreauthenticatedSessionError::Ambiguous => {
+            AdapterError::ProviderNativePreauthenticatedSessionAmbiguous
+        }
+    })?;
     let real_executable = command
         .canonicalize()
         .map_err(|_| AdapterError::Unavailable)?;

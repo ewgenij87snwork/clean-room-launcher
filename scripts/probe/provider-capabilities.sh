@@ -5,10 +5,33 @@ provider=""
 fixture=""
 root=""
 require_clean_claim=false
+preauthenticated_session=""
 
 usage() {
-  echo "usage: provider-capabilities.sh --root PATH --provider codex|claude --fixture NAME [--require-clean-claim]" >&2
+  echo "usage: provider-capabilities.sh --root PATH --provider codex|claude --fixture NAME --preauthenticated-session available|unavailable|ambiguous [--require-clean-claim]" >&2
   exit 64
+}
+
+require_preauthenticated_session() {
+  case "$1" in
+    available) return 0 ;;
+    unavailable)
+      echo "PROVIDER_NATIVE_PREAUTHENTICATED_SESSION_UNAVAILABLE" >&2
+      exit 78
+      ;;
+    ambiguous)
+      echo "PROVIDER_NATIVE_PREAUTHENTICATED_SESSION_AMBIGUOUS" >&2
+      exit 78
+      ;;
+    "")
+      echo "PROVIDER_NATIVE_PREAUTHENTICATED_SESSION_REQUIRED" >&2
+      exit 78
+      ;;
+    *)
+      echo "PROVIDER_NATIVE_PREAUTHENTICATED_SESSION_STATE_REFUSED" >&2
+      exit 78
+      ;;
+  esac
 }
 
 while [ "$#" -gt 0 ]; do
@@ -16,12 +39,14 @@ while [ "$#" -gt 0 ]; do
     --root) [ "$#" -ge 2 ] || usage; root=$2; shift 2 ;;
     --provider) [ "$#" -ge 2 ] || usage; provider=$2; shift 2 ;;
     --fixture) [ "$#" -ge 2 ] || usage; fixture=$2; shift 2 ;;
+    --preauthenticated-session) [ "$#" -ge 2 ] || usage; preauthenticated_session=$2; shift 2 ;;
     --require-clean-claim) require_clean_claim=true; shift ;;
     *) usage ;;
   esac
 done
 
 [ -n "$root" ] && [ -n "$provider" ] && [ -n "$fixture" ] || usage
+require_preauthenticated_session "$preauthenticated_session"
 root=$(cd "$root" && pwd -P)
 fixture_root="$root/fixtures/contracts/provider-capabilities/$provider/$fixture"
 [ -d "$fixture_root" ] || { echo "UNKNOWN_FIXTURE" >&2; exit 66; }

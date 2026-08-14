@@ -94,6 +94,24 @@ expect_refusal saved_start_inline_access_token_selector
 jq '.ingestion_closure.saved_start_save_refusal_phase="AFTER_SERIALIZATION"' "$report" >"$fixture_report"
 expect_refusal saved_start_prewrite_phase
 
+jq '.dispatch_boundary.credential_shaped_values_echoed=1' "$report" >"$fixture_report"
+expect_refusal dispatch_boundary_echo
+
+jq '.dispatch_boundary.argument_routes |= map(select(. != "OUTPUT_COMMAND"))' "$report" >"$fixture_report"
+expect_refusal dispatch_boundary_selector
+
+jq '.dispatch_boundary.non_sensitive_local_arguments_preserved=false' "$report" >"$fixture_report"
+expect_refusal local_argument_preservation
+
+jq '.provider_birth_boundary.missing="ALLOW"' "$report" >"$fixture_report"
+expect_refusal missing_opaque_state
+
+jq '.provider_birth_boundary.negative_process_birth=true' "$report" >"$fixture_report"
+expect_refusal negative_process_birth
+
+jq '.provider_birth_boundary.provider_birth_count=4' "$report" >"$fixture_report"
+expect_refusal provider_birth_inventory
+
 jq '.result="PASS"' "$report" >"$fixture_report"
 expect_refusal premature_plan_pass
 
@@ -116,5 +134,8 @@ expect_refusal invalid_append
 duplicate_id=$(sed -n '1p' "$worklog" | jq -r .event_id)
 printf '{"schema":"taskseal.worklog.event.v1","event_id":"%s","event":"terminal_review"}\n' "$duplicate_id" >>"$fixture_worklog"
 expect_refusal duplicate_append
+
+entrypoint_output=$("$root/$successor/test-entrypoint-inventory.sh")
+test "$entrypoint_output" = P06_ZERO_AUTH_ENTRYPOINT_INVENTORY_TEST_PASS
 
 printf '%s\n' P06_ZERO_AUTH_GATE_MUTATIONS_PASS

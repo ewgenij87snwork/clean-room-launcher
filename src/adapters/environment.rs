@@ -1,12 +1,8 @@
 use super::identity::ProviderIdentity;
+pub use super::session::ProviderNativePreauthenticatedSession;
+use super::session::{PreauthenticatedSessionError, require_preauthenticated_session};
 use std::fmt;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ProviderNativePreauthenticatedSession {
-    Available,
-    Unavailable,
-    Ambiguous,
-}
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ProxyMode {
     Deny,
@@ -60,14 +56,12 @@ pub fn build_environment(
         return Err(EnvironmentError::PolicyIdentityMismatch);
     }
 
-    match session {
-        ProviderNativePreauthenticatedSession::Available => {
-            Ok(LaunchEnvironment::ProviderNativePreauthenticatedSession)
-        }
-        ProviderNativePreauthenticatedSession::Unavailable => {
+    match require_preauthenticated_session(session) {
+        Ok(()) => Ok(LaunchEnvironment::ProviderNativePreauthenticatedSession),
+        Err(PreauthenticatedSessionError::Unavailable) => {
             Err(EnvironmentError::ProviderNativePreauthenticatedSessionUnavailable)
         }
-        ProviderNativePreauthenticatedSession::Ambiguous => {
+        Err(PreauthenticatedSessionError::Ambiguous) => {
             Err(EnvironmentError::ProviderNativePreauthenticatedSessionAmbiguous)
         }
     }

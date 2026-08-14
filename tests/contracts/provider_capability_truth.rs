@@ -1,3 +1,4 @@
+use std::os::unix::fs::PermissionsExt;
 use std::path::PathBuf;
 use std::process::Command;
 use std::sync::atomic::{AtomicUsize, Ordering};
@@ -32,8 +33,78 @@ fn run_probe(extra_args: &[&str]) -> std::process::Output {
 }
 
 #[test]
+fn provider_probe_requires_opaque_preauthentication_before_process_birth() {
+    for (index, (state, expected)) in [
+        (None, "PROVIDER_NATIVE_PREAUTHENTICATED_SESSION_REQUIRED\n"),
+        (
+            Some("unavailable"),
+            "PROVIDER_NATIVE_PREAUTHENTICATED_SESSION_UNAVAILABLE\n",
+        ),
+        (
+            Some("ambiguous"),
+            "PROVIDER_NATIVE_PREAUTHENTICATED_SESSION_AMBIGUOUS\n",
+        ),
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        let root = repository_root();
+        let fake_root = std::env::temp_dir().join(format!(
+            "taskseal-provider-preauth-{}-{index}",
+            std::process::id()
+        ));
+        let _ = std::fs::remove_dir_all(&fake_root);
+        std::fs::create_dir_all(&fake_root).unwrap();
+        let capture = fake_root.join("provider-born");
+        let fake = fake_root.join("codex");
+        std::fs::write(
+            &fake,
+            "#!/bin/sh\n: > \"$TASKSEAL_PROVIDER_CAPTURE\"\nprintf 'codex 0.147.0\\n'\n",
+        )
+        .unwrap();
+        std::fs::set_permissions(&fake, std::fs::Permissions::from_mode(0o700)).unwrap();
+        let inherited_path = std::env::var("PATH").unwrap_or_default();
+        let probe_path = format!("{}:{inherited_path}", fake_root.display());
+
+        let mut command = Command::new(root.join("scripts/probe/provider-capabilities.sh"));
+        command
+            .args([
+                "--root",
+                root.to_str().unwrap(),
+                "--provider",
+                "codex",
+                "--fixture",
+                "no-native-isolation",
+            ])
+            .env("PATH", probe_path)
+            .env("TASKSEAL_PROVIDER_CAPTURE", &capture);
+        if let Some(state) = state {
+            command.args(["--preauthenticated-session", state]);
+        }
+        let output = command.output().expect("guarded probe must run");
+        let provider_born = capture.exists();
+        std::fs::remove_dir_all(&fake_root).unwrap();
+
+        assert_eq!(output.status.code(), Some(78));
+        assert!(output.stdout.is_empty());
+        assert_eq!(String::from_utf8(output.stderr).unwrap(), expected);
+        assert!(
+            !provider_born,
+            "provider process was born before session guard"
+        );
+    }
+}
+
+#[test]
 fn codex_fixture_produces_closed_capability_truth_without_a_clean_overclaim() {
-    let output = run_probe(&["--provider", "codex", "--fixture", "qualified-home"]);
+    let output = run_probe(&[
+        "--provider",
+        "codex",
+        "--fixture",
+        "qualified-home",
+        "--preauthenticated-session",
+        "available",
+    ]);
     assert!(
         output.status.success(),
         "{}",
@@ -88,6 +159,8 @@ fn absent_native_isolation_refuses_a_requested_clean_claim() {
         "--fixture",
         "no-native-isolation",
         "--require-clean-claim",
+        "--preauthenticated-session",
+        "available",
     ]);
     assert!(
         !output.status.success(),
@@ -100,7 +173,14 @@ fn absent_native_isolation_refuses_a_requested_clean_claim() {
 #[test]
 fn wrong_version_and_poisoned_ambient_source_cannot_qualify() {
     for fixture in ["wrong-version", "poisoned-home"] {
-        let output = run_probe(&["--provider", "codex", "--fixture", fixture]);
+        let output = run_probe(&[
+            "--provider",
+            "codex",
+            "--fixture",
+            fixture,
+            "--preauthenticated-session",
+            "available",
+        ]);
         assert!(
             output.status.success(),
             "{fixture}: {}",
@@ -121,7 +201,14 @@ fn wrong_version_and_poisoned_ambient_source_cannot_qualify() {
 
 #[test]
 fn claude_evidence_is_no_spend_and_never_runtime_qualified() {
-    let output = run_probe(&["--provider", "claude", "--fixture", "no-spend"]);
+    let output = run_probe(&[
+        "--provider",
+        "claude",
+        "--fixture",
+        "no-spend",
+        "--preauthenticated-session",
+        "available",
+    ]);
     assert!(
         output.status.success(),
         "{}",
