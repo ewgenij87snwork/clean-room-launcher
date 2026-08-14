@@ -167,7 +167,9 @@ def normalize(root: Path, task: int) -> dict[str, Any]:
     evidence = receipt.get("evidence")
     if not isinstance(evidence, list) or not evidence:
         raise Refused("evidence missing")
-    evidence_objects = [e for e in evidence if isinstance(e, dict) and set(e) >= {"id"}]
+    if any(not isinstance(e, dict) or set(e) < {"id"} for e in evidence):
+        raise Refused("malformed evidence entry")
+    evidence_objects = evidence
     actual_ids = [e["id"] for e in evidence_objects]
     if len(actual_ids) != len(set(actual_ids)):
         raise Refused("duplicate evidence ID")
@@ -183,7 +185,7 @@ def normalize(root: Path, task: int) -> dict[str, Any]:
     if receipt.get("qualification") != "NOT_QUALIFIED":
         raise Refused("qualification boundary")
     verify_lineage(root, profile)
-    return {
+    result = {
         "schema_version": "taskseal.p07.consolidated-task-receipt.v2",
         "plan_id": "P07-PACKAGING-SCAFFOLD-V1",
         "task": task,
@@ -194,6 +196,13 @@ def normalize(root: Path, task: int) -> dict[str, Any]:
         "subjects": subjects,
         "qualification": receipt["qualification"],
     }
+    projection_path = f"reports/gates/p07/scaffold-v2/task-{task}.json"
+    projection_bytes = tracked_regular(root, projection_path)
+    if load_json(projection_bytes, projection_path) != result:
+        raise Refused("canonical projection mismatch")
+    if projection_bytes != (json.dumps(result, sort_keys=True, separators=(",", ":")) + "\n").encode():
+        raise Refused("canonical projection bytes")
+    return result
 
 
 def main() -> int:
