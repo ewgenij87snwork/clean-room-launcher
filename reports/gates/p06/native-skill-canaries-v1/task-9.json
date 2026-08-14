@@ -6,15 +6,15 @@
   "qualification": "NOT_QUALIFIED",
   "tuple": {"provider_id":"codex","artifact_digest":"19c4f144c5226a9f17c58e6f0fa854843b0f77a6eb420f40e2745a12f10f5d37","version":[0,147,0],"os":"macos","arch":"aarch64"},
   "canaries": [
-    {"case":"needed","status":"NOT_OBSERVED"}, {"case":"unused","status":"NOT_OBSERVED"},
-    {"case":"protected","status":"REFUSED"}, {"case":"outside_boundary","status":"REFUSED"}, {"case":"tampered","status":"REFUSED"}
+    {"case":"needed","status":"OBSERVED_EXIT_0_UNQUALIFIED","digest":"8af1c9fb50d4fbbd915f60968c8ae2cdc1d09a11376e51a8bfa256d898f14983"}, {"case":"unused","status":"OBSERVED_EXIT_0_UNQUALIFIED","digest":"05dd71f7d2f1c06e989adeb427987a7148b04df12dcebbfa35adcdc1dceb5360"},
+    {"case":"protected","status":"OBSERVED_EXIT_0_UNQUALIFIED","digest":"af59d7f08756dfd5293cf73a4de327bce5c03eadfa7db392768b08ccade9c644"}, {"case":"outside_boundary","status":"OBSERVED_EXIT_0_UNQUALIFIED","digest":"05222931a58be012238cf223dc133f9f0c724e5c007c835508e8fe004f90e6c8"}, {"case":"tampered","status":"OBSERVED_EXIT_0_UNQUALIFIED","digest":"6b783c6d6d5d424a5b0bc94aa552f048c0fa119cc6b5238941be0432ee27f322"}
   ],
-  "native_processes": 0,
-  "network": "NOT_ATTEMPTED",
+  "native_processes": 5,
+  "network": "OBSERVED",
   "raw_output_retained": false,
   "body_bytes_read_or_injected": false,
   "all_admitted_names_accounted": true,
-  "refusal_reason": "No bounded provider-native observation was retained; deterministic preflight proves only metadata-only local projection and static refusals.",
+  "refusal_reason": "Exit and digest metadata were captured, but no semantic native canary observation was retained; exact deferred loading remains NOT_QUALIFIED.",
   "sources": [
     {"path":"tests/adapters.rs","sha256":"7b1fdeb7b7a6e477a36a18f8faf86e71b7cc6a77f0fd90d692f3116ecf5a0c57"},
     {"path":"tests/adapters/codex/skill_canaries.rs","sha256":"9c17def4c787bd89d862fd19e271dde0043c38e82f7cb960f9a53956db8d9750"},

@@ -4,9 +4,9 @@ root=${P06_GATE_ROOT:-$(CDPATH= cd -- "$(dirname -- "$0")/../../.." && pwd -P)}
 cd "$(CDPATH= cd -- "$root" && pwd -P)"
 jq -e '
   .schema_version == "taskseal.p06-qualification-gate.v1" and
-  .gate == "scripts/gates/p06/verify.sh" and .result == "QUALIFICATION_GATE_PASS_NOT_QUALIFIED" and
-  .tasks.foundation == "4/4" and .tasks.tuple == "8/8" and .tasks.qualified == "0/1" and
-  .required_tuple.qualification == "NOT_QUALIFIED" and .native_processes == 0 and
+  .gate == "scripts/gates/p06/verify.sh" and .result == "QUALIFICATION_GATE_PASS" and
+  .tasks.foundation == "4/4" and .tasks.tuple == "8/8" and .tasks.qualified == "1/1" and
+  .required_tuple.qualification == "QUALIFIED" and .native_processes >= 1 and
   .raw_output_retained == false and .skip_as_pass == false and
   (.unsupported_tuples == "NOT_QUALIFIED") and (.reason|length > 20) and
   (.subject|test("^[0-9a-f]{40}$"))
