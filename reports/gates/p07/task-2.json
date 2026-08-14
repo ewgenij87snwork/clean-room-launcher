@@ -5,12 +5,12 @@
   "result": "accepted",
   "acceptance": {
     "id": "ACC-P07-T2",
-    "operator_result": "The release-candidate workflow requires every P02-P07 gate, rejects continue-on-error/conditional/missing gates, propagates one subject digest, and preserves P06 NOT_QUALIFIED truthfully.",
-    "evidence_ids": ["EVD-P07-T2-RED", "EVD-P07-T2-GREEN", "EVD-P07-T2-SOURCE-NOT-QUALIFIED"]
+    "operator_result": "The release-candidate workflow calls one orchestrator; every P02-P07 gate is attempted against the exact checked-out subject, missing gates are NOT_QUALIFIED, poisoned workflow fixtures are rejected, and P06 remains NOT_QUALIFIED truthfully.",
+    "evidence_ids": ["EVD-P07-T2-RED", "EVD-P07-T2-GREEN", "EVD-P07-T2-SUBJECT", "EVD-P07-T2-ALL-GATES", "EVD-P07-T2-SOURCE-NOT-QUALIFIED"]
   },
   "binding": {
     "input_head": "fd43bb83074e1dd75b5d7f44d9973f790e746a80",
-    "implementation_head": "4d81e55708b86532c7dcc5e6941299d9d9fb15c3",
+    "implementation_head": "f354c20647e724118cbb740162e85bb479a7085c",
     "receipt_seal_role": "receipt-only-child",
     "implementation_files": [
       "scripts/release-build/verify-source.sh",
@@ -45,17 +45,33 @@
       "exit": 1,
       "output": "result NOT_QUALIFIED; fmt, all-tests, privacy and P06 qualification are NOT_QUALIFIED; skips_counted_as_pass=0",
       "meaning": "Known P06 NOT_QUALIFIED and pre-existing fmt drift remain visible; no failure is relabelled PASS."
+    },
+    {
+      "id": "EVD-P07-T2-SUBJECT",
+      "command": "verify-source.sh --subject-digest <invalid-length|unknown-40-hex|non-HEAD-commit> --scaffold",
+      "exit": 65,
+      "meaning": "Invalid, nonexistent and non-HEAD subjects are refused before a receipt can be produced."
+    },
+    {
+      "id": "EVD-P07-T2-ALL-GATES",
+      "command": "verify-source.sh --gate-dir tests/packaging/fixtures/gates --scaffold",
+      "exit": 1,
+      "output": "p02 exit 17; p03/p04/p05 attempted; p06 missing recorded exit 127 NOT_QUALIFIED; p07 recorded; all same subject digest",
+      "meaning": "An early failing gate does not prevent later gates from being attempted, and absent gates cannot become PASS."
     }
   ],
   "subjects": {
-    ".github/workflows/release-candidate.yml": "537c188fb45de5c3e6318da8b132c5ae21bb121291ec781c2550153121d319dc",
-    "scripts/release-build/verify-source.sh": "6f7766d778818d737a3ef809d317d4316fc8deb86e351665ad7b78780f78cf44",
-    "tests/packaging/no_skip.rs": "450940344d5a04e581ef2afaa944508cfd71265acc1760a4982a9e22aa365a84"
+    ".github/workflows/release-candidate.yml": "de189f066a7c552c68d4c423084d58dc442d44d05c4830d42f1f7ecd3183d05e",
+    "scripts/release-build/verify-source.sh": "ee97deac11a91c4309670649828c34d2efecaede35c449ebc6467eba797631fc",
+    "tests/packaging/no_skip.rs": "ec77136f4ca7008d2de1c43b12ccd6748912f4abe51ac30bb0ec4669574c13c9"
   },
   "qualification": "NOT_QUALIFIED",
   "controls": {
     "no_skip": true,
     "same_subject_digest": true,
+    "subject_exact_existing_head": true,
+    "all_gates_attempted": true,
+    "missing_gate_not_qualified": true,
     "p06_truthful": true,
     "publication": false,
     "network": false,
