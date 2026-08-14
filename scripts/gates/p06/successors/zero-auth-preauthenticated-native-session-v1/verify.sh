@@ -83,7 +83,13 @@ jq -e '
     sole_gate:"scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/verify.sh",
     mutation_suite:"scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-verify.sh",
     source_inventory:"CURRENT_TRACKED_INVENTORY",
-    public_boundary_inventory:"CURRENT_GIT_RECEIPT_HEAD",
+    public_boundary_inventory:"CURRENT_GIT_GOVERNED_RELEASE_INVENTORY",
+    public_boundary_paths:[
+      ".gitignore","AGENTS.md","CHANGELOG.md","Cargo.lock","Cargo.toml","GOVERNANCE.md","LICENSE","SECURITY.md",
+      "adapters/declarations","controls","deny.toml","fixtures/adapters","fixtures/catalog","fixtures/cli","fixtures/contracts","fixtures/core",
+      "reports/contracts","rust-toolchain.toml","schemas/canonical-json-profile.md","schemas/contracts","scripts/check-control-coverage.rb",
+      "scripts/check-public-boundary.sh","scripts/probe","src","tests"
+    ],
     full_zero_auth_call_paths:true,
     task_receipts_validated:[1,2,3,4]
   } and
@@ -160,7 +166,11 @@ cargo test --locked --offline --test cli --test adapters --test trace_metadata
 
 scratch=$(mktemp -d "${TMPDIR:-/tmp}/taskseal-p06-zero-auth-public.XXXXXX")
 trap 'rm -rf "$scratch"' EXIT HUP INT TERM
-git archive --format=tar HEAD | tar -xf - -C "$scratch"
+public_paths=$(jq -r '.verification.public_boundary_paths[]' "$report")
+# The current governed release inventory excludes gate/receipt evidence, which
+# is covered separately by the closed executable-source scanner and receipts.
+# This avoids interpreting evidence path identifiers as credential material.
+git archive --format=tar HEAD -- $public_paths | tar -xf - -C "$scratch"
 public_output=$("$scratch/scripts/check-public-boundary.sh" --root "$scratch") || refuse PUBLIC_BOUNDARY
 test "$public_output" = PUBLIC_BOUNDARY_PASS || refuse PUBLIC_BOUNDARY_OUTPUT
 

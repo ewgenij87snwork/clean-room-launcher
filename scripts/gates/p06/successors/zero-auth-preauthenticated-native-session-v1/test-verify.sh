@@ -64,6 +64,9 @@ expect_refusal task_receipt_digest
 jq '.git.implementation_write_set |= map(select(. != "src/cli/screen.rs"))' "$report" >"$fixture_report"
 expect_refusal implementation_write_set
 
+jq '.verification.public_boundary_paths |= map(select(. != "src"))' "$report" >"$fixture_report"
+expect_refusal public_boundary_inventory
+
 jq '.result="PASS"' "$report" >"$fixture_report"
 expect_refusal premature_plan_pass
 
