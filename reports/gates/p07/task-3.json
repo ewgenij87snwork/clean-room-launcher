@@ -5,25 +5,28 @@
   "result": "accepted",
   "acceptance": {
     "id": "ACC-P07-T3",
-    "operator_result": "A local unsigned NOT_QUALIFIED archive contains one canonical taskseal executable, a byte-identical safe tseal copy, LICENSE, NOTICE and source/toolchain/version metadata; two equivalent locked builds are byte-reproducible.",
-    "evidence_ids": ["EVD-P07-T3-RED", "EVD-P07-T3-GREEN", "EVD-P07-T3-BUILD-C", "EVD-P07-T3-BUILD-D", "EVD-P07-T3-ARCHIVE-SAFETY"]
+    "operator_result": "Two clean exported source roots without .git or untracked state, separate target directories and normalized offline environments produced identical local-toolchain archives. Each archive contains one canonical taskseal executable, a byte-identical safe tseal copy, complete metadata, and passes the production verifier; release qualification remains NOT_QUALIFIED.",
+    "evidence_ids": ["EVD-P07-T3-R1-RED", "EVD-P07-T3-R1-GREEN", "EVD-P07-T3-R1-CLEAN-A", "EVD-P07-T3-R1-CLEAN-B", "EVD-P07-T3-R1-VERIFY-POISON", "EVD-P07-T3-R1-PARSER"]
   },
   "binding": {
     "input_head": "cee78ac90ae9a4dc3b07518089df26c8d64f68d1",
-    "implementation_head": "19260917749988429ae917b8b2405559ad2b1e5f",
+    "implementation_head": "d8fb3616902342d2cc3a98e5d000b85c0bd13c57",
     "receipt_seal_role": "receipt-only-child",
-    "implementation_files": ["packaging/build-artifacts.sh", "tests/packaging/artifact_layout.rs", "tests/packaging/fixtures/archive-layout.txt", "tests/packaging/fixtures/archive-path-traversal.txt", "tests/packaging/fixtures/archive-wrong-binary.txt", "tests/packaging/fixtures/archive-missing-license.txt", "tests/packaging/fixtures/archive-nondeterministic-metadata.txt"]
+    "implementation_files": ["packaging/build-artifacts.sh", "packaging/verify-artifact.py", "tests/packaging/artifact_layout.rs", "tests/packaging/fixtures/make_poison_archive.py", "tests/packaging/fixtures/archive-layout.txt", "tests/packaging/fixtures/archive-path-traversal.txt", "tests/packaging/fixtures/archive-wrong-binary.txt", "tests/packaging/fixtures/archive-missing-license.txt", "tests/packaging/fixtures/archive-nondeterministic-metadata.txt"]
   },
   "evidence": [
-    {"id": "EVD-P07-T3-RED", "command": "CARGO_MANIFEST_DIR=\"$PWD\" rustc --test tests/packaging/artifact_layout.rs -o /tmp/p07-artifact-layout-red", "exit": 1, "meaning": "Focused contract failed before Task 3 artifact scaffold existed."},
-    {"id": "EVD-P07-T3-GREEN", "command": "CARGO_MANIFEST_DIR=\"$PWD\" rustc --test tests/packaging/artifact_layout.rs -o /tmp/p07-artifact-layout-final && /tmp/p07-artifact-layout-final", "exit": 0, "output": "4 passed; 0 failed", "meaning": "Layout, path-safety fixtures, poisoned fixtures and shell contract pass."},
-    {"id": "EVD-P07-T3-BUILD-C", "command": "packaging/build-artifacts.sh /tmp/p07-artifacts-c.PSvZeL", "exit": 0, "output": "archive sha256 e69956adf601f6f02f7689e1f55e86dd5583c409e4665d4fe94f6fb67c79da80; QUALIFICATION=NOT_QUALIFIED", "meaning": "Locked release build generated complete local unsigned preview."},
-    {"id": "EVD-P07-T3-BUILD-D", "command": "packaging/build-artifacts.sh /tmp/p07-artifacts-d.s2QIV6", "exit": 0, "output": "archive sha256 e69956adf601f6f02f7689e1f55e86dd5583c409e4665d4fe94f6fb67c79da80; QUALIFICATION=NOT_QUALIFIED", "meaning": "Equivalent clean output directory reproduced identical bytes."},
-    {"id": "EVD-P07-T3-ARCHIVE-SAFETY", "command": "python3 tarfile inspection of both archives", "exit": 0, "output": "no absolute/.. paths; taskseal and tseal byte-identical; LICENSE NOTICE VERSION present", "meaning": "Archive extraction surface and named executable behavior are safe and complete."}
+    {"id": "EVD-P07-T3-R1-RED", "command": "CARGO_MANIFEST_DIR=\"$PWD\" rustc --test tests/packaging/artifact_layout.rs -o /tmp/p07-artifact-layout-red", "exit": 1, "meaning": "Correction contract failed before production verifier and clean-root controls existed."},
+    {"id": "EVD-P07-T3-R1-GREEN", "command": "CARGO_MANIFEST_DIR=\"$PWD\" rustc --test tests/packaging/artifact_layout.rs -o /tmp/p07-artifact-layout-r1b && /tmp/p07-artifact-layout-r1b", "exit": 0, "output": "5 passed; 0 failed; generated traversal/wrong-name/missing-license/metadata archives all rejected", "meaning": "Focused contract and production verifier pass."},
+    {"id": "EVD-P07-T3-R1-CLEAN-A", "command": "git archive HEAD -> clean root A; CARGO_NET_OFFLINE=true CARGO_TARGET_DIR=target-a packaging/build-artifacts.sh out-a", "exit": 0, "output": "archive sha256 3c993a1e987fa4d1845e06a2da8474282cad742e2d8f6291ea2aa20af7177dc2; NOT_QUALIFIED", "meaning": "Clean exported source root without .git/untracked state built with separate target directory."},
+    {"id": "EVD-P07-T3-R1-CLEAN-B", "command": "git archive HEAD -> clean root B; CARGO_NET_OFFLINE=true CARGO_TARGET_DIR=target-b packaging/build-artifacts.sh out-b", "exit": 0, "output": "archive sha256 3c993a1e987fa4d1845e06a2da8474282cad742e2d8f6291ea2aa20af7177dc2; NOT_QUALIFIED", "meaning": "Equivalent clean root reproduced identical bytes under the bound local toolchain/profile."},
+    {"id": "EVD-P07-T3-R1-VERIFY-POISON", "command": "python3 packaging/verify-artifact.py clean-root archives plus generated poison archives", "exit": 0, "output": "valid clean archives; traversal/wrong-name/missing-license/nondeterministic metadata rejected; exact member order/modes/uid/gid/mtime checked", "meaning": "Production archive verifier is exercised against actual generated archives, not textual fixtures only."},
+    {"id": "EVD-P07-T3-R1-PARSER", "command": "extract archive; bin/taskseal --json and bin/tseal --json", "exit": 0, "output": "exit 2/2; stdout byte-identical; stderr byte-identical (UNKNOWN_COMMAND: --json; try help)", "meaning": "Installed names run the same local parser behavior without provider or network access."}
   ],
   "subjects": {
-    "packaging/build-artifacts.sh": "f7e99da454c42658eab7a4995c59b37f0ff729421d2c876e06eda3332252680c",
-    "tests/packaging/artifact_layout.rs": "6d4ac68188fab583c8c549aeca10859593ab922a3a423dde8e8ca693d825efac",
+    "packaging/build-artifacts.sh": "b84277b98d44135226766dd2e2f8a31c30c0741a52714a6b22fac3db0853f399",
+    "packaging/verify-artifact.py": "577a27c50c5614076c3afae3ca0f4752d67ea6df2453fdc5a8565c685337c45a",
+    "tests/packaging/artifact_layout.rs": "050f6fc3a3b8811aa03bd23de60f03b606fac0954782bf2bb42207a8dfab0e2d",
+    "tests/packaging/fixtures/make_poison_archive.py": "b03297ebaf67aad2f60611b42ed88893a3db3e23ed47db916180a62d6fa15646",
     "tests/packaging/fixtures/archive-layout.txt": "ac62e17d432dc029bf472a728db359a7004e9f7c559935803a885ff647061178",
     "tests/packaging/fixtures/archive-path-traversal.txt": "0af2c1affd8c8dc04992f1d1f81ca8f5c4d6998e5719eb342f6bccbe7dfc1cb8",
     "tests/packaging/fixtures/archive-wrong-binary.txt": "f3170538e1d8ec16e531159fcf9115c2f8f185e2fb306de2d3e326252cd1ddfd",
@@ -31,6 +34,6 @@
     "tests/packaging/fixtures/archive-nondeterministic-metadata.txt": "0326a3a5da12e5069f93e92f7efc6c9e6abba1846434b7658037748562daafd2"
   },
   "qualification": "NOT_QUALIFIED",
-  "claims": {"archive": "local unsigned preview only", "source_commit": "19260917749988429ae917b8b2405559ad2b1e5f", "target": "aarch64-apple-darwin", "reproducible": true},
-  "controls": {"locked_dependencies": true, "exact_source_head": true, "normalized_metadata": true, "path_safe": true, "canonical_taskseal": true, "safe_tseal_copy": true, "license_and_notices": true, "publication": false, "network": false, "signing": false, "main_mutation": false, "qualification_truthful": true}
+  "claims": {"archive": "local unsigned preview only", "source_commit": "d8fb3616902342d2cc3a98e5d000b85c0bd13c57", "target": "aarch64-apple-darwin", "reproducible": "bound local rustc/cargo/python toolchain and normalized packaging profile only", "toolchain": {"rustc": "1.97.1 (8bab26f4f 2026-07-14)", "cargo": "1.97.1 (c980f4866 2026-06-30)", "python": "3.11.15", "network": "offline", "source_roots": 2, "target_dirs": 2}, "archive_sha256": "3c993a1e987fa4d1845e06a2da8474282cad742e2d8f6291ea2aa20af7177dc2"},
+  "controls": {"locked_dependencies": true, "exact_source_head": true, "clean_exported_roots": true, "separate_target_dirs": true, "offline_build": true, "normalized_member_order_modes_owner_timestamps": true, "production_verifier": true, "path_safe": true, "canonical_taskseal": true, "safe_tseal_copy": true, "license_and_notices": true, "parser_behavior_identical": true, "publication": false, "network": false, "signing": false, "main_mutation": false, "qualification_truthful": true}
 }
