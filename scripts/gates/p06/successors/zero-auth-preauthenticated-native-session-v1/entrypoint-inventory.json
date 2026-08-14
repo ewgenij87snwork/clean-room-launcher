@@ -18,6 +18,28 @@
       }
     ]
   },
+  "shell_source_policy": {
+    "root": "scripts/probe",
+    "inventory": "GIT_TRACKED_RECURSIVE",
+    "extensions": [
+      ".sh",
+      ".bash",
+      ".zsh"
+    ],
+    "regular_modes": [
+      "100644",
+      "100755"
+    ],
+    "extensionless_shell_shebang": "REFUSED",
+    "non_regular_or_symlink": "REFUSED",
+    "guard": "SAME_FILE_EXECUTABLE_BEFORE_EVERY_BIRTH_OCCURRENCE"
+  },
+  "shell_sources": [
+    {
+      "path": "scripts/probe/provider-capabilities.sh",
+      "mode": "100755"
+    }
+  ],
   "provider_births": [
     {
       "path": "scripts/probe/provider-capabilities.sh",

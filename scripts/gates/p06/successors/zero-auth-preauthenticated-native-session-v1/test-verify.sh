@@ -67,6 +67,9 @@ expect_refusal implementation_write_set
 jq '.verification.public_boundary_paths |= map(select(. != "src"))' "$report" >"$fixture_report"
 expect_refusal public_boundary_inventory
 
+jq 'del(.verification.public_boundary_forbidden_tracked_prefixes)' "$report" >"$fixture_report"
+expect_refusal runtime_public_boundary
+
 jq 'del(.local_continuity.real_tty_enter_dispatch)' "$report" >"$fixture_report"
 expect_refusal real_tty_enter_dispatch
 
@@ -111,6 +114,15 @@ expect_refusal negative_process_birth
 
 jq '.provider_birth_boundary.provider_birth_count=4' "$report" >"$fixture_report"
 expect_refusal provider_birth_inventory
+
+jq '.provider_birth_boundary.shell_source_inventory="FILESYSTEM_GLOB"' "$report" >"$fixture_report"
+expect_refusal recursive_tracked_shell_inventory
+
+jq '.provider_birth_boundary.guard_requirement="SAME_FILE_GUARD_ANYWHERE"' "$report" >"$fixture_report"
+expect_refusal every_birth_guard_order
+
+jq '.provider_birth_boundary.extensionless_shell_source="IGNORED"' "$report" >"$fixture_report"
+expect_refusal extensionless_shell_source
 
 jq '.result="PASS"' "$report" >"$fixture_report"
 expect_refusal premature_plan_pass

@@ -87,6 +87,14 @@ jq -e '
       "src/adapters/identity.rs::require_preauthenticated_session"
     ],
     inventory:"scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/entrypoint-inventory.json",
+    shell_source_scope:"RECURSIVE_GIT_TRACKED_REGULAR_SOURCES_UNDER_SCRIPTS_PROBE",
+    shell_source_inventory:"CLOSED_PATH_AND_MODE_LIST",
+    shell_extensions:[".sh",".bash",".zsh"],
+    shell_regular_modes:["100644","100755"],
+    extensionless_shell_source:"REFUSED",
+    shell_symlink_or_mode_violation:"REFUSED",
+    guard_requirement:"SAME_FILE_EXECUTABLE_GUARD_BEFORE_EVERY_BIRTH_OCCURRENCE",
+    tracked_probe_shell_source_count:1,
     cli_entrypoint_count:2,
     provider_birth_count:5,
     future_unguarded_route_allowed:false
@@ -151,6 +159,7 @@ jq -e '
       "reports/contracts","rust-toolchain.toml","schemas/canonical-json-profile.md","schemas/contracts","scripts/check-control-coverage.rb",
       "scripts/check-public-boundary.sh","scripts/probe","src","tests"
     ],
+    public_boundary_forbidden_tracked_prefixes:["scripts/runtime/"],
     full_zero_auth_call_paths:true,
     task_receipts_validated:[1,2,3,4]
   } and
@@ -241,6 +250,7 @@ cargo test --locked --offline --test provider_capability_truth \
 
 scratch=$(mktemp -d "${TMPDIR:-/tmp}/taskseal-p06-zero-auth-public.XXXXXX")
 trap 'rm -rf "$scratch"' EXIT HUP INT TERM
+test -z "$(git ls-files -- 'scripts/runtime/**')" || refuse PUBLIC_BOUNDARY_RUNTIME
 public_paths=$(jq -r '.verification.public_boundary_paths[]' "$report")
 # The current governed release inventory excludes gate/receipt evidence, which
 # is covered separately by the closed executable-source scanner and receipts.
