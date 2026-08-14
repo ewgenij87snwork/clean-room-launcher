@@ -36,6 +36,8 @@ jq -e \
     "P06-ZERO-AUTH-T4-GREEN-EXACT-TRANSCRIPTS-V1",
     "P06-ZERO-AUTH-T4-RED-MISSING-CONSOLIDATED-VERIFIER-V1",
     "P06-ZERO-AUTH-T4-GREEN-GATE-MUTATIONS-V1",
+    "P06-ZERO-AUTH-T4-FIX1-RED-UNOWNED-FMT-SCOPE-V1",
+    "P06-ZERO-AUTH-T4-FIX1-GREEN-OWNED-FMT-SCOPE-V1",
     "P06-ZERO-AUTH-T4-GREEN-SOLE-GATE-V1",
     "P06-ZERO-AUTH-T4-GREEN-DESCENDANT-DURABILITY-V1"
   ] and
@@ -45,13 +47,14 @@ jq -e \
     implementation_result_head:$implementation_head,
     implementation_tree:$implementation_tree,
     receipt_commit_parent:$implementation_head,
+    replaces_receipt_commit:"f7a7d1bf1d22216e1c9b61313885aaacd9194d81",
     parent_task_receipt:{
       path:"reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/task-3.json",
       commit:$input_head,
       blob_oid:"08febe5afe412e00e46f32d4c915f94e6cbe209d",
       sha256:"8916cd8d268d91988931985ffb952b95fde491445f84ddbfa9a1c22352a68de8"
     },
-    resolution:"Resolve exactly one commit in input_head..tip whose task-4 receipt blob equals these bytes; it must be a single-parent receipt-only child of implementation_result_head. Repository subjects are read from that implementation commit, while the accepted Task 3 receipt is read from input_head."
+    resolution:"Resolve exactly one commit in input_head..tip whose task-4 receipt blob equals these bytes; it must be a single-parent receipt-only child of implementation_result_head and replace receipt-only f7a7d1b. Repository subjects are read from that implementation commit, while the accepted Task 3 receipt is read from input_head."
   } and
   .inputs == {
     plan_checkpoint_path:"/Users/ysorokin/Documents/it/5-LVL - 2026/Temp in Projects/wisdom/taskseal/plans/2026-08-13-p06-zero-auth-preauthenticated-native-session-v1.md",
@@ -83,14 +86,18 @@ jq -e \
     "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-verify.sh",
     "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-verify.sh",
     "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/verify.sh",
+    "rustfmt --edition 2024 --check src/cli/screen.rs tests/cli/first_screen.rs",
+    "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/verify.sh",
     "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-4-receipt-durability.sh"
   ] and
-  [.evidence[].exit] == [101,0,1,0,0,0] and
+  [.evidence[].exit] == [101,0,1,0,1,0,0,0] and
   [.evidence[].output] == [
     "error[E0425]: RenderContext and render_unqualified_for are absent",
     "test result: ok. 4 passed; 0 failed; 0 ignored",
     "P06_ZERO_AUTH_RED_VERIFIER_MISSING",
     "P06_ZERO_AUTH_GATE_MUTATIONS_PASS",
+    "cargo fmt --check found pre-existing formatting drift outside Task 4 write-set",
+    "rustfmt --edition 2024 --check src/cli/screen.rs tests/cli/first_screen.rs: exit 0",
     "P06_ZERO_AUTH_PREAUTHENTICATED_NATIVE_SESSION_V1_PASS",
     "P06_ZERO_AUTH_TASK_4_RECEIPT_DURABILITY_PASS"
   ] and
@@ -132,6 +139,8 @@ test "$(git rev-parse "$implementation_head^{tree}")" = "$implementation_tree" |
 git merge-base --is-ancestor "$input_head" "$implementation_head" || refuse IMPLEMENTATION_LINEAGE
 test "$(git rev-parse "$input_head:$parent_receipt_rel")" = "$(jq -r '.binding.parent_task_receipt.blob_oid' "$receipt")" || refuse PARENT_RECEIPT_BLOB
 test "$(git show "$input_head:$parent_receipt_rel" | shasum -a 256 | awk '{print $1}')" = "$(jq -r '.binding.parent_task_receipt.sha256' "$receipt")" || refuse PARENT_RECEIPT_DIGEST
+git merge-base --is-ancestor f7a7d1bf1d22216e1c9b61313885aaacd9194d81 "$implementation_head" || refuse REPLACEMENT_LINEAGE
+test "$(git diff-tree --no-commit-id --name-only -r f7a7d1bf1d22216e1c9b61313885aaacd9194d81)" = "$receipt_rel" || refuse REPLACED_RECEIPT_NOT_RECEIPT_ONLY
 
 expected_paths='fixtures/cli/first-screen-unqualified-narrow.txt
 fixtures/cli/first-screen-unqualified-non-tty.txt
@@ -139,6 +148,7 @@ fixtures/cli/first-screen-unqualified-plain.txt
 fixtures/cli/first-screen-unqualified-tty.txt
 fixtures/cli/first-screen-unqualified.txt
 reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/consolidated.json
+reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/task-4.json
 scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-4-receipt-durability.sh
 scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-4-receipt.sh
 scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-verify.sh
@@ -162,7 +172,7 @@ match_count=$(wc -l <"$scratch/matching-commits" | tr -d ' ')
 case "$match_count" in
   0)
     test "$(git rev-parse HEAD)" = "$implementation_head" || refuse UNCOMMITTED_RECEIPT_WRONG_HEAD
-    test "$(git status --porcelain=v1 --untracked-files=all)" = "?? $receipt_rel" || refuse UNCOMMITTED_RECEIPT_WRITE_SET
+    test "$(git status --porcelain=v1 --untracked-files=all)" = " M $receipt_rel" || refuse UNCOMMITTED_RECEIPT_WRITE_SET
     ;;
   1)
     receipt_commit=$(sed -n '1p' "$scratch/matching-commits")

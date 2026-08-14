@@ -33,7 +33,7 @@
     {
       "task": 4,
       "path": "reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/task-4.json",
-      "binding": "PARENT_BOUND_RECEIPT_V2_RESOLVED_BY_GATE"
+      "binding": "PARENT_BOUND_REPLACEMENT_RECEIPT_V2_RESOLVED_BY_GATE"
     }
   ],
   "transcripts": [
@@ -97,6 +97,7 @@
       "fixtures/cli/first-screen-unqualified-tty.txt",
       "fixtures/cli/first-screen-unqualified.txt",
       "reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/consolidated.json",
+      "reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/task-4.json",
       "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-4-receipt-durability.sh",
       "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-4-receipt.sh",
       "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-verify.sh",

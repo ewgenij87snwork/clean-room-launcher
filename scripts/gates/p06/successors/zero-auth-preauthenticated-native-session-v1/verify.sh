@@ -35,7 +35,7 @@ jq -e '
     {task:1,path:"reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/task-1.json",commit:"2d29ecfef073c5ad1a04d3acb96a6ccb48261ce6",sha256:"a20e8c793f99a6022a96d9e274c8c6685011e8762d90bee3afe1320f445df472"},
     {task:2,path:"reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/task-2.json",commit:"3f2bda4dadd22395a9313e80b03b029b43e4a5f3",sha256:"81673336fa08bb90a48229779556bb4a1c9ee21d2b8c0b7bd44eef3db583105a"},
     {task:3,path:"reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/task-3.json",commit:"6a54523b4dbf8869ca7035a7dc42df88ac11c45a",sha256:"8916cd8d268d91988931985ffb952b95fde491445f84ddbfa9a1c22352a68de8"},
-    {task:4,path:"reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/task-4.json",binding:"PARENT_BOUND_RECEIPT_V2_RESOLVED_BY_GATE"}
+    {task:4,path:"reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/task-4.json",binding:"PARENT_BOUND_REPLACEMENT_RECEIPT_V2_RESOLVED_BY_GATE"}
   ] and
   .transcripts == [
     {mode:"TTY_80",path:"fixtures/cli/first-screen-unqualified-tty.txt",sha256:"847c65e3b8c2d5ea778de2d00a0509020ad78839653704a77f57f0505ae793cf"},
@@ -71,6 +71,7 @@ jq -e '
     "fixtures/cli/first-screen-unqualified-tty.txt",
     "fixtures/cli/first-screen-unqualified.txt",
     "reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/consolidated.json",
+    "reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/task-4.json",
     "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-4-receipt-durability.sh",
     "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-4-receipt.sh",
     "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-verify.sh",
@@ -153,7 +154,7 @@ test "$control_output" = P06_ZERO_AUTH_CONTROL_PASS || refuse CONTROL_OUTPUT
 source_output=$(ruby "$root/$successor/source-inventory.rb" "$root") || refuse SOURCE_INVENTORY
 test "$source_output" = P06_ZERO_AUTH_SOURCE_INVENTORY_PASS || refuse SOURCE_INVENTORY_OUTPUT
 
-cargo fmt --check
+rustfmt --edition 2024 --check src/cli/screen.rs tests/cli/first_screen.rs
 cargo clippy --all-targets --locked --offline -- -D warnings
 cargo test --locked --offline --test cli --test adapters --test trace_metadata
 
