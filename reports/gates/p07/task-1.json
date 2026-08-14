@@ -1,0 +1,60 @@
+{
+  "schema_version": "taskseal.p07.task-receipt.v1",
+  "plan_id": "P07-PACKAGING-SCAFFOLD-V1",
+  "task": 1,
+  "result": "accepted",
+  "acceptance": {
+    "id": "ACC-P07-T1",
+    "operator_result": "The alpha target matrix declares the complete target interface, keeps unsupported and missing-runner fixtures out of advertised claims, and has no RC claim without a P06 QUALIFIED receipt.",
+    "evidence_ids": ["EVD-P07-T1-RED", "EVD-P07-T1-GREEN", "EVD-P07-T1-FMT-BOUNDARY"]
+  },
+  "binding": {
+    "input_head": "ea551a35b058b19e402071cfc07d34862ec9216b",
+    "implementation_files": [
+      ".github/workflows/ci.yml",
+      "packaging/targets.toml",
+      "tests/packaging/target_matrix.rs"
+    ]
+  },
+  "evidence": [
+    {
+      "id": "EVD-P07-T1-RED",
+      "command": "CARGO_MANIFEST_DIR=\"$PWD\" rustc --test tests/packaging/target_matrix.rs -o /tmp/p07-target-matrix-red && /tmp/p07-target-matrix-red",
+      "exit": 101,
+      "meaning": "Focused contract failed before the packaging scaffold existed."
+    },
+    {
+      "id": "EVD-P07-T1-GREEN",
+      "command": "CARGO_MANIFEST_DIR=\"$PWD\" rustc --test tests/packaging/target_matrix.rs -o /tmp/p07-target-matrix-green && /tmp/p07-target-matrix-green",
+      "exit": 0,
+      "output": "3 passed; 0 failed",
+      "meaning": "Supported, unsupported and missing-runner matrix behavior plus workflow no-skip checks pass."
+    },
+    {
+      "id": "EVD-P07-T1-FMT-BOUNDARY",
+      "command": "cargo fmt --all -- --check",
+      "exit": 1,
+      "meaning": "Pre-existing formatting drift is outside the P07 exclusive write-set; no unrelated files were changed."
+    }
+  ],
+  "subjects": {
+    "packaging/targets.toml": "c86dd1855da9752695aff2dd97e0d561894cfd9504e69097da77af28a2302272",
+    ".github/workflows/ci.yml": "fa0efe7a9ec92d16608e1658de4bd866d051b9e1b06d0d1d3ccb32c43cc6f97d",
+    "tests/packaging/target_matrix.rs": "ecb72b2ddaa08b047a271760aca44252030a2b0aac76bd9e048772313d14c3eb"
+  },
+  "qualification": "NOT_QUALIFIED",
+  "claims": {
+    "advertised_targets": [],
+    "alpha_scaffold": "NOT_QUALIFIED",
+    "rc_targets": "none; no P06 QUALIFIED receipt",
+    "signing": "unsigned-preview-only"
+  },
+  "controls": {
+    "no_skip": true,
+    "unsupported_excluded": true,
+    "missing_runner_not_qualified": true,
+    "publication": false,
+    "network": false,
+    "main_mutation": false
+  }
+}

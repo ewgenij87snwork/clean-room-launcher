@@ -1,0 +1,25 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+
+permissions:
+  contents: read
+
+jobs:
+  target-matrix:
+    name: Validate packaging target matrix
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate declared matrix
+        run: test -s packaging/targets.toml
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+      - name: Run tests
+        run: cargo test --locked --all-targets
+      - name: Run target-matrix fixtures
+        run: |
+          CARGO_MANIFEST_DIR="$PWD" rustc --test tests/packaging/target_matrix.rs -o /tmp/taskseal-target-matrix
+          /tmp/taskseal-target-matrix

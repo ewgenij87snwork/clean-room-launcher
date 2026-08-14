@@ -1,0 +1,41 @@
+# TaskSeal v0.1 P07 target matrix.
+# P06 currently has no QUALIFIED receipt.  Therefore this alpha scaffold is
+# deliberately not an advertised release lane and no RC target is claimed.
+schema_version = "taskseal.packaging-targets.v1"
+advertised_targets = []
+qualified_targets = []
+claims_policy = "advertised targets exactly equal qualified build/test lanes"
+
+# Matrix fixtures are data, not release claims. Unsupported and missing-runner
+# lanes must be excluded from claims (never silently skipped).
+fixture_supported = "alpha-macos-aarch64"
+fixture_unsupported = "unsupported-linux-riscv64"
+fixture_missing_runner = "missing-runner-windows-aarch64"
+fixture_disposition = "unsupported targets are excluded"
+
+[[targets]]
+name = "alpha-macos-aarch64"
+rust_target = "aarch64-apple-darwin"
+runner = "macos-14"
+qualification_status = "NOT_QUALIFIED"
+artifact_name = "taskseal-v0.1.0-alpha-macos-aarch64"
+required_checks = "fmt, clippy, test, schema, target-matrix"
+signing_policy = "unsigned-preview-only"
+
+[[targets]]
+name = "fixture_unsupported"
+rust_target = "riscv64gc-unknown-linux-gnu"
+runner = "unsupported"
+qualification_status = "NOT_QUALIFIED"
+artifact_name = ""
+required_checks = "fmt, clippy, test, schema, target-matrix"
+signing_policy = "none"
+
+[[targets]]
+name = "fixture_missing_runner"
+rust_target = "aarch64-pc-windows-msvc"
+runner = "missing-runner"
+qualification_status = "NOT_QUALIFIED"
+artifact_name = ""
+required_checks = "fmt, clippy, test, schema, target-matrix"
+signing_policy = "none"
