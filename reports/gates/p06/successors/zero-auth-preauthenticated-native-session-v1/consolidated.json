@@ -1,0 +1,126 @@
+{
+  "schema_version": "taskseal.p06.zero-auth-preauthenticated-native-session-v1.consolidated.v1",
+  "plan_id": "P06-ZERO-AUTH-PREAUTHENTICATED-NATIVE-SESSION-V1",
+  "result": "IMPLEMENTED_REVIEW_PENDING",
+  "checkpoint": {
+    "path": "/Users/ysorokin/Documents/it/5-LVL - 2026/Temp in Projects/wisdom/taskseal/plans/2026-08-13-p06-zero-auth-preauthenticated-native-session-v1.md",
+    "sha256": "b26939c0863cb8760baa89418d2817ddc732ab5cf5b1551d08218ef585f1ed68"
+  },
+  "controls": [
+    "ADP-05",
+    "AUTH-01",
+    "OD-10"
+  ],
+  "task_receipts": [
+    {
+      "task": 1,
+      "path": "reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/task-1.json",
+      "commit": "2d29ecfef073c5ad1a04d3acb96a6ccb48261ce6",
+      "sha256": "a20e8c793f99a6022a96d9e274c8c6685011e8762d90bee3afe1320f445df472"
+    },
+    {
+      "task": 2,
+      "path": "reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/task-2.json",
+      "commit": "3f2bda4dadd22395a9313e80b03b029b43e4a5f3",
+      "sha256": "81673336fa08bb90a48229779556bb4a1c9ee21d2b8c0b7bd44eef3db583105a"
+    },
+    {
+      "task": 3,
+      "path": "reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/task-3.json",
+      "commit": "6a54523b4dbf8869ca7035a7dc42df88ac11c45a",
+      "sha256": "8916cd8d268d91988931985ffb952b95fde491445f84ddbfa9a1c22352a68de8"
+    },
+    {
+      "task": 4,
+      "path": "reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/task-4.json",
+      "binding": "PARENT_BOUND_RECEIPT_V2_RESOLVED_BY_GATE"
+    }
+  ],
+  "transcripts": [
+    {
+      "mode": "TTY_80",
+      "path": "fixtures/cli/first-screen-unqualified-tty.txt",
+      "sha256": "847c65e3b8c2d5ea778de2d00a0509020ad78839653704a77f57f0505ae793cf"
+    },
+    {
+      "mode": "TTY_40_NARROW",
+      "path": "fixtures/cli/first-screen-unqualified-narrow.txt",
+      "sha256": "85a1c1eea3707c95ab9b68aa771b3cc4c0f928cf2ffde2ddd5b6ae7b0704ebcf"
+    },
+    {
+      "mode": "PLAIN_TTY_80",
+      "path": "fixtures/cli/first-screen-unqualified-plain.txt",
+      "sha256": "b2cb9c2db649a79f136ed9d785a62d319eedc3788e9270a062c66226ac3cbd0a"
+    },
+    {
+      "mode": "NON_TTY_80",
+      "path": "fixtures/cli/first-screen-unqualified-non-tty.txt",
+      "sha256": "f54f17b1d9d2576f2fb9f31ca2799dd94b5b69824dfdb610918f9a2e46f9e20b"
+    }
+  ],
+  "local_continuity": {
+    "default_action": "Continue locally",
+    "local_commands": [
+      "status",
+      "scan",
+      "prepare",
+      "check"
+    ],
+    "prohibited_cta_classes": [
+      "LOGIN",
+      "SETTINGS",
+      "API_KEY",
+      "DOCUMENTATION"
+    ],
+    "prohibited_cta_present": false,
+    "non_tty_prompt": false
+  },
+  "owner_ssot": {
+    "worklog_prefix": {
+      "path": "/Users/ysorokin/Documents/it/5-LVL - 2026/Temp in Projects/wisdom/taskseal/TASKSEAL-WORKLOG.jsonl",
+      "line_count": 130,
+      "sha256": "ea68139bbe3ea5505a5120da6bb9ec735f5f63355c36bdc256f5d97b1d8a0a83"
+    },
+    "tail_policy": "APPEND_ONLY_VALID_JSONL_EVENTS",
+    "mutable_tail_hashed": false,
+    "terminal_review_event_may_append": true
+  },
+  "git": {
+    "input_head": "6a54523b4dbf8869ca7035a7dc42df88ac11c45a",
+    "input_tree": "7f3b2870967dbf8864e65bf15b02e7661b7b1995",
+    "history_policy": "SINGLE_PARENT_IMMUTABLE_PREFIX",
+    "receipt_topology": "PARENT_BOUND_RECEIPT_ONLY",
+    "implementation_write_set": [
+      "fixtures/cli/first-screen-unqualified-narrow.txt",
+      "fixtures/cli/first-screen-unqualified-non-tty.txt",
+      "fixtures/cli/first-screen-unqualified-plain.txt",
+      "fixtures/cli/first-screen-unqualified-tty.txt",
+      "fixtures/cli/first-screen-unqualified.txt",
+      "reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/consolidated.json",
+      "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-4-receipt-durability.sh",
+      "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-4-receipt.sh",
+      "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-verify.sh",
+      "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/verify.sh",
+      "src/cli/screen.rs",
+      "tests/cli/first_screen.rs"
+    ]
+  },
+  "verification": {
+    "sole_gate": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/verify.sh",
+    "mutation_suite": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-verify.sh",
+    "source_inventory": "CURRENT_TRACKED_INVENTORY",
+    "public_boundary_inventory": "CURRENT_GIT_RECEIPT_HEAD",
+    "full_zero_auth_call_paths": true,
+    "task_receipts_validated": [
+      1,
+      2,
+      3,
+      4
+    ]
+  },
+  "terminal_review": {
+    "state": "PENDING",
+    "checkpoint_mutable": false,
+    "append_only_event_allowed": true
+  }
+}
