@@ -1,0 +1,65 @@
+{
+  "schema_version": "taskseal.p07.task-receipt.v1",
+  "plan_id": "P07-PACKAGING-SCAFFOLD-V1",
+  "task": 2,
+  "result": "accepted",
+  "acceptance": {
+    "id": "ACC-P07-T2",
+    "operator_result": "The release-candidate workflow requires every P02-P07 gate, rejects continue-on-error/conditional/missing gates, propagates one subject digest, and preserves P06 NOT_QUALIFIED truthfully.",
+    "evidence_ids": ["EVD-P07-T2-RED", "EVD-P07-T2-GREEN", "EVD-P07-T2-SOURCE-NOT-QUALIFIED"]
+  },
+  "binding": {
+    "input_head": "fd43bb83074e1dd75b5d7f44d9973f790e746a80",
+    "implementation_head": "4d81e55708b86532c7dcc5e6941299d9d9fb15c3",
+    "receipt_seal_role": "receipt-only-child",
+    "implementation_files": [
+      "scripts/release-build/verify-source.sh",
+      ".github/workflows/release-candidate.yml",
+      "tests/packaging/no_skip.rs"
+    ]
+  },
+  "evidence": [
+    {
+      "id": "EVD-P07-T2-RED",
+      "command": "CARGO_MANIFEST_DIR=\"$PWD\" rustc --test tests/packaging/no_skip.rs -o /tmp/p07-no-skip-red && /tmp/p07-no-skip-red",
+      "exit": 101,
+      "meaning": "Focused static contract failed before Task 2 workflow, verifier and fixtures existed."
+    },
+    {
+      "id": "EVD-P07-T2-GREEN",
+      "command": "CARGO_MANIFEST_DIR=\"$PWD\" rustc --test tests/packaging/no_skip.rs -o /tmp/p07-no-skip-green2 && /tmp/p07-no-skip-green2",
+      "exit": 0,
+      "output": "3 passed; poisoned continue-on-error, conditional-skip and missing-gate fixtures rejected",
+      "meaning": "No-skip workflow contract and poisoned fixture rejection pass."
+    },
+    {
+      "id": "EVD-P07-T2-SOURCE-SCAFFOLD",
+      "command": "scripts/release-build/verify-source.sh --workflow .github/workflows/release-candidate.yml --subject-digest fd43bb83074e1dd75b5d7f44d9973f790e746a80 --scaffold",
+      "exit": 0,
+      "output": "P07_SCAFFOLD_VALIDATION_PASS",
+      "meaning": "Local workflow-equivalent structural validation passes with one subject digest."
+    },
+    {
+      "id": "EVD-P07-T2-SOURCE-NOT-QUALIFIED",
+      "command": "scripts/release-build/verify-source.sh --subject-digest fd43bb83074e1dd75b5d7f44d9973f790e746a80",
+      "exit": 1,
+      "output": "result NOT_QUALIFIED; fmt, all-tests, privacy and P06 qualification are NOT_QUALIFIED; skips_counted_as_pass=0",
+      "meaning": "Known P06 NOT_QUALIFIED and pre-existing fmt drift remain visible; no failure is relabelled PASS."
+    }
+  ],
+  "subjects": {
+    ".github/workflows/release-candidate.yml": "537c188fb45de5c3e6318da8b132c5ae21bb121291ec781c2550153121d319dc",
+    "scripts/release-build/verify-source.sh": "6f7766d778818d737a3ef809d317d4316fc8deb86e351665ad7b78780f78cf44",
+    "tests/packaging/no_skip.rs": "450940344d5a04e581ef2afaa944508cfd71265acc1760a4982a9e22aa365a84"
+  },
+  "qualification": "NOT_QUALIFIED",
+  "controls": {
+    "no_skip": true,
+    "same_subject_digest": true,
+    "p06_truthful": true,
+    "publication": false,
+    "network": false,
+    "main_mutation": false,
+    "skips_counted_as_pass": 0
+  }
+}
