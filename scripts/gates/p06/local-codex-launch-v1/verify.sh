@@ -8,7 +8,7 @@ jq -e '
   keys == ["command","executable","result","schema_version","status"] and
   .schema_version == "taskseal.local-codex-launch-smoke.v1" and
   .command == "codex -- --help" and .executable == "codex" and
-  .result == "accepted" and (.status|test("^exit-[0-9]+$|^unavailable$"))
+  .result == "observed" and (.status|test("^exit-[0-9]+$"))
 ' reports/gates/p06/local-codex-launch-v1/smoke.json >/dev/null
 
 rustfmt --edition 2024 --check src/cli/mod.rs src/cli/process.rs tests/cli.rs tests/cli/argv_passthrough.rs tests/cli/local_codex_launch.rs fixtures/cli/fake-provider.rs

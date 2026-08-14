@@ -1,1 +1,1 @@
-{"command":"codex -- --help","executable":"codex","result":"accepted","schema_version":"taskseal.local-codex-launch-smoke.v1","status":"exit-0"}
+{"command":"codex -- --help","executable":"codex","result":"observed","schema_version":"taskseal.local-codex-launch-smoke.v1","status":"exit-0"}
