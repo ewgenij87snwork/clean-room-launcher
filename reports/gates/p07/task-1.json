@@ -6,15 +6,15 @@
   "acceptance": {
     "id": "ACC-P07-T1",
     "operator_result": "The alpha target matrix declares the complete target interface, keeps unsupported and missing-runner fixtures out of advertised claims, and has no RC claim without a P06 QUALIFIED receipt.",
-    "evidence_ids": ["EVD-P07-T1-RED", "EVD-P07-T1-GREEN", "EVD-P07-T1-R1-MUTATIONS-GREEN", "EVD-P07-T1-R2-RUNNER-MUTATIONS-GREEN", "EVD-P07-T1-FMT-BOUNDARY"]
+    "evidence_ids": ["EVD-P07-T1-RED", "EVD-P07-T1-GREEN", "EVD-P07-T1-R1-MUTATIONS-GREEN", "EVD-P07-T1-R2-RUNNER-MUTATIONS-GREEN", "EVD-P07-T1-R4-GIT-TOPOLOGY-DURABILITY-GREEN", "EVD-P07-T1-FMT-BOUNDARY"]
   },
   "binding": {
     "input_head": "ea551a35b058b19e402071cfc07d34862ec9216b",
     "accepted_initial_head": "5249fd4c86760563b1f4306b74ee5e35fa949b4b",
     "continuation_head": "224095f295fbd76b36a2b19f29606fb32d2ed0cb",
-    "correction_implementation_head": "6de043b07ba9b103f24fdc24cbce5d1c3297ab3a",
+    "correction_implementation_head": "b08387b5bc060148ad0ffecbdb889f7f50fc2ba0",
     "receipt_seal_role": "receipt-only-child",
-    "receipt_commit_parent": "7c72ac6475158e4e2d6fcfaf65d829a9c9ad74e2",
+    "receipt_commit_parent": "b08387b5bc060148ad0ffecbdb889f7f50fc2ba0",
     "implementation_files": [
       ".github/workflows/ci.yml",
       "packaging/targets.toml",
@@ -50,6 +50,13 @@
       "meaning": "The workflow is bound to matrix.runner for qualified lanes; mutation to hardcoded ubuntu-latest is refused, while the empty qualified matrix remains honest under P06 NOT_QUALIFIED."
     },
     {
+      "id": "EVD-P07-T1-R4-GIT-TOPOLOGY-DURABILITY-GREEN",
+      "command": "CARGO_MANIFEST_DIR=\"$PWD\" rustc --test tests/packaging/target_matrix.rs -o /tmp/p07-target-matrix-r4-green && /tmp/p07-target-matrix-r4-green",
+      "exit": 0,
+      "output": "5 passed; 0 failed",
+      "meaning": "The focused test resolves real Git objects and ancestry: the correction implementation exists and changes only the test, its first receipt descendant has the declared immediate parent and receipt-only diff, the seal remains reachable from descendant HEAD, and an incorrect-parent mutation is refused."
+    },
+    {
       "id": "EVD-P07-T1-FMT-BOUNDARY",
       "command": "cargo fmt --all -- --check",
       "exit": 1,
@@ -59,7 +66,7 @@
   "subjects": {
     "packaging/targets.toml": "392a949ea9957c304fd2413fd91d1a01e546fc108b21f644a5912ca9f3543dec",
     ".github/workflows/ci.yml": "df90fae71de0b9063ab2964725030e850c9e3aae6d30f54b9ac7d34c9fe17541",
-    "tests/packaging/target_matrix.rs": "ccca44f901c935eb81e4b47b0503f520df1f3348895cfbc3fecfa328c29f41d8"
+    "tests/packaging/target_matrix.rs": "accd3245bae72748eb521e1e7db54f484f14281cab0620288f87a26f35cfb67c"
   },
   "qualification": "NOT_QUALIFIED",
   "claims": {
