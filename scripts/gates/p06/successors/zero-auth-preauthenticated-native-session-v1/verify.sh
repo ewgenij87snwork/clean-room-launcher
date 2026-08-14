@@ -169,7 +169,7 @@ trap 'rm -rf "$scratch"' EXIT HUP INT TERM
 public_paths=$(jq -r '.verification.public_boundary_paths[]' "$report")
 # The current governed release inventory excludes gate/receipt evidence, which
 # is covered separately by the closed executable-source scanner and receipts.
-# This avoids interpreting evidence path identifiers as credential material.
+# This avoids interpreting evidence path identifiers as release tokens.
 git archive --format=tar HEAD -- $public_paths | tar -xf - -C "$scratch"
 public_output=$("$scratch/scripts/check-public-boundary.sh" --root "$scratch") || refuse PUBLIC_BOUNDARY
 test "$public_output" = PUBLIC_BOUNDARY_PASS || refuse PUBLIC_BOUNDARY_OUTPUT

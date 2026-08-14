@@ -40,6 +40,8 @@ jq -e \
     "P06-ZERO-AUTH-T4-FIX1-GREEN-OWNED-FMT-SCOPE-V1",
     "P06-ZERO-AUTH-T4-FIX2-RED-UNGOVERNED-PUBLIC-INVENTORY-V1",
     "P06-ZERO-AUTH-T4-FIX2-GREEN-GOVERNED-PUBLIC-INVENTORY-V1",
+    "P06-ZERO-AUTH-T4-FIX3-RED-SOURCE-SCANNER-SELF-MATCH-V1",
+    "P06-ZERO-AUTH-T4-FIX3-GREEN-CURRENT-SOURCE-INVENTORY-V1",
     "P06-ZERO-AUTH-T4-GREEN-SOLE-GATE-V1",
     "P06-ZERO-AUTH-T4-GREEN-DESCENDANT-DURABILITY-V1"
   ] and
@@ -49,14 +51,14 @@ jq -e \
     implementation_result_head:$implementation_head,
     implementation_tree:$implementation_tree,
     receipt_commit_parent:$implementation_head,
-    replaces_receipt_commit:"4ef2a33943689b468f8679f86de52930a3677175",
+    replaces_receipt_commit:"95529ea783007d374bac6bddd990fe7f013b3e84",
     parent_task_receipt:{
       path:"reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/task-3.json",
       commit:$input_head,
       blob_oid:"08febe5afe412e00e46f32d4c915f94e6cbe209d",
       sha256:"8916cd8d268d91988931985ffb952b95fde491445f84ddbfa9a1c22352a68de8"
     },
-    resolution:"Resolve exactly one commit in input_head..tip whose task-4 receipt blob equals these bytes; it must be a single-parent receipt-only child of implementation_result_head and replace receipt-only 4ef2a33. Repository subjects are read from that implementation commit, while the accepted Task 3 receipt is read from input_head."
+    resolution:"Resolve exactly one commit in input_head..tip whose task-4 receipt blob equals these bytes; it must be a single-parent receipt-only child of implementation_result_head and replace receipt-only 95529ea. Repository subjects are read from that implementation commit, while the accepted Task 3 receipt is read from input_head."
   } and
   .inputs == {
     plan_checkpoint_path:"/Users/ysorokin/Documents/it/5-LVL - 2026/Temp in Projects/wisdom/taskseal/plans/2026-08-13-p06-zero-auth-preauthenticated-native-session-v1.md",
@@ -92,9 +94,11 @@ jq -e \
     "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/verify.sh",
     "git archive HEAD governed release paths | scripts/check-public-boundary.sh --root <archive>",
     "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/verify.sh",
+    "ruby scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/source-inventory.rb .",
+    "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/verify.sh",
     "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-4-receipt-durability.sh"
   ] and
-  [.evidence[].exit] == [101,0,1,0,1,0,1,0,0,0] and
+  [.evidence[].exit] == [101,0,1,0,1,0,1,0,1,0,0,0] and
   [.evidence[].output] == [
     "error[E0425]: RenderContext and render_unqualified_for are absent",
     "test result: ok. 4 passed; 0 failed; 0 ignored",
@@ -104,6 +108,8 @@ jq -e \
     "rustfmt --edition 2024 --check src/cli/screen.rs tests/cli/first_screen.rs: exit 0",
     "full Git archive public scan matched pre-existing evidence path identifiers outside the governed release inventory",
     "PUBLIC_BOUNDARY_PASS",
+    "P06_ZERO_AUTH_SOURCE_REFUSAL:CREDENTIAL_EXTRACTION:scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/verify.sh",
+    "P06_ZERO_AUTH_SOURCE_INVENTORY_PASS",
     "P06_ZERO_AUTH_PREAUTHENTICATED_NATIVE_SESSION_V1_PASS",
     "P06_ZERO_AUTH_TASK_4_RECEIPT_DURABILITY_PASS"
   ] and
@@ -145,8 +151,8 @@ test "$(git rev-parse "$implementation_head^{tree}")" = "$implementation_tree" |
 git merge-base --is-ancestor "$input_head" "$implementation_head" || refuse IMPLEMENTATION_LINEAGE
 test "$(git rev-parse "$input_head:$parent_receipt_rel")" = "$(jq -r '.binding.parent_task_receipt.blob_oid' "$receipt")" || refuse PARENT_RECEIPT_BLOB
 test "$(git show "$input_head:$parent_receipt_rel" | shasum -a 256 | awk '{print $1}')" = "$(jq -r '.binding.parent_task_receipt.sha256' "$receipt")" || refuse PARENT_RECEIPT_DIGEST
-git merge-base --is-ancestor 4ef2a33943689b468f8679f86de52930a3677175 "$implementation_head" || refuse REPLACEMENT_LINEAGE
-test "$(git diff-tree --no-commit-id --name-only -r 4ef2a33943689b468f8679f86de52930a3677175)" = "$receipt_rel" || refuse REPLACED_RECEIPT_NOT_RECEIPT_ONLY
+git merge-base --is-ancestor 95529ea783007d374bac6bddd990fe7f013b3e84 "$implementation_head" || refuse REPLACEMENT_LINEAGE
+test "$(git diff-tree --no-commit-id --name-only -r 95529ea783007d374bac6bddd990fe7f013b3e84)" = "$receipt_rel" || refuse REPLACED_RECEIPT_NOT_RECEIPT_ONLY
 
 expected_paths='fixtures/cli/first-screen-unqualified-narrow.txt
 fixtures/cli/first-screen-unqualified-non-tty.txt
