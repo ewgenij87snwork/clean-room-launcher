@@ -20,7 +20,7 @@ def fixture() -> Path:
     return repo
 
 def invoke(repo: Path) -> subprocess.CompletedProcess[str]:
-    return subprocess.run([str(repo / "scripts/gates/p07/scaffold-v2/verify.sh"), "--root", str(repo)], text=True, capture_output=True)
+    return subprocess.run([str(repo / "scripts/gates/p07/scaffold-v2/verify.sh"), "--root", str(repo)], text=True, capture_output=True, env={**os.environ, "P07_V2_FIXTURE_MODE":"1"})
 
 def refuse(repo: Path, label: str) -> None:
     p = invoke(repo)
@@ -47,6 +47,9 @@ def main() -> int:
     add("duplicate manifest task", lambda r: (r / "reports/gates/p07/scaffold-v2/source-manifest.json").write_text((r / "reports/gates/p07/scaffold-v2/source-manifest.json").read_text().replace('"task": 2', '"task": 1', 1)))
     add("duplicate JSON key", lambda r: (r / "reports/gates/p07/scaffold-v2/source-manifest.json").write_text('{"schema_version":"x","schema_version":"y","entries":[]}\n'))
     add("qualification boundary", lambda r: (r / "reports/gates/p07/scaffold-v2/task-1.json").write_text((r / "reports/gates/p07/scaffold-v2/task-1.json").read_text().replace('NOT_QUALIFIED', 'QUALIFIED', 1)))
+    add("full P07 marker", lambda r: (r / "scripts/gates/p07/scaffold-v2/verify.sh").write_text((r / "scripts/gates/p07/scaffold-v2/verify.sh").read_text().replace('P07_PACKAGING_SCAFFOLD_V2_PASS', 'P07_PASS')))
+    add("dirty tracked status", lambda r: (r / "Cargo.toml").write_text((r / "Cargo.toml").read_text() + "\nmutation\n"))
+    add("removed acceptance evidence", lambda r: (r / "reports/gates/p07/task-1.json").write_text((r / "reports/gates/p07/scaffold-v2/task-1.json").read_text().replace('EVD-P07-T1-RED', 'EVD-MISSING', 1)))
     add("detached HEAD", lambda r: subprocess.run(["git", "checkout", "-q", "--detach", "HEAD"], cwd=r, check=True))
     for label, fn in mutations:
         repo = fixture()

@@ -21,6 +21,11 @@ profiles = {
   2: ("reports/gates/p07/task-2.json", "cee78ac90ae9a4dc3b07518089df26c8d64f68d1", "3f2e59a113bcb38c6a53b14d8ee70c37823a29cdc2ef603d1b26b6da9f1d571a"),
   3: ("reports/gates/p07/task-3.json", "0d5b7fbc9a079e8816bf4acfef6ee0e5b741a123", "26d05b906e14c6c9aeaf24b392082578ac788689b4cac7a088b80da170e2caef"),
 }
+receipt_profiles = {
+  1: "ea551a35b058b19e402071cfc07d34862ec9216b",
+  2: "fd43bb83074e1dd75b5d7f44d9973f790e746a80",
+  3: "cee78ac90ae9a4dc3b07518089df26c8d64f68d1",
+}
 class Refused(Exception): pass
 def git(*args):
   p = subprocess.run(["git", *args], cwd=root, text=True, capture_output=True)
@@ -68,6 +73,27 @@ def check():
     blob = git("show", f"{entry['commit']}:{entry['path']}").encode()
     if hashlib.sha256(blob).hexdigest() != entry["sha256"] or regular(entry["path"]) != blob:
       raise Refused("SOURCE_BLOB")
+    receipt = load(blob, f"SOURCE_{task}")
+    binding = receipt.get("binding")
+    if not isinstance(binding, dict): raise Refused("BINDING")
+    implementation = binding.get("correction_implementation_head", binding.get("implementation_head"))
+    input_head = binding.get("input_head")
+    if not implementation or not input_head: raise Refused("BINDING")
+    for commit in (input_head, implementation, entry["commit"]):
+      git("cat-file", "-e", f"{commit}^{{commit}}")
+    if subprocess.run(["git", "merge-base", "--is-ancestor", input_head, implementation], cwd=root).returncode:
+      raise Refused("IMPLEMENTATION_ANCESTRY")
+    if subprocess.run(["git", "merge-base", "--is-ancestor", implementation, entry["commit"]], cwd=root).returncode:
+      raise Refused("RECEIPT_ANCESTRY")
+    files = set(binding.get("implementation_files", []))
+    changed = set(git("diff", "--name-only", f"{input_head}..{implementation}").splitlines())
+    if not files or not files.issubset(changed): raise Refused("IMPLEMENTATION_FILES")
+    commits = git("rev-list", "--reverse", f"{implementation}..{entry['commit']}").splitlines()
+    for commit in commits:
+      parents = git("rev-list", "--parents", "-n", "1", commit).split()
+      changed_receipt = git("diff-tree", "--no-commit-id", "--name-only", "-r", commit).splitlines()
+      if len(parents) != 2 or changed_receipt != [entry["path"]]:
+        raise Refused("RECEIPT_LINEAGE")
   normalizer = root / "scripts/gates/p07/scaffold-v2/normalize.py"
   for task in (1, 2, 3):
     projection = regular(f"reports/gates/p07/scaffold-v2/task-{task}.json")
@@ -79,6 +105,16 @@ def check():
       raise Refused("BOUNDARY")
     if not value.get("evidence_ids") or len(value["evidence_ids"]) != len(set(value["evidence_ids"])):
       raise Refused("ACCEPTANCE_EVIDENCE")
+  if os.environ.get("P07_V2_FIXTURE_MODE") != "1":
+    for command in (
+      [sys.executable, "scripts/gates/p07/scaffold-v2/test-normalize.py"],
+      ["rustc", "--test", "tests/packaging/target_matrix.rs", "-o", "/tmp/p07-v2-t1",],
+      ["rustc", "--test", "tests/packaging/no_skip.rs", "-o", "/tmp/p07-v2-t2",],
+      ["rustc", "--test", "tests/packaging/artifact_layout.rs", "-o", "/tmp/p07-v2-t3",],
+      ["scripts/release-build/verify-source.sh", "--scaffold", "--subject-digest", git("rev-parse", "HEAD").strip()],
+    ):
+      if subprocess.run(command, cwd=root).returncode:
+        raise Refused("FOCUSED_TEST")
   return {"qualification":"NOT_QUALIFIED", "p07":"3/8", "overall":"3/7", "tasks":[1,2,3]}
 try:
   result = check()
