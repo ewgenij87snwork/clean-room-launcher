@@ -5,12 +5,12 @@
   "result": "accepted",
   "acceptance": {
     "id": "ACC-P07-T2",
-    "operator_result": "The release-candidate workflow calls one orchestrator; every P02-P07 gate is attempted against the exact checked-out subject, missing gates are NOT_QUALIFIED, poisoned workflow fixtures are rejected, and P06 remains NOT_QUALIFIED truthfully.",
-    "evidence_ids": ["EVD-P07-T2-RED", "EVD-P07-T2-GREEN", "EVD-P07-T2-SUBJECT", "EVD-P07-T2-ALL-GATES", "EVD-P07-T2-SOURCE-NOT-QUALIFIED"]
+    "operator_result": "The release-candidate workflow has one executable orchestrator call; every P02-P07 gate is attempted against the exact checked-out subject, missing P07 is NOT_QUALIFIED, comments cannot satisfy the workflow contract, and P06 remains NOT_QUALIFIED truthfully.",
+    "evidence_ids": ["EVD-P07-T2-RED", "EVD-P07-T2-GREEN", "EVD-P07-T2-SUBJECT", "EVD-P07-T2-ALL-GATES", "EVD-P07-T2-REAL-ORCHESTRATOR", "EVD-P07-T2-SOURCE-NOT-QUALIFIED"]
   },
   "binding": {
     "input_head": "fd43bb83074e1dd75b5d7f44d9973f790e746a80",
-    "implementation_head": "f354c20647e724118cbb740162e85bb479a7085c",
+    "implementation_head": "aab71de37a6130600d60a57c6097340abec530ea",
     "receipt_seal_role": "receipt-only-child",
     "implementation_files": [
       "scripts/release-build/verify-source.sh",
@@ -58,12 +58,18 @@
       "exit": 1,
       "output": "p02 exit 17; p03/p04/p05 attempted; p06 missing recorded exit 127 NOT_QUALIFIED; p07 recorded; all same subject digest",
       "meaning": "An early failing gate does not prevent later gates from being attempted, and absent gates cannot become PASS."
+    },
+    {
+      "id": "EVD-P07-T2-REAL-ORCHESTRATOR",
+      "command": "verify-source.sh --workflow tests/packaging/fixtures/comment-only-orchestrator.yml --scaffold",
+      "exit": 1,
+      "meaning": "A workflow with gate names only in comments and no executable orchestrator call is refused."
     }
   ],
   "subjects": {
     ".github/workflows/release-candidate.yml": "de189f066a7c552c68d4c423084d58dc442d44d05c4830d42f1f7ecd3183d05e",
-    "scripts/release-build/verify-source.sh": "ee97deac11a91c4309670649828c34d2efecaede35c449ebc6467eba797631fc",
-    "tests/packaging/no_skip.rs": "ec77136f4ca7008d2de1c43b12ccd6748912f4abe51ac30bb0ec4669574c13c9"
+    "scripts/release-build/verify-source.sh": "e427f2fdfcc11f414cb5d9580158cced0fd47dc8af6b5a5e5cbe85ed9fdf5b12",
+    "tests/packaging/no_skip.rs": "48214d0fef2e8b4e8817f79bf36fceace296bf0407baffb259f7bbb42527de99"
   },
   "qualification": "NOT_QUALIFIED",
   "controls": {
@@ -72,6 +78,7 @@
     "subject_exact_existing_head": true,
     "all_gates_attempted": true,
     "missing_gate_not_qualified": true,
+    "real_orchestrator_required": true,
     "p06_truthful": true,
     "publication": false,
     "network": false,
