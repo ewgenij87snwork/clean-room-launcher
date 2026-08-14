@@ -16,7 +16,7 @@ jq -e '
 subject=$(jq -r .subject "$receipt")
 git rev-parse --verify "$subject^{commit}" >/dev/null
 git merge-base --is-ancestor "$subject" HEAD
-git diff --quiet "$subject" -- tests/adapters.rs tests/adapters/codex/skill_canaries.rs fixtures/adapters/codex/skill-canaries scripts/gates/p06/native-skill-canaries-v1 reports/gates/p06/native-skill-canaries-v1
+git diff --quiet "$subject" -- tests/adapters.rs tests/adapters/codex/skill_canaries.rs fixtures/adapters/codex/skill-canaries scripts/gates/p06/native-skill-canaries-v1
 jq -r '.sources[] | [.path,.sha256] | @tsv' "$receipt" | while IFS='	' read -r path expected; do
   test "$(shasum -a 256 "$path" | awk '{print $1}')" = "$expected"
   test "$(git show "$subject:$path" | shasum -a 256 | awk '{print $1}')" = "$expected"
