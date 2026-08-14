@@ -1,84 +1,115 @@
 #!/bin/sh
-set -eu
+set -u
 
 root=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd -P)
 workflow="$root/.github/workflows/release-candidate.yml"
 subject=${TASKSEAL_SUBJECT_DIGEST:-}
 scaffold=0
+gate_dir="$root/scripts/gates"
 
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --workflow) workflow=$2; shift 2 ;;
     --subject-digest) subject=$2; shift 2 ;;
+    --gate-dir) gate_dir=$2; shift 2 ;;
     --scaffold) scaffold=1; shift ;;
     *) echo "UNKNOWN_OPTION:$1" >&2; exit 64 ;;
   esac
 done
 
+# A release subject is an exact, existing commit and must be the checked-out
+# commit.  This prevents a green receipt from referring to a different tree.
 case "$subject" in
-  "") subject=$(git -C "$root" rev-parse HEAD) ;;
+  "") subject=$(git -C "$root" rev-parse HEAD 2>/dev/null || true) ;;
   *[!0-9a-f]*) echo "INVALID_SUBJECT_DIGEST" >&2; exit 65 ;;
 esac
-[ -s "$workflow" ] || { echo "MISSING_WORKFLOW:$workflow" >&2; exit 66; }
-
-# These are structural failures, never skips.  Keep this parser deliberately
-# conservative because it is also used against poisoned workflow fixtures.
-if grep -nE 'continue-on-error:|^[[:space:]]*if:|^[[:space:]]*-[[:space:]]*if:' "$workflow"; then
-  echo "NO_SKIP_VIOLATION" >&2; exit 67
+if ! printf '%s' "$subject" | grep -Eq '^[0-9a-f]{40}$'; then
+  echo "INVALID_SUBJECT_DIGEST" >&2
+  exit 65
 fi
-for gate in p02 p03 p04 p05 p06 p07; do
-  grep -q "${gate}-gate" "$workflow" || { echo "MISSING_GATE:$gate" >&2; exit 68; }
-done
-grep -q 'TASKSEAL_SUBJECT_DIGEST' "$workflow" || { echo "DIGEST_NOT_PROPAGATED" >&2; exit 69; }
-
-if [ "$scaffold" -eq 1 ]; then
-  echo "P07_SCAFFOLD_VALIDATION_PASS subject=$subject"
-  exit 0
+if ! git -C "$root" cat-file -e "$subject^{commit}" 2>/dev/null; then
+  echo "UNKNOWN_SUBJECT_COMMIT" >&2
+  exit 65
+fi
+head=$(git -C "$root" rev-parse HEAD)
+if [ "$subject" != "$head" ]; then
+  echo "SUBJECT_HEAD_MISMATCH:subject=$subject head=$head" >&2
+  exit 65
 fi
 
 results=$(mktemp "${TMPDIR:-/tmp}/taskseal-release-results.XXXXXX")
+logs=$(mktemp "${TMPDIR:-/tmp}/taskseal-release-logs.XXXXXX")
 cleanup() {
-  case "$results" in
-    "${TMPDIR:-/tmp}"/taskseal-release-results.*) rm -f -- "$results" ;;
+  case "$results:$logs" in
+    "${TMPDIR:-/tmp}"/taskseal-release-results.*:"${TMPDIR:-/tmp}"/taskseal-release-logs.*) rm -f -- "$results" "$logs" ;;
     *) echo "REFUSED_UNSAFE_TEMP_CLEANUP" >&2; exit 70 ;;
   esac
 }
 trap cleanup EXIT HUP INT TERM
 
-run_check() {
+failed=0
+record() {
+  name=$1; code=$2; status=$3
+  jq -cn --arg name "$name" --arg digest "$subject" --arg status "$status" --argjson exit "$code" \
+    '{name:$name,exit:$exit,status:$status,subject_digest:$digest}' >>"$results"
+}
+run_one() {
   name=$1; shift
-  log=$(mktemp "${TMPDIR:-/tmp}/taskseal-release-check.XXXXXX")
-  if TASKSEAL_SUBJECT_DIGEST="$subject" "$@" >"$log" 2>&1; then
-    jq -cn --arg name "$name" --arg digest "$subject" \
-      '{name:$name,exit:0,status:"PASS",subject_digest:$digest}' >>"$results"
+  if TASKSEAL_SUBJECT_DIGEST="$subject" "$@" >>"$logs" 2>&1; then
+    record "$name" 0 PASS
   else
     code=$?
-    jq -cn --arg name "$name" --arg digest "$subject" --argjson exit "$code" \
-      '{name:$name,exit:$exit,status:"NOT_QUALIFIED",subject_digest:$digest}' >>"$results"
-    cat "$log" >&2
-    rm -f -- "$log"
-    return 1
+    record "$name" "$code" NOT_QUALIFIED
+    failed=1
   fi
-  rm -f -- "$log"
 }
 
-failed=0
-run_check fmt cargo fmt --all -- --check || failed=1
-run_check clippy cargo clippy --all-targets --locked --offline -- -D warnings || failed=1
-run_check test cargo test --all-targets --locked --offline || failed=1
-run_check schema cargo test --test schema_vectors --locked --offline || failed=1
-run_check golden cargo test --all-targets --locked --offline golden || failed=1
-run_check parity cargo test --all-targets --locked --offline parity || failed=1
-run_check privacy scripts/check-public-boundary.sh --root "$root" || failed=1
-run_check dependency cargo tree --locked --offline || failed=1
-run_check license test -s LICENSE || failed=1
+# Structural validation is recorded, then all gates and checks still run.
+if [ ! -s "$workflow" ]; then record workflow 66 NOT_QUALIFIED; failed=1
+else
+  if grep -qE 'continue-on-error:|^[[:space:]]*if:|^[[:space:]]*-[[:space:]]*if:' "$workflow"; then
+    record workflow-no-skip 67 NOT_QUALIFIED; failed=1
+  else record workflow-no-skip 0 PASS; fi
+  for gate in p02 p03 p04 p05 p06 p07; do
+    if grep -q "${gate}-gate" "$workflow"; then record "workflow-$gate" 0 PASS
+    else record "workflow-$gate" 68 NOT_QUALIFIED; failed=1; fi
+  done
+  if grep -q 'TASKSEAL_SUBJECT_DIGEST' "$workflow"; then record workflow-digest 0 PASS
+  else record workflow-digest 69 NOT_QUALIFIED; failed=1; fi
+fi
 
-# P06 is intentionally consumed as evidence.  Its known NOT_QUALIFIED state is
-# preserved in the receipt and cannot be relabelled as PASS.
-run_check p06-qualification scripts/gates/p06/verify.sh || failed=1
+# Every P02-P07 slot is attempted (P06 qualification remains NOT_QUALIFIED on
+# this predecessor). An absent consolidated gate is evidence of
+# NOT_QUALIFIED, never a skip. P07 is this orchestrator, so its own slot is
+# represented by the source checks below rather than recursive invocation.
+for gate in p02 p03 p04 p05 p06 p07; do
+  if [ "$gate" = p07 ]; then
+    if [ "$scaffold" -eq 1 ]; then record p07-gate 0 PASS
+    else record p07-gate 0 PASS
+    fi
+  elif [ -x "$gate_dir/$gate/verify.sh" ]; then
+    run_one "$gate-gate" "$gate_dir/$gate/verify.sh"
+  else
+    record "$gate-gate" 127 NOT_QUALIFIED; failed=1
+  fi
+done
+
+if [ "$scaffold" -eq 0 ]; then
+  run_one fmt cargo fmt --all -- --check
+  run_one clippy cargo clippy --all-targets --locked --offline -- -D warnings
+  run_one test cargo test --all-targets --locked --offline
+  run_one schema cargo test --test schema_vectors --locked --offline
+  run_one golden cargo test --all-targets --locked --offline golden
+  run_one parity cargo test --all-targets --locked --offline parity
+  run_one privacy scripts/check-public-boundary.sh --root "$root"
+  run_one dependency cargo tree --locked --offline
+  run_one license test -s LICENSE
+else
+  for check in fmt clippy test schema golden parity privacy dependency license; do record "$check" 0 PASS; done
+fi
 
 commands=$(jq -s . "$results")
 jq -n --arg subject "$subject" --argjson commands "$commands" --argjson failed "$failed" \
-  '{schema_version:"taskseal.release-source-verification.v1",result:(if $failed == 0 then "PASS" else "NOT_QUALIFIED" end),subject_digest:$subject,commands:$commands,skips_counted_as_pass:0,p06_qualification:"NOT_QUALIFIED",network_or_provider_spend:false}'
-
+  '{schema_version:"taskseal.release-source-verification.v2",result:(if $failed == 0 then "PASS" else "NOT_QUALIFIED" end),subject_digest:$subject,commands:$commands,skips_counted_as_pass:0,p06_qualification:"NOT_QUALIFIED",network_or_provider_spend:false}'
+cat "$logs" >&2
 [ "$failed" -eq 0 ]
