@@ -13,6 +13,7 @@ def fixture() -> Path:
     d = Path(tempfile.mkdtemp(prefix="p07-v2-gate-")); repo = d / "repo"
     subprocess.run(["git", "clone", "--no-local", "-q", str(ROOT), str(repo)], check=True)
     target = repo / "scripts/gates/p07/scaffold-v2/verify.sh"; shutil.copy2(GATE, target)
+    (repo / "scripts/gates/p07/scaffold-v2/test-normalize.py").write_text("#!/usr/bin/env python3\nprint('P07_SCAFFOLD_V2_NORMALIZER_MUTATIONS_PASS mutations=26')\n")
     bindir = repo / "fixture-bin"; bindir.mkdir()
     (bindir / "rustc").write_text("#!/bin/sh\nout=\nwhile [ $# -gt 0 ]; do if [ \"$1\" = -o ]; then out=$2; shift 2; else shift; fi; done\nprintf '#!/bin/sh\\nexit 0\\n' > \"$out\"\nchmod +x \"$out\"\n")
     (bindir / "verify-source.sh").write_text("#!/bin/sh\nprintf 'P07_SCAFFOLD_VALIDATION_PASS\\n'\n")
@@ -45,6 +46,8 @@ def main() -> int:
       ("duplicate path", "MANIFEST_DUPLICATE", lambda r: (r / "reports/gates/p07/scaffold-v2/source-manifest.json").write_text((r / "reports/gates/p07/scaffold-v2/source-manifest.json").read_text().replace('reports/gates/p07/task-2.json', 'reports/gates/p07/task-1.json', 1))),
       ("source Git blob/current", "SOURCE_BLOB", lambda r: (r / "reports/gates/p07/task-1.json").write_text((r / "reports/gates/p07/task-1.json").read_text() + "\n")),
       ("canonical subject", "PROJECTION", lambda r: (r / "reports/gates/p07/scaffold-v2/task-1.json").write_text((r / "reports/gates/p07/scaffold-v2/task-1.json").read_text().replace('NOT_QUALIFIED', 'QUALIFIED', 1))),
+      ("canonical duplicate JSON", "DUPLICATE_JSON_KEY", lambda r: (r / "reports/gates/p07/scaffold-v2/task-1.json").write_text('{"schema_version":"x","schema_version":"y"}\n')),
+      ("implementation subject", "SUBJECT_SHA", lambda r: (r / "packaging/targets.toml").write_text((r / "packaging/targets.toml").read_text() + "\nsubject mutation\n")),
       ("source subject/evidence", "SOURCE_BLOB", lambda r: (r / "reports/gates/p07/task-1.json").write_text((r / "reports/gates/p07/task-1.json").read_text().replace('EVD-P07-T1-GREEN', 'EVD-DUPLICATE', 1))),
       ("symlink projection", "PATH", lambda r: (r / "reports/gates/p07/scaffold-v2/task-1.json").unlink() or os.symlink('../../task-1.json', r / "reports/gates/p07/scaffold-v2/task-1.json")),
       ("untracked projection", "PATH", lambda r: subprocess.run(["git", "rm", "-q", "reports/gates/p07/scaffold-v2/task-1.json"], cwd=r, check=True)),

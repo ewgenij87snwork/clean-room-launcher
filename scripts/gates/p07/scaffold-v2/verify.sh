@@ -27,6 +27,11 @@ receipt_profiles = {
   2: "fd43bb83074e1dd75b5d7f44d9973f790e746a80",
   3: "cee78ac90ae9a4dc3b07518089df26c8d64f68d1",
 }
+implementation_profiles = {
+  1: "b08387b5bc060148ad0ffecbdb889f7f50fc2ba0",
+  2: "aab71de37a6130600d60a57c6097340abec530ea",
+  3: "01ad1d894aabe265b08d61d67d39da1a29cad9e4",
+}
 class Refused(Exception): pass
 def git(*args):
   p = subprocess.run(["git", *args], cwd=root, text=True, capture_output=True)
@@ -80,6 +85,8 @@ def check():
     implementation = binding.get("correction_implementation_head", binding.get("implementation_head"))
     input_head = binding.get("input_head")
     if not implementation or not input_head: raise Refused("BINDING")
+    if input_head != receipt_profiles[task] or implementation != implementation_profiles[task]:
+      raise Refused("BINDING_IDENTITY")
     for commit in (input_head, implementation, entry["commit"]):
       git("cat-file", "-e", f"{commit}^{{commit}}")
     if subprocess.run(["git", "merge-base", "--is-ancestor", input_head, implementation], cwd=root).returncode:
@@ -100,6 +107,8 @@ def check():
     projection = regular(f"reports/gates/p07/scaffold-v2/task-{task}.json")
     proc = subprocess.run([sys.executable, str(normalizer), "--root", str(root), "--task", str(task)], text=True, capture_output=True)
     if proc.returncode or proc.stdout.encode() != projection:
+      if "duplicate JSON key" in proc.stderr: raise Refused("DUPLICATE_JSON_KEY")
+      if "subject SHA mismatch" in proc.stderr: raise Refused("SUBJECT_SHA")
       raise Refused("PROJECTION")
     value = load(projection, f"PROJECTION_{task}")
     if value.get("qualification") != "NOT_QUALIFIED" or value.get("task") != task:
@@ -109,6 +118,9 @@ def check():
   gate_source = Path(os.environ.get("P07_V2_GATE_SCRIPT", "scripts/gates/p07/scaffold-v2/verify.sh")).read_text()
   if "P07_PACKAGING_SCAFFOLD_V2_PASS" not in gate_source or "P07_" + "PASS" in gate_source:
     raise Refused("OUTPUT_BOUNDARY")
+  normalize_test = subprocess.run([sys.executable, "scripts/gates/p07/scaffold-v2/test-normalize.py"], cwd=root, text=True, capture_output=True)
+  if normalize_test.returncode or "P07_SCAFFOLD_V2_NORMALIZER_MUTATIONS_PASS" not in normalize_test.stdout:
+    raise Refused("NORMALIZER_FOCUSED")
   focused = (
     ("tests/packaging/target_matrix.rs", "/tmp/p07-v2-t1"),
     ("tests/packaging/no_skip.rs", "/tmp/p07-v2-t2"),
