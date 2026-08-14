@@ -82,6 +82,31 @@ fn final_zero_auth_ingestion_refuses_access_token_argv_before_state_creation() {
 }
 
 #[test]
+fn final_zero_auth_inline_access_token_save_refuses_before_any_write() {
+    // Existing-GREEN proof: inline access-token forms must refuse before lock/temp/state creation.
+    for (index, argument) in [
+        "--with-access-token=must-not-be-serialized",
+        "--access-token=must-not-be-serialized",
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        let store = StateStore::at(scratch(&format!("inline-access-token-{index}")));
+        let mut candidate = start("safe", AccessClass::Standard);
+        candidate.argv.push(argument.to_owned());
+
+        assert_eq!(
+            store.save(candidate).unwrap_err().code(),
+            "SAVED_START_SENSITIVE_ARGUMENT_REFUSED"
+        );
+        assert!(
+            fs::read_dir(store.root()).unwrap().next().is_none(),
+            "sensitive inline argv must refuse before lock, temp, or state creation"
+        );
+    }
+}
+
+#[test]
 fn final_zero_auth_ingestion_raw_token_state_refuses_before_deserialization() {
     let store = StateStore::at(scratch("raw-sensitive-before-json"));
     fs::write(

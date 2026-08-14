@@ -115,6 +115,50 @@ impl Iterator for PoisonTail {
 }
 
 #[test]
+fn final_zero_auth_generic_boundary_stops_before_executable_position() {
+    // Break caught: the generic boundary consumes a credential-shaped flag as an executable.
+    for (prefix, expected_calls) in [(vec!["--"], 1), (vec!["--output", "json", "--"], 3)] {
+        let next_calls = Rc::new(Cell::new(0));
+        let exit = cli_entry::run(
+            "tseal",
+            PoisonTail {
+                prefix: prefix
+                    .into_iter()
+                    .map(str::to_owned)
+                    .collect::<Vec<_>>()
+                    .into_iter(),
+                next_calls: Rc::clone(&next_calls),
+                unread_tail: vec![
+                    "--access-token".to_owned(),
+                    "generic-secret-must-remain-unread".to_owned(),
+                ],
+            },
+        );
+        assert_eq!(exit, std::process::ExitCode::from(2));
+        assert_eq!(next_calls.get(), expected_calls);
+    }
+
+    for args in [
+        vec!["--", "--access-token", "must-not-be-retained"],
+        vec![
+            "--output",
+            "json",
+            "--",
+            "--with-access-token",
+            "must-not-be-retained",
+        ],
+    ] {
+        let output = Command::new(env!("CARGO_BIN_EXE_tseal"))
+            .args(args)
+            .output()
+            .expect("tseal must run");
+        assert_eq!(output.status.code(), Some(2));
+        assert!(output.stdout.is_empty());
+        assert_eq!(String::from_utf8(output.stderr).unwrap(), ZERO_AUTH_REFUSAL);
+    }
+}
+
+#[test]
 fn provider_and_generic_refusal_do_not_consume_credential_shaped_tails() {
     // Break caught: collecting or cloning argv reads API-key/token values before zero-auth refusal.
     for (prefix, unread_tail, expected_calls) in [
@@ -132,7 +176,7 @@ fn provider_and_generic_refusal_do_not_consume_credential_shaped_tails() {
                 "--access-token".to_owned(),
                 "generic-token-value-must-not-be-read".to_owned(),
             ],
-            2,
+            1,
         ),
     ] {
         let next_calls = Rc::new(Cell::new(0));
@@ -172,7 +216,7 @@ fn selector_prefixed_refusal_does_not_consume_credential_shaped_tails() {
                 "--access-token".to_owned(),
                 "selector-generic-value-must-not-be-read".to_owned(),
             ],
-            4,
+            3,
         ),
     ] {
         let next_calls = Rc::new(Cell::new(0));
@@ -279,17 +323,14 @@ fn unqualified_provider_route_refuses_before_ambient_path_can_spawn() {
 
 #[test]
 fn generic_boundary_without_an_executable_refuses_safely() {
-    // Break caught: an empty generic boundary panics or invokes an ambient shell.
+    // Break caught: an empty generic boundary panics, inspects a tail, or invokes a shell.
     let output = Command::new(env!("CARGO_BIN_EXE_tseal"))
         .arg("--")
         .output()
         .expect("tseal must run");
     assert_eq!(output.status.code(), Some(2));
     assert!(output.stdout.is_empty());
-    assert_eq!(
-        String::from_utf8(output.stderr).unwrap(),
-        "GENERIC_EXECUTABLE_REQUIRED: use tseal -- <executable> [args...]\n"
-    );
+    assert_eq!(String::from_utf8(output.stderr).unwrap(), ZERO_AUTH_REFUSAL);
 }
 
 #[test]

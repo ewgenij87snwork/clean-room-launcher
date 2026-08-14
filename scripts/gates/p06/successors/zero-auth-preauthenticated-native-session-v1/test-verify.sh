@@ -76,11 +76,23 @@ expect_refusal semantic_configuration_cta
 jq 'del(.ingestion_closure.credential_tail_values_consumed)' "$report" >"$fixture_report"
 expect_refusal unread_cli_tail
 
+jq '.ingestion_closure.generic_post_boundary_values_consumed=1' "$report" >"$fixture_report"
+expect_refusal generic_executable_position
+
+jq '.ingestion_closure.cli_unread_tail_routes |= map(select(. != "SELECTOR_PREFIXED_GENERIC_EXECUTABLE_POSITION"))' "$report" >"$fixture_report"
+expect_refusal selector_generic_executable_position
+
 jq '.ingestion_closure.saved_start_refusal_phase="AFTER_ARGV_HASH"' "$report" >"$fixture_report"
 expect_refusal saved_start_preparse_phase
 
 jq '.ingestion_closure.saved_start_sensitive_selectors |= map(select(. != "--access-token"))' "$report" >"$fixture_report"
 expect_refusal saved_start_access_token_selector
+
+jq '.ingestion_closure.saved_start_sensitive_selectors |= map(select(. != "--with-access-token=<value>"))' "$report" >"$fixture_report"
+expect_refusal saved_start_inline_access_token_selector
+
+jq '.ingestion_closure.saved_start_save_refusal_phase="AFTER_SERIALIZATION"' "$report" >"$fixture_report"
+expect_refusal saved_start_prewrite_phase
 
 jq '.result="PASS"' "$report" >"$fixture_report"
 expect_refusal premature_plan_pass

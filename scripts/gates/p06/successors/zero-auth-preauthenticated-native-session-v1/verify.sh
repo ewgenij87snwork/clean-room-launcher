@@ -54,11 +54,14 @@ jq -e '
     semantic_cta_regression:"tests/cli/first_screen.rs::assert_zero_auth_actions"
   } and
   .ingestion_closure == {
-    cli_unread_tail_routes:["UNSUPPORTED_SELECTOR","SELECTOR_PREFIXED_LOCAL","TASKSEAL_OWNED_LOCAL","UNKNOWN_COMMAND"],
+    cli_unread_tail_routes:["GENERIC_EXECUTABLE_POSITION","SELECTOR_PREFIXED_GENERIC_EXECUTABLE_POSITION","UNSUPPORTED_SELECTOR","SELECTOR_PREFIXED_LOCAL","TASKSEAL_OWNED_LOCAL","UNKNOWN_COMMAND"],
     credential_tail_values_consumed:0,
     credential_tail_values_copied:0,
-    saved_start_sensitive_selectors:["--with-access-token","--access-token"],
+    generic_post_boundary_values_consumed:0,
+    generic_post_boundary_values_copied:0,
+    saved_start_sensitive_selectors:["--with-access-token","--access-token","--with-access-token=<value>","--access-token=<value>"],
     saved_start_refusal_phase:"BEFORE_DESERIALIZATION_OR_ARGV_HASH",
+    saved_start_save_refusal_phase:"BEFORE_LOCK_SERIALIZATION_OR_WRITE",
     valid_local_commands_preserved:["status","scan","prepare","check","starts","start","help","doctor"],
     valid_saved_starts_preserved:true
   } and

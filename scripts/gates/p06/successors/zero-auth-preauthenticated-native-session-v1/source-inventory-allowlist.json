@@ -93,9 +93,21 @@
     },
     {
       "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-4-receipt.sh",
-      "sha256": "5e2cfc83df61675d4106374cf92d0aade806d30842dabf23651f86e864d2de9d",
+      "sha256": "702f47c52905a0ffc741ac23a7111136d28219a4f1a92225429a8a73fd4e2c20",
       "matched_classes": ["TOKEN_INPUT"],
       "rationale": "Offline receipt checker: access-token flags are exact rejected-selector evidence assertions; the script reads no credential value and exposes no provider interface."
+    },
+    {
+      "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-verify.sh",
+      "sha256": "5c225ceddda0aadafa7fc18a7b657d8134f4cf377afa3a08b3ac57bbfccec1c7",
+      "matched_classes": ["CREDENTIAL_EXTRACTION", "TOKEN_INPUT"],
+      "rationale": "Offline metadata mutation suite: matched access-token text is removed from disposable JSON copies to prove the gate refuses weakened evidence; it reads no credential source and starts no provider."
+    },
+    {
+      "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/verify.sh",
+      "sha256": "2e635f9f7af1f042d378effa53a08b61eae0fadc221ce01a4fdf71226deec140",
+      "matched_classes": ["TOKEN_INPUT"],
+      "rationale": "Offline consolidated verifier: access-token forms are exact refused-selector metadata assertions; the script reads no credential value and exposes no provider interface."
     },
     {
       "path": "scripts/gates/p06/t6-codex-auth-verify.sh",

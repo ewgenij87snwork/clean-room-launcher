@@ -51,7 +51,7 @@ fn local_prefix(first: String, source: &mut impl Iterator<Item = String>) -> Vec
         .collect()
 }
 
-fn external_prefix(command: &str, source: &mut impl Iterator<Item = String>) -> Option<ExitCode> {
+fn external_prefix(command: &str, _source: &mut impl Iterator<Item = String>) -> Option<ExitCode> {
     let spec = help::resolve(command)?;
     if !matches!(
         spec.command,
@@ -59,9 +59,9 @@ fn external_prefix(command: &str, source: &mut impl Iterator<Item = String>) -> 
     ) {
         return None;
     }
-    let generic_executable_present =
-        !matches!(spec.command, parser::Command::Generic) || source.next().is_some();
-    Some(external_refusal(spec.command, generic_executable_present))
+    // Zero-auth closes the generic route at its boundary. Inspecting even the
+    // nominal executable would consume a credential-shaped value in that slot.
+    Some(external_refusal(spec.command, true))
 }
 
 fn external_refusal(command: parser::Command, generic_executable_present: bool) -> ExitCode {
