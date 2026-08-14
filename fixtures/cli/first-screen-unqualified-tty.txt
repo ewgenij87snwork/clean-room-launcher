@@ -7,5 +7,8 @@ Provider Codex · P06_REQUIRED · nothing launched
 Writes   .taskseal/project.json + .taskseal/out/ · nothing yet
 Leaves   ~/.codex · ~/.claude · Git/provider state unchanged
 
-Continue locally
-  tseal status · tseal scan · tseal prepare · tseal check
+› Continue locally  Recommended
+  Review or change setup
+  Exit
+
+Enter continue locally · Esc exit
