@@ -164,8 +164,10 @@
       "100644",
       "100755"
     ],
-    "extensionless_shell_source": "REFUSED",
-    "shell_symlink_or_mode_violation": "REFUSED",
+    "extensionless_tracked_path": "REFUSED_REGARDLESS_OF_CONTENT",
+    "shell_symlink_or_mode_violation": "REFUSED_REGARDLESS_OF_EXTENSION",
+    "provider_command_positions": "ALL_STATIC_DIRECT_WITH_MULTILINE_CONTINUATIONS",
+    "ambiguous_provider_dispatch": "REFUSED",
     "guard_requirement": "SAME_FILE_EXECUTABLE_GUARD_BEFORE_EVERY_BIRTH_OCCURRENCE",
     "tracked_probe_shell_source_count": 1,
     "cli_entrypoint_count": 2,

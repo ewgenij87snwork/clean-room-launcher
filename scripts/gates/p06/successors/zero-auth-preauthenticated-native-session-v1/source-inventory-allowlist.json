@@ -81,7 +81,7 @@
     },
     {
       "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-entrypoint-inventory.sh",
-      "sha256": "f994a2dc342944cf9ab9313efb66140cae2c88b2cbfd6540b4bc9b18943611b1",
+      "sha256": "aba44d0289dbc7b023c5c73988ba4faded90fddc7562d61324cbfe55b620f371",
       "matched_classes": ["CREDENTIAL_COPY"],
       "rationale": "Offline inventory mutation suite: local file copies build a disposable source fixture whose provider births and pre-birth guards are parsed as text and never executed."
     },
@@ -99,19 +99,19 @@
     },
     {
       "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-4-receipt.sh",
-      "sha256": "00e5722c0e9541096a73bedf99ba7f147fcdec79cc080920f2773b2a6198c40e",
+      "sha256": "45e9f7ea01e9859401896e92eeb2a479d28078a22a5943a1ba3a40e648bab4d7",
       "matched_classes": ["TOKEN_INPUT"],
       "rationale": "Offline receipt checker: access-token flags are exact rejected-selector evidence assertions; the script reads no credential value and exposes no provider interface."
     },
     {
       "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-verify.sh",
-      "sha256": "ce4883557cf4b29019b555f50786da0079153376deaf6b52d8604b6b36d74b04",
+      "sha256": "a0ca36f515a041e7f02b2122d39f08ed742a4dfd9b7b9061148c7aee4a38c7ca",
       "matched_classes": ["CREDENTIAL_EXTRACTION", "TOKEN_INPUT"],
       "rationale": "Offline metadata mutation suite: matched access-token text is removed from disposable JSON copies to prove the gate refuses weakened evidence; it reads no credential source and starts no provider."
     },
     {
       "path": "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/verify.sh",
-      "sha256": "30d1d11c914705574cb2d3f4bf5e83ce6a55af80459dcc0b65b8a9b25e92f9e8",
+      "sha256": "45ad66b7b1d44d2e60c142a002ad2c76dacfd1b5dd37fce703e5d81a9320b21f",
       "matched_classes": ["TOKEN_INPUT"],
       "rationale": "Offline consolidated verifier: access-token forms are exact refused-selector metadata assertions; the script reads no credential value and exposes no provider interface."
     },

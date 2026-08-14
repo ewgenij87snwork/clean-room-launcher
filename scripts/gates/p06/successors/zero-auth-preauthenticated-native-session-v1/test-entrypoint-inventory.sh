@@ -96,6 +96,13 @@ printf '%s\n' '#!/bin/sh' 'codex --version' \
 git -C "$extensionless_root" add scripts/probe/runtime/unguarded-provider
 expect_refusal extensionless_shell_source "$extensionless_root" "$inventory"
 
+extensionless_benign_root="$scratch/extensionless-benign"
+make_fixture "$extensionless_benign_root"
+mkdir -p "$extensionless_benign_root/scripts/probe/runtime"
+printf '%s\n' ':' >"$extensionless_benign_root/scripts/probe/runtime/sourceable"
+git -C "$extensionless_benign_root" add scripts/probe/runtime/sourceable
+expect_refusal extensionless_sourceable_path "$extensionless_benign_root" "$inventory"
+
 symlink_root="$scratch/symlink"
 make_fixture "$symlink_root"
 mkdir -p "$symlink_root/scripts/probe/runtime"
@@ -109,6 +116,13 @@ set -e
 test "$symlink_public_status" = 10
 test "$symlink_public_output" = SYMLINK_ESCAPE
 
+extensionless_symlink_root="$scratch/extensionless-symlink"
+make_fixture "$extensionless_symlink_root"
+mkdir -p "$extensionless_symlink_root/scripts/probe/runtime"
+ln -s ../provider-capabilities.sh "$extensionless_symlink_root/scripts/probe/runtime/provider-link"
+git -C "$extensionless_symlink_root" add scripts/probe/runtime/provider-link
+expect_refusal tracked_extensionless_symlink "$extensionless_symlink_root" "$inventory"
+
 mode_root="$scratch/mode"
 make_fixture "$mode_root"
 empty_tree=$(git -C "$mode_root" mktree </dev/null)
@@ -118,6 +132,16 @@ gitlink_commit=$(GIT_AUTHOR_NAME=fixture GIT_AUTHOR_EMAIL=fixture@invalid \
 git -C "$mode_root" update-index --add \
   --cacheinfo "160000,$gitlink_commit,scripts/probe/provider-gitlink.sh"
 expect_refusal tracked_shell_mode_violation "$mode_root" "$inventory"
+
+extensionless_mode_root="$scratch/extensionless-mode"
+make_fixture "$extensionless_mode_root"
+extensionless_empty_tree=$(git -C "$extensionless_mode_root" mktree </dev/null)
+extensionless_gitlink_commit=$(GIT_AUTHOR_NAME=fixture GIT_AUTHOR_EMAIL=fixture@invalid \
+  GIT_COMMITTER_NAME=fixture GIT_COMMITTER_EMAIL=fixture@invalid \
+  git -C "$extensionless_mode_root" commit-tree "$extensionless_empty_tree" -m fixture)
+git -C "$extensionless_mode_root" update-index --add \
+  --cacheinfo "160000,$extensionless_gitlink_commit,scripts/probe/runtime/provider-gitlink"
+expect_refusal tracked_extensionless_mode_violation "$extensionless_mode_root" "$inventory"
 
 missing_guard_root="$scratch/missing-guard"
 make_fixture "$missing_guard_root"
@@ -148,6 +172,48 @@ printf '%s\n' 'version=$(codex --version)' >>"$duplicate_root/scripts/probe/prov
 git -C "$duplicate_root" add scripts/probe/provider-capabilities.sh
 jq '.provider_births += [.provider_births[0]]' "$inventory" >"$scratch/duplicate-birth.json"
 test "$(ruby "$validator" "$duplicate_root" "$scratch/duplicate-birth.json")" = P06_ZERO_AUTH_ENTRYPOINT_INVENTORY_PASS
+
+for direct_form in bare exec prompt env path; do
+  direct_root="$scratch/direct-$direct_form"
+  make_fixture "$direct_root"
+  case "$direct_form" in
+    bare) printf '%s\n' 'codex' >>"$direct_root/scripts/probe/provider-capabilities.sh" ;;
+    exec) printf '%s\n' 'exec claude' >>"$direct_root/scripts/probe/provider-capabilities.sh" ;;
+    prompt) printf '%s\n' "codex -p 'local probe'" >>"$direct_root/scripts/probe/provider-capabilities.sh" ;;
+    env) printf '%s\n' "env TASKSEAL_LOCAL=1 claude -p 'local probe'" >>"$direct_root/scripts/probe/provider-capabilities.sh" ;;
+    path) printf '%s\n' "'/opt/providers/codex' -p 'local probe'" >>"$direct_root/scripts/probe/provider-capabilities.sh" ;;
+  esac
+  git -C "$direct_root" add scripts/probe/provider-capabilities.sh
+  expect_refusal "unlisted_static_direct_$direct_form" "$direct_root" "$inventory"
+done
+
+multiline_root="$scratch/direct-multiline"
+make_fixture "$multiline_root"
+printf '%s\n' 'exec \' '  codex \' "  -p 'local probe'" \
+  >>"$multiline_root/scripts/probe/provider-capabilities.sh"
+git -C "$multiline_root" add scripts/probe/provider-capabilities.sh
+expect_refusal unlisted_static_direct_multiline "$multiline_root" "$inventory"
+
+quoted_argument_root="$scratch/quoted-provider-argument"
+make_fixture "$quoted_argument_root"
+printf '%s\n' "printf '%s\\n' 'codex -p is documentation text'" \
+  >>"$quoted_argument_root/scripts/probe/provider-capabilities.sh"
+git -C "$quoted_argument_root" add scripts/probe/provider-capabilities.sh
+test "$(ruby "$validator" "$quoted_argument_root" "$inventory")" = P06_ZERO_AUTH_ENTRYPOINT_INVENTORY_PASS
+
+for ambiguous_form in eval shell_c xargs backtick heredoc; do
+  ambiguous_root="$scratch/ambiguous-$ambiguous_form"
+  make_fixture "$ambiguous_root"
+  case "$ambiguous_form" in
+    eval) printf '%s\n' 'eval "$provider_command"' >>"$ambiguous_root/scripts/probe/provider-capabilities.sh" ;;
+    shell_c) printf '%s\n' 'sh -c "$provider_command"' >>"$ambiguous_root/scripts/probe/provider-capabilities.sh" ;;
+    xargs) printf '%s\n' 'xargs "$provider_command"' >>"$ambiguous_root/scripts/probe/provider-capabilities.sh" ;;
+    backtick) printf '%s\n' 'result=`$provider_command`' >>"$ambiguous_root/scripts/probe/provider-capabilities.sh" ;;
+    heredoc) printf '%s\n' 'sh <<EOF' '$provider_command' 'EOF' >>"$ambiguous_root/scripts/probe/provider-capabilities.sh" ;;
+  esac
+  git -C "$ambiguous_root" add scripts/probe/provider-capabilities.sh
+  expect_refusal "ambiguous_provider_dispatch_$ambiguous_form" "$ambiguous_root" "$inventory"
+done
 
 rust_root="$scratch/unguarded-rust"
 make_fixture "$rust_root"

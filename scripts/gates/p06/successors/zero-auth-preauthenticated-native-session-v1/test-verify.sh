@@ -121,8 +121,17 @@ expect_refusal recursive_tracked_shell_inventory
 jq '.provider_birth_boundary.guard_requirement="SAME_FILE_GUARD_ANYWHERE"' "$report" >"$fixture_report"
 expect_refusal every_birth_guard_order
 
-jq '.provider_birth_boundary.extensionless_shell_source="IGNORED"' "$report" >"$fixture_report"
-expect_refusal extensionless_shell_source
+jq '.provider_birth_boundary.extensionless_tracked_path="SHEBANG_ONLY"' "$report" >"$fixture_report"
+expect_refusal extensionless_tracked_path
+
+jq '.provider_birth_boundary.shell_symlink_or_mode_violation="REFUSED_FOR_SHELL_EXTENSION_ONLY"' "$report" >"$fixture_report"
+expect_refusal shell_mode_independent_of_extension
+
+jq '.provider_birth_boundary.provider_command_positions="VERSION_AND_DEBUG_ONLY"' "$report" >"$fixture_report"
+expect_refusal static_direct_command_positions
+
+jq '.provider_birth_boundary.ambiguous_provider_dispatch="IGNORED"' "$report" >"$fixture_report"
+expect_refusal ambiguous_provider_dispatch
 
 jq '.result="PASS"' "$report" >"$fixture_report"
 expect_refusal premature_plan_pass

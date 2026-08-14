@@ -28,12 +28,12 @@ def tracked_probe_shell_sources(root)
     extension = File.extname(path)
     shell_extension = %w[.sh .bash .zsh].include?(extension)
     unless %w[100644 100755].include?(mode)
-      refuse("PROBE_SHELL_SOURCE_MODE:#{path}") if shell_extension
-      next
+      refuse("PROBE_SOURCE_MODE:#{path}")
     end
 
     absolute = File.join(root, path)
     refuse("PROBE_SOURCE_TYPE:#{path}") if File.symlink?(absolute) || !File.file?(absolute)
+    refuse("PROBE_EXTENSIONLESS_SOURCE:#{path}") if extension.empty?
     source = File.binread(absolute)
     shell_shebang = source.lines.first&.match?(%r{\A#!.*(?:^|[/[:space:]])(?:ba|z)?sh(?:[[:space:]]|$)})
     refuse("PROBE_SHELL_SOURCE_EXTENSION:#{path}") if shell_shebang && !shell_extension
@@ -41,11 +41,126 @@ def tracked_probe_shell_sources(root)
   end
 end
 
-def shell_provider_birth?(line)
-  stripped = line.strip
-  return false if stripped.empty? || stripped.start_with?("#")
+def logical_shell_statements(source)
+  statements = []
+  parts = []
+  start_index = nil
 
-  stripped.match?(/\b(?:codex|claude)\s+(?:--version|debug\s+prompt-input)\b/)
+  source.lines(chomp: true).each_with_index do |line, index|
+    start_index ||= index
+    continued = line.match?(/\\[[:space:]]*\z/)
+    parts << (continued ? line.sub(/\\[[:space:]]*\z/, "").strip : line.strip)
+    next if continued
+
+    statements << [start_index, parts.join(" ").strip]
+    parts = []
+    start_index = nil
+  end
+  refuse("PROBE_SHELL_MALFORMED_CONTINUATION") unless parts.empty?
+  statements
+end
+
+def shell_tokens(statement)
+  tokens = []
+  word = +""
+  quote = nil
+  index = 0
+  flush = lambda do
+    unless word.empty?
+      tokens << [:word, word]
+      word = +""
+    end
+  end
+
+  while index < statement.length
+    character = statement[index]
+    if quote
+      if character == quote
+        quote = nil
+      elsif character == "\\" && quote == '"' && index + 1 < statement.length
+        index += 1
+        word << statement[index]
+      else
+        word << character
+      end
+    elsif character == "'" || character == '"'
+      quote = character
+    elsif character == "#" && (index.zero? || statement[index - 1].match?(/[[:space:];&|(){}]/))
+      break
+    elsif character.match?(/[[:space:]]/)
+      flush.call
+    elsif character == "\\"
+      refuse("PROBE_SHELL_MALFORMED_ESCAPE") if index + 1 >= statement.length
+      index += 1
+      word << statement[index]
+    elsif character == "`"
+      refuse("PROBE_SHELL_AMBIGUOUS_BACKTICK")
+    elsif character == "$" && statement[index + 1] == "("
+      flush.call
+      tokens << [:operator, "$("]
+      index += 1
+    elsif ";|&(){}".include?(character)
+      flush.call
+      operator = character
+      if %w[& |].include?(character) && statement[index + 1] == character
+        index += 1
+        operator += character
+      end
+      tokens << [:operator, operator]
+    elsif character == "<" && statement[index + 1] == "<"
+      refuse("PROBE_SHELL_AMBIGUOUS_HEREDOC")
+    else
+      word << character
+    end
+    index += 1
+  end
+  refuse("PROBE_SHELL_MALFORMED_QUOTE") if quote
+  flush.call
+  tokens
+end
+
+def shell_provider_birth_count(statement)
+  return 0 if statement.match?(/\A(?:codex|claude)\)[[:space:]]*\z/)
+
+  tokens = shell_tokens(statement)
+  command_position = true
+  wrapper = false
+  births = 0
+
+  tokens.each_with_index do |(kind, value), index|
+    if kind == :operator
+      command_position = true
+      wrapper = false
+      next
+    end
+
+    next unless command_position
+
+    if value.match?(/\A[A-Za-z_][A-Za-z0-9_]*=/) || %w[if then elif else do while until !].include?(value)
+      next
+    end
+    if value == "command" && %w[-v -V].include?(tokens[index + 1]&.fetch(1, nil))
+      command_position = false
+      wrapper = false
+      next
+    end
+    if %w[exec env command builtin nohup].include?(value)
+      wrapper = true
+      next
+    end
+    next if wrapper && value.start_with?("-")
+
+    executable = File.basename(value)
+    births += 1 if %w[codex claude].include?(executable)
+    refuse("PROBE_SHELL_AMBIGUOUS_DISPATCH") if %w[eval xargs].include?(executable)
+    if %w[sh bash zsh].include?(executable) && tokens[index + 1] == [:word, "-c"]
+      refuse("PROBE_SHELL_AMBIGUOUS_SHELL_C")
+    end
+    command_position = false
+    wrapper = false
+  end
+
+  births
 end
 
 inventory = JSON.parse(File.binread(inventory_path))
@@ -75,8 +190,10 @@ refuse("SHELL_SOURCE_POLICY") unless shell_policy == {
   "inventory" => "GIT_TRACKED_RECURSIVE",
   "extensions" => %w[.sh .bash .zsh],
   "regular_modes" => %w[100644 100755],
-  "extensionless_shell_shebang" => "REFUSED",
-  "non_regular_or_symlink" => "REFUSED",
+  "extensionless_tracked_path" => "REFUSED_REGARDLESS_OF_CONTENT",
+  "non_regular_or_symlink" => "REFUSED_REGARDLESS_OF_EXTENSION",
+  "provider_command_positions" => "ALL_STATIC_DIRECT_WITH_MULTILINE_CONTINUATIONS",
+  "ambiguous_dispatch" => "REFUSED",
   "guard" => "SAME_FILE_EXECUTABLE_BEFORE_EVERY_BIRTH_OCCURRENCE"
 }
 
@@ -97,12 +214,11 @@ Dir.glob(File.join(root, "src/**/*.rs")).sort.each do |absolute|
   end
 end
 probe_shell_sources.each do |path, _mode, source|
-  source.lines(chomp: true).each_with_index do |line, index|
-    stripped = line.strip
-    next unless shell_provider_birth?(stripped)
-
-    births << { "path" => path, "line" => stripped }
-    birth_positions[path] << index
+  logical_shell_statements(source).each do |index, statement|
+    shell_provider_birth_count(statement).times do
+      births << { "path" => path, "line" => statement }
+      birth_positions[path] << index
+    end
   end
 end
 births.sort_by! { |entry| [entry.fetch("path"), entry.fetch("line")] }
