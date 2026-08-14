@@ -10,7 +10,7 @@
   },
   "binding": {
     "input_head": "cee78ac90ae9a4dc3b07518089df26c8d64f68d1",
-    "implementation_head": "d8fb3616902342d2cc3a98e5d000b85c0bd13c57",
+    "implementation_head": "4444104a2eb2319cd657894dbca72b94053523f9",
     "receipt_seal_role": "receipt-only-child",
     "implementation_files": ["packaging/build-artifacts.sh", "packaging/verify-artifact.py", "tests/packaging/artifact_layout.rs", "tests/packaging/fixtures/make_poison_archive.py", "tests/packaging/fixtures/archive-layout.txt", "tests/packaging/fixtures/archive-path-traversal.txt", "tests/packaging/fixtures/archive-wrong-binary.txt", "tests/packaging/fixtures/archive-missing-license.txt", "tests/packaging/fixtures/archive-nondeterministic-metadata.txt"]
   },
@@ -34,6 +34,6 @@
     "tests/packaging/fixtures/archive-nondeterministic-metadata.txt": "0326a3a5da12e5069f93e92f7efc6c9e6abba1846434b7658037748562daafd2"
   },
   "qualification": "NOT_QUALIFIED",
-  "claims": {"archive": "local unsigned preview only", "source_commit": "d8fb3616902342d2cc3a98e5d000b85c0bd13c57", "target": "aarch64-apple-darwin", "reproducible": "bound local rustc/cargo/python toolchain and normalized packaging profile only", "toolchain": {"rustc": "1.97.1 (8bab26f4f 2026-07-14)", "cargo": "1.97.1 (c980f4866 2026-06-30)", "python": "3.11.15", "network": "offline", "source_roots": 2, "target_dirs": 2}, "archive_sha256": "3c993a1e987fa4d1845e06a2da8474282cad742e2d8f6291ea2aa20af7177dc2"},
+  "claims": {"archive": "local unsigned preview only", "source_commit": "4444104a2eb2319cd657894dbca72b94053523f9", "target": "aarch64-apple-darwin", "reproducible": "bound local rustc/cargo/python toolchain and normalized packaging profile only", "toolchain": {"rustc": "1.97.1 (8bab26f4f 2026-07-14)", "cargo": "1.97.1 (c980f4866 2026-06-30)", "python": "3.11.15", "network": "offline", "source_roots": 2, "target_dirs": 2}, "archive_sha256": "3c993a1e987fa4d1845e06a2da8474282cad742e2d8f6291ea2aa20af7177dc2"},
   "controls": {"locked_dependencies": true, "exact_source_head": true, "clean_exported_roots": true, "separate_target_dirs": true, "offline_build": true, "normalized_member_order_modes_owner_timestamps": true, "production_verifier": true, "path_safe": true, "canonical_taskseal": true, "safe_tseal_copy": true, "license_and_notices": true, "parser_behavior_identical": true, "publication": false, "network": false, "signing": false, "main_mutation": false, "qualification_truthful": true}
 }
