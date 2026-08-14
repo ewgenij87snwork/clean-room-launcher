@@ -10,7 +10,11 @@
   },
   "binding": {
     "input_head": "ea551a35b058b19e402071cfc07d34862ec9216b",
+    "accepted_initial_head": "5249fd4c86760563b1f4306b74ee5e35fa949b4b",
     "continuation_head": "224095f295fbd76b36a2b19f29606fb32d2ed0cb",
+    "correction_implementation_head": "6de043b07ba9b103f24fdc24cbce5d1c3297ab3a",
+    "receipt_seal_role": "receipt-only-child",
+    "receipt_commit_parent": "6de043b07ba9b103f24fdc24cbce5d1c3297ab3a",
     "implementation_files": [
       ".github/workflows/ci.yml",
       "packaging/targets.toml",
