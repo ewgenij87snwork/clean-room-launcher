@@ -73,6 +73,15 @@ expect_refusal real_tty_enter_dispatch
 jq '.local_continuity.prohibited_cta_classes |= map(select(. != "SETUP_SETTINGS_CONFIGURATION"))' "$report" >"$fixture_report"
 expect_refusal semantic_configuration_cta
 
+jq 'del(.ingestion_closure.credential_tail_values_consumed)' "$report" >"$fixture_report"
+expect_refusal unread_cli_tail
+
+jq '.ingestion_closure.saved_start_refusal_phase="AFTER_ARGV_HASH"' "$report" >"$fixture_report"
+expect_refusal saved_start_preparse_phase
+
+jq '.ingestion_closure.saved_start_sensitive_selectors |= map(select(. != "--access-token"))' "$report" >"$fixture_report"
+expect_refusal saved_start_access_token_selector
+
 jq '.result="PASS"' "$report" >"$fixture_report"
 expect_refusal premature_plan_pass
 

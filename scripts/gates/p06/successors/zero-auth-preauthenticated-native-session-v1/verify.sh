@@ -22,7 +22,7 @@ test -f "$worklog" || refuse WORKLOG_MISSING
 cd "$root"
 
 jq -e '
-  keys == ["checkpoint","controls","git","local_continuity","owner_ssot","plan_id","result","schema_version","task_receipts","terminal_review","transcripts","verification"] and
+  keys == ["checkpoint","controls","git","ingestion_closure","local_continuity","owner_ssot","plan_id","result","schema_version","task_receipts","terminal_review","transcripts","verification"] and
   .schema_version == "taskseal.p06.zero-auth-preauthenticated-native-session-v1.consolidated.v1" and
   .plan_id == "P06-ZERO-AUTH-PREAUTHENTICATED-NATIVE-SESSION-V1" and
   .result == "IMPLEMENTED_REVIEW_PENDING" and
@@ -53,6 +53,15 @@ jq -e '
     real_tty_enter_dispatch:"TASKSEAL_OWNED_STATUS_IN_PROCESS",
     semantic_cta_regression:"tests/cli/first_screen.rs::assert_zero_auth_actions"
   } and
+  .ingestion_closure == {
+    cli_unread_tail_routes:["UNSUPPORTED_SELECTOR","SELECTOR_PREFIXED_LOCAL","TASKSEAL_OWNED_LOCAL","UNKNOWN_COMMAND"],
+    credential_tail_values_consumed:0,
+    credential_tail_values_copied:0,
+    saved_start_sensitive_selectors:["--with-access-token","--access-token"],
+    saved_start_refusal_phase:"BEFORE_DESERIALIZATION_OR_ARGV_HASH",
+    valid_local_commands_preserved:["status","scan","prepare","check","starts","start","help","doctor"],
+    valid_saved_starts_preserved:true
+  } and
   .owner_ssot == {
     worklog_prefix:{
       path:"/Users/ysorokin/Documents/it/5-LVL - 2026/Temp in Projects/wisdom/taskseal/TASKSEAL-WORKLOG.jsonl",
@@ -75,13 +84,18 @@ jq -e '
     "fixtures/cli/first-screen-unqualified.txt",
     "reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/consolidated.json",
     "reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/task-4.json",
+    "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/source-inventory-allowlist.json",
     "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-4-receipt-durability.sh",
     "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-4-receipt.sh",
     "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-verify.sh",
     "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/verify.sh",
     "src/cli/mod.rs",
     "src/cli/screen.rs",
-    "tests/cli/first_screen.rs"
+    "src/cli/state.rs",
+    "tests/cli/argv_passthrough.rs",
+    "tests/cli/first_screen.rs",
+    "tests/cli/saved_start_call_path.rs",
+    "tests/cli/saved_starts.rs"
   ] and
   .verification == {
     sole_gate:"scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/verify.sh",
@@ -164,7 +178,9 @@ test "$control_output" = P06_ZERO_AUTH_CONTROL_PASS || refuse CONTROL_OUTPUT
 source_output=$(ruby "$root/$successor/source-inventory.rb" "$root") || refuse SOURCE_INVENTORY
 test "$source_output" = P06_ZERO_AUTH_SOURCE_INVENTORY_PASS || refuse SOURCE_INVENTORY_OUTPUT
 
-rustfmt --edition 2024 --check src/cli/mod.rs src/cli/screen.rs tests/cli/first_screen.rs
+rustfmt --edition 2024 --check src/cli/mod.rs src/cli/screen.rs src/cli/state.rs \
+  tests/cli/argv_passthrough.rs tests/cli/first_screen.rs \
+  tests/cli/saved_start_call_path.rs tests/cli/saved_starts.rs
 cargo clippy --all-targets --locked --offline -- -D warnings
 cargo test --locked --offline --test cli --test adapters --test trace_metadata
 

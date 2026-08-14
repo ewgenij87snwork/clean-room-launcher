@@ -1,6 +1,7 @@
 use super::state::{AccessClass, SavedStart, StateStore};
 use std::{
     fs,
+    os::unix::fs::PermissionsExt,
     path::{Path, PathBuf},
     process::Command,
 };
@@ -11,6 +12,38 @@ fn scratch(name: &str) -> PathBuf {
     let _ = fs::remove_dir_all(&root);
     fs::create_dir_all(&root).unwrap();
     root
+}
+
+#[test]
+fn final_zero_auth_ingestion_saved_start_refuses_before_argv_hashing() {
+    let home = scratch("sensitive-prehash");
+    let store = StateStore::at(home.join("Library/Application Support/TaskSeal"));
+    fs::create_dir_all(store.root()).unwrap();
+    fs::set_permissions(store.root(), fs::Permissions::from_mode(0o700)).unwrap();
+    fs::write(
+        store.state_path(),
+        format!(
+            "{{\"schema_version\":\"taskseal.saved-start.v1\",\"starts\":[{{\"provider\":\"codex\",\"argv\":[\"--with-access-token\",\"must-not-be-hashed\"],\"project_digest\":\"{}\",\"access_class\":\"standard\",\"qualification_digest\":\"{}\"}}]}}",
+            "a".repeat(64),
+            "b".repeat(64)
+        ),
+    )
+    .unwrap();
+    fs::set_permissions(store.state_path(), fs::Permissions::from_mode(0o600)).unwrap();
+    let before = fs::read(store.state_path()).unwrap();
+
+    let output = Command::new(env!("CARGO_BIN_EXE_tseal"))
+        .args(["start", "1", "--approve"])
+        .env("HOME", &home)
+        .output()
+        .unwrap();
+    assert_eq!(output.status.code(), Some(2));
+    assert!(output.stdout.is_empty());
+    assert_eq!(
+        String::from_utf8(output.stderr).unwrap(),
+        "SAVED_START_SENSITIVE_ARGUMENT_REFUSED\n"
+    );
+    assert_eq!(fs::read(store.state_path()).unwrap(), before);
 }
 
 fn save(home: &Path, access_class: AccessClass) {

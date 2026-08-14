@@ -190,6 +190,37 @@ fn selector_prefixed_refusal_does_not_consume_credential_shaped_tails() {
 }
 
 #[test]
+fn final_zero_auth_ingestion_routes_leave_credential_shaped_tails_unread() {
+    // Break caught: a non-provider refusal or local no-argument route eagerly collects its tail.
+    for (prefix, expected_calls, expected_exit) in [
+        (vec!["--output", "yaml"], 2, 2),
+        (vec!["--json"], 1, 2),
+        (vec!["--output", "json", "status"], 3, 2),
+        (vec!["status"], 1, 0),
+        (vec!["unknown-command"], 1, 2),
+    ] {
+        let next_calls = Rc::new(Cell::new(0));
+        let exit = cli_entry::run(
+            "tseal",
+            PoisonTail {
+                prefix: prefix
+                    .into_iter()
+                    .map(str::to_owned)
+                    .collect::<Vec<_>>()
+                    .into_iter(),
+                next_calls: Rc::clone(&next_calls),
+                unread_tail: vec![
+                    "--access-token".to_owned(),
+                    "tail-value-must-not-be-read-or-copied".to_owned(),
+                ],
+            },
+        );
+        assert_eq!(exit, std::process::ExitCode::from(expected_exit));
+        assert_eq!(next_calls.get(), expected_calls);
+    }
+}
+
+#[test]
 fn selector_prefixed_real_routes_refuse_before_child_birth() {
     let (codex, capture) = fake_provider("codex");
     let provider_dir = codex.parent().unwrap();

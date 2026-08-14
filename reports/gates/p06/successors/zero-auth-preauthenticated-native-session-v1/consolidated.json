@@ -78,6 +78,32 @@
     "real_tty_enter_dispatch": "TASKSEAL_OWNED_STATUS_IN_PROCESS",
     "semantic_cta_regression": "tests/cli/first_screen.rs::assert_zero_auth_actions"
   },
+  "ingestion_closure": {
+    "cli_unread_tail_routes": [
+      "UNSUPPORTED_SELECTOR",
+      "SELECTOR_PREFIXED_LOCAL",
+      "TASKSEAL_OWNED_LOCAL",
+      "UNKNOWN_COMMAND"
+    ],
+    "credential_tail_values_consumed": 0,
+    "credential_tail_values_copied": 0,
+    "saved_start_sensitive_selectors": [
+      "--with-access-token",
+      "--access-token"
+    ],
+    "saved_start_refusal_phase": "BEFORE_DESERIALIZATION_OR_ARGV_HASH",
+    "valid_local_commands_preserved": [
+      "status",
+      "scan",
+      "prepare",
+      "check",
+      "starts",
+      "start",
+      "help",
+      "doctor"
+    ],
+    "valid_saved_starts_preserved": true
+  },
   "owner_ssot": {
     "worklog_prefix": {
       "path": "/Users/ysorokin/Documents/it/5-LVL - 2026/Temp in Projects/wisdom/taskseal/TASKSEAL-WORKLOG.jsonl",
@@ -101,13 +127,18 @@
       "fixtures/cli/first-screen-unqualified.txt",
       "reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/consolidated.json",
       "reports/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/task-4.json",
+      "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/source-inventory-allowlist.json",
       "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-4-receipt-durability.sh",
       "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-task-4-receipt.sh",
       "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/test-verify.sh",
       "scripts/gates/p06/successors/zero-auth-preauthenticated-native-session-v1/verify.sh",
       "src/cli/mod.rs",
       "src/cli/screen.rs",
-      "tests/cli/first_screen.rs"
+      "src/cli/state.rs",
+      "tests/cli/argv_passthrough.rs",
+      "tests/cli/first_screen.rs",
+      "tests/cli/saved_start_call_path.rs",
+      "tests/cli/saved_starts.rs"
     ]
   },
   "verification": {

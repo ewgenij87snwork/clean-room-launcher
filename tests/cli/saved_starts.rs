@@ -62,6 +62,42 @@ fn sensitive_argv_refuses_without_creating_state() {
 }
 
 #[test]
+fn final_zero_auth_ingestion_refuses_access_token_argv_before_state_creation() {
+    for (index, flag) in ["--with-access-token", "--access-token"]
+        .into_iter()
+        .enumerate()
+    {
+        let store = StateStore::at(scratch(&format!("access-token-{index}")));
+        let mut candidate = start("safe", AccessClass::Standard);
+        candidate
+            .argv
+            .extend([flag.to_owned(), "must-not-be-stored".to_owned()]);
+
+        assert_eq!(
+            store.save(candidate).unwrap_err().code(),
+            "SAVED_START_SENSITIVE_ARGUMENT_REFUSED"
+        );
+        assert!(!store.state_path().exists());
+    }
+}
+
+#[test]
+fn final_zero_auth_ingestion_raw_token_state_refuses_before_deserialization() {
+    let store = StateStore::at(scratch("raw-sensitive-before-json"));
+    fs::write(
+        store.state_path(),
+        br#"{"schema_version":"taskseal.saved-start.v1","starts":[{"argv":["--access-token","must-not-be-deserialized"]"#,
+    )
+    .unwrap();
+    fs::set_permissions(store.state_path(), fs::Permissions::from_mode(0o600)).unwrap();
+
+    assert_eq!(
+        store.load().unwrap_err().code(),
+        "SAVED_START_SENSITIVE_ARGUMENT_REFUSED"
+    );
+}
+
+#[test]
 fn record_requires_a_closed_provider_and_digest_fields() {
     // Break caught: arbitrary provider labels or path-like metadata enter a record advertised as closed/digested.
     let store = StateStore::at(scratch("closed-record"));

@@ -123,7 +123,7 @@
     },
     {
       "path": "src/cli/state.rs",
-      "sha256": "d5837ad16e9353c83de59bc0fda565623b248c2798d5a5dba167008569cedffe",
+      "sha256": "604960c296005aa87fb2806a589205a0c6ac30eebdfe7f1cc3922d2ee8d7bb21",
       "matched_classes": ["TOKEN_INPUT"],
       "rationale": "Compiled state code contains a deny-list that rejects saved arguments with token/API-key/password spellings; it never reads environment credentials or starts a process."
     }

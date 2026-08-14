@@ -100,11 +100,11 @@ impl StateStore {
     }
 
     pub fn save(&self, candidate: SavedStart) -> Result<(), StateError> {
-        if !valid_record(&candidate) {
-            return Err(StateError("STATE_RECORD_REFUSED"));
-        }
         if contains_sensitive_value(&candidate.argv) {
             return Err(StateError("SAVED_START_SENSITIVE_ARGUMENT_REFUSED"));
+        }
+        if !valid_record(&candidate) {
+            return Err(StateError("STATE_RECORD_REFUSED"));
         }
         self.with_lock(|| {
             let mut saved = self.read_unlocked()?;
@@ -174,12 +174,24 @@ impl StateStore {
             Ok(_) => {}
         }
         self.require_private_regular(&state_path)?;
-        let saved: SavedStarts = serde_json::from_slice(
-            &fs::read(&state_path).map_err(|_| StateError("STATE_READ_FAILED"))?,
-        )
-        .map_err(|_| StateError("STATE_CORRUPT_REFUSED"))?;
-        if saved.schema_version != SCHEMA_VERSION || saved.starts.len() > 3 {
+        let bytes = fs::read(&state_path).map_err(|_| StateError("STATE_READ_FAILED"))?;
+        if contains_sensitive_bytes(&bytes) {
+            return Err(StateError("SAVED_START_SENSITIVE_ARGUMENT_REFUSED"));
+        }
+        let saved: SavedStarts =
+            serde_json::from_slice(&bytes).map_err(|_| StateError("STATE_CORRUPT_REFUSED"))?;
+        if saved.schema_version != SCHEMA_VERSION
+            || saved.starts.len() > 3
+            || saved.starts.iter().any(|start| !valid_record(start))
+        {
             return Err(StateError("STATE_CORRUPT_REFUSED"));
+        }
+        if saved
+            .starts
+            .iter()
+            .any(|start| contains_sensitive_value(&start.argv))
+        {
+            return Err(StateError("SAVED_START_SENSITIVE_ARGUMENT_REFUSED"));
         }
         Ok(saved)
     }
@@ -252,6 +264,8 @@ fn contains_sensitive_value(argv: &[String]) -> bool {
             || value.starts_with("bearer ")
             || [
                 "--token",
+                "--with-access-token",
+                "--access-token",
                 "--api-key",
                 "--api_key",
                 "--password",
@@ -268,6 +282,36 @@ fn contains_sensitive_value(argv: &[String]) -> bool {
             ]
             .iter()
             .any(|needle| value.contains(needle))
+    })
+}
+
+fn contains_sensitive_bytes(bytes: &[u8]) -> bool {
+    [
+        br"\u".as_slice(),
+        b"sk-".as_slice(),
+        b"bearer ".as_slice(),
+        b"--token".as_slice(),
+        b"--with-access-token".as_slice(),
+        b"--access-token".as_slice(),
+        b"--api-key".as_slice(),
+        b"--api_key".as_slice(),
+        b"--password".as_slice(),
+        b"--secret".as_slice(),
+        b"token=".as_slice(),
+        b"token:".as_slice(),
+        b"api-key=".as_slice(),
+        b"api_key=".as_slice(),
+        b"password=".as_slice(),
+        b"secret=".as_slice(),
+    ]
+    .iter()
+    .any(|needle| {
+        bytes.windows(needle.len()).any(|window| {
+            window
+                .iter()
+                .zip(needle.iter())
+                .all(|(left, right)| left.eq_ignore_ascii_case(right))
+        })
     })
 }
 

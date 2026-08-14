@@ -25,27 +25,30 @@ pub fn run(invoked_as: &str, args: impl IntoIterator<Item = String>) -> ExitCode
     if first == "--output"
         && let Some(format) = source.next()
     {
-        if format == "json"
-            && let Some(command) = source.next()
-        {
+        if format != "json" {
+            return run_local(invoked_as, vec![first, format]);
+        }
+        if let Some(command) = source.next() {
             if let Some(exit) = external_prefix(&command, &mut source) {
                 return exit;
             }
-            return run_local(
-                invoked_as,
-                [first, format, command].into_iter().chain(source).collect(),
-            );
+            return run_local(invoked_as, vec![first, format, command]);
         }
-        return run_local(
-            invoked_as,
-            [first, format].into_iter().chain(source).collect(),
-        );
+        return run_local(invoked_as, vec![first, format]);
     }
 
-    run_local(
-        invoked_as,
-        std::iter::once(first).chain(source).collect::<Vec<_>>(),
-    )
+    run_local(invoked_as, local_prefix(first, &mut source))
+}
+
+fn local_prefix(first: String, source: &mut impl Iterator<Item = String>) -> Vec<String> {
+    let additional = match first.as_str() {
+        "help" | "--help" | "-h" | "explain" | "inspect" => 1,
+        "doctor" | "start" => 2,
+        _ => 0,
+    };
+    std::iter::once(first)
+        .chain(source.take(additional))
+        .collect()
 }
 
 fn external_prefix(command: &str, source: &mut impl Iterator<Item = String>) -> Option<ExitCode> {
