@@ -242,13 +242,15 @@ def require_sentinels(paths: SafeHomebrew, baseline: dict[str, str]) -> None:
 def verify_dual_names(paths: SafeHomebrew, network_bound: bool = False) -> None:
     binaries = [paths.prefix / "bin/taskseal", paths.prefix / "bin/tseal"]
     if any(not value.is_file() for value in binaries) or hashlib.sha256(binaries[0].read_bytes()).digest() != hashlib.sha256(binaries[1].read_bytes()).digest(): raise LifecycleRefused("DUAL_NAME_PARITY_REFUSED")
+    status_outputs: list[str] = []
     for binary in binaries:
-        invoked_as = binary.name
         status_command = [str(binary), "status"]; refusal_command = [str(binary), "--output", "json", "status"]
         if network_bound: status_command, refusal_command = deny_network(status_command), deny_network(refusal_command)
         status = subprocess.run(status_command, env=closed_env(paths), stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False)
         refusal = subprocess.run(refusal_command, env=closed_env(paths), stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False)
-        if status.returncode or status.stdout != f"{invoked_as}: command accepted\n" or status.stderr or refusal.returncode != 2 or refusal.stdout or refusal.stderr != "OUTPUT_UNSUPPORTED_FOR_COMMAND: status; use human output\n": raise LifecycleRefused("DUAL_NAME_PARITY_REFUSED")
+        if status.returncode or status.stderr or refusal.returncode != 2 or refusal.stdout or refusal.stderr != "OUTPUT_UNSUPPORTED_FOR_COMMAND: status; use human output\n": raise LifecycleRefused("DUAL_NAME_PARITY_REFUSED")
+        status_outputs.append(status.stdout)
+    if status_outputs != ["taskseal: command accepted\n", "taskseal: command accepted\n"]: raise LifecycleRefused("DUAL_NAME_PARITY_REFUSED")
 
 def cleanup(paths: SafeHomebrew, scenario: str | None, steps: list[dict[str, object]]) -> bool:
     ok = True

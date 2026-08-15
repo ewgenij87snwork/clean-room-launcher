@@ -107,7 +107,7 @@ def render(contract: dict, formula_id: str, url: str) -> bytes:
     taskseal_status = shell_output("#{'{'}bin{'}'}/taskseal status")
     tseal_status = shell_output("#{'{'}bin{'}'}/tseal status")
     assert_equal "taskseal: command accepted\\n", taskseal_status
-    assert_equal "tseal: command accepted\\n", tseal_status
+    assert_equal taskseal_status, tseal_status
     expected = "OUTPUT_UNSUPPORTED_FOR_COMMAND: status; use human output\\n"
     assert_equal expected, shell_output("#{'{'}bin{'}'}/taskseal --output json status 2>&1", 2)
     assert_equal expected, shell_output("#{'{'}bin{'}'}/tseal --output json status 2>&1", 2)
