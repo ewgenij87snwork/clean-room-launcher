@@ -44,7 +44,12 @@ elif argv[0] in {"style", "audit", "test", "upgrade", "unlink", "link", "install
     if argv[0] == "install":
         version = "0.0.1" if item.endswith("@0.0.1") else ("0.0.2" if "upgrade" in state.get("events", []) else "0.0.1")
         state["installed"] = sorted(set(state["installed"] + [item])); cell = prefix / "Cellar" / item.rsplit("/", 1)[-1] / version / "bin"; cell.mkdir(parents=True, exist_ok=True)
-        payload = b"#!/bin/sh\nprintf 'OUTPUT_UNSUPPORTED_FOR_COMMAND: status; use human output\\n'\n[ \"$1\" = status ] || exit 2\n"
+        payload = b'''#!/bin/sh
+name=${0##*/}
+if [ "$1" = status ]; then printf '%s: command accepted\\n' "$name"; exit 0; fi
+if [ "$1" = --output ] && [ "$2" = json ] && [ "$3" = status ]; then printf 'OUTPUT_UNSUPPORTED_FOR_COMMAND: status; use human output\\n' >&2; exit 2; fi
+exit 2
+'''
         for name in ("taskseal", "tseal"): (cell / name).write_bytes(payload); (cell / name).chmod(0o755); (prefix / "bin").mkdir(parents=True, exist_ok=True); target = prefix / "bin" / name; target.unlink(missing_ok=True); target.symlink_to(cell / name)
     if argv[0] == "upgrade": state["events"] = state.get("events", []) + ["upgrade"]
     if argv[0] == "uninstall" and scenario != "partial_uninstall": state["installed"] = [x for x in state["installed"] if x != item]; shutil_target = prefix / "Cellar" / item.rsplit("/", 1)[-1];
