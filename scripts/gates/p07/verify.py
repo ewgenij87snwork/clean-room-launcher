@@ -77,14 +77,17 @@ def main() -> int:
         receipt_digests[str(task)] = digest(path)
     lifecycle_path = root / "reports/gates/p07/homebrew-v1/lifecycle-result.json"
     lifecycle = strict_json(lifecycle_path)
-    expected_steps = ["preflight", "clone_local", "origin_removed", "tap_git_ready", "formula_syntax", "tap", "item_trust", "install_current", "uninstall_current", "untrust", "untap"]
-    if lifecycle.get("schema_version") != "taskseal.p07.homebrew-lifecycle.v1" or lifecycle.get("evidence_class") != "real-current" or lifecycle.get("qualification") != "NOT_QUALIFIED": refuse("LIFECYCLE_IDENTITY")
+    expected_steps = ["preflight", "clone_local", "origin_removed", "tap_git_ready", "formula_syntax", "tap", "item_trust", "install_n", "upgrade_n_plus_1", "uninstall_n_plus_1", "rollback_n", "rollback_link_n", "uninstall_current", "untrust", "untap"]
+    if lifecycle.get("schema_version") != "taskseal.p07.homebrew-lifecycle.v1" or lifecycle.get("evidence_class") != "real-current-two-version" or lifecycle.get("qualification") != "NOT_QUALIFIED": refuse("LIFECYCLE_IDENTITY")
     if lifecycle.get("failure_class") is not None or lifecycle.get("cleanup_complete") is not True: refuse("LIFECYCLE_RESULT")
     if lifecycle.get("network_boundary") != "homebrew-native-sandbox-loopback-proxy": refuse("LIFECYCLE_NETWORK_BOUNDARY")
     if lifecycle.get("checks") != {"dual_executable_parity": True, "poison_provider_absent": True, "selector_refusal": True, "status_paths": True}: refuse("LIFECYCLE_CHECKS")
     if any(lifecycle.get("forbidden_actions", {}).values()): refuse("LIFECYCLE_FORBIDDEN_ACTION")
     steps = lifecycle.get("steps")
     if not isinstance(steps, list) or [step.get("name") for step in steps] != expected_steps or any(step.get("exit") != 0 for step in steps): refuse("LIFECYCLE_STEPS")
+    archives = lifecycle.get("archive")
+    if not isinstance(archives, dict) or set(archives) != {"n", "n_plus_1"}: refuse("LIFECYCLE_ARCHIVES")
+    if archives["n"].get("version") == archives["n_plus_1"].get("version") or archives["n"].get("archive_sha256") == archives["n_plus_1"].get("archive_sha256"): refuse("LIFECYCLE_ARCHIVES")
     checks = [
         ("target_matrix", "tests/packaging/target_matrix.rs"),
         ("no_skip", "tests/packaging/no_skip.rs"),

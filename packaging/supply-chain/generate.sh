@@ -12,12 +12,14 @@ import subprocess
 import sys
 import tomllib
 import uuid
+import jsonschema
 
 ROOT = Path(sys.argv[1])
 POLICY_PATH = ROOT / "packaging/supply-chain/policy.toml"
 EXPECTED_FILES = {"checksums.sha256", "sbom.cdx.json", "provenance.intoto.json"}
 HEX40 = re.compile(r"[0-9a-f]{40}\Z")
 SECRET = re.compile(r"(?:ghp_[A-Za-z0-9]{20,}|sk-[A-Za-z0-9_-]{20,}|AKIA[0-9A-Z]{16})")
+SCHEMA_ROOT = ROOT / "packaging/supply-chain/schemas"
 
 class Refused(Exception):
     pass
@@ -67,6 +69,51 @@ def load_json(path):
 def write_json(path, value):
     path.write_text(json.dumps(value, sort_keys=True, separators=(",", ":")) + "\n", encoding="utf-8")
     path.chmod(0o644)
+
+def validate_official_schemas():
+    manifest = load_json(SCHEMA_ROOT / "manifest.json")
+    if manifest.get("schema_version") != "taskseal.p07.official-schemas.v1" or not isinstance(manifest.get("sources"), list):
+        refuse("SCHEMA_MANIFEST")
+    for item in manifest["sources"]:
+        if set(item) != {"path", "sha256", "url"}:
+            refuse("SCHEMA_MANIFEST")
+        path = SCHEMA_ROOT / item["path"]
+        if not regular(path) or digest(path) != item["sha256"]:
+            refuse("SCHEMA_DIGEST")
+
+def validate_sbom_schema(sbom):
+    schema_path = SCHEMA_ROOT / "cyclonedx-1.7/bom-1.7.schema.json"
+    try:
+        schema = json.loads(schema_path.read_text(encoding="utf-8"))
+        resolver = jsonschema.RefResolver(base_uri=schema_path.parent.as_uri() + "/", referrer=schema)
+        jsonschema.Draft7Validator(schema, resolver=resolver).validate(sbom)
+    except (OSError, UnicodeError, json.JSONDecodeError, jsonschema.ValidationError, jsonschema.SchemaError, jsonschema.RefResolutionError):
+        refuse("SBOM_SCHEMA")
+
+def validate_slsa_profile(provenance, rules, artifact_name, artifact_sha):
+    if set(provenance) != {"_type", "subject", "predicateType", "predicate"}:
+        refuse("PROVENANCE_PROFILE")
+    if provenance["_type"] != rules["statement_type"] or provenance["predicateType"] != rules["slsa_predicate"]:
+        refuse("PROVENANCE_PROFILE")
+    if provenance["subject"] != [{"name": artifact_name, "digest": {"sha256": artifact_sha}}]:
+        refuse("PROVENANCE_SUBJECT")
+    predicate = provenance["predicate"]
+    if not isinstance(predicate, dict) or set(predicate) != {"buildDefinition", "runDetails"}:
+        refuse("PROVENANCE_PROFILE")
+    build, run = predicate["buildDefinition"], predicate["runDetails"]
+    if not isinstance(build, dict) or set(build) != {"buildType", "externalParameters", "internalParameters", "resolvedDependencies"}:
+        refuse("PROVENANCE_PROFILE")
+    external, internal = build["externalParameters"], build["internalParameters"]
+    if build["buildType"] != "https://taskseal.invalid/build-types/cargo-release/v1" or not isinstance(external, dict) or set(external) != {"source_commit", "target", "qualification"} or external["qualification"] != rules["qualification"]:
+        refuse("PROVENANCE_CLAIM")
+    if not isinstance(internal, dict) or internal != {"locked": True, "network": False}:
+        refuse("PROVENANCE_CLAIM")
+    dependencies = build["resolvedDependencies"]
+    source_commit = external["source_commit"]
+    if dependencies != [{"uri": "git+local://taskseal@" + source_commit, "digest": {"gitCommit": source_commit}}]:
+        refuse("PROVENANCE_CLAIM")
+    if not isinstance(run, dict) or set(run) != {"builder", "metadata"} or set(run["builder"]) != {"id"} or run["builder"]["id"] not in rules["allowed_builders"] or set(run["metadata"]) != {"invocationId"} or run["metadata"]["invocationId"] != "urn:taskseal:p07:" + artifact_sha:
+        refuse("PROVENANCE_CLAIM")
 
 def policy():
     try:
@@ -137,6 +184,8 @@ def verify(options, rules, emit=True):
         refuse("CHECKSUM")
     sbom = load_json(output / "sbom.cdx.json")
     provenance = load_json(output / "provenance.intoto.json")
+    validate_official_schemas()
+    validate_sbom_schema(sbom)
     if sbom.get("bomFormat") != "CycloneDX" or sbom.get("specVersion") != rules["cyclonedx_spec"] or sbom.get("version") != 1:
         refuse("SBOM_PROFILE")
     root_component = sbom.get("metadata", {}).get("component", {})
@@ -145,13 +194,7 @@ def verify(options, rules, emit=True):
     components = sbom.get("components")
     if not isinstance(components, list) or not components or any(not item.get("name") or not item.get("version") or not item.get("licenses") or not item["licenses"][0].get("expression") for item in components):
         refuse("SBOM_COMPONENTS")
-    if provenance.get("_type") != rules["statement_type"] or provenance.get("predicateType") != rules["slsa_predicate"]:
-        refuse("PROVENANCE_PROFILE")
-    if provenance.get("subject") != [{"name": artifact.name, "digest": {"sha256": artifact_sha}}]:
-        refuse("PROVENANCE_SUBJECT")
-    predicate = provenance.get("predicate", {})
-    if predicate.get("runDetails", {}).get("builder", {}).get("id") not in rules["allowed_builders"] or predicate.get("buildDefinition", {}).get("externalParameters", {}).get("qualification") != rules["qualification"] or predicate.get("buildDefinition", {}).get("internalParameters", {}).get("network") is not False:
-        refuse("PROVENANCE_CLAIM")
+    validate_slsa_profile(provenance, rules, artifact.name, artifact_sha)
     combined = b"".join((output / name).read_bytes() for name in sorted(EXPECTED_FILES))
     try:
         text = combined.decode("utf-8")

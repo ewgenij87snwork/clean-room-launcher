@@ -37,6 +37,8 @@ def main() -> int:
         "lifecycle_failure": ("reports/gates/p07/homebrew-v1/lifecycle-result.json", lambda value: value.__setitem__("failure_class", "INSTALL_REFUSED")),
         "cleanup_false": ("reports/gates/p07/homebrew-v1/lifecycle-result.json", lambda value: value.__setitem__("cleanup_complete", False)),
         "qualification_pass": ("reports/gates/p07/task-7.json", lambda value: value.__setitem__("qualification", "PASS")),
+        "upgrade_omitted": ("reports/gates/p07/homebrew-v1/lifecycle-result.json", lambda value: value.__setitem__("steps", [step for step in value["steps"] if step["name"] != "upgrade_n_plus_1"])),
+        "same_artifact": ("reports/gates/p07/homebrew-v1/lifecycle-result.json", lambda value: value["archive"].__setitem__("n_plus_1", value["archive"]["n"])),
     }
     for name, (relative, mutate) in cases.items():
         root = clone()
@@ -48,7 +50,7 @@ def main() -> int:
         result = run(root)
         if result.returncode == 0:
             raise SystemExit(f"P07_FINAL_GATE_EXPECTED_REFUSAL_MISSING:{name}")
-    print("P07_FINAL_GATE_MUTATIONS_PASS mutations=3")
+    print("P07_FINAL_GATE_MUTATIONS_PASS mutations=5")
     return 0
 
 

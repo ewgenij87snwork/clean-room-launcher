@@ -52,8 +52,16 @@ fn metadata_is_subject_bound_complete_and_secret_free() {
     assert!(!verify().status.success(), "component omission was accepted");
 
     assert!(run(&["generate", "--artifact", artifact.to_str().unwrap(), "--source-commit", "1111111111111111111111111111111111111111", "--target", "aarch64-apple-darwin", "--builder-id", "local://taskseal/p07", "--output", output.to_str().unwrap()]).status.success());
+    mutate(&output.join("sbom.cdx.json"), "import json,sys; p=sys.argv[1]; x=json.load(open(p)); x['serialNumber']='not-a-urn'; open(p,'w').write(json.dumps(x,separators=(',',':'))+'\\n')");
+    assert!(!verify().status.success(), "CycloneDX schema violation was accepted");
+
+    assert!(run(&["generate", "--artifact", artifact.to_str().unwrap(), "--source-commit", "1111111111111111111111111111111111111111", "--target", "aarch64-apple-darwin", "--builder-id", "local://taskseal/p07", "--output", output.to_str().unwrap()]).status.success());
     mutate(&output.join("provenance.intoto.json"), "import json,sys; p=sys.argv[1]; x=json.load(open(p)); x['predicate']['runDetails']['builder']['id']='https://unknown.invalid'; open(p,'w').write(json.dumps(x,separators=(',',':'))+'\\n')");
     assert!(!verify().status.success(), "unknown builder was accepted");
+
+    assert!(run(&["generate", "--artifact", artifact.to_str().unwrap(), "--source-commit", "1111111111111111111111111111111111111111", "--target", "aarch64-apple-darwin", "--builder-id", "local://taskseal/p07", "--output", output.to_str().unwrap()]).status.success());
+    mutate(&output.join("provenance.intoto.json"), "import json,sys; p=sys.argv[1]; x=json.load(open(p)); del x['predicate']['buildDefinition']['buildType']; open(p,'w').write(json.dumps(x,separators=(',',':'))+'\\n')");
+    assert!(!verify().status.success(), "incomplete SLSA provenance was accepted");
 
     fs::remove_dir_all(&temp).unwrap();
 }
