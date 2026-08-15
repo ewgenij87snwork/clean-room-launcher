@@ -1,0 +1,14 @@
+{
+  "schema_version": "taskseal.terminal-review.v1",
+  "subject": "09b3d2486b8ee727fd5b547ee2c163bc05b38600",
+  "verdict": "BLOCKER",
+  "reviewed_at": "2026-08-15",
+  "blockers": [
+    {"id": "P07-T8-REAL-TWO-VERSION-LIFECYCLE", "required": "Two produced artifacts with real install N, upgrade N+1, rollback N, both-name checks and uninstall", "observed": "Only install_current and uninstall_current are bound"},
+    {"id": "P07-T8-LIFECYCLE-OMISSION-MUTATION", "required": "Gate refusal when upgrade, rollback or either artifact subject is absent", "observed": "Mutation suite covers failure, cleanup and false qualification only"},
+    {"id": "P07-T6-OFFICIAL-SCHEMA-VALIDATION", "required": "Official CycloneDX 1.7 schema and independent complete provenance validation", "observed": "Current verifier checks a handwritten structural subset"}
+  ],
+  "verified_safe": {"real_homebrew_install_uninstall": true, "privacy_or_secret_finding": false, "publication": false, "network": false, "main_mutation": false, "integration": false},
+  "supersedes_task_8_acceptance": true,
+  "progress": {"overall": "3/7", "p07": "7/8"}
+}

@@ -2,10 +2,10 @@
   "schema_version": "taskseal.p07.task-receipt.v1",
   "plan_id": "P07",
   "task": 8,
-  "result": "accepted",
+  "result": "blocked",
   "acceptance": {
     "id": "ACC-P07-T8",
-    "operator_result": "The sole P07 gate binds Tasks 1–7, the real local Homebrew lifecycle, Cargo source installation, deterministic artifacts, checksum/CycloneDX/SLSA evidence and honest signing states to one immutable subject without claiming release qualification.",
+    "operator_result": "Terminal review supersedes the provisional acceptance: the gate proves one-version install/uninstall but does not prove the required real N to N+1 upgrade and rollback, and its supply-chain verifier is not bound to official CycloneDX/SLSA schemas.",
     "evidence_ids": ["EVD-P07-T8-MUTATIONS", "EVD-P07-T8-CONSOLIDATED"]
   },
   "binding": {
@@ -27,6 +27,6 @@
     "reports/gates/p07/supply-chain-gate.json": "3742f0f9446b9b1fc86fac49709af4e2d4ead7647e474803a5e5453147b83af2"
   },
   "qualification": "NOT_QUALIFIED",
-  "progress": {"overall": "3/7", "p07": "8/8"},
+  "progress": {"overall": "3/7", "p07": "7/8"},
   "controls": {"same_subject": true, "all_receipts_bound": true, "real_homebrew_lifecycle": true, "cleanup_complete": true, "publication": false, "network": false, "credentials": false, "main_mutation": false, "integration": false}
 }
