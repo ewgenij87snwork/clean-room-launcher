@@ -1,0 +1,56 @@
+{
+  "schema_version": "taskseal.p08.task-receipt.v1",
+  "plan_id": "P08",
+  "task": 5,
+  "acceptance_id": "ACC-P08-T5",
+  "qualification": "NOT_QUALIFIED",
+  "result": "PREPARED_NOT_QUALIFIED",
+  "binding": {
+    "input_head": "ab5a10b9d9ea801876bacad0dce5bfb00728e3f8",
+    "implementation_head": "8190842fc5ab8db615519b1e48bdf7f646f3add8",
+    "receipt_commit_parent": "8190842fc5ab8db615519b1e48bdf7f646f3add8",
+    "receipt_seal_role": "receipt-only-child"
+  },
+  "evidence": [
+    {
+      "id": "EVD-P08-T5-RED",
+      "command": "CARGO_MANIFEST_DIR=\"$PWD\" rustc --edition=2024 --test tests/release/onboarding.rs -o /tmp/p08-onboarding-red && /tmp/p08-onboarding-red --nocapture",
+      "exit": 101,
+      "result": "missing protocol and checker caused both focused tests to fail"
+    },
+    {
+      "id": "EVD-P08-T5-GREEN",
+      "command": "CARGO_MANIFEST_DIR=\"$PWD\" rustc --edition=2024 --test tests/release/onboarding.rs -o /tmp/p08-onboarding-green-state && /tmp/p08-onboarding-green-state --nocapture",
+      "exit": 0,
+      "result": "2 focused tests passed; deterministic fixture is not a human observation"
+    }
+  ],
+  "subjects": {
+    "reports/release/onboarding.json": "cb877f32e3a14ee8cee25ba264751792c8ba26fb2263e040f1c0397dc2d8afa7",
+    "scripts/release/check-onboarding.rb": "90669d43ab4c329f4c1533c84dd09534b8f85e65c47713b81ec9432a834743d0",
+    "tests/release/onboarding-protocol.md": "ab279adde499799136f089c247d1282214568ac72781e487a7386786fbe76980",
+    "tests/release/onboarding.rs": "4478e765fd912f891679cd7c653f33365059ad414d00af32847e2df669a02a35"
+  },
+  "subject_sha256": {
+    "algorithm": "sha256 of sorted path, tab, sha256, newline records",
+    "value": "9a2436ba36b3d5d4376e036f8393768fd4c86400fb1a355864f361fe8b8c4cca"
+  },
+  "internal_readiness": "PASS",
+  "external_observation": "NOT_RUN",
+  "owner_gate_reason": "OWNER_GATE_REQUIRED_EXTERNAL_USER",
+  "setup_time_claim": "UNAVAILABLE",
+  "controls": {
+    "deterministic_fixture_only": true,
+    "human_observation_simulation_forbidden": true,
+    "published_docs_and_one_command_only": true,
+    "separate_active_wait_help_errors": true,
+    "comprehension_required_not_observed": true,
+    "sanitized_closed_report": true,
+    "network": false,
+    "provider_process": false,
+    "external_contact": false,
+    "publication": false,
+    "main_mutation": false,
+    "integration": false
+  }
+}
