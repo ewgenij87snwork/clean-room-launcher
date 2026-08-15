@@ -28,6 +28,7 @@ config_after=$(required_digest "${TASKSEAL_CONFIG_SHA256_AFTER:-}" CONFIG_SHA256
 
 image_id=${TASKSEAL_CLEAN_IMAGE_ID:-UNAVAILABLE}; printf '%s' "$image_id" | grep -Eq '^[A-Za-z0-9._:-]+$' || { echo "P08_LIVE_OS_REFUSED:INVALID_CLEAN_IMAGE_ID" >&2; exit 69; }
 prerequisites=${TASKSEAL_PREREQUISITES_SHA256:-UNAVAILABLE}
+[ "$prerequisites" = UNAVAILABLE ] || printf '%s' "$prerequisites" | grep -Eq '^[0-9a-f]{64}$' || { echo "P08_LIVE_OS_REFUSED:INVALID_PREREQUISITES_SHA256" >&2; exit 70; }
 host_os=$(uname -s)
 reason=clean_image_or_prerequisites_not_verified
 [ "$host_os" = Linux ] || reason=unsupported_host_os

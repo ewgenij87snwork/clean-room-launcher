@@ -18,6 +18,7 @@ foreach ($entry in @(@($config, $configAfter), @($provider, $providerAfter), @($
   if ($entry[0] -ne $entry[1]) { throw 'P08_LIVE_OS_REFUSED:PROTECTED_STATE_MISMATCH' }
 }
 $prerequisites = if ($env:TASKSEAL_PREREQUISITES_SHA256) { $env:TASKSEAL_PREREQUISITES_SHA256 } else { 'UNAVAILABLE' }
+if ($prerequisites -ne 'UNAVAILABLE' -and $prerequisites -notmatch '^[0-9a-f]{64}$') { throw 'P08_LIVE_OS_REFUSED:INVALID_PREREQUISITES_SHA256' }
 $record = [ordered]@{
   schema_version = 'taskseal.live-os-receipt.v1'; lane = 'windows'; qualification = 'NOT_QUALIFIED'; artifact_sha256 = $actual
   clean_image = [ordered]@{ id = $(if ($env:TASKSEAL_CLEAN_IMAGE_ID) { $env:TASKSEAL_CLEAN_IMAGE_ID } else { 'UNAVAILABLE' }); verified = $false }

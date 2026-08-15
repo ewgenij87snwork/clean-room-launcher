@@ -40,6 +40,18 @@ fn missing_before_after_and_mismatch_refuse_without_receipts() {
 }
 
 #[test]
+fn invalid_prerequisite_digest_refuses_before_receipt() {
+    let t = temp(); let a = artifact(&t);
+    for prerequisite in ["not-a-digest", "\"invalid"] {
+        for script in ["scripts/release/live-macos.sh", "scripts/release/live-ubuntu.sh"] {
+            let r = t.join(format!("prerequisite-{script}.json")); let mut values = complete_protected(); values.push(("TASKSEAL_PREREQUISITES_SHA256", prerequisite.into()));
+            let output = run(script, &a, &r, &values);
+            assert!(!output.status.success()); assert!(String::from_utf8_lossy(&output.stderr).contains("INVALID_PREREQUISITES_SHA256")); assert!(!r.exists());
+        }
+    }
+}
+
+#[test]
 fn receipts_parse_bind_distinct_captures_and_hash_their_payload() {
     let t = temp(); let a = artifact(&t); let values = complete_protected();
     for (script, lane) in [("scripts/release/live-macos.sh", "macos"), ("scripts/release/live-ubuntu.sh", "ubuntu")] {
@@ -52,6 +64,6 @@ fn receipts_parse_bind_distinct_captures_and_hash_their_payload() {
 #[test]
 fn windows_contract_requires_before_after_and_checksum_refusal_without_claiming_execution() {
     let s = fs::read_to_string(root().join("scripts/release/live-windows.ps1")).unwrap();
-    for required in ["ARTIFACT_CHECKSUM_MISMATCH", "MISSING_PROTECTED_STATE", "PROTECTED_STATE_MISMATCH", "TASKSEAL_CONFIG_SHA256_AFTER", "protected_state_before", "protected_state_after", "receipt_sha256", "NOT_QUALIFIED"] { assert!(s.contains(required)); }
+    for required in ["ARTIFACT_CHECKSUM_MISMATCH", "MISSING_PROTECTED_STATE", "PROTECTED_STATE_MISMATCH", "INVALID_PREREQUISITES_SHA256", "TASKSEAL_PREREQUISITES_SHA256", "TASKSEAL_CONFIG_SHA256_AFTER", "protected_state_before", "protected_state_after", "receipt_sha256", "NOT_QUALIFIED"] { assert!(s.contains(required)); }
     for forbidden in ["git clone", "cargo install", "CARGO_MANIFEST_DIR", "developer checkout"] { assert!(!s.contains(forbidden)); }
 }
