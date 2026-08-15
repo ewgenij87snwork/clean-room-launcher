@@ -127,4 +127,6 @@ fn real_mode_prepares_only_a_disposable_local_git_source_and_real_current_eviden
     let json = fs::read_to_string(result).unwrap();
     assert!(json.contains("\"evidence_class\":\"real-current\""), "{}", json);
     assert!(json.contains("\"clone_local\"") && json.contains("\"origin_removed\"") && json.contains("\"tap_git_ready\""), "{}", json);
+    assert!(json.contains("\"network_boundary\":\"deny-network-sandbox\""), "{}", json);
+    assert!(!json.contains("upgrade_n_plus_1") && !json.contains("rollback_n") && !json.contains("install_versioned_trust"), "{}", json);
 }
