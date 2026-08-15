@@ -31,7 +31,7 @@ fn deterministic_capture_prepares_the_exact_live_action_without_qualifying_it() 
     let artifact_sha = Command::new("shasum").args(["-a", "256", artifact.to_str().unwrap()]).output().unwrap();
     let artifact_sha = String::from_utf8(artifact_sha.stdout).unwrap().split_whitespace().next().unwrap().to_owned();
     write(&p06, &fs::read_to_string(&p06).unwrap().replace(&digest('a'), &artifact_sha));
-    let result = run(&["--artifact", artifact.to_str().unwrap(), "--artifact-sha256", &artifact_sha, "--p06", p06.to_str().unwrap(), "--p04", p04.to_str().unwrap(), "--capture", capture.to_str().unwrap(), "--output", output.to_str().unwrap()]);
+    let result = run(&["--fixture", "--artifact", artifact.to_str().unwrap(), "--artifact-sha256", &artifact_sha, "--p06", p06.to_str().unwrap(), "--p04", p04.to_str().unwrap(), "--capture", capture.to_str().unwrap(), "--output", output.to_str().unwrap()]);
     assert!(result.status.success(), "{}", String::from_utf8_lossy(&result.stderr));
     assert_eq!(String::from_utf8(result.stdout).unwrap(), "P08_CODEX_ACCEPTANCE_PREPARED_NOT_QUALIFIED\n");
     let receipt = fs::read_to_string(output).unwrap();
@@ -53,10 +53,10 @@ fn harness_refuses_non_terminal_and_unexpected_unused_body_without_output() {
     let artifact_sha = String::from_utf8(artifact_sha.stdout).unwrap().split_whitespace().next().unwrap().to_owned();
     write(&p06, &fs::read_to_string(&p06).unwrap().replace(&digest('a'), &artifact_sha));
     let source = fs::read_to_string(&capture).unwrap().replace("\"terminal\":true", "\"terminal\":false"); write(&capture, &source);
-    let result = run(&["--artifact", artifact.to_str().unwrap(), "--artifact-sha256", &artifact_sha, "--p06", p06.to_str().unwrap(), "--p04", p04.to_str().unwrap(), "--capture", capture.to_str().unwrap(), "--output", output.to_str().unwrap()]);
+    let result = run(&["--fixture", "--artifact", artifact.to_str().unwrap(), "--artifact-sha256", &artifact_sha, "--p06", p06.to_str().unwrap(), "--p04", p04.to_str().unwrap(), "--capture", capture.to_str().unwrap(), "--output", output.to_str().unwrap()]);
     assert!(!result.status.success()); assert!(String::from_utf8_lossy(&result.stderr).contains("NON_TERMINAL_EXECUTION")); assert!(!output.exists());
     let source = fs::read_to_string(&capture).unwrap().replace("\"terminal\":false", "\"terminal\":true").replace("\"unused_body_present\":false", "\"unused_body_present\":true"); write(&capture, &source);
-    let result = run(&["--artifact", artifact.to_str().unwrap(), "--artifact-sha256", &artifact_sha, "--p06", p06.to_str().unwrap(), "--p04", p04.to_str().unwrap(), "--capture", capture.to_str().unwrap(), "--output", output.to_str().unwrap()]);
+    let result = run(&["--fixture", "--artifact", artifact.to_str().unwrap(), "--artifact-sha256", &artifact_sha, "--p06", p06.to_str().unwrap(), "--p04", p04.to_str().unwrap(), "--capture", capture.to_str().unwrap(), "--output", output.to_str().unwrap()]);
     assert!(!result.status.success()); assert!(String::from_utf8_lossy(&result.stderr).contains("UNEXPECTED_BODY_VISIBILITY")); assert!(!output.exists());
 }
 
@@ -70,4 +70,16 @@ fn committed_alpha_receipt_is_explicitly_prepared_and_never_a_live_claim() {
         "\"p04_canary_evidence\":{", "\"live_action\":\"tseal codex <normal owner-selected safe args>\"",
     ] { assert!(receipt.contains(required), "missing {required}"); }
     for forbidden in ["raw_prompt", "credential", "/Users/", "provider_response"] { assert!(!receipt.contains(forbidden), "unsafe retained evidence: {forbidden}"); }
+}
+
+#[test]
+fn harness_refuses_a_right_shaped_fabricated_p06_receipt() {
+    let (_dir, artifact, p06, p04, capture, output) = fixture();
+    let artifact_sha = Command::new("shasum").args(["-a", "256", artifact.to_str().unwrap()]).output().unwrap();
+    let artifact_sha = String::from_utf8(artifact_sha.stdout).unwrap().split_whitespace().next().unwrap().to_owned();
+    write(&p06, &fs::read_to_string(&p06).unwrap().replace(&digest('a'), &artifact_sha));
+    let result = run(&["--artifact", artifact.to_str().unwrap(), "--artifact-sha256", &artifact_sha, "--p06", p06.to_str().unwrap(), "--p04", p04.to_str().unwrap(), "--capture", capture.to_str().unwrap(), "--output", output.to_str().unwrap()]);
+    assert!(!result.status.success(), "fabricated right-shaped P06 evidence was accepted");
+    assert!(String::from_utf8_lossy(&result.stderr).contains("P06_PIN_MISMATCH"));
+    assert!(!output.exists());
 }

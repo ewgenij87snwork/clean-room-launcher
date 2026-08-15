@@ -2,7 +2,7 @@
 # Artifact-bound preparation only. This harness deliberately cannot launch Codex.
 set -eu
 
-artifact= artifact_sha= p06= p04= capture= output=
+artifact= artifact_sha= p06= p04= capture= output= fixture=false
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --artifact) artifact=${2:?}; shift 2 ;;
@@ -11,11 +11,18 @@ while [ "$#" -gt 0 ]; do
     --p04) p04=${2:?}; shift 2 ;;
     --capture) capture=${2:?}; shift 2 ;;
     --output) output=${2:?}; shift 2 ;;
+    --fixture) fixture=true; shift ;;
     *) echo "P08_CODEX_ACCEPTANCE_REFUSED:USAGE" >&2; exit 64 ;;
   esac
 done
 [ -n "$artifact" ] && [ -n "$artifact_sha" ] && [ -n "$p06" ] && [ -n "$p04" ] && [ -n "$capture" ] && [ -n "$output" ] || { echo "P08_CODEX_ACCEPTANCE_REFUSED:USAGE" >&2; exit 64; }
 [ -f "$artifact" ] && [ -f "$p06" ] && [ -f "$p04" ] && [ -f "$capture" ] || { echo "P08_CODEX_ACCEPTANCE_REFUSED:EVIDENCE_MISSING" >&2; exit 65; }
+root=$(CDPATH= cd -- "$(dirname "$0")/../.." && pwd -P)
+if [ "$fixture" = false ]; then
+  [ "$p06" = "$root/reports/gates/p06/task-11.json" ] && [ "$p04" = "$root/reports/gates/p04/acceptance-evidence.json" ] || { echo "P08_CODEX_ACCEPTANCE_REFUSED:P06_PIN_MISMATCH" >&2; exit 65; }
+  [ "$(shasum -a 256 "$p06" | awk '{print $1}')" = 89337194023b589e7a45f97c5122181c19c4b8e87f828516eb65743dd0ca19be ] && [ "$(shasum -a 256 "$p04" | awk '{print $1}')" = d9abc02b9cde8bf223f246477695b42582a0038745977207319d6f04d7a44265 ] || { echo "P08_CODEX_ACCEPTANCE_REFUSED:P06_PIN_MISMATCH" >&2; exit 65; }
+  [ "$artifact_sha" = 19c4f144c5226a9f17c58e6f0fa854843b0f77a6eb420f40e2745a12f10f5d37 ] || { echo "P08_CODEX_ACCEPTANCE_REFUSED:ARTIFACT_BYTES_UNAVAILABLE" >&2; exit 65; }
+fi
 printf '%s' "$artifact_sha" | grep -Eq '^[0-9a-f]{64}$' || { echo "P08_CODEX_ACCEPTANCE_REFUSED:INVALID_ARTIFACT_SHA256" >&2; exit 66; }
 actual=$(shasum -a 256 "$artifact" | awk '{print $1}')
 [ "$actual" = "$artifact_sha" ] || { echo "P08_CODEX_ACCEPTANCE_REFUSED:ARTIFACT_CHECKSUM_MISMATCH" >&2; exit 67; }
