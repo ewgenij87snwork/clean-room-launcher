@@ -1,0 +1,102 @@
+{
+  "base_head": "e28e47309bde88582719a3e1b389667b8dfbc141",
+  "correction_receipt": {
+    "commit": "d6a2604253f7eb1e4a78d389be9ac1734687dd01",
+    "parent": "7e4d792f09c674420217dd8777ef1b1217bbbade",
+    "path": "reports/gates/p07/scaffold-v2/source-verifier-correction.json",
+    "sha256": "7d50d73bdf8d031eed1f0920f9d7be2e50662bed6326ab72759be47d1fb678df"
+  },
+  "created_at": "2026-08-15T06:28:19+02:00",
+  "forbidden_actions": {
+    "external_contact": false,
+    "integration": false,
+    "main_mutation": false,
+    "notarization": false,
+    "provider_requests": false,
+    "publication": false,
+    "signing": false,
+    "upload": false
+  },
+  "historical_inputs": {
+    "projections": {
+      "task_1": {
+        "path": "reports/gates/p07/scaffold-v2/task-1.json",
+        "sha256": "ec192d8e7f0a35325fc6b2d53b851e140487e236cda3f353ceac5dac6682ab0d"
+      },
+      "task_2": {
+        "frozen_at": "ed79e591c2b6d4b50076f4b9ae389c3375d2ea25",
+        "path": "reports/gates/p07/scaffold-v2/task-2.json",
+        "sha256": "4441ec2f4c727c9252be8d3825ac1aea1157d33e2cccefb5c819eb44925bf4b5"
+      },
+      "task_3": {
+        "path": "reports/gates/p07/scaffold-v2/task-3.json",
+        "sha256": "a4304a8bfb18f373c71a4db84e3ae19dad0c58ba00344e828724a6606f69b30d"
+      }
+    },
+    "source_manifest": {
+      "path": "reports/gates/p07/scaffold-v2/source-manifest.json",
+      "sha256": "63147ac2aa8d9027e10ba767dc3de413088f88d03fc9a5032c4f305a13821317"
+    },
+    "task_receipts": {
+      "task_1": {
+        "commit": "fd43bb83074e1dd75b5d7f44d9973f790e746a80",
+        "path": "reports/gates/p07/task-1.json",
+        "sha256": "3d06a78a25f463405d8ee3ce8a31e344f38d698fce3b3d303a73e5dcd2b35f06"
+      },
+      "task_2": {
+        "commit": "cee78ac90ae9a4dc3b07518089df26c8d64f68d1",
+        "path": "reports/gates/p07/task-2.json",
+        "sha256": "3f2e59a113bcb38c6a53b14d8ee70c37823a29cdc2ef603d1b26b6da9f1d571a"
+      },
+      "task_3": {
+        "commit": "0d5b7fbc9a079e8816bf4acfef6ee0e5b741a123",
+        "path": "reports/gates/p07/task-3.json",
+        "sha256": "26d05b906e14c6c9aeaf24b392082578ac788689b4cac7a088b80da170e2caef"
+      }
+    }
+  },
+  "implementation": {
+    "head": "7e4d792f09c674420217dd8777ef1b1217bbbade",
+    "tree": "ffc8d051d9350021cab95d6655e5712f3d260a90"
+  },
+  "plan_id": "P07-SCAFFOLD-NEGATIVE-SOURCE-VERIFIER-V1",
+  "production_gate": {
+    "command": "scripts/gates/p07/scaffold-v2/verify.sh",
+    "exit": 0,
+    "marker": "P07_PACKAGING_SCAFFOLD_EXACT_CURRENT_PASS",
+    "script_sha256": "4d2d8e28eab61891fff54a5964d816f9a9308ef9e3e03671d246010f7a2a7ea8",
+    "structured_result": {
+      "correction_receipt_commit": "d6a2604253f7eb1e4a78d389be9ac1734687dd01",
+      "implementation_head": "7e4d792f09c674420217dd8777ef1b1217bbbade",
+      "overall": "3/7",
+      "p07": "3/8",
+      "qualification": "NOT_QUALIFIED",
+      "source_verification": "NOT_QUALIFIED",
+      "tasks": [
+        1,
+        2,
+        3
+      ]
+    },
+    "subject_head": "d6a2604253f7eb1e4a78d389be9ac1734687dd01"
+  },
+  "release_claims": {
+    "notarized": false,
+    "publication_ready": false,
+    "release_qualified": false,
+    "signed": false
+  },
+  "schema_version": "taskseal.p07.exact-current-consolidated.v1",
+  "state": {
+    "accepted_tasks": [
+      1,
+      2,
+      3
+    ],
+    "overall": "3/7",
+    "p07": "3/8",
+    "qualification": "NOT_QUALIFIED",
+    "source_verification": "NOT_QUALIFIED"
+  },
+  "terminal_review": "PENDING"
+}
