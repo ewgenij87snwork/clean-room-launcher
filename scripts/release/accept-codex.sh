@@ -3,6 +3,11 @@
 set -eu
 
 artifact= artifact_sha= p06= p04= capture= output= fixture=false
+if [ "${1:-}" = "--verify-output" ]; then
+  output=${2:?}
+  ruby -rjson -rdigest -e 'x=JSON.parse(File.read(ARGV[0])); h=x.delete("output_sha256"); abort "OUTPUT_EDITED" unless h == Digest::SHA256.hexdigest(JSON.generate(x));' "$output" || { echo "P08_CODEX_ACCEPTANCE_REFUSED:OUTPUT_EDITED" >&2; exit 72; }
+  echo "P08_CODEX_ACCEPTANCE_OUTPUT_VERIFIED"; exit 0
+fi
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --artifact) artifact=${2:?}; shift 2 ;;
