@@ -17,10 +17,10 @@ if argv in (["--prefix"], ["--repository"]):
 elif argv == ["--cellar"]: print(root / "live" if scenario == "reported_cellar_mismatch" else prefix / "Cellar")
 elif argv[:2] == ["trust", "--tap"]: raise SystemExit(2)
 elif argv[:2] in (["trust", "--formula"], ["untrust", "--formula"]):
-    if len(argv) != 3 or argv[2] not in formulae or (argv[0] == "trust" and (os.environ.get("HOMEBREW_REQUIRE_TAP_TRUST") != "1" or os.environ.get("HOMEBREW_ALLOWED_TAPS") != "taskseal-local/preview" or scenario == "missing_item_trust")): raise SystemExit(2)
+    if len(argv) != 3 or argv[2] not in formulae or (argv[0] == "trust" and (os.environ.get("HOMEBREW_REQUIRE_TAP_TRUST") != "1" or os.environ.get("HOMEBREW_ALLOWED_TAPS") != str(root / "tap") or scenario == "missing_item_trust")): raise SystemExit(2)
     state["trusted"] = sorted(set(state["trusted"] + [argv[2]])) if argv[0] == "trust" else [x for x in state["trusted"] if x != argv[2]]
 elif argv[0] == "tap":
-    if argv[:2] != ["tap", "taskseal-local/preview"] or len(argv) != 3 or not Path(argv[2]).resolve().is_relative_to(root): raise SystemExit(2)
+    if argv[:2] != ["tap", "taskseal-local/preview"] or len(argv) != 3 or not Path(argv[2]).resolve().is_relative_to(root) or os.environ.get("HOMEBREW_ALLOWED_TAPS") != argv[2]: raise SystemExit(2)
     state["tap"] = True
 elif argv[0] in {"style", "audit", "test", "upgrade", "unlink", "link", "install", "uninstall"}:
     item = argv[-1]
