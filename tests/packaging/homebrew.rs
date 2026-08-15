@@ -56,6 +56,7 @@ fn fake_lifecycle_closed_refusal_matrix_is_canonical_and_cleanup_owned() {
         ("metadata_substitution", "ARTIFACT_METADATA_MISMATCH"),
         ("stale_link", "ROLLBACK_REFUSED"),
         ("unexpected_installed_path", "INSTALL_REFUSED"),
+        ("smoke_refusal", "DUAL_NAME_PARITY_REFUSED"),
         ("config_mutation", "CONFIG_MUTATION_REFUSED"),
         ("sentinel_taskseal_mutation", "CONFIG_MUTATION_REFUSED"),
         ("sentinel_provider_mutation", "CONFIG_MUTATION_REFUSED"),
@@ -71,6 +72,7 @@ fn fake_lifecycle_closed_refusal_matrix_is_canonical_and_cleanup_owned() {
         assert!(json.contains(&format!("\"failure_class\":\"{}\"", refusal)), "{}: {}", scenario, json);
         assert!(json.contains("\"raw_output\"")==false && json.contains("/Users/")==false, "{} leaked evidence: {}", scenario, json);
         if scenario == "tap_clone_failed" { assert!(json.contains("\"diagnostic\":\"tap_clone_refused\""), "{}: {}", scenario, json); }
+        if scenario == "smoke_refusal" { assert!(json.contains("\"diagnostic\":\"smoke_formula_test_sandbox_refused\""), "{}: {}", scenario, json); }
         if !scenario.starts_with("reported_") {
             assert!(ledger.contains("[\"untap\",\"taskseal-local/preview\"]"), "{} did not run cleanup: {}", scenario, ledger);
         }

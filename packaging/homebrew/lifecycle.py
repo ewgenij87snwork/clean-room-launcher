@@ -136,6 +136,12 @@ def install_diagnostic(output: str) -> str:
     safe_tokens = tuple(token for token in ("error", "failed", "formula", "tap", "trust", "command", "ruby", "sandbox", "network", "curl", "bottle", "source", "dependency", "permission", "macos", "architecture", "resource", "download", "checksum", "cellar", "prefix", "keg", "link", "directory", "file", "unsupported", "unavailable", "forbidden", "allowed", "require", "unknown", "fatal") if token in value)
     return "install_unclassified_" + ("_".join(safe_tokens) if safe_tokens else "nonempty")
 
+def smoke_diagnostic(output: str) -> str:
+    value = output.lower()
+    if all(token in value for token in ("formula", "test", "sandbox")): return "smoke_formula_test_sandbox_refused"
+    tokens = tuple(token for token in ("formula", "test", "sandbox", "failed", "error", "permission", "network", "dependency") if token in value)
+    return "smoke_" + ("_".join(tokens) if tokens else "nonempty") + "_refused"
+
 def sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
@@ -220,7 +226,7 @@ def preflight(paths: SafeHomebrew, scenario: str | None, network_bound: bool = F
 def run_step(paths: SafeHomebrew, name: str, argv: list[str], refusal: str, scenario: str | None, steps: list[dict[str, object]], network_bound: bool = False, loopback_port: int | None = None) -> None:
     if argv[0] in MUTATING: preflight(paths, scenario, network_bound, loopback_port)
     result = invoke(paths, argv, scenario, network_bound, loopback_port)
-    diagnostic = tap_diagnostic(result.stderr) if name == "tap" and result.returncode else (install_diagnostic(result.stdout + "\n" + result.stderr) if name == "install_current" and result.returncode else None)
+    diagnostic = tap_diagnostic(result.stderr) if name == "tap" and result.returncode else (install_diagnostic(result.stdout + "\n" + result.stderr) if name == "install_current" and result.returncode else (smoke_diagnostic(result.stdout + "\n" + result.stderr) if name in {"smoke", "test"} and result.returncode else None))
     steps.append(StepResult(name, result.returncode, diagnostic).evidence())
     if result.returncode: raise LifecycleRefused(refusal)
 
