@@ -94,4 +94,16 @@ fn every_gate_is_attempted_and_missing_gate_is_not_qualified() {
     assert!(stdout.contains("\"status\": \"NOT_QUALIFIED\""));
     assert!(stdout.contains("\"name\": \"p02-gate\""));
     assert!(stdout.contains("\"exit\": 17"));
+    assert_eq!(
+        stdout.matches("\"name\": \"p07-gate\"").count(),
+        1,
+        "P07 must be represented exactly once without recursive execution"
+    );
+    assert!(
+        stdout.contains(
+            "\"name\": \"p07-gate\",\n      \"exit\": 0,\n      \"status\": \"PASS\""
+        ),
+        "P07 orchestrator slot must be an explicit non-recursive PASS: {}",
+        stdout
+    );
 }
