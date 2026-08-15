@@ -1,0 +1,32 @@
+{
+  "schema_version": "taskseal.p07.task-receipt.v1",
+  "plan_id": "P07",
+  "task": 8,
+  "result": "accepted",
+  "acceptance": {
+    "id": "ACC-P07-T8",
+    "operator_result": "The sole P07 gate binds Tasks 1–7, the real local Homebrew lifecycle, Cargo source installation, deterministic artifacts, checksum/CycloneDX/SLSA evidence and honest signing states to one immutable subject without claiming release qualification.",
+    "evidence_ids": ["EVD-P07-T8-MUTATIONS", "EVD-P07-T8-CONSOLIDATED"]
+  },
+  "binding": {
+    "input_head": "185e95d4ebcd14c5b9f3cc0f4fb0b49cb6957836",
+    "implementation_head": "057aacad19d375ed65f332d0d9da6d69d1bbbcf4",
+    "implementation_tree": "61002dc505802b945eb983575f1f9728744dde51",
+    "receipt_seal_role": "receipt-only-child",
+    "gate_subject_head": "c63ac57c1ca64e45eb48867fa030a7066e3411ae",
+    "implementation_files": ["scripts/gates/p07/verify.sh", "scripts/gates/p07/verify.py", "tests/packaging/lifecycle/test_gate.py", "reports/gates/p07/supply-chain-gate.json"]
+  },
+  "evidence": [
+    {"id": "EVD-P07-T8-MUTATIONS", "command": "python3 tests/packaging/lifecycle/test_gate.py", "exit": 0, "marker": "P07_FINAL_GATE_MUTATIONS_PASS mutations=3"},
+    {"id": "EVD-P07-T8-CONSOLIDATED", "command": "scripts/gates/p07/verify.sh", "exit": 0, "marker": "P07_SUPPLY_CHAIN_GATE_PASS qualification=NOT_QUALIFIED p07=8/8 overall=3/7", "result_sha256": "3742f0f9446b9b1fc86fac49709af4e2d4ead7647e474803a5e5453147b83af2"}
+  ],
+  "subjects": {
+    "scripts/gates/p07/verify.sh": "a296d4ee136e9556441dced4aaf5eb8875c1bec4649b8f9f8d71610782d00803",
+    "scripts/gates/p07/verify.py": "0998d4085227dc05a7870fbcf5a53b6828755ff0755d4707f14785e29f99c7e2",
+    "tests/packaging/lifecycle/test_gate.py": "7e34ba132a45b688aec04eedb8f831122f9c9b98f95cb2b6454481c26edc656a",
+    "reports/gates/p07/supply-chain-gate.json": "3742f0f9446b9b1fc86fac49709af4e2d4ead7647e474803a5e5453147b83af2"
+  },
+  "qualification": "NOT_QUALIFIED",
+  "progress": {"overall": "3/7", "p07": "8/8"},
+  "controls": {"same_subject": true, "all_receipts_bound": true, "real_homebrew_lifecycle": true, "cleanup_complete": true, "publication": false, "network": false, "credentials": false, "main_mutation": false, "integration": false}
+}
