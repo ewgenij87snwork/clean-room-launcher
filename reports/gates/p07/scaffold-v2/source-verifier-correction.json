@@ -1,0 +1,38 @@
+{
+  "base_head": "e28e47309bde88582719a3e1b389667b8dfbc141",
+  "evidence": {
+    "green": {
+      "command": "sh -c 'test -x scripts/gates/p07/scaffold-v2/verify.sh; executable_exit=$?; CARGO_MANIFEST_DIR=\"$PWD\" rustc --test tests/packaging/no_skip.rs -o /tmp/p07-negative-no-skip-green && /tmp/p07-negative-no-skip-green; rust_exit=$?; python3 scripts/gates/p07/scaffold-v2/test-verify.py; gate_exit=$?; printf \"executable_exit=%s no_skip_exit=%s exact_current_exit=%s\\n\" \"$executable_exit\" \"$rust_exit\" \"$gate_exit\"; test \"$executable_exit\" -eq 0 && test \"$rust_exit\" -eq 0 && test \"$gate_exit\" -eq 0'",
+      "exact_current_exit": 0,
+      "executable_exit": 0,
+      "marker": "P07_EXACT_CURRENT_TEST_PASS cases=4",
+      "no_skip_exit": 0
+    },
+    "red": {
+      "command": "sh -c 'CARGO_MANIFEST_DIR=\"$PWD\" rustc --test tests/packaging/no_skip.rs -o /tmp/p07-negative-no-skip && /tmp/p07-negative-no-skip; rust_exit=$?; python3 scripts/gates/p07/scaffold-v2/test-verify.py; gate_exit=$?; printf \"no_skip_exit=%s exact_current_exit=%s\\n\" \"$rust_exit\" \"$gate_exit\"; test \"$rust_exit\" -eq 0 && test \"$gate_exit\" -eq 0'",
+      "exact_current_exit": 1,
+      "no_skip_exit": 101
+    }
+  },
+  "forbidden_actions": {
+    "external_contact": false,
+    "integration": false,
+    "main_mutation": false,
+    "notarization": false,
+    "provider_requests": false,
+    "publication": false,
+    "signing": false,
+    "upload": false
+  },
+  "implementation_head": "7e4d792f09c674420217dd8777ef1b1217bbbade",
+  "implementation_tree": "ffc8d051d9350021cab95d6655e5712f3d260a90",
+  "plan_id": "P07-SCAFFOLD-NEGATIVE-SOURCE-VERIFIER-V1",
+  "qualification": "NOT_QUALIFIED",
+  "schema_version": "taskseal.p07.scaffold-negative-source-verifier-receipt.v1",
+  "subjects": {
+    "scripts/gates/p07/scaffold-v2/test-verify.py": "2eb7bfb6dc0510d66472a60cb549cbcaf49d0102b84860ade6ffa06aca6258d1",
+    "scripts/gates/p07/scaffold-v2/verify.sh": "4d2d8e28eab61891fff54a5964d816f9a9308ef9e3e03671d246010f7a2a7ea8",
+    "scripts/release-build/verify-source.sh": "ccff7c1796904d82a3ae3b7f23d8513e9660993b6e0f6aee38a9fac33cec747a",
+    "tests/packaging/no_skip.rs": "373b84fd91fc236dad939fab6c46551ac444dc860665ffb367a96efed656ffc4"
+  }
+}
