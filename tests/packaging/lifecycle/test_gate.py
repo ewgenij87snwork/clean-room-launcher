@@ -23,7 +23,7 @@ def clone() -> Path:
     subprocess.run(["git", "config", "user.name", "p07-test"], cwd=root, check=True)
     subprocess.run(["git", "config", "user.email", "p07-test@example.invalid"], cwd=root, check=True)
     subprocess.run(["git", "add", "packaging", "tests/packaging", "scripts/gates/p07", "reports/gates/p07"], cwd=root, check=True)
-    subprocess.run(["git", "commit", "--quiet", "-m", "fixture baseline"], cwd=root, check=True)
+    subprocess.run(["git", "commit", "--quiet", "--allow-empty", "-m", "fixture baseline"], cwd=root, check=True)
     return root
 
 
