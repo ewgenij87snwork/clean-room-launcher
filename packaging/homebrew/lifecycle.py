@@ -58,7 +58,7 @@ def make_paths(root: Path, brew: Path) -> SafeHomebrew:
     root = root.resolve(); prefix = root / "prefix"
     return SafeHomebrew(root, prefix, prefix, prefix / "Cellar", root / "cache", root / "config", root / "home", root / "temp", brew.resolve())
 
-def closed_env(paths: SafeHomebrew, scenario: str | None = None) -> dict[str, str]:
+def closed_env(paths: SafeHomebrew, scenario: str | None = None, native_install_boundary: bool = False) -> dict[str, str]:
     for path in (paths.home, paths.cache, paths.user_config, paths.temp, paths.prefix, paths.cellar, paths.root / "data"):
         path.mkdir(parents=True, exist_ok=True)
     poison = paths.root / "poison"; poison.mkdir(parents=True, exist_ok=True)
@@ -68,6 +68,9 @@ def closed_env(paths: SafeHomebrew, scenario: str | None = None) -> dict[str, st
         script.write_text("#!/bin/sh\nprintf invoked > \"$P07_POISON_CAPTURE\"\nexit 97\n", encoding="utf-8")
         script.chmod(0o755)
     env = {"PATH": f"{poison}:/usr/bin:/bin:/usr/sbin:/sbin", "HOME": str(paths.home), "XDG_CONFIG_HOME": str(paths.user_config), "XDG_CACHE_HOME": str(paths.cache), "XDG_DATA_HOME": str(paths.root / "data"), "GIT_CONFIG_GLOBAL": str(paths.root / "gitconfig"), "HOMEBREW_PREFIX": str(paths.prefix), "HOMEBREW_REPOSITORY": str(paths.repository), "HOMEBREW_CELLAR": str(paths.cellar), "HOMEBREW_CACHE": str(paths.cache), "HOMEBREW_TEMP": str(paths.temp), "HOMEBREW_USER_CONFIG_HOME": str(paths.user_config), "HOMEBREW_NO_AUTO_UPDATE": "1", "HOMEBREW_NO_ANALYTICS": "1", "HOMEBREW_NO_INSTALL_CLEANUP": "1", "HOMEBREW_NO_AUTOREMOVE": "1", "HOMEBREW_NO_ASK": "1", "HOMEBREW_AVOID_NESTED_SANDBOXING": "1", "HOMEBREW_REQUIRE_TAP_TRUST": "1", "HOMEBREW_ALLOWED_TAPS": str(paths.root / "tap"), "P07_FAKE_ROOT": str(paths.root), "P07_POISON_CAPTURE": str(capture)}
+    if native_install_boundary:
+        env.pop("HOMEBREW_AVOID_NESTED_SANDBOXING")
+        env.update({"P07_NETWORK_BOUNDARY": "homebrew-native-sandbox-loopback-proxy", "HTTP_PROXY": "http://127.0.0.1:9", "HTTPS_PROXY": "http://127.0.0.1:9", "ALL_PROXY": "http://127.0.0.1:9", "NO_PROXY": "127.0.0.1,localhost", "http_proxy": "http://127.0.0.1:9", "https_proxy": "http://127.0.0.1:9", "all_proxy": "http://127.0.0.1:9", "no_proxy": "127.0.0.1,localhost", "GIT_ALLOW_PROTOCOL": "file"})
     if scenario == "missing_require_tap_trust": env.pop("HOMEBREW_REQUIRE_TAP_TRUST")
     if scenario == "wrong_allowed_taps": env["HOMEBREW_ALLOWED_TAPS"] = "other/tap"
     if scenario: env["P07_SCENARIO"] = scenario
@@ -104,8 +107,9 @@ def serve_exact_archive(archive: Path):
 
 def invoke(paths: SafeHomebrew, argv: list[str], scenario: str | None, network_bound: bool = False, loopback_port: int | None = None) -> subprocess.CompletedProcess[str]:
     command = [sys.executable, str(paths.brew), *argv] if paths.brew.suffix == ".py" else [str(paths.brew), *argv]
-    if network_bound: command = deny_network(command, loopback_port)
-    return subprocess.run(command, cwd=paths.root, env=closed_env(paths, scenario), text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+    native_install_boundary = network_bound and argv[0] in {"install", "test"}
+    if network_bound and not native_install_boundary: command = deny_network(command, loopback_port)
+    return subprocess.run(command, cwd=paths.root, env=closed_env(paths, scenario, native_install_boundary), text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
 
 def tap_diagnostic(stderr: str) -> str:
     value = stderr.lower()
@@ -325,7 +329,7 @@ def real_current_lifecycle(paths: SafeHomebrew, scenario: str | None, archive: d
     except LifecycleRefused as exc: failure = exc.code
     complete = cleanup_real_current(paths, scenario, steps, installed)
     if not complete and failure is None: failure = "CLEANUP_REFUSED"
-    return document(steps, complete, failure, checks, "real-current", archive, "deny-network-sandbox")
+    return document(steps, complete, failure, checks, "real-current", archive, "homebrew-native-sandbox-loopback-proxy")
 
 def main() -> int:
     parser = argparse.ArgumentParser(); parser.add_argument("--fake", action="store_true"); parser.add_argument("--fake-brew"); parser.add_argument("--brew-source"); parser.add_argument("--api-cache-source"); parser.add_argument("--input-contract"); parser.add_argument("--real-archive"); parser.add_argument("--expected-sha256"); parser.add_argument("--expected-source-commit"); parser.add_argument("--scenario"); parser.add_argument("--inject-failure"); parser.add_argument("--workspace", required=True); parser.add_argument("--output", required=True); args = parser.parse_args()
