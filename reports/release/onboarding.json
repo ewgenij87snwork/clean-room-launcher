@@ -1,6 +1,12 @@
 {
   "schema_version": "taskseal.onboarding-readiness.v1",
   "result": "PREPARED_NOT_QUALIFIED",
+  "artifact_link_receipt": {
+    "identity": "reports/release/candidate.json#/release_artifact",
+    "p07_evidence": "reports/gates/p07/task-3.json#/claims/archive_sha256",
+    "expected_sha256": "656f8701e84e0d7a72c4dbdb62d8ad20733e5743b602ff0fd6447c711a211d33",
+    "verified_sha256": "656f8701e84e0d7a72c4dbdb62d8ad20733e5743b602ff0fd6447c711a211d33"
+  },
   "internal_fixture": {
     "kind": "DETERMINISTIC_STATE_MACHINE",
     "result": "PASS",

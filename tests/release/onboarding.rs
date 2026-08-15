@@ -19,6 +19,7 @@ fn check(path: &Path) -> std::process::Output {
 const VALID: &str = r#"{
   "schema_version":"taskseal.onboarding-readiness.v1",
   "result":"PREPARED_NOT_QUALIFIED",
+  "artifact_link_receipt":{"identity":"reports/release/candidate.json#/release_artifact","p07_evidence":"reports/gates/p07/task-3.json#/claims/archive_sha256","expected_sha256":"656f8701e84e0d7a72c4dbdb62d8ad20733e5743b602ff0fd6447c711a211d33","verified_sha256":"656f8701e84e0d7a72c4dbdb62d8ad20733e5743b602ff0fd6447c711a211d33"},
   "internal_fixture":{"kind":"DETERMINISTIC_STATE_MACHINE","result":"PASS","active_seconds":42,"user_wait_seconds":11,"help_events":0,"error_events":0,"states":["ARTIFACT_RECEIVED","DIGEST_VERIFIED","PUBLISHED_DOCS_ONLY","ONE_COMMAND_STARTED","CLEAN_CODEX_VERIFIED","CLEANUP_VERIFIED"]},
   "external_observation":{"status":"NOT_RUN","reason":"OWNER_GATE_REQUIRED_EXTERNAL_USER"},
   "setup_time_claim":{"status":"UNAVAILABLE","reason":"NO_OBSERVED_DISTRIBUTION"},
@@ -35,10 +36,13 @@ fn checker_accepts_only_a_closed_sanitized_internal_readiness_fixture() {
     assert_eq!(String::from_utf8_lossy(&output.stdout), "P08_ONBOARDING_READY internal=PASS external=NOT_RUN setup_time=UNAVAILABLE\n");
 
     for (name, from, to, refusal) in [
-        ("missing-digest", "\"DIGEST_VERIFIED\",", "", "ARTIFACT_OR_DIGEST"),
+        ("missing-receipt", "\"artifact_link_receipt\":{\"identity\":\"reports/release/candidate.json#/release_artifact\",\"p07_evidence\":\"reports/gates/p07/task-3.json#/claims/archive_sha256\",\"expected_sha256\":\"656f8701e84e0d7a72c4dbdb62d8ad20733e5743b602ff0fd6447c711a211d33\",\"verified_sha256\":\"656f8701e84e0d7a72c4dbdb62d8ad20733e5743b602ff0fd6447c711a211d33\"},", "", "ARTIFACT_RECEIPT"),
+        ("mismatched-digest", "\"verified_sha256\":\"656f8701e84e0d7a72c4dbdb62d8ad20733e5743b602ff0fd6447c711a211d33\"", "\"verified_sha256\":\"0000000000000000000000000000000000000000000000000000000000000000\"", "ARTIFACT_DIGEST_MISMATCH"),
         ("collapsed-time", "\"user_wait_seconds\":11", "\"user_wait_seconds\":0", "TIME_COLLAPSED"),
         ("coaching", "\"PUBLISHED_DOCS_ONLY\"", "\"COACHED\"", "COACHING"),
         ("private", "\"sanitized\":true", "\"private_path\":\"/Users/owner\",\"sanitized\":true", "PRIVATE_DATA"),
+        ("impossible-chronology", "\"ARTIFACT_RECEIVED\",\"DIGEST_VERIFIED\"", "\"DIGEST_VERIFIED\",\"ARTIFACT_RECEIVED\"", "IMPOSSIBLE_CHRONOLOGY"),
+        ("raw-retention", "\"raw_user_data_retained\":false", "\"raw_user_data_retained\":true", "RAW_DATA_RETENTION"),
         ("unsupported-tuple", "\"CLEAN_CODEX_VERIFIED\"", "\"UNSUPPORTED_TUPLE\"", "UNSUPPORTED_TUPLE"),
         ("missing-cleanup", "\"verified_by_fixture\":true", "\"verified_by_fixture\":false", "CLEANUP"),
         ("fake-human", "\"kind\":\"DETERMINISTIC_STATE_MACHINE\"", "\"kind\":\"HUMAN_OBSERVATION\"", "FAKE_HUMAN_PROMOTION"),
