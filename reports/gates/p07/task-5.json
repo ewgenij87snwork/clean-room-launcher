@@ -1,0 +1,26 @@
+{
+  "schema_version": "taskseal.p07.task-receipt.v1",
+  "plan_id": "P07",
+  "task": 5,
+  "result": "accepted",
+  "acceptance": {
+    "id": "ACC-P07-T5",
+    "operator_result": "A locked offline local Cargo source install provides both TaskSeal entrypoints, preserves their semantic parity, and uninstalls only Cargo-managed files without inheriting binary-distribution signing or provenance claims.",
+    "evidence_ids": ["EVD-P07-T5-RED", "EVD-P07-T5-GREEN"]
+  },
+  "binding": {
+    "input_head": "540f94c6110c8341e86db59547dba375c436a0db",
+    "implementation_head": "cd08cecf60131cd612ac11847ddfca19829f425b",
+    "implementation_files": ["packaging/cargo/README.md", "tests/packaging/cargo_install.rs"]
+  },
+  "evidence": [
+    {"id": "EVD-P07-T5-RED", "command": "focused cargo_install test before implementation", "exit": 101, "meaning": "The required bounded Cargo installation policy did not exist."},
+    {"id": "EVD-P07-T5-GREEN", "command": "CARGO_MANIFEST_DIR=\"$PWD\" rustc --test tests/packaging/cargo_install.rs -o /tmp/p07-cargo-install-final && /tmp/p07-cargo-install-final", "exit": 0, "output": "1 passed; 0 failed", "meaning": "Actual locked offline install, dual-name semantic parity and Cargo uninstall scope pass."}
+  ],
+  "subjects": {
+    "packaging/cargo/README.md": "2c91baca66cb3f821154442e586519a2511336dba88a3481d15df67ed9a19f0c",
+    "tests/packaging/cargo_install.rs": "80af52c774b562d2e41ee66fb335ebdaf0a4ae1acbac2dc7572ccf5d5f514fd9"
+  },
+  "qualification": "NOT_QUALIFIED",
+  "controls": {"offline": true, "registry_publication": false, "binary_signing_claim_inherited": false, "binary_provenance_claim_inherited": false, "main_mutation": false}
+}

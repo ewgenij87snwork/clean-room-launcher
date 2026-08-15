@@ -1,0 +1,27 @@
+{
+  "schema_version": "taskseal.p07.task-receipt.v1",
+  "plan_id": "P07",
+  "task": 6,
+  "result": "accepted",
+  "acceptance": {
+    "id": "ACC-P07-T6",
+    "operator_result": "Exact archive subjects produce SHA-256 checksums, CycloneDX 1.7 SBOMs and SLSA provenance with closed builder and source bindings; malformed or privacy-unsafe claims fail closed.",
+    "evidence_ids": ["EVD-P07-T6-RED", "EVD-P07-T6-GREEN"]
+  },
+  "binding": {
+    "input_head": "cd08cecf60131cd612ac11847ddfca19829f425b",
+    "implementation_head": "c24177ee96426061a2b3d1bef5944f9a348f7975",
+    "implementation_files": ["packaging/supply-chain/generate.sh", "packaging/supply-chain/policy.toml", "tests/packaging/supply_chain.rs"]
+  },
+  "evidence": [
+    {"id": "EVD-P07-T6-RED", "command": "focused supply_chain test before implementation", "exit": 101, "meaning": "The supply-chain generator/verifier did not exist."},
+    {"id": "EVD-P07-T6-GREEN", "command": "CARGO_MANIFEST_DIR=\"$PWD\" rustc --test tests/packaging/supply_chain.rs -o /tmp/p07-supply-chain-final && /tmp/p07-supply-chain-final", "exit": 0, "output": "1 passed; 0 failed", "meaning": "Generation and independent refusal tests for subject, builder, component/license and private data pass."}
+  ],
+  "subjects": {
+    "packaging/supply-chain/generate.sh": "72b1ae5fa8238e9e71a5f50117146157fc7ab8f616cb0273c99e4a83e9d32a92",
+    "packaging/supply-chain/policy.toml": "612ac3cee1d03d572efc6ebe08dfaf9a9a61ccd90e589619daf70bc3e6bd605a",
+    "tests/packaging/supply_chain.rs": "d4e8d9a8b7c226d3b71a12006dfb7a4f7204df20027458cc791d656f28d0d1f8"
+  },
+  "qualification": "NOT_QUALIFIED",
+  "controls": {"cyclonedx_profile": "1.7", "slsa_predicate": "https://slsa.dev/provenance/v1", "exact_subject": true, "closed_builder": true, "network": false, "publication": false, "main_mutation": false}
+}

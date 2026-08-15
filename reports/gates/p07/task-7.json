@@ -1,0 +1,27 @@
+{
+  "schema_version": "taskseal.p07.task-receipt.v1",
+  "plan_id": "P07",
+  "task": 7,
+  "result": "accepted",
+  "acceptance": {
+    "id": "ACC-P07-T7",
+    "operator_result": "Signing claims are stateful and platform-verified: authenticated identities are required for signed states, while the available ad-hoc macOS artifact remains an explicit unsigned NOT_QUALIFIED preview.",
+    "evidence_ids": ["EVD-P07-T7-RED", "EVD-P07-T7-GREEN"]
+  },
+  "binding": {
+    "input_head": "c24177ee96426061a2b3d1bef5944f9a348f7975",
+    "implementation_head": "8b4b7b467e67dce3e3027fd9bc75159434d6eb2f",
+    "implementation_files": ["packaging/signing/policy.md", "packaging/signing/verify.sh", "tests/packaging/signing.rs"]
+  },
+  "evidence": [
+    {"id": "EVD-P07-T7-RED", "command": "focused signing test before implementation and ad-hoc regression", "exit": 101, "meaning": "The verifier was absent, then the real compiler-produced ad-hoc state required an explicit unsigned-preview contract."},
+    {"id": "EVD-P07-T7-GREEN", "command": "CARGO_MANIFEST_DIR=\"$PWD\" rustc --test tests/packaging/signing.rs -o /tmp/p07-signing-final && /tmp/p07-signing-final", "exit": 0, "output": "1 passed; 0 failed; P07_SIGNING_VERIFY_PASS state=unsigned qualification=NOT_QUALIFIED evidence=platform signature=adhoc", "meaning": "Unsigned, ad-hoc, wrong-identity, tampered and valid-state policy paths are enforced without signing actions."}
+  ],
+  "subjects": {
+    "packaging/signing/policy.md": "4961f3f1ea5ee19551f05ce9813fc98cf30d1fb0ddba4a18760614a1a3789755",
+    "packaging/signing/verify.sh": "0209409468b72c329060d166af77b51c55649a9d704abd41e1a6832b9c01136e",
+    "tests/packaging/signing.rs": "725c69f5ba3383b230b164432ebecbaad8606b376dad64ac50f78e4aca5111ae"
+  },
+  "qualification": "NOT_QUALIFIED",
+  "controls": {"platform_verification_required": true, "adhoc_is_authenticated": false, "credentials_accessed": false, "signing_performed": false, "notarization_performed": false, "network": false, "main_mutation": false}
+}
