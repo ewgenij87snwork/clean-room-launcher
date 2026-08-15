@@ -509,9 +509,26 @@ fn receipt_validator_recomputes_subjects_topology_and_descendant_durability() {
     );
     assert!(String::from_utf8_lossy(&descendant.stdout).contains("P08_T3_RECEIPT_DURABILITY_PASS"));
 
-    let stale_receipt = root().join("reports/gates/p08/task-3.json");
+    let current_receipt = root().join("reports/gates/p08/task-3.json");
+    let current = verify_receipt(&root(), &current_receipt, "HEAD");
+    assert!(
+        current.status.success(),
+        "{}",
+        String::from_utf8_lossy(&current.stderr)
+    );
+    assert!(String::from_utf8_lossy(&current.stdout).contains("P08_T3_RECEIPT_DURABILITY_PASS"));
+
+    let malformed_format = scratch.join("malformed-subject-format.json");
+    write(
+        &malformed_format,
+        &fs::read_to_string(&current_receipt).unwrap().replacen(
+            "109f84a1118a867d20fa8bb0796d1ca6dbc6306e395d38986ff713d93115c739",
+            "7951495b2527a1e39b3f09ccd2b00199b4ad8e05",
+            1,
+        ),
+    );
     assert_refusal(
-        verify_receipt(&root(), &stale_receipt, "HEAD"),
+        verify_receipt(&root(), &malformed_format, "HEAD"),
         "SUBJECT_SHA256_FORMAT_INVALID",
         &PathBuf::from("/never-created"),
     );
