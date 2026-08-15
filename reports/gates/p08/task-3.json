@@ -1,1 +1,80 @@
-{"schema_version":"taskseal.p08.task-receipt.v1","plan_id":"P08","task":3,"acceptance_id":"ACC-P08-T3","qualification":"NOT_QUALIFIED","result":"PREPARED_NOT_QUALIFIED","binding":{"input_head":"62e0882af1cc90df4b26c7848f9eaf316c01207c","implementation_head":"61295bc2a9eadc887a9e17432c10b3b22a8024fa","receipt_commit_parent":"61295bc2a9eadc887a9e17432c10b3b22a8024fa","receipt_seal_role":"receipt-only-child"},"evidence":[{"id":"EVD-P08-T3-RED","command":"CARGO_MANIFEST_DIR=\"$PWD\" rustc --edition=2024 --test tests/release/codex_acceptance.rs -o /tmp/taskseal-codex-acceptance-tdd && /tmp/taskseal-codex-acceptance-tdd --nocapture","exit":101,"result":"acceptance harness was absent"},{"id":"EVD-P08-T3-GREEN","command":"CARGO_MANIFEST_DIR=\"$PWD\" rustc --edition=2024 --test tests/release/codex_acceptance.rs -o /tmp/taskseal-codex-acceptance-tdd && /tmp/taskseal-codex-acceptance-tdd --nocapture","exit":0,"result":"3 focused deterministic capture and refusal tests passed"}],"subjects":{"reports/release/codex-alpha.json":"7951495b2527a1e39b3f09ccd2b00199b4ad8e05","scripts/release/accept-codex.sh":"f138f91bdddf5a0505ae639743ec4a72b83b823f","tests/release/codex_acceptance.rs":"ce9219dfaf94f187991e3eb20e0c2c67e190ee4d"},"subject_sha256":{"algorithm":"sha256 of sorted path, tab, sha256, newline records","value":"aba6ccbed24d15b8c526bb095fa966a4ec9305ad23f36c37260c6490c0f889aa"},"live_observation":"NOT_RUN","owner_gate_reason":"OWNER_GATE_REQUIRED_PROVIDER_PROCESS","controls":{"deterministic_fake_cannot_qualify_live_observation":true,"artifact_p06_p04_bound":true,"terminal_required":true,"no_provider_process":true,"network":false,"browser_or_login":false,"credential_read":false,"external_contact":false,"publication":false,"main_mutation":false,"integration":false}}
+{
+  "schema_version": "taskseal.p08.task-receipt.v1",
+  "plan_id": "P08",
+  "task": 3,
+  "acceptance_id": "ACC-P08-T3",
+  "qualification": "NOT_QUALIFIED",
+  "result": "PREPARED_NOT_QUALIFIED",
+  "binding": {
+    "input_head": "1c3ccec1d8ee48f95ad27fe616c9be51c59f9499",
+    "implementation_head": "792b37d75ec452e0f6cf63e8125dfce101798955",
+    "receipt_commit_parent": "792b37d75ec452e0f6cf63e8125dfce101798955",
+    "receipt_seal_role": "replacement-receipt-only-child",
+    "replaces_receipt_commit": "1ecba980871681ac8a62e399ae1b9e97db32a8e1",
+    "review_fix_base_head": "1c3ccec1d8ee48f95ad27fe616c9be51c59f9499"
+  },
+  "replaced_receipt": {
+    "path": "reports/gates/p08/task-3.json",
+    "commit": "1ecba980871681ac8a62e399ae1b9e97db32a8e1",
+    "sha256": "f966defa839de7639ada910af4e73bd54c8dd217e94b5c9f330f39d2e1ebcaef",
+    "reason": "reviewed receipt used 40-character Git blob IDs instead of implementation subject SHA-256 values"
+  },
+  "evidence": [
+    {
+      "id": "EVD-P08-T3-R1-RED",
+      "command": "CARGO_MANIFEST_DIR=\"$PWD\" rustc --edition=2024 --test tests/release/codex_acceptance.rs -o /tmp/taskseal-codex-acceptance-round1-red && /tmp/taskseal-codex-acceptance-round1-red --nocapture",
+      "exit": 101,
+      "result": "6 focused tests failed for the missing installed provenance, immutable capture and receipt-validator interfaces"
+    },
+    {
+      "id": "EVD-P08-T3-R1-GREEN",
+      "command": "CARGO_MANIFEST_DIR=\"$PWD\" rustc --edition=2024 --test tests/release/codex_acceptance.rs -o /tmp/taskseal-codex-acceptance-replacement-seal && /tmp/taskseal-codex-acceptance-replacement-seal --nocapture",
+      "exit": 0,
+      "result": "6 focused installed-provenance, capture, refusal, tamper and descendant-durability tests passed"
+    },
+    {
+      "id": "EVD-P08-T3-R1-RECEIPT",
+      "command": "scripts/release/verify-codex-task3-receipt.sh --repo . --receipt-file reports/gates/p08/task-3.json --receipt-path reports/gates/p08/task-3.json --tip HEAD",
+      "exit": 0,
+      "result": "implementation subject SHA-256, aggregate, unique direct receipt-only child and descendant durability verified"
+    }
+  ],
+  "subjects": {
+    "reports/release/codex-alpha.json": "109f84a1118a867d20fa8bb0796d1ca6dbc6306e395d38986ff713d93115c739",
+    "schemas/release/codex-clean-launch-capture.schema.json": "4efb65309afa7b2a70dd533b4d7ad6a38c431466b6ea2dc83eb500a930b5eaab",
+    "scripts/release/accept-codex.sh": "d739d59924522d309151b7c2def92c91c225f36ec2f2b1600c381014b7d708d3",
+    "scripts/release/verify-codex-task3-receipt.sh": "ec55665bab1d4156934fe2db457d5eb0e01a975761aa78fe1a2e7be110c5683b",
+    "tests/release/codex_acceptance.rs": "cdb817f481ebaa32d2ec2f48e950085e2403dd748da3cb0355b0db0a409379c8"
+  },
+  "subject_sha256": {
+    "algorithm": "sha256 of sorted path, tab, sha256, newline records",
+    "value": "c26ad07e42647c3055c52d4858d43d9e755713119198959d5b78f895e8b44017"
+  },
+  "live_observation": "NOT_RUN",
+  "owner_gate_reason": "OWNER_GATE_REQUIRED_PROVIDER_PROCESS",
+  "controls": {
+    "production_p06_p04_paths_and_sha256_pinned": true,
+    "production_artifact_bytes_required": true,
+    "installed_archive_member_matches_external_tseal": true,
+    "developer_checkout_refused": true,
+    "capture_schema_closed_and_sha256_bound": true,
+    "exact_safe_argv": [
+      "tseal",
+      "codex",
+      "--"
+    ],
+    "p04_canary_ids_and_body_sha256_bound": true,
+    "startup_catalog_protected_cleanup_observations_bound": true,
+    "test_only_fixture_cannot_promote": true,
+    "atomic_output_and_post_write_verification": true,
+    "terminal_required": true,
+    "no_provider_process": true,
+    "network": false,
+    "browser_or_login": false,
+    "credential_read": false,
+    "external_contact": false,
+    "publication": false,
+    "main_mutation": false,
+    "integration": false
+  }
+}
