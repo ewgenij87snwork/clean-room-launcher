@@ -6,31 +6,32 @@
   "qualification": "NOT_QUALIFIED",
   "result": "PREPARED_NOT_QUALIFIED",
   "binding": {
-    "input_head": "1c3ccec1d8ee48f95ad27fe616c9be51c59f9499",
-    "implementation_head": "792b37d75ec452e0f6cf63e8125dfce101798955",
-    "receipt_commit_parent": "792b37d75ec452e0f6cf63e8125dfce101798955",
+    "input_head": "a76eb7780a4ae6b981dc0b8eafd9b04019c6ee97",
+    "implementation_head": "de6af4e624ade9e30b65080ca1bdd29bd19bcd7d",
+    "receipt_commit_parent": "de6af4e624ade9e30b65080ca1bdd29bd19bcd7d",
     "receipt_seal_role": "replacement-receipt-only-child",
-    "replaces_receipt_commit": "1ecba980871681ac8a62e399ae1b9e97db32a8e1",
-    "review_fix_base_head": "1c3ccec1d8ee48f95ad27fe616c9be51c59f9499"
+    "replaces_receipt_commit": "a76eb7780a4ae6b981dc0b8eafd9b04019c6ee97",
+    "original_receipt_commit": "1ecba980871681ac8a62e399ae1b9e97db32a8e1",
+    "review_fix_base_head": "a76eb7780a4ae6b981dc0b8eafd9b04019c6ee97"
   },
   "replaced_receipt": {
     "path": "reports/gates/p08/task-3.json",
-    "commit": "1ecba980871681ac8a62e399ae1b9e97db32a8e1",
-    "sha256": "f966defa839de7639ada910af4e73bd54c8dd217e94b5c9f330f39d2e1ebcaef",
-    "reason": "reviewed receipt used 40-character Git blob IDs instead of implementation subject SHA-256 values"
+    "commit": "a76eb7780a4ae6b981dc0b8eafd9b04019c6ee97",
+    "sha256": "17513649a09402f1c38de7820d79c9e3980a9d646f2c6c6d4476a6ff760f5bdc",
+    "reason": "round-1 seal preceded the focused-test correction that validates the current replacement receipt"
   },
   "evidence": [
     {
-      "id": "EVD-P08-T3-R1-RED",
-      "command": "CARGO_MANIFEST_DIR=\"$PWD\" rustc --edition=2024 --test tests/release/codex_acceptance.rs -o /tmp/taskseal-codex-acceptance-round1-red && /tmp/taskseal-codex-acceptance-round1-red --nocapture",
+      "id": "EVD-P08-T3-R2-RED",
+      "command": "CARGO_MANIFEST_DIR=\"$PWD\" rustc --edition=2024 --test tests/release/codex_acceptance.rs -o /tmp/taskseal-codex-acceptance-round2-red && /tmp/taskseal-codex-acceptance-round2-red --nocapture",
       "exit": 101,
-      "result": "6 focused tests failed for the missing installed provenance, immutable capture and receipt-validator interfaces"
+      "result": "5 passed and 1 failed because the current valid replacement receipt was incorrectly labelled stale"
     },
     {
-      "id": "EVD-P08-T3-R1-GREEN",
-      "command": "CARGO_MANIFEST_DIR=\"$PWD\" rustc --edition=2024 --test tests/release/codex_acceptance.rs -o /tmp/taskseal-codex-acceptance-replacement-seal && /tmp/taskseal-codex-acceptance-replacement-seal --nocapture",
+      "id": "EVD-P08-T3-R2-GREEN",
+      "command": "CARGO_MANIFEST_DIR=\"$PWD\" rustc --edition=2024 --test tests/release/codex_acceptance.rs -o /tmp/taskseal-codex-acceptance-round2-reseal && /tmp/taskseal-codex-acceptance-round2-reseal --nocapture",
       "exit": 0,
-      "result": "6 focused installed-provenance, capture, refusal, tamper and descendant-durability tests passed"
+      "result": "6 focused tests passed at the actual implementation parent, including current-receipt durability and explicit malformed-format refusal"
     },
     {
       "id": "EVD-P08-T3-R1-RECEIPT",
@@ -44,11 +45,11 @@
     "schemas/release/codex-clean-launch-capture.schema.json": "4efb65309afa7b2a70dd533b4d7ad6a38c431466b6ea2dc83eb500a930b5eaab",
     "scripts/release/accept-codex.sh": "d739d59924522d309151b7c2def92c91c225f36ec2f2b1600c381014b7d708d3",
     "scripts/release/verify-codex-task3-receipt.sh": "ec55665bab1d4156934fe2db457d5eb0e01a975761aa78fe1a2e7be110c5683b",
-    "tests/release/codex_acceptance.rs": "cdb817f481ebaa32d2ec2f48e950085e2403dd748da3cb0355b0db0a409379c8"
+    "tests/release/codex_acceptance.rs": "6058e4efdf1728e09f1241031b674e4488230c571e1afafe8ecd5186d5cb6db6"
   },
   "subject_sha256": {
     "algorithm": "sha256 of sorted path, tab, sha256, newline records",
-    "value": "c26ad07e42647c3055c52d4858d43d9e755713119198959d5b78f895e8b44017"
+    "value": "8eccb4d09d583a666a30b471758bc2a244cc78b04cde68017a8717231c7853d1"
   },
   "live_observation": "NOT_RUN",
   "owner_gate_reason": "OWNER_GATE_REQUIRED_PROVIDER_PROCESS",
