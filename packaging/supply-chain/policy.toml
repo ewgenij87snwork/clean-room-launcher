@@ -1,0 +1,6 @@
+schema_version = "taskseal.p07.supply-chain-policy.v1"
+cyclonedx_spec = "1.7"
+slsa_predicate = "https://slsa.dev/provenance/v1"
+statement_type = "https://in-toto.io/Statement/v1"
+qualification = "NOT_QUALIFIED"
+allowed_builders = ["local://taskseal/p07"]
