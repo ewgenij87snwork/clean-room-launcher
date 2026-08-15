@@ -114,6 +114,14 @@ def tap_diagnostic(stderr: str) -> str:
     if "network" in value: return "tap_network_refused"
     return "tap_command_refused"
 
+def install_diagnostic(stderr: str) -> str:
+    value = stderr.lower()
+    if "failed to download resource" in value or "download failed" in value: return "install_archive_fetch_refused"
+    if "checksum" in value or "sha256 mismatch" in value: return "install_checksum_refused"
+    if "no such file" in value: return "install_layout_refused"
+    if "requires macos" in value: return "install_host_refused"
+    return "install_command_refused"
+
 def sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
@@ -198,7 +206,7 @@ def preflight(paths: SafeHomebrew, scenario: str | None, network_bound: bool = F
 def run_step(paths: SafeHomebrew, name: str, argv: list[str], refusal: str, scenario: str | None, steps: list[dict[str, object]], network_bound: bool = False, loopback_port: int | None = None) -> None:
     if argv[0] in MUTATING: preflight(paths, scenario, network_bound, loopback_port)
     result = invoke(paths, argv, scenario, network_bound, loopback_port)
-    diagnostic = tap_diagnostic(result.stderr) if name == "tap" and result.returncode else None
+    diagnostic = tap_diagnostic(result.stderr) if name == "tap" and result.returncode else (install_diagnostic(result.stderr) if name == "install_current" and result.returncode else None)
     steps.append(StepResult(name, result.returncode, diagnostic).evidence())
     if result.returncode: raise LifecycleRefused(refusal)
 
