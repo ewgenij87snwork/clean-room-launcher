@@ -2,6 +2,7 @@
 """Stateful, workspace-confined fake brew for P07 process tests only."""
 from __future__ import annotations
 import json, os, sys
+import urllib.request
 from pathlib import Path
 
 root = Path(os.environ["P07_FAKE_ROOT"]).resolve(); prefix = root / "prefix"; argv = sys.argv[1:]; scenario = os.environ.get("P07_SCENARIO", "")
@@ -32,6 +33,10 @@ elif argv[0] == "tap":
 elif argv[0] in {"style", "audit", "test", "upgrade", "unlink", "link", "install", "uninstall"}:
     item = argv[-1]
     if item not in formulae or (argv[0] in {"install", "upgrade"} and item not in state["trusted"]): raise SystemExit(2)
+    if scenario == "style_refusal_cleanup" and argv[0] in {"style", "uninstall"}: raise SystemExit(2)
+    if scenario == "require_loopback_server" and argv[0] == "install":
+        body = urllib.request.urlopen("http://127.0.0.1:49152/taskseal-v0.0.1-aarch64-apple-darwin.tar.gz", timeout=1).read()
+        if not body: raise SystemExit(2)
     if argv[0] == "install":
         version = "0.0.1" if item.endswith("@0.0.1") else ("0.0.2" if "upgrade" in state.get("events", []) else "0.0.1")
         state["installed"] = sorted(set(state["installed"] + [item])); cell = prefix / "Cellar" / item.rsplit("/", 1)[-1] / version / "bin"; cell.mkdir(parents=True, exist_ok=True)

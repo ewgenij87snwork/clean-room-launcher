@@ -8,6 +8,7 @@ a separately authorized campaign supplies an actual local source and archive.
 from __future__ import annotations
 
 import argparse
+import http.server
 import hashlib
 import json
 import os
@@ -15,6 +16,8 @@ import shutil
 import subprocess
 import sys
 import tarfile
+import threading
+from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -22,6 +25,7 @@ REFUSALS = {"ARTIFACT_MISSING", "ARTIFACT_DIGEST_MISMATCH", "ARTIFACT_METADATA_M
 MUTATING = {"tap", "trust", "style", "audit", "install", "test", "upgrade", "unlink", "link", "uninstall", "untrust", "untap"}
 NETWORK_SANDBOX = Path("/usr/bin/sandbox-exec")
 NETWORK_PROFILE = "(version 1)(deny network*)(allow default)"
+LOOPBACK_PORT = 49152
 SCENARIO_REFUSALS = {
     "missing_require_tap_trust": "TAP_TRUST_REFUSED", "wrong_allowed_taps": "TAP_TRUST_REFUSED",
     "whole_tap_trust": "TAP_TRUST_REFUSED", "missing_item_trust": "TAP_TRUST_REFUSED",
@@ -78,13 +82,29 @@ def safe_boundary(paths: SafeHomebrew) -> None:
     if any(not within(paths.root, path) or any(within(bad, path) for bad in prohibited) for path in (paths.prefix, paths.repository, paths.cellar, paths.cache, paths.home, paths.temp)):
         raise LifecycleRefused("LIVE_HOMEBREW_BOUNDARY_REFUSED")
 
-def deny_network(argv: list[str]) -> list[str]:
+def deny_network(argv: list[str], loopback_port: int | None = None) -> list[str]:
     if not NETWORK_SANDBOX.is_file() or not os.access(NETWORK_SANDBOX, os.X_OK): raise LifecycleRefused("LIVE_HOMEBREW_BOUNDARY_REFUSED")
-    return [str(NETWORK_SANDBOX), "-p", NETWORK_PROFILE, *argv]
+    profile = NETWORK_PROFILE if loopback_port is None else f'(version 1)(deny network*)(allow default)(allow network-outbound (remote ip "localhost:{loopback_port}"))'
+    return [str(NETWORK_SANDBOX), "-p", profile, *argv]
 
-def invoke(paths: SafeHomebrew, argv: list[str], scenario: str | None, network_bound: bool = False) -> subprocess.CompletedProcess[str]:
+@contextmanager
+def serve_exact_archive(archive: Path):
+    expected = "/" + archive.name
+    class ArchiveHandler(http.server.BaseHTTPRequestHandler):
+        def do_GET(self):
+            if self.path != expected: self.send_error(404); return
+            self.send_response(200); self.send_header("Content-Length", str(archive.stat().st_size)); self.end_headers()
+            with archive.open("rb") as source: shutil.copyfileobj(source, self.wfile)
+        def log_message(self, *_): pass
+    try: server = http.server.ThreadingHTTPServer(("127.0.0.1", LOOPBACK_PORT), ArchiveHandler)
+    except OSError as exc: raise LifecycleRefused("LIVE_HOMEBREW_BOUNDARY_REFUSED") from exc
+    thread = threading.Thread(target=server.serve_forever, daemon=True); thread.start()
+    try: yield LOOPBACK_PORT
+    finally: server.shutdown(); server.server_close(); thread.join()
+
+def invoke(paths: SafeHomebrew, argv: list[str], scenario: str | None, network_bound: bool = False, loopback_port: int | None = None) -> subprocess.CompletedProcess[str]:
     command = [sys.executable, str(paths.brew), *argv] if paths.brew.suffix == ".py" else [str(paths.brew), *argv]
-    if network_bound: command = deny_network(command)
+    if network_bound: command = deny_network(command, loopback_port)
     return subprocess.run(command, cwd=paths.root, env=closed_env(paths, scenario), text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
 
 def tap_diagnostic(stderr: str) -> str:
@@ -167,17 +187,17 @@ def prepare_git_tap(paths: SafeHomebrew, input_contract: Path) -> None:
     if result.returncode: raise LifecycleRefused("FORMULA_RENDER_REFUSED")
     run_git(["init"], tap, True); run_git(["add", "Formula/taskseal-preview.rb"], tap, True); run_git(["-c", "user.name=p07", "-c", "user.email=p07@example.invalid", "commit", "-m", "local-preview"], tap, True)
 
-def preflight(paths: SafeHomebrew, scenario: str | None, network_bound: bool = False) -> None:
+def preflight(paths: SafeHomebrew, scenario: str | None, network_bound: bool = False, loopback_port: int | None = None) -> None:
     safe_boundary(paths); expected = [str(paths.prefix), str(paths.repository), str(paths.cellar)]; reported: list[str] = []
     for flag in ("--prefix", "--repository", "--cellar"):
-        result = invoke(paths, [flag], scenario, network_bound)
+        result = invoke(paths, [flag], scenario, network_bound, loopback_port)
         if result.returncode: raise LifecycleRefused("LIVE_HOMEBREW_BOUNDARY_REFUSED")
         reported.append(result.stdout.strip())
     if reported != expected: raise LifecycleRefused("LIVE_HOMEBREW_BOUNDARY_REFUSED")
 
-def run_step(paths: SafeHomebrew, name: str, argv: list[str], refusal: str, scenario: str | None, steps: list[dict[str, object]], network_bound: bool = False) -> None:
-    if argv[0] in MUTATING: preflight(paths, scenario, network_bound)
-    result = invoke(paths, argv, scenario, network_bound)
+def run_step(paths: SafeHomebrew, name: str, argv: list[str], refusal: str, scenario: str | None, steps: list[dict[str, object]], network_bound: bool = False, loopback_port: int | None = None) -> None:
+    if argv[0] in MUTATING: preflight(paths, scenario, network_bound, loopback_port)
+    result = invoke(paths, argv, scenario, network_bound, loopback_port)
     diagnostic = tap_diagnostic(result.stderr) if name == "tap" and result.returncode else None
     steps.append(StepResult(name, result.returncode, diagnostic).evidence())
     if result.returncode: raise LifecycleRefused(refusal)
@@ -212,9 +232,11 @@ def cleanup(paths: SafeHomebrew, scenario: str | None, steps: list[dict[str, obj
         shutil.rmtree(path, ignore_errors=True)
     return ok and all(not path.exists() for path in (paths.prefix, paths.cache, paths.user_config, paths.home, paths.temp, paths.root / "tap", paths.root / "poison"))
 
-def cleanup_real_current(paths: SafeHomebrew, scenario: str | None, steps: list[dict[str, object]]) -> bool:
+def cleanup_real_current(paths: SafeHomebrew, scenario: str | None, steps: list[dict[str, object]], installed: bool) -> bool:
     ok = True
-    for name, argv in (("uninstall_current", ["uninstall", "taskseal-local/preview/taskseal-preview"]), ("untrust", ["untrust", "--formula", "taskseal-local/preview/taskseal-preview"]), ("untap", ["untap", "taskseal-local/preview"])):
+    operations = [("untrust", ["untrust", "--formula", "taskseal-local/preview/taskseal-preview"]), ("untap", ["untap", "taskseal-local/preview"])]
+    if installed: operations.insert(0, ("uninstall_current", ["uninstall", "taskseal-local/preview/taskseal-preview"]))
+    for name, argv in operations:
         try: run_step(paths, name, argv, "CLEANUP_REFUSED", scenario, steps, True)
         except LifecycleRefused: ok = False
     for path in (paths.prefix, paths.cache, paths.user_config, paths.home, paths.temp, paths.root / "tap", paths.root / "poison"):
@@ -264,19 +286,21 @@ def lifecycle(paths: SafeHomebrew, scenario: str | None, injected: str | None, e
         failure = "UNINSTALL_REFUSED" if scenario == "partial_uninstall" else "CLEANUP_REFUSED"
     return document(steps, complete, failure, checks, evidence_class, archive)
 
-def real_current_lifecycle(paths: SafeHomebrew, scenario: str | None, archive: dict[str, object]) -> dict[str, object]:
-    steps: list[dict[str, object]] = []; checks = {"dual_executable_parity": False, "status_paths": False, "selector_refusal": False, "poison_provider_absent": False}; failure: str | None = None; baseline = sentinels(paths)
+def real_current_lifecycle(paths: SafeHomebrew, scenario: str | None, archive: dict[str, object], archive_path: Path) -> dict[str, object]:
+    steps: list[dict[str, object]] = []; checks = {"dual_executable_parity": False, "status_paths": False, "selector_refusal": False, "poison_provider_absent": False}; failure: str | None = None; installed = False; baseline = sentinels(paths)
     try:
-        preflight(paths, scenario, True); steps.extend([StepResult("preflight", 0).evidence(), StepResult("clone_local", 0).evidence(), StepResult("origin_removed", 0).evidence(), StepResult("tap_git_ready", 0).evidence()])
-        run_step(paths, "tap", ["tap", "taskseal-local/preview", str(paths.root / "tap")], "TAP_TRUST_REFUSED", scenario, steps, True)
-        run_step(paths, "item_trust", ["trust", "--formula", "taskseal-local/preview/taskseal-preview"], "TAP_TRUST_REFUSED", scenario, steps, True)
-        run_step(paths, "style", ["style", "--formula", "taskseal-local/preview/taskseal-preview"], "FORMULA_AUDIT_REFUSED", scenario, steps, True)
-        run_step(paths, "audit", ["audit", "--strict", "--formula", "taskseal-local/preview/taskseal-preview"], "FORMULA_AUDIT_REFUSED", scenario, steps, True)
-        run_step(paths, "install_current", ["install", "taskseal-local/preview/taskseal-preview"], "INSTALL_REFUSED", scenario, steps, True)
-        require_sentinels(paths, baseline); verify_dual_names(paths, True); checks.update({"dual_executable_parity": True, "status_paths": True, "selector_refusal": True, "poison_provider_absent": not (paths.root / "poison-provider-invoked").exists()})
-        run_step(paths, "smoke", ["test", "taskseal-local/preview/taskseal-preview"], "DUAL_NAME_PARITY_REFUSED", scenario, steps, True)
+        with serve_exact_archive(archive_path) as loopback_port:
+            preflight(paths, scenario, True, loopback_port); steps.extend([StepResult("preflight", 0).evidence(), StepResult("clone_local", 0).evidence(), StepResult("origin_removed", 0).evidence(), StepResult("tap_git_ready", 0).evidence()])
+            run_step(paths, "tap", ["tap", "taskseal-local/preview", str(paths.root / "tap")], "TAP_TRUST_REFUSED", scenario, steps, True, loopback_port)
+            run_step(paths, "item_trust", ["trust", "--formula", "taskseal-local/preview/taskseal-preview"], "TAP_TRUST_REFUSED", scenario, steps, True, loopback_port)
+            run_step(paths, "style", ["style", "--formula", "taskseal-local/preview/taskseal-preview"], "FORMULA_AUDIT_REFUSED", scenario, steps, True, loopback_port)
+            run_step(paths, "audit", ["audit", "--strict", "--formula", "taskseal-local/preview/taskseal-preview"], "FORMULA_AUDIT_REFUSED", scenario, steps, True, loopback_port)
+            run_step(paths, "install_current", ["install", "taskseal-local/preview/taskseal-preview"], "INSTALL_REFUSED", scenario, steps, True, loopback_port)
+            installed = True
+            require_sentinels(paths, baseline); verify_dual_names(paths, True); checks.update({"dual_executable_parity": True, "status_paths": True, "selector_refusal": True, "poison_provider_absent": not (paths.root / "poison-provider-invoked").exists()})
+            run_step(paths, "smoke", ["test", "taskseal-local/preview/taskseal-preview"], "DUAL_NAME_PARITY_REFUSED", scenario, steps, True, loopback_port)
     except LifecycleRefused as exc: failure = exc.code
-    complete = cleanup_real_current(paths, scenario, steps)
+    complete = cleanup_real_current(paths, scenario, steps, installed)
     if not complete and failure is None: failure = "CLEANUP_REFUSED"
     return document(steps, complete, failure, checks, "real-current", archive, "deny-network-sandbox")
 
@@ -291,7 +315,7 @@ def main() -> int:
         try:
             archive = validate_real_archive(Path(args.real_archive), args.expected_sha256, args.expected_source_commit)
             paths = prepare_real_source(root, Path(args.brew_source).resolve(), Path(args.api_cache_source).resolve()); prepare_git_tap(paths, Path(args.input_contract).resolve())
-            value = real_current_lifecycle(paths, args.scenario, archive)
+            value = real_current_lifecycle(paths, args.scenario, archive, Path(args.real_archive).resolve())
         except LifecycleRefused as exc:
             value = document([], False, exc.code, {"dual_executable_parity": False, "status_paths": False, "selector_refusal": False, "poison_provider_absent": False}, "real-current")
         atomic_write(Path(args.output), value)
