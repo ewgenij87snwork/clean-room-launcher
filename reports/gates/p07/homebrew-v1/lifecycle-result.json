@@ -1,0 +1,13 @@
+{
+  "archive": {"archive_sha256": "656f8701e84e0d7a72c4dbdb62d8ad20733e5743b602ff0fd6447c711a211d33", "source_commit": "01ad1d894aabe265b08d61d67d39da1a29cad9e4", "target": "aarch64-apple-darwin", "version": "0.1.0"},
+  "checks": {"dual_executable_parity": true, "poison_provider_absent": true, "selector_refusal": true, "status_paths": true},
+  "cleanup_complete": true,
+  "evidence_class": "real-current",
+  "failure_class": null,
+  "forbidden_actions": {"credential_access": false, "external_contact": false, "integration": false, "keychain_access": false, "live_homebrew_mutation": false, "main_mutation": false, "notarization": false, "provider_requests": false, "publication": false, "signing": false, "upload": false},
+  "network_boundary": "homebrew-native-sandbox-loopback-proxy",
+  "qualification": "NOT_QUALIFIED",
+  "refusal_vocabulary": ["ARTIFACT_DIGEST_MISMATCH", "ARTIFACT_METADATA_MISMATCH", "ARTIFACT_MISSING", "CLEANUP_REFUSED", "CONFIG_MUTATION_REFUSED", "DEPLOYMENT_TARGET_UNKNOWN", "DUAL_NAME_PARITY_REFUSED", "FORMULA_AUDIT_REFUSED", "FORMULA_RENDER_REFUSED", "HOST_UNSUPPORTED", "INSTALL_REFUSED", "LIVE_HOMEBREW_BOUNDARY_REFUSED", "ROLLBACK_REFUSED", "TAP_TRUST_REFUSED", "UNINSTALL_REFUSED", "UPGRADE_REFUSED"],
+  "schema_version": "taskseal.p07.homebrew-lifecycle.v1",
+  "steps": [{"exit": 0, "name": "preflight"}, {"exit": 0, "name": "clone_local"}, {"exit": 0, "name": "origin_removed"}, {"exit": 0, "name": "tap_git_ready"}, {"exit": 0, "name": "formula_syntax"}, {"exit": 0, "name": "tap"}, {"exit": 0, "name": "item_trust"}, {"exit": 0, "name": "install_current"}, {"exit": 0, "name": "uninstall_current"}, {"exit": 0, "name": "untrust"}, {"exit": 0, "name": "untap"}]
+}
