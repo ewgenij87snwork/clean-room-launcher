@@ -53,8 +53,14 @@ capture_values=$(ruby -rjson -e '
 set -- $capture_values
 startup_sha=$1 protected_sha=$2
 
+output_dir=$(dirname "$output")
+[ -d "$output_dir" ] || { echo "P08_CODEX_ACCEPTANCE_REFUSED:OUTPUT_PARENT_MISSING" >&2; exit 71; }
+output_tmp=$(mktemp "$output_dir/.codex-alpha.XXXXXX")
+trap 'rm -f "$output_tmp"' EXIT HUP INT TERM
 TASKSEAL_ARTIFACT_SHA="$artifact_sha" TASKSEAL_STARTUP_SHA="$startup_sha" TASKSEAL_PROTECTED_SHA="$protected_sha" ruby -rjson -rdigest -e '
   payload={"schema_version"=>"taskseal.codex-clean-launch-acceptance.v1", "result"=>"PREPARED_NOT_QUALIFIED", "live_observation"=>"NOT_RUN", "reason"=>"OWNER_GATE_REQUIRED_PROVIDER_PROCESS", "capture_mode"=>"DETERMINISTIC_FAKE", "artifact_sha256"=>ENV.fetch("TASKSEAL_ARTIFACT_SHA"), "startup_context_sha256"=>ENV.fetch("TASKSEAL_STARTUP_SHA"), "catalog_census"=>{"needed_name_visible"=>true, "unused_body_present"=>false, "invoked_body_available"=>true}, "command"=>["tseal", "codex", "--safe"], "protected_state_sha256"=>ENV.fetch("TASKSEAL_PROTECTED_SHA"), "protected_mutation"=>false, "cleanup"=>{"exit"=>"NOT_RUN", "relaunch"=>"NOT_RUN", "uninstall"=>"NOT_RUN"}};
   payload["output_sha256"]=Digest::SHA256.hexdigest(JSON.generate(payload)); STDOUT.write(JSON.generate(payload), "\n")
-' > "$output"
+' > "$output_tmp"
+mv "$output_tmp" "$output"
+trap - EXIT HUP INT TERM
 echo "P08_CODEX_ACCEPTANCE_PREPARED_NOT_QUALIFIED"
