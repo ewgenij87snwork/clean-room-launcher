@@ -1,0 +1,35 @@
+{
+  "schema_version": "taskseal.onboarding-readiness.v1",
+  "result": "PREPARED_NOT_QUALIFIED",
+  "internal_fixture": {
+    "kind": "DETERMINISTIC_STATE_MACHINE",
+    "result": "PASS",
+    "active_seconds": 42,
+    "user_wait_seconds": 11,
+    "help_events": 0,
+    "error_events": 0,
+    "states": ["ARTIFACT_RECEIVED", "DIGEST_VERIFIED", "PUBLISHED_DOCS_ONLY", "ONE_COMMAND_STARTED", "CLEAN_CODEX_VERIFIED", "CLEANUP_VERIFIED"]
+  },
+  "external_observation": {
+    "status": "NOT_RUN",
+    "reason": "OWNER_GATE_REQUIRED_EXTERNAL_USER"
+  },
+  "setup_time_claim": {
+    "status": "UNAVAILABLE",
+    "reason": "NO_OBSERVED_DISTRIBUTION"
+  },
+  "comprehension_checks": {
+    "changed": "REQUIRED_NOT_OBSERVED",
+    "unchanged": "REQUIRED_NOT_OBSERVED",
+    "exit": "REQUIRED_NOT_OBSERVED",
+    "rollback": "REQUIRED_NOT_OBSERVED"
+  },
+  "privacy": {
+    "sanitized": true,
+    "raw_user_data_retained": false
+  },
+  "cleanup": {
+    "required": true,
+    "verified_by_fixture": true
+  }
+}
