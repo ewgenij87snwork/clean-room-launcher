@@ -74,13 +74,55 @@ def run_archive():
         bad = Path(temp) / "bad.tar.gz"; archive(bad, equal=False)
         expect_refusal(lambda: mod.verify_archive_members(bad, hashlib.sha256(bad.read_bytes()).hexdigest()), "DUAL_NAME_PARITY_REFUSED")
 
+def input_contract():
+    return {
+        "schema_version": "taskseal.p07.homebrew-input.v1", "evidence_class": "real-current",
+        "archive": {"filename": "taskseal-v0.1.0-aarch64-apple-darwin.tar.gz", "sha256": "6" * 64, "size": 42},
+        "artifact": {"version": "0.1.0", "source_commit": "01ad1d894aabe265b08d61d67d39da1a29cad9e4", "target": "aarch64-apple-darwin", "qualification": "NOT_QUALIFIED", "signing": "unsigned-preview-only", "root": "taskseal-v0.1.0-aarch64-apple-darwin", "members": ["LICENSE", "NOTICE", "VERSION", "bin/taskseal", "bin/tseal", "share/doc/taskseal/CHANGELOG.md"], "taskseal_sha256": "a" * 64, "tseal_sha256": "a" * 64},
+        "host": {"system": "Darwin", "machine": "arm64", "macho_arch": "arm64", "minimum_macos": "13.0", "homebrew_symbol": "ventura"},
+    }
+
+def run_formula():
+    spec = importlib.util.spec_from_file_location("render_formula", ROOT / "packaging/homebrew/render_formula.py")
+    if spec is None or spec.loader is None:
+        raise AssertionError("renderer missing")
+    renderer = importlib.util.module_from_spec(spec); sys.modules[spec.name] = renderer; spec.loader.exec_module(renderer)
+    contract = input_contract()
+    url = "http://127.0.0.1:49152/taskseal-v0.1.0-aarch64-apple-darwin.tar.gz"
+    with tempfile.TemporaryDirectory() as temp:
+        output = Path(temp) / "Formula" / "taskseal-preview.rb"
+        first = renderer.render(contract, "taskseal-preview", url)
+        second = renderer.render(contract, "taskseal-preview", url)
+        assert first == second and b"class TasksealPreview < Formula" in first
+        renderer.atomic_write(output, first)
+        assert output.read_bytes() == first and (output.stat().st_mode & 0o777) == 0o644
+        assert b"post_install" not in first and b'system "curl"' not in first
+        assert b"https://taskseal-preview.invalid/" in first and b"127.0.0.1:49152" in first
+        assert b"provider" not in first.lower() and b"login" not in first.lower()
+        assert __import__("subprocess").run(["ruby", "-c", str(output)], stdout=__import__("subprocess").PIPE, stderr=__import__("subprocess").PIPE).returncode == 0
+        for bad_url in ["https://127.0.0.1:49152/taskseal-v0.1.0-aarch64-apple-darwin.tar.gz", "http://localhost:49152/taskseal-v0.1.0-aarch64-apple-darwin.tar.gz", "http://127.0.0.1:49152/other.tar.gz", "http://user@127.0.0.1:49152/taskseal-v0.1.0-aarch64-apple-darwin.tar.gz", url + "?x=1"]:
+            expect_formula_refusal(lambda bad_url=bad_url: renderer.render(contract, "taskseal-preview", bad_url), renderer)
+        for bad_id in ["taskseal", "taskseal-preview; system('x')", "taskseal-preview@bad"]:
+            expect_formula_refusal(lambda bad_id=bad_id: renderer.render(contract, bad_id, url), renderer)
+        malformed = dict(contract); malformed["extra"] = True
+        expect_formula_refusal(lambda: renderer.render(malformed, "taskseal-preview", url), renderer)
+        unknown = json.loads(json.dumps(contract)); unknown["host"]["homebrew_symbol"] = "unknown"
+        expect_formula_refusal(lambda: renderer.render(unknown, "taskseal-preview", url), renderer)
+        link = Path(temp) / "link.rb"; link.symlink_to(output)
+        expect_formula_refusal(lambda: renderer.atomic_write(link, first), renderer)
+
+def expect_formula_refusal(fn, renderer):
+    try:
+        fn()
+    except renderer.FormulaRefused as exc:
+        assert exc.code == "FORMULA_RENDER_REFUSED"
+    else:
+        raise AssertionError("expected FORMULA_RENDER_REFUSED")
+
 def main():
     parser = argparse.ArgumentParser(); parser.add_argument("--section", required=True); args = parser.parse_args()
     if args.section == "input": run_input(); run_archive()
-    elif args.section == "formula":
-        # Renderer cases become available in Task 2 while keeping this one focused suite.
-        print("P07_HOMEBREW_FORMULA_TEST_PENDING")
-        return
+    elif args.section == "formula": run_formula(); print("P07_HOMEBREW_FORMULA_TEST_PASS"); return
     else: raise SystemExit("unknown section")
     print("P07_HOMEBREW_INPUT_TEST_PASS")
 
