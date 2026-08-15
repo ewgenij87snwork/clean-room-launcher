@@ -118,13 +118,18 @@ fn real_mode_prepares_only_a_disposable_local_git_source_and_real_current_eviden
     for args in [["init"].as_slice(), ["add", "."].as_slice(), ["-c", "user.name=p07", "-c", "user.email=p07@example.invalid", "commit", "-m", "fixture"].as_slice()] {
         assert!(Command::new("git").current_dir(&source).args(args).status().unwrap().success());
     }
+    let portable = source.join("Library/Homebrew/vendor/portable-ruby/fixture/bin");
+    fs::create_dir_all(&portable).unwrap();
+    fs::write(portable.join("ruby"), "fixture portable ruby\n").unwrap();
+    assert!(Command::new("chmod").args(["755", portable.join("ruby").to_str().unwrap()]).status().unwrap().success());
+    std::os::unix::fs::symlink("fixture", source.join("Library/Homebrew/vendor/portable-ruby/current")).unwrap();
     let archives = temp.join("archives");
     let generator = root().join("tests/packaging/fixtures/homebrew/make_fixture_archives.py");
     assert!(Command::new("python3").args([generator.to_str().unwrap(), "--output-dir", archives.to_str().unwrap()]).status().unwrap().success());
     let archive = archives.join("taskseal-v0.0.1-aarch64-apple-darwin.tar.gz");
     let digest = String::from_utf8(Command::new("shasum").args(["-a", "256", archive.to_str().unwrap()]).output().unwrap().stdout).unwrap().split_whitespace().next().unwrap().to_owned();
     let workspace = temp.join("workspace"); fs::create_dir_all(&workspace).unwrap(); let result = temp.join("result.json");
-    let output = Command::new("python3").current_dir(root()).env("AWS_SECRET_ACCESS_KEY", "must-not-inherit").args(["packaging/homebrew/lifecycle.py", "--brew-source", source.to_str().unwrap(), "--real-archive", archive.to_str().unwrap(), "--expected-sha256", &digest, "--expected-source-commit", "1111111111111111111111111111111111111111", "--workspace", workspace.to_str().unwrap(), "--output", result.to_str().unwrap()]).output().unwrap();
+    let output = Command::new("python3").current_dir(root()).env("AWS_SECRET_ACCESS_KEY", "must-not-inherit").args(["packaging/homebrew/lifecycle.py", "--brew-source", source.to_str().unwrap(), "--real-archive", archive.to_str().unwrap(), "--expected-sha256", &digest, "--expected-source-commit", "1111111111111111111111111111111111111111", "--scenario", "require_portable_ruby", "--workspace", workspace.to_str().unwrap(), "--output", result.to_str().unwrap()]).output().unwrap();
     assert!(output.status.success(), "stderr={} result={}", String::from_utf8_lossy(&output.stderr), fs::read_to_string(&result).unwrap_or_default());
     let json = fs::read_to_string(result).unwrap();
     assert!(json.contains("\"evidence_class\":\"real-current\""), "{}", json);

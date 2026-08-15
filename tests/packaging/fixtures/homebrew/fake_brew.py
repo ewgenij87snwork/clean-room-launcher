@@ -7,6 +7,7 @@ from pathlib import Path
 root = Path(os.environ["P07_FAKE_ROOT"]).resolve(); prefix = root / "prefix"; argv = sys.argv[1:]; scenario = os.environ.get("P07_SCENARIO", "")
 credential_words = ("TOKEN", "SECRET", "PASSWORD", "CREDENTIAL", "KEY")
 if not argv or Path(os.environ.get("HOMEBREW_PREFIX", "")).resolve() != prefix or os.environ.get("HOME") != str(root / "home") or os.environ.get("PATH") != f"{root / 'poison'}:/usr/bin:/bin:/usr/sbin:/sbin" or any(any(word in key.upper() for word in credential_words) for key in os.environ): raise SystemExit(2)
+if scenario == "require_portable_ruby" and not (Path(os.environ["HOMEBREW_REPOSITORY"]) / "Library/Homebrew/vendor/portable-ruby/current/bin/ruby").is_file(): raise SystemExit(2)
 ledger = root / "ledger.jsonl"; ledger.parent.mkdir(parents=True, exist_ok=True)
 with ledger.open("a", encoding="utf-8") as out: out.write(json.dumps({"argv": argv}, sort_keys=True, separators=(",", ":")) + "\n")
 state_path = root / "state.json"; state = json.loads(state_path.read_text()) if state_path.exists() else {"tap": False, "trusted": [], "installed": []}

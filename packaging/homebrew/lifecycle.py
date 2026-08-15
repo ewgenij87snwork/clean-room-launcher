@@ -129,10 +129,19 @@ def run_git(argv: list[str], cwd: Path, network_bound: bool = False) -> None:
     result = subprocess.run(command, cwd=cwd, env={"PATH": "/usr/bin:/bin:/usr/sbin:/sbin", "HOME": str(cwd / ".home"), "GIT_CONFIG_NOSYSTEM": "1"}, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
     if result.returncode: raise LifecycleRefused("LIVE_HOMEBREW_BOUNDARY_REFUSED")
 
+def provision_portable_ruby(source: Path, prefix: Path) -> None:
+    relative = Path("Library/Homebrew/vendor/portable-ruby")
+    source_ruby = source / relative / "current" / "bin" / "ruby"
+    target = prefix / relative
+    if not source_ruby.is_file(): raise LifecycleRefused("LIVE_HOMEBREW_BOUNDARY_REFUSED")
+    shutil.copytree(source / relative, target, symlinks=True)
+    if not (target / "current" / "bin" / "ruby").is_file(): raise LifecycleRefused("LIVE_HOMEBREW_BOUNDARY_REFUSED")
+
 def prepare_real_source(root: Path, source: Path) -> SafeHomebrew:
     if not (source / ".git").exists() or not (source / "bin/brew").is_file(): raise LifecycleRefused("LIVE_HOMEBREW_BOUNDARY_REFUSED")
     prefix = root / "prefix"
     run_git(["clone", "--local", "--no-hardlinks", str(source), str(prefix)], root, True)
+    provision_portable_ruby(source, prefix)
     run_git(["remote", "remove", "origin"], prefix, True)
     remote = subprocess.run(deny_network(["git", "remote"]), cwd=prefix, env={"PATH": "/usr/bin:/bin", "HOME": str(root / "home"), "GIT_CONFIG_NOSYSTEM": "1"}, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, check=False)
     if remote.returncode or remote.stdout.strip(): raise LifecycleRefused("LIVE_HOMEBREW_BOUNDARY_REFUSED")
