@@ -118,6 +118,8 @@ def install_diagnostic(output: str) -> str:
     value = output.lower()
     if "failed to download resource" in value or "download failed" in value: return "install_archive_fetch_refused"
     if "checksum" in value or "sha256 mismatch" in value: return "install_checksum_refused"
+    if "has not allowed this tap" in value: return "install_tap_allowlist_refused"
+    if "not trusted" in value or "trust --formula" in value: return "install_formula_trust_refused"
     if "formulae.brew.sh" in value: return "install_api_access_refused"
     if "github.com" in value: return "install_external_dependency_refused"
     if "no available formula" in value or "formula not found" in value: return "install_formula_lookup_refused"
