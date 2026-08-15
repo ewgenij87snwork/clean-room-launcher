@@ -44,8 +44,11 @@ class SafeHomebrew:
 
 @dataclass(frozen=True)
 class StepResult:
-    name: str; exit: int
-    def evidence(self) -> dict[str, object]: return {"name": self.name, "exit": self.exit}
+    name: str; exit: int; diagnostic: str | None = None
+    def evidence(self) -> dict[str, object]:
+        value: dict[str, object] = {"name": self.name, "exit": self.exit}
+        if self.diagnostic is not None: value["diagnostic"] = self.diagnostic
+        return value
 
 def make_paths(root: Path, brew: Path) -> SafeHomebrew:
     root = root.resolve(); prefix = root / "prefix"
@@ -82,7 +85,14 @@ def deny_network(argv: list[str]) -> list[str]:
 def invoke(paths: SafeHomebrew, argv: list[str], scenario: str | None, network_bound: bool = False) -> subprocess.CompletedProcess[str]:
     command = [sys.executable, str(paths.brew), *argv] if paths.brew.suffix == ".py" else [str(paths.brew), *argv]
     if network_bound: command = deny_network(command)
-    return subprocess.run(command, cwd=paths.root, env=closed_env(paths, scenario), text=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, check=False)
+    return subprocess.run(command, cwd=paths.root, env=closed_env(paths, scenario), text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+
+def tap_diagnostic(stderr: str) -> str:
+    value = stderr.lower()
+    if "clone" in value: return "tap_clone_refused"
+    if "allowed_taps" in value: return "tap_allowlist_refused"
+    if "network" in value: return "tap_network_refused"
+    return "tap_command_refused"
 
 def sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
@@ -144,7 +154,8 @@ def preflight(paths: SafeHomebrew, scenario: str | None, network_bound: bool = F
 def run_step(paths: SafeHomebrew, name: str, argv: list[str], refusal: str, scenario: str | None, steps: list[dict[str, object]], network_bound: bool = False) -> None:
     if argv[0] in MUTATING: preflight(paths, scenario, network_bound)
     result = invoke(paths, argv, scenario, network_bound)
-    steps.append(StepResult(name, result.returncode).evidence())
+    diagnostic = tap_diagnostic(result.stderr) if name == "tap" and result.returncode else None
+    steps.append(StepResult(name, result.returncode, diagnostic).evidence())
     if result.returncode: raise LifecycleRefused(refusal)
 
 def sentinels(paths: SafeHomebrew) -> dict[str, str]:

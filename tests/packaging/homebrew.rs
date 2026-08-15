@@ -47,6 +47,7 @@ fn fake_lifecycle_closed_refusal_matrix_is_canonical_and_cleanup_owned() {
         ("wrong_allowed_taps", "TAP_TRUST_REFUSED"),
         ("whole_tap_trust", "TAP_TRUST_REFUSED"),
         ("missing_item_trust", "TAP_TRUST_REFUSED"),
+        ("tap_clone_failed", "TAP_TRUST_REFUSED"),
         ("non_loopback_bind", "FORMULA_RENDER_REFUSED"),
         ("non_loopback_url", "FORMULA_RENDER_REFUSED"),
         ("extra_served_name", "FORMULA_RENDER_REFUSED"),
@@ -69,6 +70,7 @@ fn fake_lifecycle_closed_refusal_matrix_is_canonical_and_cleanup_owned() {
         assert!(!ok, "{} unexpectedly passed: {}", scenario, json);
         assert!(json.contains(&format!("\"failure_class\":\"{}\"", refusal)), "{}: {}", scenario, json);
         assert!(json.contains("\"raw_output\"")==false && json.contains("/Users/")==false, "{} leaked evidence: {}", scenario, json);
+        if scenario == "tap_clone_failed" { assert!(json.contains("\"diagnostic\":\"tap_clone_refused\""), "{}: {}", scenario, json); }
         if !scenario.starts_with("reported_") {
             assert!(ledger.contains("[\"untap\",\"taskseal-local/preview\"]"), "{} did not run cleanup: {}", scenario, ledger);
         }
