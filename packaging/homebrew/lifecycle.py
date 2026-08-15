@@ -128,7 +128,9 @@ def install_diagnostic(output: str) -> str:
     if "permission denied" in value: return "install_filesystem_refused"
     if "no such file" in value: return "install_layout_refused"
     if "requires macos" in value: return "install_host_refused"
-    return "install_command_refused"
+    if not value.strip(): return "install_silent_refused"
+    safe_tokens = tuple(token for token in ("error", "failed", "formula", "tap", "trust", "command", "ruby", "sandbox", "network", "curl", "bottle", "source", "dependency", "permission", "macos", "architecture", "resource", "download", "checksum", "cellar", "prefix", "keg", "link", "directory", "file", "unsupported", "unavailable", "forbidden", "allowed", "require", "unknown", "fatal") if token in value)
+    return "install_unclassified_" + ("_".join(safe_tokens) if safe_tokens else "nonempty")
 
 def sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
