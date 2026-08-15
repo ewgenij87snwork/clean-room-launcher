@@ -73,4 +73,34 @@ fn collector_builds_a_closed_private_candidate_and_refuses_bad_receipts() {
     let result = collect(&duplicate);
     assert!(!result.status.success());
     assert!(String::from_utf8_lossy(&result.stderr).contains("DUPLICATE_JSON_KEY"));
+
+    for (label, relative) in [
+        ("P07_TASK_3", "reports/gates/p07/task-3.json"),
+        ("P07_TASK_6", "reports/gates/p07/task-6.json"),
+        ("P07_TERMINAL_REVIEW", "reports/gates/p07/terminal-review.json"),
+    ] {
+      for mutation in ["missing", "stale", "private", "duplicate", "unsupported"] {
+        let name = format!("support-{label}-{mutation}");
+        let support = fixture(&name);
+        let path = support.join(relative);
+        match mutation {
+            "missing" => fs::remove_file(&path).unwrap(),
+            "stale" => fs::write(&path, format!("{}\n", fs::read_to_string(&path).unwrap())).unwrap(),
+            "private" => fs::write(&path, fs::read_to_string(&path).unwrap().replace("\"schema_version\":", "\"private\":\"/Users/owner\",\"schema_version\":")).unwrap(),
+            "duplicate" => fs::write(&path, fs::read_to_string(&path).unwrap().replace("\"schema_version\":", "\"schema_version\":\"duplicate\",\"schema_version\":")).unwrap(),
+            "unsupported" => fs::write(&path, fs::read_to_string(&path).unwrap().replace("\"schema_version\":", "\"unsupported\":true,\"schema_version\":")).unwrap(),
+            _ => unreachable!(),
+        }
+        let result = collect(&support);
+        let expected = match mutation {
+            "missing" => format!("EVIDENCE_MISSING:{label}"),
+            "private" => format!("PRIVATE_DATA:{label}"),
+            "duplicate" => "DUPLICATE_JSON_KEY".to_owned(),
+            _ => format!("EVIDENCE_STALE:{label}"),
+        };
+        assert!(!result.status.success(), "support evidence {name} was accepted");
+        assert!(String::from_utf8_lossy(&result.stderr).contains(&expected), "{}", String::from_utf8_lossy(&result.stderr));
+        assert!(!support.join("candidate.json").exists(), "refused support evidence wrote a dossier");
+      }
+    }
 }
