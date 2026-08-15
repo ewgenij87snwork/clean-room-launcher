@@ -6,24 +6,26 @@
   "qualification": "NOT_QUALIFIED",
   "result": "PREPARED_NOT_QUALIFIED",
   "binding": {
-    "input_head": "db29fecdb3b282bfc5039aeb73e85905b6b8f056",
-    "implementation_head": "fae990309b64b43c626cdda3da1fa74079abaf04",
-    "receipt_commit_parent": "fae990309b64b43c626cdda3da1fa74079abaf04",
-    "receipt_seal_role": "receipt-only-child"
+    "input_head": "05257f8a911179ebd747f83753290bea794bdb45",
+    "implementation_head": "c369551da61b678aa152eab75fd1aa327cd89638",
+    "receipt_commit_parent": "c369551da61b678aa152eab75fd1aa327cd89638",
+    "receipt_seal_role": "replacement-receipt-only-child",
+    "replaces_receipt_commit": "05257f8a911179ebd747f83753290bea794bdb45",
+    "replaced_receipt_sha256": "682eee8d40d44677303513cf349f1e9ec6afab3438696f1418df974704d432b4"
   },
   "evidence": [
-    {"id":"EVD-P08-T6-RED","command":"CARGO_MANIFEST_DIR=\"$PWD\" rustc --edition=2024 --test tests/release/demo_repro.rs -o /tmp/p08-demo-red && /tmp/p08-demo-red","exit":101,"result":"demo runner was absent; three test expectations could not launch it"},
-    {"id":"EVD-P08-T6-GREEN","command":"CARGO_MANIFEST_DIR=\"$PWD\" rustc --edition=2024 --test tests/release/demo_repro.rs -o /tmp/p08-demo-green2 && /tmp/p08-demo-green2","exit":0,"result":"3 focused tests pass: closed replay, non-promotion, unsafe/stale/edited/cleanup refusal and output verification"}
+    {"id":"EVD-P08-T6-R2-RED","command":"CARGO_MANIFEST_DIR=\"$PWD\" rustc --edition=2024 --test tests/release/demo_repro.rs -o /tmp/p08-demo-critical-red && /tmp/p08-demo-critical-red","exit":101,"result":"2 targeted failures: arbitrary digest accepted and rehashed schema-invalid receipt accepted"},
+    {"id":"EVD-P08-T6-R2-GREEN","command":"CARGO_MANIFEST_DIR=\"$PWD\" rustc --edition=2024 --test tests/release/demo_repro.rs -o /tmp/p08-demo-critical-green2 && /tmp/p08-demo-critical-green2","exit":0,"result":"4 focused tests pass: committed P07 digest binding and executed closed schema validation plus prior non-promotion/refusals"}
   ],
   "subjects": {
     "docs/demo.md":"58eb6d9f6966109a24d58113540e76c74da95d7d92f1345a7ff10cabef46dafb",
     "reports/release/demo.json":"658d571df020fed04b8aa897ea8036598aaa5e9dd2881c3499c6695441fb620d",
-    "schemas/release/demo-receipt.schema.json":"d60d779470f29a84580fb67380d10f05dd909a2da37765d7d40779a8bd99fe51",
-    "scripts/release/run-demo.sh":"7d158226f3b2b234d483d0a61277a52db730e8ea6b07c6392ca8357d4559e313",
-    "tests/release/demo_repro.rs":"ff76ff142ca52b1074b51f1fad8ea5fa11699c80bb99352490c6997e278ea534"
+    "schemas/release/demo-receipt.schema.json":"1587d1c27272cb288aef233f1dd8969a08684ca4c8442231f230132243ecc3da",
+    "scripts/release/run-demo.sh":"8a876358ee4be1669f0bb6ee8846ef322e267bedcd777b7ccac4df8f2e07c6a1",
+    "tests/release/demo_repro.rs":"9c6b4b66996eb675c7abb9508e2b7e3031fc52dccfed74a45c4de297d5adc3ba"
   },
-  "subject_sha256":{"algorithm":"sha256 of sorted path, tab, sha256, newline records","value":"4aa7654ae9ce7707f04a38268a03aeb5916afb6cef5d53d2ecf03d9b8cf4869e"},
+  "subject_sha256":{"algorithm":"sha256 of sorted path, tab, sha256, newline records","value":"1622c94d1822bf3b1aef32b138eac1be72a2e0f34540a562bad4ba4e9edd63c0"},
   "production_demo":"NOT_RUN",
   "owner_gate_reason":"EXACT_ARTIFACT_BYTES_AND_CLEAN_INSTALL_OBSERVATION_REQUIRED",
-  "controls":{"fixture_non_promotable":true,"production_artifact_bytes_required":true,"clean_install_required":true,"developer_checkout_refused":true,"private_path_raw_prompt_credential_refused":true,"edited_output_refused":true,"cleanup_required":true,"nondeterministic_claim_census_digest_refused":true,"network":false,"provider_spend":false,"browser_or_login":false,"credential_read":false,"publication":false,"main_mutation":false,"integration":false}
+  "controls":{"fixture_non_promotable":true,"production_artifact_bytes_required":true,"committed_p07_task3_digest_required":true,"clean_install_required":true,"developer_checkout_refused":true,"private_path_raw_prompt_credential_refused":true,"edited_output_refused":true,"closed_schema_validated_before_write_and_verify":true,"cleanup_required":true,"nondeterministic_claim_census_digest_refused":true,"network":false,"provider_spend":false,"browser_or_login":false,"credential_read":false,"publication":false,"main_mutation":false,"integration":false}
 }
