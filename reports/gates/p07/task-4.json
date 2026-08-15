@@ -1,0 +1,39 @@
+{
+  "schema_version": "taskseal.p07.task-receipt.v1",
+  "plan_id": "P07",
+  "task": 4,
+  "result": "accepted",
+  "acceptance": {
+    "id": "ACC-P07-T4",
+    "operator_result": "A real local Homebrew 6.0.15 lifecycle installed the exact pinned unsigned preview from loopback, exercised both installed CLI names without provider execution, and removed package, trust, tap and disposable state while external network remained denied.",
+    "evidence_ids": ["EVD-P07-T4-REAL-LOCAL"]
+  },
+  "binding": {
+    "input_head": "540f94c6110c8341e86db59547dba375c436a0db",
+    "implementation_head": "9b59ca1fc4d5d5c66f8cbc658c5abfa35a35fc35",
+    "implementation_tree": "545551f394c458b9fa1ab7d572151637056b0b51",
+    "receipt_seal_role": "receipt-only-child",
+    "implementation_files": ["packaging/homebrew/lifecycle.py", "packaging/homebrew/render_formula.py", "tests/packaging/homebrew.rs", "tests/packaging/fixtures/homebrew/fake_brew.py", "reports/gates/p07/homebrew-v1/lifecycle-result.json"]
+  },
+  "evidence": [{
+    "id": "EVD-P07-T4-REAL-LOCAL",
+    "command": "packaging/homebrew/lifecycle.py with exact local archive, Homebrew source, API cache, loopback and closed environment",
+    "exit": 0,
+    "marker": "P07_HOMEBREW_REAL_LOCAL_LIFECYCLE_PASS qualification=NOT_QUALIFIED",
+    "result_sha256": "2aafcfc91cd1a0cc1a3af1c8b4a15f7563a9682c9ce5b7736852f5aafa09d6e9"
+  }],
+  "subjects": {
+    "packaging/homebrew/verify_input.py": "8897452016d46aecb17053e336d029835404256de9a149edb2e7387cc2802e9e",
+    "packaging/homebrew/render_formula.py": "fd5c369c0f0e35c2aed788c08a87af045277bef5dc320defe6ca540c2012abf4",
+    "packaging/homebrew/lifecycle.py": "97bf4c3897062f6c9b75dc5f3599942aec45d0067ddfa1f5e11d742ca9b1a390",
+    "tests/packaging/homebrew_contract_test.py": "2e920ef635b6b5374f7ee93fe61707a796cd24ac437ccef2277edbc06e757078",
+    "tests/packaging/homebrew.rs": "6fec709abae6c3152263ba7c8fb23f7cab322f463c3428cf64294f40ca913eed",
+    "tests/packaging/fixtures/homebrew/vtool-arm64.txt": "b802c92b7a33ad6dcab1707402e877981239942298e3faf06b5fc3437af3acb7",
+    "tests/packaging/fixtures/homebrew/vtool-unknown.txt": "c9ffc0a84a98b2d6b80c3d1c68c3ae9213f7e5fe9b2881b86f8fb51635296d71",
+    "tests/packaging/fixtures/homebrew/fake_brew.py": "1294d24d7e89c700a92ffa5e81621208d477c38854827e8dd043489870ad85ad",
+    "tests/packaging/fixtures/homebrew/make_fixture_archives.py": "46b0ade68d7b47bbd9f86ad1fc4143e408cf5843036aec830bce803cb6356bd5",
+    "reports/gates/p07/homebrew-v1/lifecycle-result.json": "2aafcfc91cd1a0cc1a3af1c8b4a15f7563a9682c9ce5b7736852f5aafa09d6e9"
+  },
+  "qualification": "NOT_QUALIFIED",
+  "controls": {"loopback_only": true, "homebrew_native_sandbox": true, "dual_executable_parity": true, "provider_execution": false, "cleanup_complete": true, "publication": false, "network": false, "credentials": false, "main_mutation": false, "integration": false}
+}
