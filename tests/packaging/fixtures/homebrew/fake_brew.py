@@ -34,6 +34,7 @@ elif argv[0] in {"style", "audit", "test", "upgrade", "unlink", "link", "install
     item = argv[-1]
     if scenario == "require_native_install_boundary" and argv[0] in {"install", "test"}:
         if os.environ.get("P07_NETWORK_BOUNDARY") != "homebrew-native-sandbox-loopback-proxy" or "HOMEBREW_AVOID_NESTED_SANDBOXING" in os.environ: raise SystemExit(2)
+        if argv[0] == "test": print("Error: metadata network unavailable", file=sys.stderr); raise SystemExit(2)
     if item not in formulae or (argv[0] in {"install", "upgrade"} and item not in state["trusted"]): raise SystemExit(2)
     if scenario == "install_archive_fetch_failed" and argv[0] == "install":
         print("Error: unsupported formula dependency"); raise SystemExit(2)

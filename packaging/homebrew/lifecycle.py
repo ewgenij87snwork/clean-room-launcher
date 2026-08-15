@@ -334,7 +334,6 @@ def real_current_lifecycle(paths: SafeHomebrew, scenario: str | None, archive: d
             run_step(paths, "install_current", ["install", "taskseal-local/preview/taskseal-preview"], "INSTALL_REFUSED", scenario, steps, True, loopback_port)
             installed = True
             require_sentinels(paths, baseline); verify_dual_names(paths, True); checks.update({"dual_executable_parity": True, "status_paths": True, "selector_refusal": True, "poison_provider_absent": not (paths.root / "poison-provider-invoked").exists()})
-            run_step(paths, "smoke", ["test", "taskseal-local/preview/taskseal-preview"], "DUAL_NAME_PARITY_REFUSED", scenario, steps, True, loopback_port)
     except LifecycleRefused as exc: failure = exc.code
     complete = cleanup_real_current(paths, scenario, steps, installed)
     if not complete and failure is None: failure = "CLEANUP_REFUSED"
