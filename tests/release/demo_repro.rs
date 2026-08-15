@@ -14,7 +14,14 @@ fn fixture(name: &str, receipt: &str, output: &str) -> (PathBuf, PathBuf, PathBu
 }
 fn run(dir: &Path, artifact: &Path, receipt: &Path, capture: &Path, result: &Path) -> std::process::Output {
     Command::new(root().join("scripts/release/run-demo.sh")).args([
-        "--artifact", artifact.to_str().unwrap(), "--artifact-sha256", &sha256(artifact),
+        "--artifact", artifact.to_str().unwrap(), "--artifact-sha256", "656f8701e84e0d7a72c4dbdb62d8ad20733e5743b602ff0fd6447c711a211d33",
+        "--fixture", receipt.to_str().unwrap(), "--fixture-sha256", &sha256(receipt),
+        "--capture", capture.to_str().unwrap(), "--output", result.to_str().unwrap(), "--test-only-fixture",
+    ]).env("TASKSEAL_TEST_ONLY_FIXTURE", "1").current_dir(dir).output().unwrap()
+}
+fn run_with_digest(dir: &Path, artifact: &Path, receipt: &Path, capture: &Path, result: &Path, digest: &str) -> std::process::Output {
+    Command::new(root().join("scripts/release/run-demo.sh")).args([
+        "--artifact", artifact.to_str().unwrap(), "--artifact-sha256", digest,
         "--fixture", receipt.to_str().unwrap(), "--fixture-sha256", &sha256(receipt),
         "--capture", capture.to_str().unwrap(), "--output", result.to_str().unwrap(), "--test-only-fixture",
     ]).env("TASKSEAL_TEST_ONLY_FIXTURE", "1").current_dir(dir).output().unwrap()
@@ -39,9 +46,21 @@ fn test_only_replay_is_closed_sanitized_and_reproducible_but_not_promotable() {
     assert_eq!(first_bytes, fs::read_to_string(&output).unwrap());
     let verified = Command::new(root().join("scripts/release/run-demo.sh")).args(["--verify-output", output.to_str().unwrap()]).output().unwrap();
     assert!(verified.status.success());
+    let mutate_schema = Command::new("ruby").args(["-rjson", "-rdigest", "-e", "x=JSON.parse(File.read(ARGV[0])); x[\"unexpected\"]=true; x.delete(\"output_sha256\"); x[\"output_sha256\"]=Digest::SHA256.hexdigest(JSON.generate(x)); File.write(ARGV[0], JSON.generate(x)+\"\\n\")", output.to_str().unwrap()]).status().unwrap();
+    assert!(mutate_schema.success());
+    let malformed_schema = Command::new(root().join("scripts/release/run-demo.sh")).args(["--verify-output", output.to_str().unwrap()]).output().unwrap();
+    assert!(!malformed_schema.status.success()); assert!(String::from_utf8_lossy(&malformed_schema.stderr).contains("OUTPUT_SCHEMA"));
     fs::write(&output, first_bytes.replacen("PREPARED_NOT_QUALIFIED", "PASS", 1)).unwrap();
     let edited = Command::new(root().join("scripts/release/run-demo.sh")).args(["--verify-output", output.to_str().unwrap()]).output().unwrap();
-    assert!(!edited.status.success()); assert!(String::from_utf8_lossy(&edited.stderr).contains("OUTPUT_EDITED"));
+    assert!(!edited.status.success()); assert!(String::from_utf8_lossy(&edited.stderr).contains("OUTPUT_SCHEMA"));
+}
+
+#[test]
+fn arbitrary_artifact_digest_cannot_replace_committed_p07_digest() {
+    let (dir, artifact, receipt) = fixture("p07-digest", FIXTURE, CAPTURE);
+    let output = run_with_digest(&dir, &artifact, &receipt, &dir.join("capture.json"), &dir.join("out.json"), &sha256(&artifact));
+    assert!(!output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("P07_ARTIFACT_DIGEST"));
 }
 
 #[test]

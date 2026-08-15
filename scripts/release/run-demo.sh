@@ -2,14 +2,18 @@
 # Closed, local demo receipt builder. It deliberately never launches a provider.
 set -eu
 refuse() { echo "P08_DEMO_REFUSED:$1" >&2; exit "${2:-70}"; }
+root=$(CDPATH= cd -- "$(dirname "$0")/../.." && pwd -P)
+schema=$root/schemas/release/demo-receipt.schema.json
 
 if [ "${1:-}" = "--verify-output" ]; then
   [ "$#" -eq 2 ] && [ -f "$2" ] || refuse OUTPUT_EDITED 72
   ruby -rjson -rdigest -e '
-    raw=File.binread(ARGV[0]); x=JSON.parse(raw); hash=x.delete("output_sha256")
+    raw=File.binread(ARGV[0]); x=JSON.parse(raw); schema=JSON.parse(File.read(ARGV[1])); hash=x.delete("output_sha256")
     abort unless hash.is_a?(String) && hash == Digest::SHA256.hexdigest(JSON.generate(x))
     x["output_sha256"]=hash; abort unless raw == JSON.generate(x)+"\n"
-  ' "$2" >/dev/null 2>&1 || refuse OUTPUT_EDITED 72
+    abort "OUTPUT_SCHEMA" unless x.keys.sort == schema.fetch("properties").keys.sort && schema.fetch("required").all?{|key| x.key?(key)}
+    schema.fetch("properties").each{|key, rule| value=x[key]; abort "OUTPUT_SCHEMA" if rule.key?("const") && value != rule["const"]; abort "OUTPUT_SCHEMA" if rule["type"] == "boolean" && value != true && value != false; abort "OUTPUT_SCHEMA" if rule["type"] == "object" && !value.is_a?(Hash); abort "OUTPUT_SCHEMA" if rule["pattern"] && !(value.is_a?(String) && Regexp.new(rule["pattern"]).match?(value))}
+  ' "$2" "$schema" >/dev/null 2>&1 || refuse OUTPUT_SCHEMA 72
   echo "P08_DEMO_OUTPUT_VERIFIED"; exit 0
 fi
 
@@ -29,12 +33,17 @@ done
 [ -n "$artifact" ] && [ -n "$artifact_sha" ] && [ -n "$fixture" ] && [ -n "$fixture_sha" ] && [ -n "$capture" ] && [ -n "$output" ] || refuse USAGE 64
 [ -f "$artifact" ] && [ -f "$fixture" ] && [ -f "$capture" ] || refuse EVIDENCE_MISSING 65
 printf %s "$artifact_sha" | grep -Eq '^[0-9a-f]{64}$' || refuse ARTIFACT_DIGEST 66
-[ "$(shasum -a 256 "$artifact" | awk '{print $1}')" = "$artifact_sha" ] || refuse STALE_ARTIFACT 66
 printf %s "$fixture_sha" | grep -Eq '^[0-9a-f]{64}$' || refuse FIXTURE_DIGEST 66
 [ "$(shasum -a 256 "$fixture" | awk '{print $1}')" = "$fixture_sha" ] || refuse WRONG_FIXTURE 66
 
 [ "$test_only" = true ] && [ "${TASKSEAL_TEST_ONLY_FIXTURE:-}" = 1 ] || refuse PRODUCTION_NOT_RUN 67
-root=$(CDPATH= cd -- "$(dirname "$0")/../.." && pwd -P)
+p07_digest=$(ruby -rjson -e 'x=JSON.parse(File.read(ARGV[0])); abort unless x["schema_version"]=="taskseal.p07.task-receipt.v1" && x["task"]==3 && x.dig("claims","source_commit")=="01ad1d894aabe265b08d61d67d39da1a29cad9e4"; puts x.dig("claims","archive_sha256")' "$root/reports/gates/p07/task-3.json" 2>/dev/null) || refuse P07_ARTIFACT_EVIDENCE 67
+[ "$p07_digest" = "656f8701e84e0d7a72c4dbdb62d8ad20733e5743b602ff0fd6447c711a211d33" ] || refuse P07_ARTIFACT_EVIDENCE 67
+[ "$artifact_sha" = "$p07_digest" ] || refuse P07_ARTIFACT_DIGEST 67
+actual_artifact_sha=$(shasum -a 256 "$artifact" | awk '{print $1}')
+artifact_bytes_verified=false
+[ "$actual_artifact_sha" = "$artifact_sha" ] && artifact_bytes_verified=true
+[ "$artifact_bytes_verified" = true ] || [ "$test_only" = true ] || refuse STALE_ARTIFACT 67
 [ "$(ruby -e 'puts File.realpath(ARGV[0])' "$artifact" 2>/dev/null)" != "$root" ] || refuse DEVELOPER_CHECKOUT_REFUSED 67
 case "$(ruby -e 'puts File.realpath(ARGV[0])' "$artifact" 2>/dev/null)" in "$root"/*) refuse DEVELOPER_CHECKOUT_REFUSED 67;; esac
 [ "$(dirname "$output")" != "$root/reports/release" ] || refuse TEST_OUTPUT_MUST_NOT_REPLACE_PRODUCTION 67
@@ -59,9 +68,9 @@ if ! ruby -rjson -rdigest -e '
   refuse("CAPTURE_RESULT") unless capture["commands"] == ["tseal catalog"] && capture["results"] == ["catalog: 2 skills"] && capture["claims"] == fixture["claims"] && capture["catalog_census"] == fixture["catalog_census"] && capture["recorded_at"] == "REDACTED_NON_SEMANTIC"
   exact(capture["cleanup"], %w[completed], "CLEANUP"); refuse("CLEANUP") unless capture.dig("cleanup", "completed") == true
   semantic={"claims"=>capture["claims"], "catalog_census"=>capture["catalog_census"], "result_digest"=>Digest::SHA256.hexdigest(JSON.generate({"commands"=>capture["commands"],"results"=>capture["results"]}))}
-  out={"schema_version"=>"taskseal.demo-receipt.v1","result"=>"PREPARED_NOT_QUALIFIED","live_observation"=>"NOT_RUN","reason"=>"EXACT_ARTIFACT_BYTES_AND_CLEAN_INSTALL_OBSERVATION_REQUIRED","mode"=>"TEST_ONLY_REPLAY","fixture_only"=>true,"promotion_eligible"=>false,"artifact_sha256"=>ARGV[2],"fixture_sha256"=>Digest::SHA256.file(ARGV[0]).hexdigest,"p07_source_evidence"=>fixture["p07_source_evidence"],"p07_artifact_evidence"=>fixture["p07_artifact_evidence"],"p08_task3_contract"=>fixture["p08_task3_contract"],"semantic"=>semantic,"cleanup"=>"NOT_RUN","controls"=>{"developer_checkout_refused"=>true,"edited_output_refused"=>true,"redaction_closed"=>true,"provider_process"=>"NOT_RUN","network"=>false,"publication"=>false}}
-  out["output_sha256"]=Digest::SHA256.hexdigest(JSON.generate(out)); File.binwrite(ARGV[3], JSON.generate(out)+"\n")
-' "$fixture" "$capture" "$artifact_sha" "$output" 2>"$error_file"; then
+  out={"schema_version"=>"taskseal.demo-receipt.v1","result"=>"PREPARED_NOT_QUALIFIED","live_observation"=>"NOT_RUN","reason"=>"EXACT_ARTIFACT_BYTES_AND_CLEAN_INSTALL_OBSERVATION_REQUIRED","mode"=>"TEST_ONLY_REPLAY","fixture_only"=>true,"promotion_eligible"=>false,"artifact_sha256"=>ARGV[2],"artifact_bytes_verified"=>ARGV[4]=="true","fixture_sha256"=>Digest::SHA256.file(ARGV[0]).hexdigest,"p07_source_evidence"=>fixture["p07_source_evidence"],"p07_artifact_evidence"=>fixture["p07_artifact_evidence"],"p08_task3_contract"=>fixture["p08_task3_contract"],"semantic"=>semantic,"cleanup"=>"NOT_RUN","controls"=>{"developer_checkout_refused"=>true,"edited_output_refused"=>true,"redaction_closed"=>true,"provider_process"=>"NOT_RUN","network"=>false,"publication"=>false}}
+  out["output_sha256"]=Digest::SHA256.hexdigest(JSON.generate(out)); schema=JSON.parse(File.read(ARGV[5])); refuse("OUTPUT_SCHEMA") unless out.keys.sort==schema.fetch("properties").keys.sort && schema.fetch("required").all?{|key|out.key?(key)}; schema.fetch("properties").each{|key,rule| value=out[key]; refuse("OUTPUT_SCHEMA") if rule.key?("const") && value != rule["const"]; refuse("OUTPUT_SCHEMA") if rule["type"]=="boolean" && value != true && value != false; refuse("OUTPUT_SCHEMA") if rule["type"]=="object" && !value.is_a?(Hash); refuse("OUTPUT_SCHEMA") if rule["pattern"] && !(value.is_a?(String) && Regexp.new(rule["pattern"]).match?(value))}; File.binwrite(ARGV[3], JSON.generate(out)+"\n")
+' "$fixture" "$capture" "$artifact_sha" "$output" "$artifact_bytes_verified" "$schema" 2>"$error_file"; then
   code=$(sed -n 's/.*P08_DEMO_REFUSED:\([A-Z_]*\).*/\1/p' "$error_file" | head -1)
   [ -n "$code" ] || code=CAPTURE_SCHEMA
   refuse "$code"
