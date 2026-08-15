@@ -87,14 +87,15 @@ def render(contract: dict, formula_id: str, url: str) -> bytes:
     archive, artifact, host = contract["archive"], contract["artifact"], contract["host"]
     validate_loopback_url(url, archive["filename"])
     klass = ruby_class_name(formula_id)
+    versioned_keg_only = "  keg_only :versioned_formula\n" if "@" in formula_id else ""
     text = f'''class {klass} < Formula
   desc "Private local lifecycle fixture for an unsigned TaskSeal preview"
   homepage "https://taskseal-preview.invalid/"
   url "{url}"
   version "{artifact["version"]}"
   sha256 "{archive["sha256"]}"
-  depends_on arch: :arm64
   depends_on macos: :{host["homebrew_symbol"]}
+{versioned_keg_only}
 
   def install
     bin.install "bin/taskseal"

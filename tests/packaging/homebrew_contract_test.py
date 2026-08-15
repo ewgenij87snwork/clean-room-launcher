@@ -94,6 +94,12 @@ def run_formula():
         first = renderer.render(contract, "taskseal-preview", url)
         second = renderer.render(contract, "taskseal-preview", url)
         assert first == second and b"class TasksealPreview < Formula" in first
+        assert b"depends_on arch:" not in first
+        assert b"depends_on macos: :ventura" in first
+        assert b"keg_only :versioned_formula" not in first
+        versioned = renderer.render(contract, "taskseal-preview@0.0.1", url)
+        assert b"class TasksealPreviewAT001 < Formula" in versioned
+        assert b"keg_only :versioned_formula" in versioned
         renderer.atomic_write(output, first)
         assert output.read_bytes() == first and (output.stat().st_mode & 0o777) == 0o644
         assert b"post_install" not in first and b'system "curl"' not in first
