@@ -63,7 +63,7 @@ def closed_env(paths: SafeHomebrew, scenario: str | None = None) -> dict[str, st
         script = poison / provider
         script.write_text("#!/bin/sh\nprintf invoked > \"$P07_POISON_CAPTURE\"\nexit 97\n", encoding="utf-8")
         script.chmod(0o755)
-    env = {"PATH": f"{poison}:/usr/bin:/bin:/usr/sbin:/sbin", "HOME": str(paths.home), "XDG_CONFIG_HOME": str(paths.user_config), "XDG_CACHE_HOME": str(paths.cache), "XDG_DATA_HOME": str(paths.root / "data"), "GIT_CONFIG_GLOBAL": str(paths.root / "gitconfig"), "HOMEBREW_PREFIX": str(paths.prefix), "HOMEBREW_REPOSITORY": str(paths.repository), "HOMEBREW_CELLAR": str(paths.cellar), "HOMEBREW_CACHE": str(paths.cache), "HOMEBREW_TEMP": str(paths.temp), "HOMEBREW_USER_CONFIG_HOME": str(paths.user_config), "HOMEBREW_NO_AUTO_UPDATE": "1", "HOMEBREW_NO_INSTALL_FROM_API": "1", "HOMEBREW_NO_ANALYTICS": "1", "HOMEBREW_NO_INSTALL_CLEANUP": "1", "HOMEBREW_NO_AUTOREMOVE": "1", "HOMEBREW_NO_ASK": "1", "HOMEBREW_REQUIRE_TAP_TRUST": "1", "HOMEBREW_ALLOWED_TAPS": str(paths.root / "tap"), "P07_FAKE_ROOT": str(paths.root), "P07_POISON_CAPTURE": str(capture)}
+    env = {"PATH": f"{poison}:/usr/bin:/bin:/usr/sbin:/sbin", "HOME": str(paths.home), "XDG_CONFIG_HOME": str(paths.user_config), "XDG_CACHE_HOME": str(paths.cache), "XDG_DATA_HOME": str(paths.root / "data"), "GIT_CONFIG_GLOBAL": str(paths.root / "gitconfig"), "HOMEBREW_PREFIX": str(paths.prefix), "HOMEBREW_REPOSITORY": str(paths.repository), "HOMEBREW_CELLAR": str(paths.cellar), "HOMEBREW_CACHE": str(paths.cache), "HOMEBREW_TEMP": str(paths.temp), "HOMEBREW_USER_CONFIG_HOME": str(paths.user_config), "HOMEBREW_NO_AUTO_UPDATE": "1", "HOMEBREW_NO_ANALYTICS": "1", "HOMEBREW_NO_INSTALL_CLEANUP": "1", "HOMEBREW_NO_AUTOREMOVE": "1", "HOMEBREW_NO_ASK": "1", "HOMEBREW_REQUIRE_TAP_TRUST": "1", "HOMEBREW_ALLOWED_TAPS": str(paths.root / "tap"), "P07_FAKE_ROOT": str(paths.root), "P07_POISON_CAPTURE": str(capture)}
     if scenario == "missing_require_tap_trust": env.pop("HOMEBREW_REQUIRE_TAP_TRUST")
     if scenario == "wrong_allowed_taps": env["HOMEBREW_ALLOWED_TAPS"] = "other/tap"
     if scenario: env["P07_SCENARIO"] = scenario
@@ -137,11 +137,22 @@ def provision_portable_ruby(source: Path, prefix: Path) -> None:
     shutil.copytree(source / relative, target, symlinks=True)
     if not (target / "current" / "bin" / "ruby").is_file(): raise LifecycleRefused("LIVE_HOMEBREW_BOUNDARY_REFUSED")
 
-def prepare_real_source(root: Path, source: Path) -> SafeHomebrew:
+def provision_api_cache(source: Path, cache: Path) -> None:
+    metadata = sorted((source / "internal").glob("packages.*.jws.json"))
+    if not metadata: raise LifecycleRefused("LIVE_HOMEBREW_BOUNDARY_REFUSED")
+    target = cache / "api" / "internal"; target.mkdir(parents=True, exist_ok=True)
+    for item in metadata:
+        for suffix in ("", ".payload", ".payload.index"):
+            candidate = Path(str(item) + suffix)
+            if not candidate.is_file(): raise LifecycleRefused("LIVE_HOMEBREW_BOUNDARY_REFUSED")
+            shutil.copy2(candidate, target / candidate.name)
+
+def prepare_real_source(root: Path, source: Path, api_cache_source: Path) -> SafeHomebrew:
     if not (source / ".git").exists() or not (source / "bin/brew").is_file(): raise LifecycleRefused("LIVE_HOMEBREW_BOUNDARY_REFUSED")
     prefix = root / "prefix"
     run_git(["clone", "--local", "--no-hardlinks", str(source), str(prefix)], root, True)
     provision_portable_ruby(source, prefix)
+    provision_api_cache(api_cache_source, root / "cache")
     run_git(["remote", "remove", "origin"], prefix, True)
     remote = subprocess.run(deny_network(["git", "remote"]), cwd=prefix, env={"PATH": "/usr/bin:/bin", "HOME": str(root / "home"), "GIT_CONFIG_NOSYSTEM": "1"}, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, check=False)
     if remote.returncode or remote.stdout.strip(): raise LifecycleRefused("LIVE_HOMEBREW_BOUNDARY_REFUSED")
@@ -266,16 +277,16 @@ def real_current_lifecycle(paths: SafeHomebrew, scenario: str | None, archive: d
     return document(steps, complete, failure, checks, "real-current", archive, "deny-network-sandbox")
 
 def main() -> int:
-    parser = argparse.ArgumentParser(); parser.add_argument("--fake", action="store_true"); parser.add_argument("--fake-brew"); parser.add_argument("--brew-source"); parser.add_argument("--real-archive"); parser.add_argument("--expected-sha256"); parser.add_argument("--expected-source-commit"); parser.add_argument("--scenario"); parser.add_argument("--inject-failure"); parser.add_argument("--workspace", required=True); parser.add_argument("--output", required=True); args = parser.parse_args()
+    parser = argparse.ArgumentParser(); parser.add_argument("--fake", action="store_true"); parser.add_argument("--fake-brew"); parser.add_argument("--brew-source"); parser.add_argument("--api-cache-source"); parser.add_argument("--real-archive"); parser.add_argument("--expected-sha256"); parser.add_argument("--expected-source-commit"); parser.add_argument("--scenario"); parser.add_argument("--inject-failure"); parser.add_argument("--workspace", required=True); parser.add_argument("--output", required=True); args = parser.parse_args()
     if args.fake:
         if not args.fake_brew: print("P07_HOMEBREW_LIFECYCLE_REFUSED:INSTALL_REFUSED", file=sys.stderr); return 1
         brew = Path(args.fake_brew)
     else:
-        if not (args.brew_source and args.real_archive and args.expected_sha256 and args.expected_source_commit): print("P07_HOMEBREW_LIFECYCLE_REFUSED:ARTIFACT_MISSING", file=sys.stderr); return 1
+        if not (args.brew_source and args.api_cache_source and args.real_archive and args.expected_sha256 and args.expected_source_commit): print("P07_HOMEBREW_LIFECYCLE_REFUSED:ARTIFACT_MISSING", file=sys.stderr); return 1
         root = Path(args.workspace).resolve(); root.mkdir(parents=True, exist_ok=True)
         try:
             archive = validate_real_archive(Path(args.real_archive), args.expected_sha256, args.expected_source_commit)
-            paths = prepare_real_source(root, Path(args.brew_source).resolve()); prepare_git_tap(paths)
+            paths = prepare_real_source(root, Path(args.brew_source).resolve(), Path(args.api_cache_source).resolve()); prepare_git_tap(paths)
             value = real_current_lifecycle(paths, args.scenario, archive)
         except LifecycleRefused as exc:
             value = document([], False, exc.code, {"dual_executable_parity": False, "status_paths": False, "selector_refusal": False, "poison_provider_absent": False}, "real-current")
