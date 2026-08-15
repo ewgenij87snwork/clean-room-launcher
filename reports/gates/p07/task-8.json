@@ -2,31 +2,50 @@
   "schema_version": "taskseal.p07.task-receipt.v1",
   "plan_id": "P07",
   "task": 8,
-  "result": "blocked",
+  "result": "accepted",
   "acceptance": {
     "id": "ACC-P07-T8",
-    "operator_result": "Terminal review supersedes the provisional acceptance: the gate proves one-version install/uninstall but does not prove the required real N to N+1 upgrade and rollback, and its supply-chain verifier is not bound to official CycloneDX/SLSA schemas.",
-    "evidence_ids": ["EVD-P07-T8-MUTATIONS", "EVD-P07-T8-CONSOLIDATED"]
+    "operator_result": "A real disposable Homebrew lifecycle installed N, upgraded to a distinct local N+1 artifact, rolled back to N with explicit relink, verified both CLI names at every state, and uninstalled cleanly. CycloneDX 1.7 is validated against vendored official JSON schemas; SLSA v1.2 CUE/Proto sources are digest-bound and the closed provenance profile is fully validated. Qualification remains NOT_QUALIFIED.",
+    "evidence_ids": ["EVD-P07-T8-LIFECYCLE", "EVD-P07-T8-MUTATIONS", "EVD-P07-T8-CONSOLIDATED"]
   },
   "binding": {
-    "input_head": "185e95d4ebcd14c5b9f3cc0f4fb0b49cb6957836",
-    "implementation_head": "057aacad19d375ed65f332d0d9da6d69d1bbbcf4",
-    "implementation_tree": "61002dc505802b945eb983575f1f9728744dde51",
-    "receipt_seal_role": "receipt-only-child",
-    "gate_subject_head": "c63ac57c1ca64e45eb48867fa030a7066e3411ae",
-    "implementation_files": ["scripts/gates/p07/verify.sh", "scripts/gates/p07/verify.py", "tests/packaging/lifecycle/test_gate.py", "reports/gates/p07/supply-chain-gate.json"]
+    "input_head": "dc9715fe57f9f2e719e30c203e6991bb4a573395",
+    "implementation_head": "6d881115d63691f8babd4fb566534fafab7ad01c",
+    "implementation_tree": "8998180e50201c4e467ee404b40908e07ce9b190",
+    "gate_subject_head": "f2b152654db9cf851345b819d616aa00d9048ff2",
+    "receipt_seal_role": "receipt-only-child"
   },
   "evidence": [
-    {"id": "EVD-P07-T8-MUTATIONS", "command": "python3 tests/packaging/lifecycle/test_gate.py", "exit": 0, "marker": "P07_FINAL_GATE_MUTATIONS_PASS mutations=3"},
-    {"id": "EVD-P07-T8-CONSOLIDATED", "command": "scripts/gates/p07/verify.sh", "exit": 0, "marker": "P07_SUPPLY_CHAIN_GATE_PASS qualification=NOT_QUALIFIED p07=8/8 overall=3/7", "result_sha256": "3742f0f9446b9b1fc86fac49709af4e2d4ead7647e474803a5e5453147b83af2"}
+    {"id":"EVD-P07-T8-LIFECYCLE","command":"one authorized local two-version Homebrew lifecycle campaign","exit":0,"marker":"P07_HOMEBREW_REAL_LOCAL_LIFECYCLE_PASS qualification=NOT_QUALIFIED","result_sha256":"f21b417054634d5c8ceb4f9bafea45935002ecfbed88aa7921024af099da38d8"},
+    {"id":"EVD-P07-T8-MUTATIONS","command":"python3 tests/packaging/lifecycle/test_gate.py","exit":0,"marker":"P07_FINAL_GATE_MUTATIONS_PASS mutations=5"},
+    {"id":"EVD-P07-T8-CONSOLIDATED","command":"scripts/gates/p07/verify.sh","exit":0,"marker":"P07_SUPPLY_CHAIN_GATE_PASS qualification=NOT_QUALIFIED p07=8/8 overall=3/7","result_sha256":"b1c9dc8bc97120661da3430cc925436fdeb7dabf0f1d2e0835f3f533e5c8ba95"}
   ],
   "subjects": {
-    "scripts/gates/p07/verify.sh": "a296d4ee136e9556441dced4aaf5eb8875c1bec4649b8f9f8d71610782d00803",
-    "scripts/gates/p07/verify.py": "0998d4085227dc05a7870fbcf5a53b6828755ff0755d4707f14785e29f99c7e2",
-    "tests/packaging/lifecycle/test_gate.py": "7e34ba132a45b688aec04eedb8f831122f9c9b98f95cb2b6454481c26edc656a",
-    "reports/gates/p07/supply-chain-gate.json": "3742f0f9446b9b1fc86fac49709af4e2d4ead7647e474803a5e5453147b83af2"
+    "packaging/homebrew/lifecycle.py":"a095ed783b94570fe645318513c54f796ffcdf5cedc6528d9fa059f5d814de52",
+    "packaging/homebrew/make_local_upgrade_artifact.py":"d84b6de55e8110be65ef5f70cdc511f8027e8c54ccafdb16f27187e52f5561c4",
+    "packaging/supply-chain/generate.sh":"785ca3860d6f69642fa69d07c4c8d5014bba303effd5c6bf0437156f798a534c",
+    "packaging/supply-chain/schemas/manifest.json":"c87e5247d21a40af1c2d07259818156931cdb4da3ebf600c4265b82fd0c9a401",
+    "reports/gates/p07/homebrew-v1/lifecycle-result.json":"f21b417054634d5c8ceb4f9bafea45935002ecfbed88aa7921024af099da38d8",
+    "reports/gates/p07/supply-chain-gate.json":"b1c9dc8bc97120661da3430cc925436fdeb7dabf0f1d2e0835f3f533e5c8ba95",
+    "scripts/gates/p07/verify.py":"02c7ce8c04b827a082805f6018a8dd73636ff04380812e9a6db971a22f8e3070",
+    "tests/packaging/homebrew.rs":"f719f325a840eb2575d56c4b74dee343e5df2613b12429a32f058a60e9b44877",
+    "tests/packaging/lifecycle/test_gate.py":"ac63d7dc392bfea3b09154471fa91d227bb41939ba07d1b6b78c47242bdb8478",
+    "tests/packaging/supply_chain.rs":"cfaa8d6c5f06b5337d6a936633b7f8c4ff253eb525494d773edab01ba1c1ec6e"
   },
   "qualification": "NOT_QUALIFIED",
-  "progress": {"overall": "3/7", "p07": "7/8"},
-  "controls": {"same_subject": true, "all_receipts_bound": true, "real_homebrew_lifecycle": true, "cleanup_complete": true, "publication": false, "network": false, "credentials": false, "main_mutation": false, "integration": false}
+  "progress": {"overall":"3/7","p07":"8/8"},
+  "controls": {
+    "same_subject":true,
+    "all_receipts_bound":true,
+    "real_two_version_homebrew_lifecycle":true,
+    "official_schema_sources_digest_bound":true,
+    "cleanup_complete":true,
+    "official_schema_downloads":true,
+    "publication":false,
+    "upload":false,
+    "credentials":false,
+    "provider_requests":false,
+    "main_mutation":false,
+    "integration":false
+  }
 }
