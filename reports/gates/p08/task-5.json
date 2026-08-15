@@ -7,9 +7,10 @@
   "result": "PREPARED_NOT_QUALIFIED",
   "binding": {
     "input_head": "ab5a10b9d9ea801876bacad0dce5bfb00728e3f8",
-    "implementation_head": "8190842fc5ab8db615519b1e48bdf7f646f3add8",
-    "receipt_commit_parent": "8190842fc5ab8db615519b1e48bdf7f646f3add8",
-    "receipt_seal_role": "receipt-only-child"
+    "implementation_head": "ef6f5f1ff64e4d6d4016dce6719e0864c314de92",
+    "receipt_commit_parent": "ef6f5f1ff64e4d6d4016dce6719e0864c314de92",
+    "receipt_seal_role": "replacement-receipt-only-child",
+    "replaces_receipt_commit": "1af6b8ffeaba2fe036c5a55396fda1ab1850a39b"
   },
   "evidence": [
     {
@@ -26,14 +27,14 @@
     }
   ],
   "subjects": {
-    "reports/release/onboarding.json": "cb877f32e3a14ee8cee25ba264751792c8ba26fb2263e040f1c0397dc2d8afa7",
-    "scripts/release/check-onboarding.rb": "90669d43ab4c329f4c1533c84dd09534b8f85e65c47713b81ec9432a834743d0",
+    "reports/release/onboarding.json": "d95e92ab3411394d5c02a81b575bf377ca10a11de6c50c23451b582d48574dde",
+    "scripts/release/check-onboarding.rb": "6e3f1ee74f731eda33e0082f0339753cc59759efbeeaac2f7d65aed50c365cdb",
     "tests/release/onboarding-protocol.md": "ab279adde499799136f089c247d1282214568ac72781e487a7386786fbe76980",
-    "tests/release/onboarding.rs": "4478e765fd912f891679cd7c653f33365059ad414d00af32847e2df669a02a35"
+    "tests/release/onboarding.rs": "aae0886d16b4a94b2e77fd4d5ca2e43a7f0577eb7c7fb35f045ecde6973ec981"
   },
   "subject_sha256": {
     "algorithm": "sha256 of sorted path, tab, sha256, newline records",
-    "value": "9a2436ba36b3d5d4376e036f8393768fd4c86400fb1a355864f361fe8b8c4cca"
+    "value": "cc41ca7a36211670c8fa4d559ea06e3e194f4698d30befbbaa31de63bb8c94da"
   },
   "internal_readiness": "PASS",
   "external_observation": "NOT_RUN",
