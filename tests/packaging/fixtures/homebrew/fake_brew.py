@@ -34,7 +34,7 @@ elif argv[0] in {"style", "audit", "test", "upgrade", "unlink", "link", "install
     item = argv[-1]
     if item not in formulae or (argv[0] in {"install", "upgrade"} and item not in state["trusted"]): raise SystemExit(2)
     if scenario == "install_archive_fetch_failed" and argv[0] == "install":
-        print("Failed to download resource taskseal-preview", file=sys.stderr); raise SystemExit(2)
+        print("Failed to download resource taskseal-preview"); raise SystemExit(2)
     if scenario == "style_refusal_cleanup" and argv[0] in {"style", "uninstall"}: raise SystemExit(2)
     if scenario == "require_loopback_server" and argv[0] == "install":
         body = urllib.request.urlopen("http://127.0.0.1:49152/taskseal-v0.0.1-aarch64-apple-darwin.tar.gz", timeout=1).read()
