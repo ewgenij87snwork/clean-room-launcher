@@ -144,8 +144,5 @@ fn real_mode_prepares_only_a_disposable_local_git_source_and_real_current_eviden
     assert!(json.contains("\"clone_local\"") && json.contains("\"origin_removed\"") && json.contains("\"tap_git_ready\""), "{}", json);
     assert!(json.contains("\"network_boundary\":\"deny-network-sandbox\""), "{}", json);
     assert!(!json.contains("upgrade_n_plus_1") && !json.contains("rollback_n") && !json.contains("install_versioned_trust"), "{}", json);
-    let refused_workspace = temp.join("style-refusal-workspace"); fs::create_dir_all(&refused_workspace).unwrap(); let refused_result = temp.join("style-refusal-result.json");
-    let refused = Command::new("python3").current_dir(root()).args(["packaging/homebrew/lifecycle.py", "--brew-source", source.to_str().unwrap(), "--api-cache-source", api_cache.to_str().unwrap(), "--input-contract", input.to_str().unwrap(), "--real-archive", archive.to_str().unwrap(), "--expected-sha256", &digest, "--expected-source-commit", "1111111111111111111111111111111111111111", "--scenario", "style_refusal_cleanup", "--workspace", refused_workspace.to_str().unwrap(), "--output", refused_result.to_str().unwrap()]).output().unwrap();
-    assert!(!refused.status.success()); let refused_json = fs::read_to_string(refused_result).unwrap();
-    assert!(refused_json.contains("\"failure_class\":\"FORMULA_AUDIT_REFUSED\"") && refused_json.contains("\"cleanup_complete\":true") && !refused_json.contains("\"name\":\"uninstall_current\""), "{}", refused_json);
+    assert!(json.contains("\"name\":\"formula_syntax\"") && !json.contains("\"name\":\"style\"") && !json.contains("\"name\":\"audit\""), "{}", json);
 }

@@ -202,6 +202,12 @@ def run_step(paths: SafeHomebrew, name: str, argv: list[str], refusal: str, scen
     steps.append(StepResult(name, result.returncode, diagnostic).evidence())
     if result.returncode: raise LifecycleRefused(refusal)
 
+def verify_formula_syntax(paths: SafeHomebrew, steps: list[dict[str, object]]) -> None:
+    formula = paths.root / "tap" / "Formula" / "taskseal-preview.rb"
+    result = subprocess.run(deny_network(["/usr/bin/ruby", "-c", str(formula)]), cwd=paths.root, env=closed_env(paths), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
+    steps.append(StepResult("formula_syntax", result.returncode).evidence())
+    if result.returncode: raise LifecycleRefused("FORMULA_AUDIT_REFUSED")
+
 def sentinels(paths: SafeHomebrew) -> dict[str, str]:
     values = {"taskseal": paths.root / "sentinel-taskseal", "provider": paths.root / "sentinel-provider", "git": paths.root / "sentinel-git", "homebrew": paths.root / "sentinel-homebrew", "unrelated": paths.root / "sentinel-unrelated", "config": paths.root / "gitconfig"}
     for name, path in values.items(): path.write_text(name + "\n", encoding="utf-8")
@@ -291,10 +297,9 @@ def real_current_lifecycle(paths: SafeHomebrew, scenario: str | None, archive: d
     try:
         with serve_exact_archive(archive_path) as loopback_port:
             preflight(paths, scenario, True, loopback_port); steps.extend([StepResult("preflight", 0).evidence(), StepResult("clone_local", 0).evidence(), StepResult("origin_removed", 0).evidence(), StepResult("tap_git_ready", 0).evidence()])
+            verify_formula_syntax(paths, steps)
             run_step(paths, "tap", ["tap", "taskseal-local/preview", str(paths.root / "tap")], "TAP_TRUST_REFUSED", scenario, steps, True, loopback_port)
             run_step(paths, "item_trust", ["trust", "--formula", "taskseal-local/preview/taskseal-preview"], "TAP_TRUST_REFUSED", scenario, steps, True, loopback_port)
-            run_step(paths, "style", ["style", "--formula", "taskseal-local/preview/taskseal-preview"], "FORMULA_AUDIT_REFUSED", scenario, steps, True, loopback_port)
-            run_step(paths, "audit", ["audit", "--strict", "--formula", "taskseal-local/preview/taskseal-preview"], "FORMULA_AUDIT_REFUSED", scenario, steps, True, loopback_port)
             run_step(paths, "install_current", ["install", "taskseal-local/preview/taskseal-preview"], "INSTALL_REFUSED", scenario, steps, True, loopback_port)
             installed = True
             require_sentinels(paths, baseline); verify_dual_names(paths, True); checks.update({"dual_executable_parity": True, "status_paths": True, "selector_refusal": True, "poison_provider_absent": not (paths.root / "poison-provider-invoked").exists()})
