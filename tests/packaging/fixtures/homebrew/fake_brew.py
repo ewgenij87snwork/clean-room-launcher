@@ -9,6 +9,9 @@ credential_words = ("TOKEN", "SECRET", "PASSWORD", "CREDENTIAL", "KEY")
 if not argv or Path(os.environ.get("HOMEBREW_PREFIX", "")).resolve() != prefix or os.environ.get("HOME") != str(root / "home") or os.environ.get("PATH") != f"{root / 'poison'}:/usr/bin:/bin:/usr/sbin:/sbin" or any(any(word in key.upper() for word in credential_words) for key in os.environ): raise SystemExit(2)
 if scenario == "require_portable_ruby" and not (Path(os.environ["HOMEBREW_REPOSITORY"]) / "Library/Homebrew/vendor/portable-ruby/current/bin/ruby").is_file(): raise SystemExit(2)
 if scenario == "require_portable_ruby" and ("HOMEBREW_NO_INSTALL_FROM_API" in os.environ or not any((Path(os.environ["HOMEBREW_CACHE"]) / "api/internal").glob("packages.*.jws.json"))): raise SystemExit(2)
+if scenario == "require_rendered_formula":
+    formula = Path(os.environ["HOMEBREW_ALLOWED_TAPS"]) / "Formula/taskseal-preview.rb"
+    if not formula.is_file() or 'url "http://127.0.0.1:49152/taskseal-v0.0.1-aarch64-apple-darwin.tar.gz"' not in formula.read_text(encoding="utf-8") or 'sha256 "' not in formula.read_text(encoding="utf-8"): raise SystemExit(2)
 ledger = root / "ledger.jsonl"; ledger.parent.mkdir(parents=True, exist_ok=True)
 with ledger.open("a", encoding="utf-8") as out: out.write(json.dumps({"argv": argv}, sort_keys=True, separators=(",", ":")) + "\n")
 state_path = root / "state.json"; state = json.loads(state_path.read_text()) if state_path.exists() else {"tap": False, "trusted": [], "installed": []}

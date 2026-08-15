@@ -158,9 +158,13 @@ def prepare_real_source(root: Path, source: Path, api_cache_source: Path) -> Saf
     if remote.returncode or remote.stdout.strip(): raise LifecycleRefused("LIVE_HOMEBREW_BOUNDARY_REFUSED")
     return make_paths(root, prefix / "bin/brew")
 
-def prepare_git_tap(paths: SafeHomebrew) -> None:
+def prepare_git_tap(paths: SafeHomebrew, input_contract: Path) -> None:
     tap = paths.root / "tap"; formula = tap / "Formula" / "taskseal-preview.rb"; formula.parent.mkdir(parents=True, exist_ok=True)
-    formula.write_text("class TasksealPreview < Formula\n  desc \"private local lifecycle fixture\"\nend\n", encoding="utf-8")
+    try: archive_name = json.loads(input_contract.read_text(encoding="utf-8"))["archive"]["filename"]
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError, KeyError, TypeError): raise LifecycleRefused("FORMULA_RENDER_REFUSED")
+    renderer = Path(__file__).with_name("render_formula.py")
+    result = subprocess.run([sys.executable, str(renderer), "--input-contract", str(input_contract), "--formula-id", "taskseal-preview", "--artifact-url", "http://127.0.0.1:49152/" + archive_name, "--output", str(formula)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
+    if result.returncode: raise LifecycleRefused("FORMULA_RENDER_REFUSED")
     run_git(["init"], tap, True); run_git(["add", "Formula/taskseal-preview.rb"], tap, True); run_git(["-c", "user.name=p07", "-c", "user.email=p07@example.invalid", "commit", "-m", "local-preview"], tap, True)
 
 def preflight(paths: SafeHomebrew, scenario: str | None, network_bound: bool = False) -> None:
@@ -277,16 +281,16 @@ def real_current_lifecycle(paths: SafeHomebrew, scenario: str | None, archive: d
     return document(steps, complete, failure, checks, "real-current", archive, "deny-network-sandbox")
 
 def main() -> int:
-    parser = argparse.ArgumentParser(); parser.add_argument("--fake", action="store_true"); parser.add_argument("--fake-brew"); parser.add_argument("--brew-source"); parser.add_argument("--api-cache-source"); parser.add_argument("--real-archive"); parser.add_argument("--expected-sha256"); parser.add_argument("--expected-source-commit"); parser.add_argument("--scenario"); parser.add_argument("--inject-failure"); parser.add_argument("--workspace", required=True); parser.add_argument("--output", required=True); args = parser.parse_args()
+    parser = argparse.ArgumentParser(); parser.add_argument("--fake", action="store_true"); parser.add_argument("--fake-brew"); parser.add_argument("--brew-source"); parser.add_argument("--api-cache-source"); parser.add_argument("--input-contract"); parser.add_argument("--real-archive"); parser.add_argument("--expected-sha256"); parser.add_argument("--expected-source-commit"); parser.add_argument("--scenario"); parser.add_argument("--inject-failure"); parser.add_argument("--workspace", required=True); parser.add_argument("--output", required=True); args = parser.parse_args()
     if args.fake:
         if not args.fake_brew: print("P07_HOMEBREW_LIFECYCLE_REFUSED:INSTALL_REFUSED", file=sys.stderr); return 1
         brew = Path(args.fake_brew)
     else:
-        if not (args.brew_source and args.api_cache_source and args.real_archive and args.expected_sha256 and args.expected_source_commit): print("P07_HOMEBREW_LIFECYCLE_REFUSED:ARTIFACT_MISSING", file=sys.stderr); return 1
+        if not (args.brew_source and args.api_cache_source and args.input_contract and args.real_archive and args.expected_sha256 and args.expected_source_commit): print("P07_HOMEBREW_LIFECYCLE_REFUSED:ARTIFACT_MISSING", file=sys.stderr); return 1
         root = Path(args.workspace).resolve(); root.mkdir(parents=True, exist_ok=True)
         try:
             archive = validate_real_archive(Path(args.real_archive), args.expected_sha256, args.expected_source_commit)
-            paths = prepare_real_source(root, Path(args.brew_source).resolve(), Path(args.api_cache_source).resolve()); prepare_git_tap(paths)
+            paths = prepare_real_source(root, Path(args.brew_source).resolve(), Path(args.api_cache_source).resolve()); prepare_git_tap(paths, Path(args.input_contract).resolve())
             value = real_current_lifecycle(paths, args.scenario, archive)
         except LifecycleRefused as exc:
             value = document([], False, exc.code, {"dual_executable_parity": False, "status_paths": False, "selector_refusal": False, "poison_provider_absent": False}, "real-current")
