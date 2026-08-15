@@ -1,4 +1,4 @@
-use std::{fs, path::{Path, PathBuf}, process::Command};
+use std::{fs, io::Write, path::{Path, PathBuf}, process::{Command, Stdio}};
 
 fn root() -> PathBuf { Path::new(env!("CARGO_MANIFEST_DIR")).to_path_buf() }
 
@@ -116,6 +116,26 @@ fn json_string(source: &str, key: &str) -> String {
     source.split(&marker).nth(1).unwrap().split('"').next().unwrap().to_owned()
 }
 
+fn sha256_at_commit(commit: &str, file: &str) -> String {
+    let bytes = Command::new("git").current_dir(root()).args(["show", &format!("{commit}:{file}")]).output().unwrap();
+    assert!(bytes.status.success(), "{}", String::from_utf8_lossy(&bytes.stderr));
+    let mut digest = Command::new("shasum").args(["-a", "256"]).stdin(Stdio::piped()).stdout(Stdio::piped()).spawn().unwrap();
+    digest.stdin.as_mut().unwrap().write_all(&bytes.stdout).unwrap();
+    let output = digest.wait_with_output().unwrap();
+    assert!(output.status.success());
+    String::from_utf8(output.stdout).unwrap().split_whitespace().next().unwrap().to_owned()
+}
+
+fn validate_subject_sha256(source: &str, implementation: &str) -> Result<(), String> {
+    let section = source.split("\"subject_sha256\":{").nth(1).ok_or("missing subject_sha256")?;
+    for file in ["reports/release/candidate.json", "schemas/release/release-dossier.schema.json", "scripts/release/collect-dossier.rb", "tests/release/dossier.rs"] {
+        let expected = json_string(section, file);
+        let actual = sha256_at_commit(implementation, file);
+        if actual != expected { return Err(format!("subject_sha256 mismatch: {file}")); }
+    }
+    Ok(())
+}
+
 #[test]
 fn task_one_receipt_is_a_durable_receipt_only_child() {
     const RECEIPT: &str = "reports/gates/p08/task-1.json";
@@ -143,4 +163,8 @@ fn task_one_receipt_is_a_durable_receipt_only_child() {
         let actual = git(&["hash-object", file]);
         assert_eq!(actual, expected, "subject digest mismatch: {file}");
     }
+    validate_subject_sha256(&source, &implementation).unwrap();
+    let expected = json_string(source.split("\"subject_sha256\":{").nth(1).unwrap(), "reports/release/candidate.json");
+    let tampered = source.replacen(&expected, &"0".repeat(64), 1);
+    assert!(validate_subject_sha256(&tampered, &implementation).is_err(), "self-consistent subject_sha256 mutation was accepted");
 }
