@@ -1,0 +1,29 @@
+{
+  "schema_version": "taskseal.p08.task-receipt.v1",
+  "plan_id": "P08",
+  "task": 6,
+  "acceptance_id": "ACC-P08-T6",
+  "qualification": "NOT_QUALIFIED",
+  "result": "PREPARED_NOT_QUALIFIED",
+  "binding": {
+    "input_head": "db29fecdb3b282bfc5039aeb73e85905b6b8f056",
+    "implementation_head": "fae990309b64b43c626cdda3da1fa74079abaf04",
+    "receipt_commit_parent": "fae990309b64b43c626cdda3da1fa74079abaf04",
+    "receipt_seal_role": "receipt-only-child"
+  },
+  "evidence": [
+    {"id":"EVD-P08-T6-RED","command":"CARGO_MANIFEST_DIR=\"$PWD\" rustc --edition=2024 --test tests/release/demo_repro.rs -o /tmp/p08-demo-red && /tmp/p08-demo-red","exit":101,"result":"demo runner was absent; three test expectations could not launch it"},
+    {"id":"EVD-P08-T6-GREEN","command":"CARGO_MANIFEST_DIR=\"$PWD\" rustc --edition=2024 --test tests/release/demo_repro.rs -o /tmp/p08-demo-green2 && /tmp/p08-demo-green2","exit":0,"result":"3 focused tests pass: closed replay, non-promotion, unsafe/stale/edited/cleanup refusal and output verification"}
+  ],
+  "subjects": {
+    "docs/demo.md":"58eb6d9f6966109a24d58113540e76c74da95d7d92f1345a7ff10cabef46dafb",
+    "reports/release/demo.json":"658d571df020fed04b8aa897ea8036598aaa5e9dd2881c3499c6695441fb620d",
+    "schemas/release/demo-receipt.schema.json":"d60d779470f29a84580fb67380d10f05dd909a2da37765d7d40779a8bd99fe51",
+    "scripts/release/run-demo.sh":"7d158226f3b2b234d483d0a61277a52db730e8ea6b07c6392ca8357d4559e313",
+    "tests/release/demo_repro.rs":"ff76ff142ca52b1074b51f1fad8ea5fa11699c80bb99352490c6997e278ea534"
+  },
+  "subject_sha256":{"algorithm":"sha256 of sorted path, tab, sha256, newline records","value":"4aa7654ae9ce7707f04a38268a03aeb5916afb6cef5d53d2ecf03d9b8cf4869e"},
+  "production_demo":"NOT_RUN",
+  "owner_gate_reason":"EXACT_ARTIFACT_BYTES_AND_CLEAN_INSTALL_OBSERVATION_REQUIRED",
+  "controls":{"fixture_non_promotable":true,"production_artifact_bytes_required":true,"clean_install_required":true,"developer_checkout_refused":true,"private_path_raw_prompt_credential_refused":true,"edited_output_refused":true,"cleanup_required":true,"nondeterministic_claim_census_digest_refused":true,"network":false,"provider_spend":false,"browser_or_login":false,"credential_read":false,"publication":false,"main_mutation":false,"integration":false}
+}
