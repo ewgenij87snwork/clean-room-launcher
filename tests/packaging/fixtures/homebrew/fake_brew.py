@@ -37,6 +37,7 @@ elif argv[0] in {"style", "audit", "test", "upgrade", "unlink", "link", "install
         print("Error: unsupported formula dependency"); raise SystemExit(2)
     if scenario == "style_refusal_cleanup" and argv[0] in {"style", "uninstall"}: raise SystemExit(2)
     if scenario == "require_loopback_server" and argv[0] == "install":
+        if os.environ.get("HOMEBREW_AVOID_NESTED_SANDBOXING") != "1": raise SystemExit(2)
         body = urllib.request.urlopen("http://127.0.0.1:49152/taskseal-v0.0.1-aarch64-apple-darwin.tar.gz", timeout=1).read()
         if not body: raise SystemExit(2)
     if argv[0] == "install":
