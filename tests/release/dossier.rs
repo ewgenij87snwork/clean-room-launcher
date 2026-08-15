@@ -104,3 +104,43 @@ fn collector_builds_a_closed_private_candidate_and_refuses_bad_receipts() {
       }
     }
 }
+
+fn git(args: &[&str]) -> String {
+    let output = Command::new("git").current_dir(root()).args(args).output().unwrap();
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    String::from_utf8(output.stdout).unwrap().trim().to_owned()
+}
+
+fn json_string(source: &str, key: &str) -> String {
+    let marker = format!("\"{key}\":\"");
+    source.split(&marker).nth(1).unwrap().split('"').next().unwrap().to_owned()
+}
+
+#[test]
+fn task_one_receipt_is_a_durable_receipt_only_child() {
+    const RECEIPT: &str = "reports/gates/p08/task-1.json";
+    let path = root().join(RECEIPT);
+    let source = fs::read_to_string(&path).expect("Task 1 receipt is missing");
+    for needle in [
+        "\"schema_version\":\"taskseal.p08.task-receipt.v1\"",
+        "\"plan_id\":\"P08\"", "\"task\":1", "\"acceptance_id\":\"ACC-P08-T1\"",
+        "\"input_head\":\"487f4105cc56bc147783a12e30dd7c1338716284\"",
+        "\"receipt_seal_role\":\"receipt-only-child\"",
+    ] { assert!(source.contains(needle), "missing receipt field: {needle}"); }
+    let implementation = json_string(&source, "implementation_head");
+    let parent = json_string(&source, "receipt_commit_parent");
+    assert_eq!(implementation, parent);
+    for ancestor in ["04df6e065d569c7d3169df1adb8070c23eab57b4", "04230aa9e6a030109e235a266b0484e4ab2779d5", &implementation] {
+        assert_eq!(git(&["merge-base", "--is-ancestor", ancestor, "HEAD"]), "");
+    }
+    let receipts = git(&["rev-list", "--reverse", &format!("{implementation}..HEAD"), "--", RECEIPT]);
+    let receipt_commit = receipts.lines().collect::<Vec<_>>();
+    assert_eq!(receipt_commit.len(), 1, "receipt must have one seal child: {receipts}");
+    assert_eq!(git(&["rev-list", "--parents", "-n", "1", receipt_commit[0]]), format!("{} {}", receipt_commit[0], implementation));
+    assert_eq!(git(&["diff-tree", "--no-commit-id", "--name-only", "-r", receipt_commit[0]]), RECEIPT);
+    for file in ["reports/release/candidate.json", "schemas/release/release-dossier.schema.json", "scripts/release/collect-dossier.rb", "tests/release/dossier.rs"] {
+        let expected = json_string(&source, file);
+        let actual = git(&["hash-object", file]);
+        assert_eq!(actual, expected, "subject digest mismatch: {file}");
+    }
+}
