@@ -6,7 +6,7 @@ from pathlib import Path
 
 def make(output: Path, version: str) -> str:
     root = f"taskseal-v{version}-aarch64-apple-darwin"; binary = f"#!/bin/sh\nprintf 'fixture {version}\\n'\n".encode()
-    files = {"LICENSE": b"fixture license\n", "NOTICE": b"fixture notice\n", "VERSION": f"version={version}\nsource_commit={'1' * 40}\ntarget=aarch64-apple-darwin\nevidence_class=lifecycle-fixture\nqualification=NOT_QUALIFIED\n".encode(), "bin/taskseal": binary, "bin/tseal": binary}
+    files = {"LICENSE": b"fixture license\n", "NOTICE": b"fixture notice\n", "VERSION": f"version={version}\nsource_commit={'1' * 40}\ntarget=aarch64-apple-darwin\nevidence_class=lifecycle-fixture\nqualification=NOT_QUALIFIED\n".encode(), "bin/taskseal": binary, "bin/tseal": binary, "share/doc/taskseal/CHANGELOG.md": b"fixture changelog\n"}
     with open(output, "wb") as raw, gzip.GzipFile(fileobj=raw, mode="wb", filename="", mtime=0) as gz, tarfile.open(fileobj=gz, mode="w") as tar:
         for name in sorted(files):
             data = files[name]; info = tarfile.TarInfo(f"{root}/{name}"); info.size = len(data); info.uid = info.gid = info.mtime = 0; info.mode = 0o755 if name.startswith("bin/") else 0o644; tar.addfile(info, io.BytesIO(data))

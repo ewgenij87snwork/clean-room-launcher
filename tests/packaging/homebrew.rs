@@ -93,7 +93,7 @@ for path, version in zip(sys.argv[1:], ('0.0.1', '0.0.2')):
   with tarfile.open(path, 'r:gz') as archive:
     names = {member.name: member for member in archive.getmembers() if member.isfile()}
     root = f'taskseal-v{version}-aarch64-apple-darwin'
-    assert set(names) == {f'{root}/LICENSE', f'{root}/NOTICE', f'{root}/VERSION', f'{root}/bin/taskseal', f'{root}/bin/tseal'}
+    assert set(names) == {f'{root}/LICENSE', f'{root}/NOTICE', f'{root}/VERSION', f'{root}/bin/taskseal', f'{root}/bin/tseal', f'{root}/share/doc/taskseal/CHANGELOG.md'}
     assert names[f'{root}/bin/taskseal'].mode & 0o777 == 0o755 and names[f'{root}/bin/tseal'].mode & 0o777 == 0o755
     assert archive.extractfile(names[f'{root}/bin/taskseal']).read() == archive.extractfile(names[f'{root}/bin/tseal']).read()
     version_text = archive.extractfile(names[f'{root}/VERSION']).read().decode()

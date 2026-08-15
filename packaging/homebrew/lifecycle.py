@@ -95,7 +95,7 @@ def validate_real_archive(archive: Path, digest: str, source_commit: str) -> dic
             members = {item.name: item for item in tar.getmembers() if item.isfile()}
             roots = {name.split("/", 1)[0] for name in members}
             if len(roots) != 1: raise LifecycleRefused("ARTIFACT_METADATA_MISMATCH")
-            root = next(iter(roots)); required = {f"{root}/LICENSE", f"{root}/NOTICE", f"{root}/VERSION", f"{root}/bin/taskseal", f"{root}/bin/tseal"}
+            root = next(iter(roots)); required = {f"{root}/LICENSE", f"{root}/NOTICE", f"{root}/VERSION", f"{root}/bin/taskseal", f"{root}/bin/tseal", f"{root}/share/doc/taskseal/CHANGELOG.md"}
             if set(members) != required or any(name.startswith("/") or "/../" in name for name in members): raise LifecycleRefused("ARTIFACT_METADATA_MISMATCH")
             if members[f"{root}/bin/taskseal"].mode & 0o111 == 0 or members[f"{root}/bin/tseal"].mode & 0o111 == 0: raise LifecycleRefused("ARTIFACT_METADATA_MISMATCH")
             taskseal = tar.extractfile(members[f"{root}/bin/taskseal"]); tseal = tar.extractfile(members[f"{root}/bin/tseal"]); version = tar.extractfile(members[f"{root}/VERSION"])
