@@ -21,21 +21,20 @@ else
 fi
 [[ $target_label =~ ^[A-Za-z0-9._-]+$ ]] || { echo "unsafe target label" >&2; exit 2; }
 target_dir=${CARGO_TARGET_DIR:-"$root/target"}
-binary="$target_dir/${target:+$target/}release/taskseal"
+binary="$target_dir/${target:+$target/}release/clroom"
 build_cargo_home=${CARGO_HOME:-"${HOME:?HOME is required}/.cargo"}
 if [[ $build_cargo_home != /* ]]; then build_cargo_home="$root/$build_cargo_home"; fi
 build_cargo_home=$(cd "$build_cargo_home" && pwd -P)
 [[ -z ${RUSTFLAGS:-} && -z ${CARGO_ENCODED_RUSTFLAGS:-} ]] || { echo "external rust flags prevent exact path remapping" >&2; exit 2; }
 export CARGO_ENCODED_RUSTFLAGS="--remap-path-prefix=$root=/workspace/taskseal"$'\x1f'"--remap-path-prefix=$build_cargo_home=/cargo"
 export CARGO_NET_OFFLINE=${CARGO_NET_OFFLINE:-true} LC_ALL=C TZ=UTC SOURCE_DATE_EPOCH=0
-cargo build --locked --release --bin taskseal "${cargo_args[@]}"
-[[ -x "$binary" ]] || { echo "built taskseal binary not found" >&2; exit 2; }
+cargo build --locked --release --bin clroom "${cargo_args[@]}"
+[[ -x "$binary" ]] || { echo "built clroom binary not found" >&2; exit 2; }
 mkdir -p "$out_dir"
-tmp=$(mktemp -d "${TMPDIR:-/tmp}/taskseal-artifact.XXXXXX"); trap 'rm -rf "$tmp"' EXIT
-stage="$tmp/taskseal-v$version-$target_label"
-mkdir -p "$stage/bin" "$stage/share/doc/taskseal"
-install -m 0755 "$binary" "$stage/bin/taskseal"
-install -m 0755 "$binary" "$stage/bin/tseal"
+tmp=$(mktemp -d "${TMPDIR:-/tmp}/clean-room-launcher-artifact.XXXXXX"); trap 'rm -rf "$tmp"' EXIT
+stage="$tmp/clean-room-launcher-v$version-$target_label"
+mkdir -p "$stage/bin" "$stage/share/doc/clean-room-launcher"
+install -m 0755 "$binary" "$stage/bin/clroom"
 install -m 0644 "$root/LICENSE" "$stage/LICENSE"
 python3 "$root/packaging/generate-notice.py" --output "$stage/NOTICE"
 script_sha=$(shasum -a 256 "$root/packaging/build-artifacts.sh" | awk '{print $1}')
@@ -47,8 +46,8 @@ rustc_version=$(rustc --version)
 cargo_version=$(cargo --version)
 python_version=$(python3 --version)
 printf 'version=%s\nsource_commit=%s\nrust_toolchain=%s\ntarget=%s\nrustc=%s\ncargo=%s\npython=%s\npackaging_script_sha256=%s\nnotice_generator_sha256=%s\nlicense_policy_sha256=%s\nnotice_policy_sha256=%s\ncargo_lock_sha256=%s\narchive_profile=normalized-local-toolchain\nqualification=NOT_QUALIFIED\nsigning=unsigned-preview-only\ndependencies=cargo-lock\n' "$version" "$commit" "$toolchain" "$target_label" "$rustc_version" "$cargo_version" "$python_version" "$script_sha" "$notice_generator_sha" "$license_policy_sha" "$notice_policy_sha" "$cargo_lock_sha" > "$stage/VERSION"
-install -m 0644 "$root/CHANGELOG.md" "$stage/share/doc/taskseal/CHANGELOG.md"
-archive="$out_dir/taskseal-v$version-$target_label.tar.gz"
+install -m 0644 "$root/CHANGELOG.md" "$stage/share/doc/clean-room-launcher/CHANGELOG.md"
+archive="$out_dir/clean-room-launcher-v$version-$target_label.tar.gz"
 python3 - "$stage" "$archive" <<'PY'
 import gzip, hashlib, os, sys, tarfile
 stage, archive = sys.argv[1:]
@@ -66,7 +65,7 @@ with open(archive, "wb") as raw:
             for rel, path in entries:
                 info = tar.gettarinfo(path, arcname=rel)
                 info.uid = info.gid = 0; info.uname = info.gname = ""; info.mtime = 0
-                info.mode = 0o755 if info.isdir() or rel.endswith("/bin/taskseal") or rel.endswith("/bin/tseal") else 0o644
+                info.mode = 0o755 if info.isdir() or rel.endswith("/bin/clroom") else 0o644
                 if info.isfile():
                     with open(path, "rb") as data: tar.addfile(info, data)
                 else: tar.addfile(info)

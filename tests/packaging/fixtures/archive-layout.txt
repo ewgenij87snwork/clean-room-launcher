@@ -1,6 +1,5 @@
-taskseal-v0.1.0/bin
-taskseal-v0.1.0/bin/taskseal
-taskseal-v0.1.0/bin/tseal
-taskseal-v0.1.0/LICENSE
-taskseal-v0.1.0/NOTICE
-taskseal-v0.1.0/VERSION
+clean-room-launcher-v0.1.0/bin
+clean-room-launcher-v0.1.0/bin/clroom
+clean-room-launcher-v0.1.0/LICENSE
+clean-room-launcher-v0.1.0/NOTICE
+clean-room-launcher-v0.1.0/VERSION
