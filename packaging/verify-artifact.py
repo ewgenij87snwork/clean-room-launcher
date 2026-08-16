@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Fail-closed verifier for locally generated TaskSeal preview archives."""
-import gzip, hashlib, os, sys, tarfile
+import gzip, hashlib, os, re, sys, tarfile
 
 REQUIRED = {"LICENSE", "NOTICE", "VERSION", "bin/taskseal", "bin/tseal", "share/doc/taskseal/CHANGELOG.md"}
 def fail(message):
@@ -32,6 +32,14 @@ try:
         if taskseal != tseal: fail("tseal is not byte-identical")
         version = tar.extractfile(root + "/VERSION").read().decode("utf-8")
         if "qualification=NOT_QUALIFIED\n" not in version or "source_commit=" not in version: fail("unbound qualification metadata")
+        for field in ("notice_generator_sha256", "license_policy_sha256", "notice_policy_sha256", "cargo_lock_sha256"):
+            if not re.search(rf"^{field}=[0-9a-f]{{64}}$", version, re.MULTILINE): fail("unbound notice metadata")
+        notice = tar.extractfile(root + "/NOTICE").read().decode("utf-8")
+        if not notice.startswith("Third-party dependency notices\n"): fail("dependency notice identity")
+        count = re.search(r"^Component count: ([1-9][0-9]*)$", notice, re.MULTILINE)
+        if count is None or notice.count("\n- ") != int(count.group(1)): fail("dependency notice component census")
+        if not re.search(r"^Cargo\.lock SHA-256: [0-9a-f]{64}$", notice, re.MULTILINE): fail("dependency notice lock binding")
+        if any(marker in notice for marker in ("/Users/", "/home/", "Documents/it", "ghp_", "sk-")): fail("dependency notice private data")
 except (tarfile.TarError, OSError, UnicodeError) as exc:
     fail(str(exc))
 print("ARTIFACT_VALID sha256=" + hashlib.sha256(open(archive, "rb").read()).hexdigest())

@@ -32,12 +32,16 @@ mkdir -p "$stage/bin" "$stage/share/doc/taskseal"
 install -m 0755 "$binary" "$stage/bin/taskseal"
 install -m 0755 "$binary" "$stage/bin/tseal"
 install -m 0644 "$root/LICENSE" "$stage/LICENSE"
-printf 'TaskSeal v%s local unsigned preview artifact.\nCanonical executable: bin/taskseal\nCompatibility executable: bin/tseal (byte-identical copy)\n' "$version" > "$stage/NOTICE"
+python3 "$root/packaging/generate-notice.py" --output "$stage/NOTICE"
 script_sha=$(shasum -a 256 "$root/packaging/build-artifacts.sh" | awk '{print $1}')
+notice_generator_sha=$(shasum -a 256 "$root/packaging/generate-notice.py" | awk '{print $1}')
+license_policy_sha=$(shasum -a 256 "$root/packaging/license-policy.toml" | awk '{print $1}')
+notice_policy_sha=$(shasum -a 256 "$root/packaging/dependency-notice-policy.json" | awk '{print $1}')
+cargo_lock_sha=$(shasum -a 256 "$root/Cargo.lock" | awk '{print $1}')
 rustc_version=$(rustc --version)
 cargo_version=$(cargo --version)
 python_version=$(python3 --version)
-printf 'version=%s\nsource_commit=%s\nrust_toolchain=%s\ntarget=%s\nrustc=%s\ncargo=%s\npython=%s\npackaging_script_sha256=%s\narchive_profile=normalized-local-toolchain\nqualification=NOT_QUALIFIED\nsigning=unsigned-preview-only\ndependencies=cargo-lock\n' "$version" "$commit" "$toolchain" "$target_label" "$rustc_version" "$cargo_version" "$python_version" "$script_sha" > "$stage/VERSION"
+printf 'version=%s\nsource_commit=%s\nrust_toolchain=%s\ntarget=%s\nrustc=%s\ncargo=%s\npython=%s\npackaging_script_sha256=%s\nnotice_generator_sha256=%s\nlicense_policy_sha256=%s\nnotice_policy_sha256=%s\ncargo_lock_sha256=%s\narchive_profile=normalized-local-toolchain\nqualification=NOT_QUALIFIED\nsigning=unsigned-preview-only\ndependencies=cargo-lock\n' "$version" "$commit" "$toolchain" "$target_label" "$rustc_version" "$cargo_version" "$python_version" "$script_sha" "$notice_generator_sha" "$license_policy_sha" "$notice_policy_sha" "$cargo_lock_sha" > "$stage/VERSION"
 install -m 0644 "$root/CHANGELOG.md" "$stage/share/doc/taskseal/CHANGELOG.md"
 archive="$out_dir/taskseal-v$version-$target_label.tar.gz"
 python3 - "$stage" "$archive" <<'PY'
