@@ -1,0 +1,111 @@
+{
+  "schema_version": "clean-room-launcher.p06.public-identity-correction.v1",
+  "plan_id": "P06",
+  "result": "PASS",
+  "qualification": "NOT_YET_RUN_FOR_CURRENT_ARTIFACT",
+  "recorded_at": "2026-08-16T12:50:51Z",
+  "acceptance": {
+    "id": "ACC-P06-CLROOM-PUBLIC-IDENTITY-V1",
+    "operator_result": "The sole Cargo executable target is clroom. Its bare screen and help identify Clean Room Launcher and the approved category. clroom codex uses native Unix exec with literal safe argv, inherited foreground streams, exit status and signals, while login and credential-shaped inputs refuse before provider birth."
+  },
+  "binding": {
+    "input_head": "0f89039687b90d82521ffd905cb9dd0d1996aec3",
+    "implementation_head": "3e3a718e5f091fa30a146a3f3cf6286da4d66e03",
+    "receipt_seal_role": "receipt-only-child",
+    "canonical_p08_plan_sha256": "611e56412b2fa04a2f271ffde52e196d542a988252d135bd9ea66eb9351cf215",
+    "local_closure_plan_sha256": "bbd8a0f3633040a792d7c308f9d713275e36bd36583f8e515afdb94ab313487b"
+  },
+  "identity": {
+    "product": "Clean Room Launcher",
+    "category": "A clean-room launcher for coding-agent CLIs.",
+    "command": "clroom",
+    "package_and_repository": "clean-room-launcher",
+    "compatibility_executable_aliases": [],
+    "claude_support": "NOT_RUN_NOT_ADVERTISED"
+  },
+  "historical_stale_input": {
+    "name": "croom",
+    "origin_commit": "1e249e8",
+    "status": "STALE_SUPERSEDED_NOT_REWRITTEN",
+    "audit_path": "reports/release/audit.json",
+    "audit_sha256": "2691540b89f7f58c5cf36457cb44436aacaa4b6e682fa324ea16826b8f0f46e1",
+    "task_7_receipt_path": "reports/gates/p08/task-7.json",
+    "task_7_receipt_sha256": "2c54a99a5e23badc102ca5df5cdf6f5ad704f05e8c288767c50ab144f3bf8deb"
+  },
+  "remaining_identity_classification": [
+    {
+      "class": "CURRENT_PACKAGE_INTERNAL",
+      "values": ["Cargo package taskseal", "Rust crate imports taskseal"],
+      "disposition": "Phase B replaces these before the release artifact is built; they are not exposed by the accepted Phase A CLI output."
+    },
+    {
+      "class": "SCHEMA_AND_DIGEST_HISTORY",
+      "values": ["taskseal.output.v1", "taskseal.saved-start.v1", "taskseal-placement.v1", "taskseal-generation-v1", "taskseal.provider-*"],
+      "disposition": "Retained for deterministic reading and verification of existing stored state and evidence; not presented as product identity."
+    },
+    {
+      "class": "IMMUTABLE_HISTORICAL_EVIDENCE",
+      "values": ["prior reports and receipts", "existing bound canary fixture identifiers"],
+      "disposition": "Preserved unchanged."
+    }
+  ],
+  "subjects": {
+    "src/bin/clroom.rs": "b5c83dbd9dd59a95fb21ca663386c16e00d4af0bc1335e4f0d3ae30723233fa6",
+    "src/cli/mod.rs": "d97bafe38a94a210867b48e07126f10102e14661f283e933c41c1c28aa76d308",
+    "src/cli/process.rs": "3599c3f93206f15d904137626ae6ccc394c7f863644df5a19f1b91ec45c88a5b",
+    "src/cli/help.rs": "7b8b58acb6f29f25b016532b6a1c37e796d363fdaab33320591c2da54555d282",
+    "src/cli/screen.rs": "bcbb18afeb19f1f3de826c781b0e5c91c51264e34c7ece4cd56da5b44c078476",
+    "src/cli/state.rs": "2612deaa3dbb44d5792dab36237b7c2275b3b4d5d6a06360ffb07d8553dc7da0",
+    "src/adapters/placement.rs": "a92cf862980e562621293fc42038a4c315662f910a963140dc203db1682d2069",
+    "src/core/publish.rs": "71d04fabf2b8fccd6f5fd5ae52b78f3f6f5105b610156801595c7fcf3683a016",
+    "tests/public_identity.rs": "d98031a965d5a8d6f80944befb58026e4442602d553f0ebb97e26288e4977155"
+  },
+  "verification": {
+    "red": {
+      "command": "cargo test --locked --test public_identity -- --nocapture",
+      "exit": 101,
+      "marker": "clroom executable target is required"
+    },
+    "green": {
+      "command": "cargo test --locked --test public_identity -- --nocapture",
+      "exit": 0,
+      "tests": "1 passed"
+    },
+    "existing_cli_regression": {
+      "command": "cargo test --locked --test cli",
+      "exit": 0,
+      "tests": "51 passed",
+      "changed_input_before_final_run": "Corrected the exact em-dash expectation and made per-test fake-provider scratch roots unique after the first regression run exposed shared-process test collisions."
+    },
+    "runtime_path_regressions": [
+      {
+        "command": "cargo test --locked --lib core::",
+        "exit": 0,
+        "tests": "30 passed"
+      },
+      {
+        "command": "cargo test --locked --test adapters",
+        "exit": 0,
+        "tests": "39 passed"
+      },
+      {
+        "command": "cargo test --locked --test schema_vectors",
+        "exit": 0,
+        "tests": "5 passed"
+      }
+    ]
+  },
+  "controls": {
+    "provider_processes": 0,
+    "credential_access": false,
+    "keychain_access": false,
+    "browser_or_login": false,
+    "claude_processes": 0,
+    "historical_receipts_rewritten": false,
+    "task_7_rerun": false,
+    "p08_consolidated_gate": false,
+    "publication": false,
+    "main_mutation": false,
+    "integration": false
+  }
+}
