@@ -26,22 +26,32 @@ fn run_with_digest(dir: &Path, artifact: &Path, receipt: &Path, capture: &Path, 
         "--capture", capture.to_str().unwrap(), "--output", result.to_str().unwrap(), "--test-only-fixture",
     ]).env("TASKSEAL_TEST_ONLY_FIXTURE", "1").current_dir(dir).output().unwrap()
 }
+fn reproduced_clean_install() -> (PathBuf, PathBuf, PathBuf) {
+    let dir = std::env::temp_dir().join(format!("p08-demo-real-{}", std::process::id()));
+    let _ = fs::remove_dir_all(&dir); fs::create_dir_all(dir.join("source")).unwrap(); fs::create_dir_all(dir.join("target")).unwrap(); fs::create_dir_all(dir.join("out")).unwrap();
+    assert!(Command::new("sh").args(["-c", "git archive --format=tar 01ad1d894aabe265b08d61d67d39da1a29cad9e4 | tar -xf - -C \"$1\"", "--", dir.join("source").to_str().unwrap()]).current_dir(root()).status().unwrap().success());
+    let built = Command::new(dir.join("source/packaging/build-artifacts.sh")).arg(dir.join("out")).env("TASKSEAL_SOURCE_COMMIT", "01ad1d894aabe265b08d61d67d39da1a29cad9e4").env("CARGO_TARGET_DIR", dir.join("target")).env("CARGO_NET_OFFLINE", "true").env("LC_ALL", "C").env("TZ", "UTC").env("SOURCE_DATE_EPOCH", "0").current_dir(dir.join("source")).status().unwrap();
+    assert!(built.success()); let artifact=fs::read_dir(dir.join("out")).unwrap().map(|e|e.unwrap().path()).find(|p|p.extension().is_some_and(|x|x=="gz")).unwrap();
+    assert_eq!(sha256(&artifact), "656f8701e84e0d7a72c4dbdb62d8ad20733e5743b602ff0fd6447c711a211d33");
+    let install=dir.join("install"); fs::create_dir_all(&install).unwrap(); assert!(Command::new("tar").args(["-xzf", artifact.to_str().unwrap(), "-C", install.to_str().unwrap()]).status().unwrap().success());
+    let installed=fs::read_dir(&install).unwrap().next().unwrap().unwrap().path().join("bin/tseal"); (dir, artifact, installed)
+}
 
 const FIXTURE: &str = r#"{"schema_version":"taskseal.demo-fixture.v1","mode":"TEST_ONLY_REPLAY","promotion_eligible":false,"p07_source_evidence":"reports/gates/p07/task-3.json#/claims/source_commit","p07_artifact_evidence":"reports/gates/p07/task-3.json#/claims/archive_sha256","p08_task3_contract":"reports/release/codex-alpha.json","claims":["compact_catalog","deferred_body"],"catalog_census":{"admitted":2,"loaded_now":0},"semantic_fields":["claims","catalog_census","result_digest"],"redaction":{"declared_non_semantic":["recorded_at"],"raw_prompt_retained":false,"credential_retained":false,"private_path_retained":false}}"#;
 const CAPTURE: &str = r#"{"schema_version":"taskseal.demo-capture.v1","mode":"TEST_ONLY_REPLAY","promotion_eligible":false,"commands":["tseal catalog"],"results":["catalog: 2 skills"],"claims":["compact_catalog","deferred_body"],"catalog_census":{"admitted":2,"loaded_now":0},"cleanup":{"completed":true},"recorded_at":"REDACTED_NON_SEMANTIC"}"#;
 
 #[test]
 fn test_only_replay_is_closed_sanitized_and_reproducible_but_not_promotable() {
-    let (dir, artifact, fixture_path) = fixture("valid", FIXTURE, CAPTURE);
-    let capture = dir.join("capture.json"); let output = dir.join("demo.json");
-    let first = run(&dir, &artifact, &fixture_path, &capture, &output);
+    let (dir, artifact, installed) = reproduced_clean_install();
+    let fixture_path = dir.join("fixture.json"); let capture = dir.join("capture.json"); let output = dir.join("demo.json"); fs::write(&fixture_path, FIXTURE).unwrap(); fs::write(&capture, CAPTURE).unwrap();
+    let first = Command::new(root().join("scripts/release/run-demo.sh")).args(["--artifact", artifact.to_str().unwrap(), "--artifact-sha256", "656f8701e84e0d7a72c4dbdb62d8ad20733e5743b602ff0fd6447c711a211d33", "--installed-tseal", installed.to_str().unwrap(), "--fixture", fixture_path.to_str().unwrap(), "--fixture-sha256", &sha256(&fixture_path), "--capture", capture.to_str().unwrap(), "--output", output.to_str().unwrap(), "--test-only-fixture"]).env("TASKSEAL_TEST_ONLY_FIXTURE", "1").current_dir(&dir).output().unwrap();
     assert!(first.status.success(), "{}", String::from_utf8_lossy(&first.stderr));
     assert!(String::from_utf8_lossy(&first.stdout).contains("P08_DEMO_PREPARED_NOT_QUALIFIED"));
     let first_bytes = fs::read_to_string(&output).unwrap();
     assert!(first_bytes.contains("\"result\":\"PREPARED_NOT_QUALIFIED\""));
     assert!(first_bytes.contains("\"live_observation\":\"NOT_RUN\""));
     assert!(first_bytes.contains("\"promotion_eligible\":false"));
-    let replay = run(&dir, &artifact, &fixture_path, &capture, &output);
+    let replay = Command::new(root().join("scripts/release/run-demo.sh")).args(["--artifact", artifact.to_str().unwrap(), "--artifact-sha256", "656f8701e84e0d7a72c4dbdb62d8ad20733e5743b602ff0fd6447c711a211d33", "--installed-tseal", installed.to_str().unwrap(), "--fixture", fixture_path.to_str().unwrap(), "--fixture-sha256", &sha256(&fixture_path), "--capture", capture.to_str().unwrap(), "--output", output.to_str().unwrap(), "--test-only-fixture"]).env("TASKSEAL_TEST_ONLY_FIXTURE", "1").current_dir(&dir).output().unwrap();
     assert!(replay.status.success(), "{}", String::from_utf8_lossy(&replay.stderr));
     assert_eq!(first_bytes, fs::read_to_string(&output).unwrap());
     let verified = Command::new(root().join("scripts/release/run-demo.sh")).args(["--verify-output", output.to_str().unwrap()]).output().unwrap();

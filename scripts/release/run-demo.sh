@@ -17,11 +17,12 @@ if [ "${1:-}" = "--verify-output" ]; then
   echo "P08_DEMO_OUTPUT_VERIFIED"; exit 0
 fi
 
-artifact= artifact_sha= fixture= fixture_sha= capture= output= test_only=false
+artifact= artifact_sha= installed_tseal= fixture= fixture_sha= capture= output= test_only=false
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --artifact) artifact=${2:?}; shift 2 ;;
     --artifact-sha256) artifact_sha=${2:?}; shift 2 ;;
+    --installed-tseal) installed_tseal=${2:?}; shift 2 ;;
     --fixture) fixture=${2:?}; shift 2 ;;
     --fixture-sha256) fixture_sha=${2:?}; shift 2 ;;
     --capture) capture=${2:?}; shift 2 ;;
@@ -44,6 +45,20 @@ actual_artifact_sha=$(shasum -a 256 "$artifact" | awk '{print $1}')
 artifact_bytes_verified=false
 [ "$actual_artifact_sha" = "$artifact_sha" ] && artifact_bytes_verified=true
 [ "$artifact_bytes_verified" = true ] || [ "$test_only" = true ] || refuse STALE_ARTIFACT 67
+if [ "$artifact_bytes_verified" = true ]; then
+  [ -n "$installed_tseal" ] && [ -f "$installed_tseal" ] && [ -x "$installed_tseal" ] || refuse CLEAN_INSTALL_REQUIRED 67
+  installed_real=$(ruby -e 'puts File.realpath(ARGV[0])' "$installed_tseal" 2>/dev/null) || refuse CLEAN_INSTALL_REQUIRED 67
+  case "$installed_real" in "$root"|"$root"/*) refuse DEVELOPER_CHECKOUT_REFUSED 67;; esac
+  archive_tseal_sha=$(python3 - "$artifact" <<'PY'
+import hashlib, sys, tarfile
+with tarfile.open(sys.argv[1], "r:gz") as archive:
+    members = [m for m in archive.getmembers() if m.name.endswith("/bin/tseal")]
+    if len(members) != 1 or not members[0].isfile(): raise SystemExit(1)
+    print(hashlib.sha256(archive.extractfile(members[0]).read()).hexdigest())
+PY
+) || refuse CLEAN_INSTALL_REQUIRED 67
+  [ "$archive_tseal_sha" = "$(shasum -a 256 "$installed_real" | awk '{print $1}')" ] || refuse INSTALLED_ARTIFACT_MISMATCH 67
+fi
 [ "$(ruby -e 'puts File.realpath(ARGV[0])' "$artifact" 2>/dev/null)" != "$root" ] || refuse DEVELOPER_CHECKOUT_REFUSED 67
 case "$(ruby -e 'puts File.realpath(ARGV[0])' "$artifact" 2>/dev/null)" in "$root"/*) refuse DEVELOPER_CHECKOUT_REFUSED 67;; esac
 [ "$(dirname "$output")" != "$root/reports/release" ] || refuse TEST_OUTPUT_MUST_NOT_REPLACE_PRODUCTION 67
