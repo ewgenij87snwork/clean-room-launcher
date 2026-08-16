@@ -4,6 +4,8 @@ mod codex_context_canaries;
 mod codex_environment;
 #[path = "adapters/codex/identity.rs"]
 mod codex_identity;
+#[path = "adapters/codex/isolation.rs"]
+mod codex_isolation;
 #[path = "adapters/codex/placement.rs"]
 mod codex_placement;
 #[path = "adapters/codex/process_parity.rs"]
