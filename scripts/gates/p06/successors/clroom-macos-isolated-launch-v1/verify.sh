@@ -9,9 +9,9 @@ fi
 
 if ! /usr/bin/ruby -rjson -e '
   expected = %w[
-    allowed_project_canary browser_or_login denied_global_agents_canary
-    denied_user_skill_canary exit_class manifest_digest plan_id process_count
-    raw_retained schema_version tuple_digest
+    manifest_digest offline_allowed_project_canary offline_denied_global_agents_canary
+    offline_denied_user_skill_canary plan_id process_count raw_retained
+    real_help_browser_or_login real_help_exit_class schema_version tuple_digest
   ].sort
   value = JSON.parse(File.binread(ARGV.fetch(0)))
   abort "closed schema" unless value.keys.sort == expected
@@ -21,11 +21,11 @@ if ! /usr/bin/ruby -rjson -e '
     value["tuple_digest"].match?(/\A[0-9a-f]{64}\z/) &&
     value["manifest_digest"].match?(/\A[0-9a-f]{64}\z/) &&
     value["process_count"] == 1 &&
-    value["allowed_project_canary"] == true &&
-    value["denied_global_agents_canary"] == true &&
-    value["denied_user_skill_canary"] == true &&
-    value["browser_or_login"] == false &&
-    value["exit_class"] == "HELP_EXIT_0" &&
+    value["offline_allowed_project_canary"] == true &&
+    value["offline_denied_global_agents_canary"] == true &&
+    value["offline_denied_user_skill_canary"] == true &&
+    value["real_help_browser_or_login"] == false &&
+    value["real_help_exit_class"] == "HELP_EXIT_0" &&
     value["raw_retained"] == false
 ' "$result" >/dev/null 2>&1; then
   printf '%s\n' 'P06_CLROOM_MACOS_ISOLATED_LAUNCH_V1_REFUSED:RESULT_INVALID' >&2

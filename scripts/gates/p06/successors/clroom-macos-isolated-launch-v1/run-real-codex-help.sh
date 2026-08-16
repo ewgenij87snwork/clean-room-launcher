@@ -42,11 +42,11 @@ fi
     "tuple_digest" => "19c4f144c5226a9f17c58e6f0fa854843b0f77a6eb420f40e2745a12f10f5d37",
     "manifest_digest" => digest,
     "process_count" => 1,
-    "allowed_project_canary" => true,
-    "denied_global_agents_canary" => true,
-    "denied_user_skill_canary" => true,
-    "browser_or_login" => false,
-    "exit_class" => "HELP_EXIT_0",
+    "offline_allowed_project_canary" => true,
+    "offline_denied_global_agents_canary" => true,
+    "offline_denied_user_skill_canary" => true,
+    "real_help_browser_or_login" => false,
+    "real_help_exit_class" => "HELP_EXIT_0",
     "raw_retained" => false
   }
   File.binwrite(path, JSON.generate(value) + "\n")

@@ -11,12 +11,12 @@ fn temporary_result() -> PathBuf {
 }
 
 #[test]
-fn sole_gate_rejects_a_closed_reduction_with_an_unknown_raw_field() {
-    // Break caught: raw provider output can enter the durable acceptance receipt.
+fn sole_gate_rejects_ambiguous_canary_fields_that_look_like_real_codex_observation() {
+    // Break caught: offline sandbox evidence is mislabeled as observed inside real Codex.
     let result = temporary_result();
     fs::write(
         &result,
-        r#"{"schema_version":"clroom.macos-isolated-launch.result.v1","plan_id":"P06-CLROOM-MACOS-ISOLATED-LAUNCH-V1","tuple_digest":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","manifest_digest":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","process_count":1,"allowed_project_canary":true,"denied_global_agents_canary":true,"denied_user_skill_canary":true,"browser_or_login":false,"exit_class":"HELP_EXIT_0","raw_retained":false,"raw_output":"forbidden"}"#,
+        r#"{"schema_version":"clroom.macos-isolated-launch.result.v1","plan_id":"P06-CLROOM-MACOS-ISOLATED-LAUNCH-V1","tuple_digest":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","manifest_digest":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","process_count":1,"allowed_project_canary":true,"denied_global_agents_canary":true,"denied_user_skill_canary":true,"browser_or_login":false,"exit_class":"HELP_EXIT_0","raw_retained":false}"#,
     )
     .unwrap();
     let gate = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
