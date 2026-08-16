@@ -1,0 +1,132 @@
+{
+  "schema_version": "taskseal.p08.task7-continuation.v1",
+  "plan_id": "P08",
+  "task": 7,
+  "acceptance_id": "ACC-P08-T7",
+  "result": "BLOCKED",
+  "qualification": "NOT_QUALIFIED",
+  "recorded_at": "2026-08-16T11:42:19Z",
+  "binding": {
+    "input_head": "9fe34c44a2ae11405cb7861f2f13d1d9dd30f446",
+    "final_audit_scan_head": "b7eebe1a3a02a50dd36ce505540091bf5eadb7c8",
+    "final_audit_report_commit": "c89b220601446808a8e8fe5ae1c3ad442f9ce555",
+    "post_audit_p07_receipt_commit": "c6f9d8f1cfa65c63bf34595eee056ff5d9202b25",
+    "implementation_head": "ddd24d6258300ea8e67b10ab12e0dae9f41a473e",
+    "receipt_commit_parent": "ddd24d6258300ea8e67b10ab12e0dae9f41a473e",
+    "receipt_seal_role": "receipt-only-child-blocked-continuation",
+    "canonical_plan_sha256": "611e56412b2fa04a2f271ffde52e196d542a988252d135bd9ea66eb9351cf215",
+    "superseded_historical_receipt": {
+      "path": "reports/gates/p08/task-7.json",
+      "sha256": "2c54a99a5e23badc102ca5df5cdf6f5ad704f05e8c288767c50ab144f3bf8deb",
+      "rewritten": false
+    }
+  },
+  "executed_audit": {
+    "path": "reports/release/audit.json",
+    "sha256": "2691540b89f7f58c5cf36457cb44436aacaa4b6e682fa324ea16826b8f0f46e1",
+    "artifact_sha256": "ea8e60d2b4097ce766758bd70543628d0c15e9c7ab0ebc0d29d76c59da896b0c",
+    "recorded_at": "2026-08-16T11:30:30Z",
+    "exit": 3,
+    "marker": "P08_TASK7_AUDIT_BLOCKED slices=5 blockers=5",
+    "slices_run": 5,
+    "slices_total": 5,
+    "reruns": 0
+  },
+  "executed_audit_blockers": [
+    "PROTECTED_PATH_OWNERSHIP_UNVERIFIED",
+    "SECURITY_REPORTING_ROUTE_UNVERIFIED",
+    "NAMESPACE_OWNERSHIP_UNPROVEN",
+    "PRIVATE_ABSOLUTE_PATH",
+    "UPSTREAM_RELEASE_RISK_OPEN"
+  ],
+  "post_audit_artifact_correction": {
+    "receipt_path": "reports/gates/p07/artifact-privacy-correction-v1.json",
+    "receipt_sha256": "2d5a97d1a39f24eca2875db2b887fa43d8b1d0ac6cd24631cf141d106cc3641c",
+    "artifact_sha256": "49a685a98df13fa59766d9032dca7229cfa3e996b1b9b92ec59be8da1b899cf7",
+    "artifact_size": 708265,
+    "source_commit": "b6581cb70686b2a32a0ea8496a9c15794f0bb6ca",
+    "builds": 2,
+    "byte_identical": true,
+    "binary_concrete_home_paths": 0,
+    "notice_components": 143,
+    "supply_chain_verified": true,
+    "task7_rerun": false
+  },
+  "current_candidate": {
+    "dossier_path": "reports/release/candidate.json",
+    "dossier_sha256": "95ff7862168eda44a5fbc963e0e769cd576972ed12810d059f97f98aaf22a652",
+    "candidate_commit": "c6f9d8f1cfa65c63bf34595eee056ff5d9202b25",
+    "artifact_sha256": "49a685a98df13fa59766d9032dca7229cfa3e996b1b9b92ec59be8da1b899cf7",
+    "qualification": "NOT_QUALIFIED"
+  },
+  "dispositions": [
+    {
+      "code": "PRIVATE_ABSOLUTE_PATH",
+      "status": "RESOLVED_POST_AUDIT_NOT_PROMOTED",
+      "evidence": "Seven source matches were deny-pattern literals; two concrete binary findings were fixed by the bound P07 artifact correction. Current focused privacy diagnostic reports zero findings."
+    },
+    {
+      "code": "DEPENDENCY_LICENSE_NOTICE_MISSING",
+      "status": "RESOLVED_IN_EXECUTED_AUDIT",
+      "evidence": "Executed audit recorded missing=0 for the 143-component artifact NOTICE."
+    },
+    {
+      "code": "DEPENDENCY_LICENSE_POLICY",
+      "status": "RESOLVED_IN_EXECUTED_AUDIT",
+      "evidence": "Executed audit accepted the locked graph under the bound P07 policy."
+    }
+  ],
+  "current_blockers": [
+    {
+      "code": "CURRENT_CANDIDATE_TASK7_AUDIT_NOT_RUN",
+      "owner": "P08",
+      "evidence": "The sole authorized final audit preceded the defect-driven replacement artifact; no second Task 7 audit was executed or inferred."
+    },
+    {
+      "code": "UPSTREAM_RELEASE_RISK_OPEN",
+      "owner": "P06/P08",
+      "evidence": "The current Codex observation is NOT_QUALIFIED, binds the prior artifact and does not match the sealed negative P06 tuple."
+    },
+    {
+      "code": "NAMESPACE_OWNERSHIP_UNPROVEN",
+      "owner": "owner/external",
+      "evidence": "The approved croom namespace is observed absent, not reserved or owned."
+    },
+    {
+      "code": "SECURITY_REPORTING_ROUTE_UNVERIFIED",
+      "owner": "owner/external",
+      "evidence": "No public repository exists with a verified private vulnerability-reporting route."
+    },
+    {
+      "code": "PROTECTED_PATH_OWNERSHIP_UNVERIFIED",
+      "owner": "owner/external",
+      "evidence": "The comment-only CODEOWNERS contract has no verified host account mapping or enforceable repository protection."
+    }
+  ],
+  "subjects": {
+    "reports/release/audit.json": "2691540b89f7f58c5cf36457cb44436aacaa4b6e682fa324ea16826b8f0f46e1",
+    "reports/release/candidate.json": "95ff7862168eda44a5fbc963e0e769cd576972ed12810d059f97f98aaf22a652",
+    "schemas/release/release-dossier.schema.json": "493efcbe690d82fcf97bf9ba21bb68011da6ca8fb6e46e1017020476872257ee",
+    "scripts/release/audit-release.sh": "21030c19d25ebf9f01115b2300487cd29d447fabbb951098c46594d47012d60d",
+    "scripts/release/collect-dossier.rb": "00cb104a800d48703c672eeb9b78e6de6a5652255959e6ef063f5760fc1e93f5",
+    "tests/release/dossier.rs": "415e5a86103f4dfb2326c62d88bbaefcf8f9ac43ffa8d62108cedc224bfe7d4f",
+    "reports/gates/p07/artifact-privacy-correction-v1.json": "2d5a97d1a39f24eca2875db2b887fa43d8b1d0ac6cd24631cf141d106cc3641c"
+  },
+  "controls": {
+    "tasks_8_to_10_started": false,
+    "consolidated_p08_gate_run": false,
+    "task7_rerun": false,
+    "historical_receipts_rewritten": false,
+    "provider_requests_after_budget": false,
+    "claude_requests": false,
+    "browser_or_login": false,
+    "credential_access": false,
+    "keychain_access": false,
+    "namespace_reservation": false,
+    "publication": false,
+    "upload": false,
+    "external_contact": false,
+    "main_mutation": false,
+    "integration": false
+  }
+}
