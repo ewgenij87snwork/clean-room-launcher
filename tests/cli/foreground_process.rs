@@ -1,7 +1,7 @@
 use std::{fs, path::PathBuf, process::Command};
 
 fn fake_provider() -> PathBuf {
-    let dir = std::env::temp_dir().join(format!("taskseal-foreground-{}", std::process::id()));
+    let dir = std::env::temp_dir().join(format!("clroom-foreground-{}", std::process::id()));
     let _ = fs::remove_dir_all(&dir);
     fs::create_dir_all(&dir).unwrap();
     let executable = dir.join("fake-provider");
@@ -20,11 +20,11 @@ fn foreground_provider_is_refused_before_normal_or_signal_execution() {
     let provider = fake_provider();
     let capture = provider.parent().unwrap().join("capture");
     for provider_arg in ["--exit-42", "--abort"] {
-        let output = Command::new(env!("CARGO_BIN_EXE_tseal"))
+        let output = Command::new(env!("CARGO_BIN_EXE_clroom"))
             .args(["--", provider.to_str().unwrap(), provider_arg])
-            .env("TASKSEAL_CAPTURE_PATH", &capture)
+            .env("CLROOM_CAPTURE_PATH", &capture)
             .output()
-            .expect("tseal must run");
+            .expect("clroom must run");
         assert_eq!(output.status.code(), Some(2));
         assert!(output.stdout.is_empty());
         assert_eq!(

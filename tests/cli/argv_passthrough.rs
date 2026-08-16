@@ -6,6 +6,7 @@ use std::{
     path::{Path, PathBuf},
     process::Command,
     rc::Rc,
+    sync::atomic::{AtomicU64, Ordering},
 };
 
 use super::cli_entry;
@@ -13,9 +14,14 @@ use super::cli_entry;
 const ZERO_AUTH_REFUSAL: &str = "ZERO_AUTH_REFUSAL: provider-native preauthenticated session unavailable or ambiguous; continue locally\n";
 const ZERO_AUTH_ARGUMENT_REFUSAL: &str =
     "ZERO_AUTH_ARGUMENT_REFUSAL: sensitive argument refused before dispatch; continue locally\n";
+static SCRATCH_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 
 fn scratch(name: &str) -> PathBuf {
-    let path = std::env::temp_dir().join(format!("taskseal-{name}-{}", std::process::id()));
+    let path = std::env::temp_dir().join(format!(
+        "clroom-{name}-{}-{}",
+        std::process::id(),
+        SCRATCH_SEQUENCE.fetch_add(1, Ordering::Relaxed)
+    ));
     let _ = fs::remove_dir_all(&path);
     fs::create_dir_all(&path).unwrap();
     path
@@ -36,12 +42,12 @@ fn fake_provider(name: &str) -> (PathBuf, PathBuf) {
 
 fn assert_zero_auth_refusal(args: Vec<OsString>, provider_dir: &Path, capture: &Path) {
     let _ = fs::remove_file(capture);
-    let output = Command::new(env!("CARGO_BIN_EXE_tseal"))
+    let output = Command::new(env!("CARGO_BIN_EXE_clroom"))
         .args(args)
         .env("PATH", provider_dir)
-        .env("TASKSEAL_CAPTURE_PATH", capture)
+        .env("CLROOM_CAPTURE_PATH", capture)
         .output()
-        .expect("tseal must run");
+        .expect("clroom must run");
     assert_eq!(output.status.code(), Some(2));
     assert!(output.stdout.is_empty());
     assert_eq!(String::from_utf8(output.stderr).unwrap(), ZERO_AUTH_REFUSAL);
@@ -110,7 +116,7 @@ impl Iterator for PoisonTail {
             return Some(value);
         }
         panic!(
-            "TaskSeal consumed a prohibited provider tail containing {} unread values",
+            "Clean Room Launcher consumed a prohibited provider tail containing {} unread values",
             self.unread_tail.len()
         );
     }
@@ -122,7 +128,7 @@ fn final_zero_auth_generic_boundary_stops_before_executable_position() {
     for (prefix, expected_calls) in [(vec!["--"], 1), (vec!["--output", "json", "--"], 3)] {
         let next_calls = Rc::new(Cell::new(0));
         let exit = cli_entry::run(
-            "tseal",
+            "clroom",
             PoisonTail {
                 prefix: prefix
                     .into_iter()
@@ -150,10 +156,10 @@ fn final_zero_auth_generic_boundary_stops_before_executable_position() {
             "must-not-be-retained",
         ],
     ] {
-        let output = Command::new(env!("CARGO_BIN_EXE_tseal"))
+        let output = Command::new(env!("CARGO_BIN_EXE_clroom"))
             .args(args)
             .output()
-            .expect("tseal must run");
+            .expect("clroom must run");
         assert_eq!(output.status.code(), Some(2));
         assert!(output.stdout.is_empty());
         assert_eq!(String::from_utf8(output.stderr).unwrap(), ZERO_AUTH_REFUSAL);
@@ -177,7 +183,7 @@ fn final_zero_auth_shared_predispatch_boundary_covers_every_argument_route() {
     ] {
         let next_calls = Rc::new(Cell::new(0));
         let exit = cli_entry::run(
-            "tseal",
+            "clroom",
             PoisonTail {
                 prefix: prefix
                     .into_iter()
@@ -201,10 +207,10 @@ fn final_zero_auth_shared_predispatch_boundary_covers_every_argument_route() {
         vec!["--output", "json", "--secret=must-not-be-echoed"],
         vec!["--password=must-not-be-echoed"],
     ] {
-        let output = Command::new(env!("CARGO_BIN_EXE_tseal"))
+        let output = Command::new(env!("CARGO_BIN_EXE_clroom"))
             .args(args)
             .output()
-            .expect("tseal must run");
+            .expect("clroom must run");
         assert_eq!(output.status.code(), Some(2));
         assert!(output.stdout.is_empty());
         assert_eq!(
@@ -217,15 +223,15 @@ fn final_zero_auth_shared_predispatch_boundary_covers_every_argument_route() {
 #[test]
 fn final_zero_auth_shared_boundary_preserves_non_sensitive_local_arguments() {
     for args in [vec!["help", "inspect"], vec!["inspect", "--help"]] {
-        let output = Command::new(env!("CARGO_BIN_EXE_tseal"))
+        let output = Command::new(env!("CARGO_BIN_EXE_clroom"))
             .args(args)
             .output()
-            .expect("tseal must run");
+            .expect("clroom must run");
         assert_eq!(output.status.code(), Some(0));
         assert!(
             String::from_utf8(output.stdout)
                 .unwrap()
-                .contains("TaskSeal inspect")
+                .contains("Clean Room Launcher — inspect")
         );
         assert!(output.stderr.is_empty());
     }
@@ -254,7 +260,7 @@ fn provider_and_generic_refusal_do_not_consume_credential_shaped_tails() {
     ] {
         let next_calls = Rc::new(Cell::new(0));
         let exit = cli_entry::run(
-            "tseal",
+            "clroom",
             PoisonTail {
                 prefix: prefix.into_iter(),
                 next_calls: Rc::clone(&next_calls),
@@ -294,7 +300,7 @@ fn selector_prefixed_refusal_does_not_consume_credential_shaped_tails() {
     ] {
         let next_calls = Rc::new(Cell::new(0));
         let exit = cli_entry::run(
-            "tseal",
+            "clroom",
             PoisonTail {
                 prefix: prefix.into_iter(),
                 next_calls: Rc::clone(&next_calls),
@@ -318,7 +324,7 @@ fn final_zero_auth_ingestion_routes_leave_credential_shaped_tails_unread() {
     ] {
         let next_calls = Rc::new(Cell::new(0));
         let exit = cli_entry::run(
-            "tseal",
+            "clroom",
             PoisonTail {
                 prefix: prefix
                     .into_iter()
@@ -365,10 +371,10 @@ fn selector_prefixed_real_routes_refuse_before_child_birth() {
 
 #[test]
 fn selector_prefixed_local_command_keeps_existing_output_refusal() {
-    let output = Command::new(env!("CARGO_BIN_EXE_tseal"))
+    let output = Command::new(env!("CARGO_BIN_EXE_clroom"))
         .args(["--output", "json", "status"])
         .output()
-        .expect("tseal must run");
+        .expect("clroom must run");
     assert_eq!(output.status.code(), Some(2));
     assert!(output.stdout.is_empty());
     assert_eq!(
@@ -378,49 +384,46 @@ fn selector_prefixed_local_command_keeps_existing_output_refusal() {
 }
 
 #[test]
-fn unqualified_provider_route_refuses_before_ambient_path_can_spawn() {
+fn direct_provider_route_forwards_safe_native_arguments() {
     let (codex, capture) = fake_provider("codex");
     let before = fs::read(&codex).unwrap();
-    let output = Command::new(env!("CARGO_BIN_EXE_tseal"))
+    let output = Command::new(env!("CARGO_BIN_EXE_clroom"))
         .arg("codex")
         .arg("--version")
         .env("PATH", codex.parent().unwrap())
-        .env("TASKSEAL_CAPTURE_PATH", &capture)
+        .env("CLROOM_CAPTURE_PATH", &capture)
         .output()
-        .expect("tseal must run");
-    assert_eq!(output.status.code(), Some(2));
-    assert_eq!(
-        String::from_utf8(output.stderr).unwrap(),
-        "LOCAL_CODEX_BOUNDARY_REQUIRED: use tseal codex -- [ARGS...]\n"
-    );
-    assert!(!capture.exists());
+        .expect("clroom must run");
+    assert_eq!(output.status.code(), Some(0));
+    assert!(output.stderr.is_empty());
+    assert_eq!(fs::read_to_string(&capture).unwrap(), "--version\0");
     assert_eq!(fs::read(codex).unwrap(), before);
 }
 
 #[test]
 fn generic_boundary_without_an_executable_refuses_safely() {
     // Break caught: an empty generic boundary panics, inspects a tail, or invokes a shell.
-    let output = Command::new(env!("CARGO_BIN_EXE_tseal"))
+    let output = Command::new(env!("CARGO_BIN_EXE_clroom"))
         .arg("--")
         .output()
-        .expect("tseal must run");
+        .expect("clroom must run");
     assert_eq!(output.status.code(), Some(2));
     assert!(output.stdout.is_empty());
     assert_eq!(String::from_utf8(output.stderr).unwrap(), ZERO_AUTH_REFUSAL);
 }
 
 #[test]
-fn taskseal_owned_local_commands_remain_available() {
+fn launcher_owned_local_commands_remain_available() {
     // Break caught: closing external execution accidentally disables local-only operations.
     for command in ["status", "scan", "prepare", "check"] {
-        let output = Command::new(env!("CARGO_BIN_EXE_tseal"))
+        let output = Command::new(env!("CARGO_BIN_EXE_clroom"))
             .arg(command)
             .output()
-            .expect("tseal must run");
+            .expect("clroom must run");
         assert_eq!(output.status.code(), Some(0), "{command}");
         assert_eq!(
             String::from_utf8(output.stdout).unwrap(),
-            "tseal: command accepted\n",
+            "clroom: command accepted\n",
             "{command}"
         );
         assert!(output.stderr.is_empty(), "{command}");

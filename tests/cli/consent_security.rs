@@ -14,7 +14,7 @@ fn digest(byte: char) -> String {
 fn proposal(access: AccessClass) -> LaunchProposal {
     LaunchProposal::new(
         digest('a'),
-        vec![".taskseal/runtime/context.md".to_owned()],
+        vec![".clroom/runtime/context.md".to_owned()],
         vec!["AGENTS.md".to_owned()],
         "codex".to_owned(),
         digest('b'),
@@ -38,7 +38,7 @@ fn consent_binds_every_proposal_field() {
     assert!(token.verify(&original).is_ok());
     let changed = LaunchProposal::new(
         digest('d'),
-        vec![".taskseal/runtime/context.md".to_owned()],
+        vec![".clroom/runtime/context.md".to_owned()],
         vec!["AGENTS.md".to_owned()],
         "codex".to_owned(),
         digest('b'),

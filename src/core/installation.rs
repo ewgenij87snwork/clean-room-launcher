@@ -15,7 +15,7 @@ pub fn verify_installation(root: &Path) -> InstallationIntegrityReport {
             safe_action: "choose an existing installation directory",
         };
     }
-    if !root.join(".taskseal/out/current.json").exists() {
+    if !root.join(".clroom/out/current.json").exists() {
         return InstallationIntegrityReport {
             code: "DOCTOR_ARTIFACT_NOT_PUBLISHED",
             safe_action: "run prepare before checking a published artifact",

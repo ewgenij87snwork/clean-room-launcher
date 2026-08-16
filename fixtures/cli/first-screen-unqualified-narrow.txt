@@ -1,22 +1,17 @@
-TaskSeal · local-first launcher
+Clean Room Launcher
+A clean-room launcher for coding-agent
+CLIs.
 
-Project
-project://offerstream
-Preview
-18 KB at start · 43 KB less (read-only
-measurement)
-Skills
-5 summaries now · 38 load on use · 4
-unavailable Review
+Command
+clroom codex [ARGS...]
 Provider
-Codex · local launcher ready · nothing
-launched
+Codex · local preauthenticated session
+only · nothing launched
 Writes
-.taskseal/project.json + .taskseal/out/
-· nothing yet
+.clroom/project.json + .clroom/out/ ·
+nothing yet
 Leaves
-~/.codex · ~/.claude · Git/provider
-state unchanged
+~/.codex · Git/provider state unchanged
 
 › Continue locally  Recommended
   Launch Codex

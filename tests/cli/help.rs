@@ -1,10 +1,10 @@
 use std::process::Command;
 
 fn run(args: &[&str]) -> std::process::Output {
-    Command::new(env!("CARGO_BIN_EXE_tseal"))
+    Command::new(env!("CARGO_BIN_EXE_clroom"))
         .args(args)
         .output()
-        .expect("tseal must run")
+        .expect("clroom must run")
 }
 
 #[test]
@@ -55,6 +55,6 @@ fn unknown_help_topic_is_stderr_only_and_actionable() {
     assert!(output.stdout.is_empty());
     assert_eq!(
         String::from_utf8(output.stderr).unwrap(),
-        "UNKNOWN_HELP_TOPIC: not-a-command; try \"tseal help\"\n"
+        "UNKNOWN_HELP_TOPIC: not-a-command; try \"clroom help\"\n"
     );
 }

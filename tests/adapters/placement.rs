@@ -49,7 +49,7 @@ fn stages_verified_context_then_only_accepts_owned_identical_generation() {
     let (path, root, manifest) = project();
     let first = place_context(&root, &manifest, &declaration()).unwrap();
     assert_eq!(first.outcome, PlacementOutcome::Created);
-    assert!(first.target.starts_with(".taskseal/runtime/generations/"));
+    assert!(first.target.starts_with(".clroom/runtime/generations/"));
     assert_eq!(
         root.read(format!("{}/context.md", first.target)).unwrap(),
         b"safe\n"
@@ -63,15 +63,15 @@ fn stages_verified_context_then_only_accepts_owned_identical_generation() {
 #[test]
 fn refuses_unowned_preexisting_target_without_overwrite() {
     let (path, root, manifest) = project();
-    root.create_dir_all(".taskseal").unwrap();
-    root.write(".taskseal/runtime", b"user-owned\n").unwrap();
+    root.create_dir_all(".clroom").unwrap();
+    root.write(".clroom/runtime", b"user-owned\n").unwrap();
     assert!(
         place_context(&root, &manifest, &declaration())
             .unwrap_err()
             .to_string()
             .contains("PLACEMENT")
     );
-    assert_eq!(root.read(".taskseal/runtime").unwrap(), b"user-owned\n");
+    assert_eq!(root.read(".clroom/runtime").unwrap(), b"user-owned\n");
     drop(root);
     fs::remove_dir_all(path).unwrap();
 }
@@ -107,17 +107,17 @@ fn refuses_owned_generation_when_context_is_replaced_by_symlink_or_extra_file() 
 fn refuses_symlinked_runtime_ancestor_and_missing_ownership_receipt() {
     use std::os::unix::fs::symlink;
     let (path, root, manifest) = project();
-    root.create_dir_all(".taskseal").unwrap();
+    root.create_dir_all(".clroom").unwrap();
     let outside = path.join("outside");
     fs::create_dir(&outside).unwrap();
-    symlink(&outside, path.join(".taskseal/runtime")).unwrap();
+    symlink(&outside, path.join(".clroom/runtime")).unwrap();
     assert!(
         place_context(&root, &manifest, &declaration())
             .unwrap_err()
             .to_string()
             .contains("PLACEMENT")
     );
-    fs::remove_file(path.join(".taskseal/runtime")).unwrap();
+    fs::remove_file(path.join(".clroom/runtime")).unwrap();
     let placed = place_context(&root, &manifest, &declaration()).unwrap();
     fs::remove_file(path.join(&placed.target).join("placement.json")).unwrap();
     assert!(
@@ -134,7 +134,7 @@ fn refuses_symlinked_runtime_ancestor_and_missing_ownership_receipt() {
 fn refuses_stale_generated_context_before_staging() {
     let (path, root, manifest) = project();
     root.write(
-        format!(".taskseal/out/generations/{}/context.md", manifest.digest),
+        format!(".clroom/out/generations/{}/context.md", manifest.digest),
         b"tampered generated context",
     )
     .unwrap();

@@ -83,11 +83,11 @@ fn publish_impl(
     }
     ensure_output_dirs(root)?;
 
-    let generation = format!(".taskseal/out/generations/{}", manifest.digest);
+    let generation = format!(".clroom/out/generations/{}", manifest.digest);
     if root.is_dir(&generation) {
         verify_generation(root, &manifest.digest)?;
     } else {
-        let staging = format!(".taskseal/out/generations/.staging-{}", manifest.digest);
+        let staging = format!(".clroom/out/generations/.staging-{}", manifest.digest);
         if root.exists(&staging) {
             return Err(PublishError::code("ORPHAN_STAGING_REFUSED"));
         }
@@ -97,7 +97,7 @@ fn publish_impl(
         write_generation(root, &staging, artifacts, manifest, observer)?;
         root.rename(&staging, root, &generation)
             .map_err(|error| PublishError::io("GENERATION_COMMIT_FAILED", error))?;
-        sync_dir(root, ".taskseal/out/generations")?;
+        sync_dir(root, ".clroom/out/generations")?;
         observer(PublicationTransition::GenerationCommitted)?;
     }
 
@@ -109,15 +109,15 @@ fn publish_impl(
     };
     let pointer_bytes =
         serde_json::to_vec(&pointer).map_err(|_| PublishError::code("POINTER_SERIALIZE_FAILED"))?;
-    write_new_synced(root, ".taskseal/out/.current.staging", &pointer_bytes)?;
+    write_new_synced(root, ".clroom/out/.current.staging", &pointer_bytes)?;
     observer(PublicationTransition::PointerFlushed)?;
     root.rename(
-        ".taskseal/out/.current.staging",
+        ".clroom/out/.current.staging",
         root,
-        ".taskseal/out/current.json",
+        ".clroom/out/current.json",
     )
     .map_err(|error| PublishError::io("POINTER_COMMIT_FAILED", error))?;
-    sync_dir(root, ".taskseal/out")?;
+    sync_dir(root, ".clroom/out")?;
     observer(PublicationTransition::PointerCommitted)?;
 
     Ok(PublishedGeneration {
@@ -143,13 +143,9 @@ pub(crate) fn publish_with_interruption(
 }
 
 pub fn verify_current(root: &CapabilityDir) -> Result<Manifest, PublishError> {
-    require_regular_file(
-        root,
-        ".taskseal/out/current.json",
-        "POINTER_BOUNDARY_REFUSED",
-    )?;
+    require_regular_file(root, ".clroom/out/current.json", "POINTER_BOUNDARY_REFUSED")?;
     let bytes = root
-        .read(".taskseal/out/current.json")
+        .read(".clroom/out/current.json")
         .map_err(|error| PublishError::io("POINTER_READ_FAILED", error))?;
     let pointer: CurrentPointer =
         serde_json::from_slice(&bytes).map_err(|_| PublishError::code("POINTER_CORRUPT"))?;
@@ -168,7 +164,7 @@ fn verify_generation(root: &CapabilityDir, digest: &str) -> Result<Manifest, Pub
     {
         return Err(PublishError::code("POINTER_CORRUPT"));
     }
-    let base = format!(".taskseal/out/generations/{digest}");
+    let base = format!(".clroom/out/generations/{digest}");
     let generation_metadata = root
         .symlink_metadata(&base)
         .map_err(|error| PublishError::io("GENERATION_INSPECT_FAILED", error))?;
@@ -245,7 +241,7 @@ fn validate_relative_path(path: &str) -> Result<(), PublishError> {
 
 fn ensure_output_dirs(root: &CapabilityDir) -> Result<(), PublishError> {
     let mut current = String::new();
-    for part in [".taskseal", "out", "generations"] {
+    for part in [".clroom", "out", "generations"] {
         if !current.is_empty() {
             current.push('/');
         }

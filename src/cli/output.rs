@@ -21,7 +21,7 @@ pub fn select(args: Vec<String>) -> Result<(Mode, Vec<String>), String> {
 }
 
 pub fn guided_json() -> &'static str {
-    r#"{"command":"guided","next_action":"tseal prepare","schema_version":"taskseal.output.v1","status":"P06_REQUIRED"}"#
+    r#"{"command":"guided","next_action":"clroom prepare","schema_version":"taskseal.output.v1","status":"P06_REQUIRED"}"#
 }
 
 pub fn stdin_is_terminal() -> bool {

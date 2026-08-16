@@ -1,10 +1,10 @@
-TaskSeal inspect
+Clean Room Launcher — inspect
 
 Inspect one skill decision without changing state.
 
-Usage: tseal inspect <skill>
+Usage: clroom inspect <skill>
 
 Example:
-  tseal inspect skill:rust
+  clroom inspect skill:rust
 
-For more: tseal help
+For more: clroom help

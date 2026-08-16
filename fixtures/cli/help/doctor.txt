@@ -1,10 +1,10 @@
-TaskSeal doctor
+Clean Room Launcher — doctor
 
 Check installation safely without changing state.
 
-Usage: tseal doctor --root <path>
+Usage: clroom doctor --root <path>
 
 Example:
-  tseal doctor --root .
+  clroom doctor --root .
 
-For more: tseal help
+For more: clroom help

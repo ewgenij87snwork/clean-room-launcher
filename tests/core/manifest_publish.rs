@@ -36,7 +36,7 @@ fn publishes_one_complete_immutable_generation_and_verifies_bytes() {
     assert_eq!(verify_current(&root).unwrap(), manifest);
     assert_eq!(
         root.read(format!(
-            ".taskseal/out/generations/{}/context.md",
+            ".clroom/out/generations/{}/context.md",
             manifest.digest
         ))
         .unwrap(),
@@ -58,10 +58,7 @@ fn pointer_switches_between_complete_generations_and_tamper_refuses() {
     assert_eq!(verify_current(&root).unwrap(), new_manifest);
 
     root.write(
-        format!(
-            ".taskseal/out/generations/{}/context.md",
-            new_manifest.digest
-        ),
+        format!(".clroom/out/generations/{}/context.md", new_manifest.digest),
         b"tampered\n",
     )
     .unwrap();
@@ -72,7 +69,7 @@ fn pointer_switches_between_complete_generations_and_tamper_refuses() {
             .contains("DIGEST_MISMATCH")
     );
     assert!(root.is_file(format!(
-        ".taskseal/out/generations/{}/manifest.json",
+        ".clroom/out/generations/{}/manifest.json",
         old_manifest.digest
     )));
     drop(root);
@@ -93,9 +90,8 @@ fn refuses_unsafe_artifact_path_and_corrupt_pointer_without_writing_through() {
     );
     assert!(!path.join("escape").exists());
 
-    root.create_dir_all(".taskseal/out").unwrap();
-    root.write(".taskseal/out/current.json", b"not-json")
-        .unwrap();
+    root.create_dir_all(".clroom/out").unwrap();
+    root.write(".clroom/out/current.json", b"not-json").unwrap();
     assert!(
         verify_current(&root)
             .unwrap_err()
@@ -140,7 +136,7 @@ fn refuses_orphan_staging_and_adjacent_hash_pointer_attack() {
     let value = compilation(b"value\n");
     let manifest = build_manifest(&value).unwrap();
     root.create_dir_all(format!(
-        ".taskseal/out/generations/.staging-{}",
+        ".clroom/out/generations/.staging-{}",
         manifest.digest
     ))
     .unwrap();
@@ -152,15 +148,15 @@ fn refuses_orphan_staging_and_adjacent_hash_pointer_attack() {
     );
 
     let adjacent = "a".repeat(64);
-    root.create_dir_all(format!(".taskseal/out/generations/{adjacent}"))
+    root.create_dir_all(format!(".clroom/out/generations/{adjacent}"))
         .unwrap();
     root.write(
-        format!(".taskseal/out/generations/{adjacent}/manifest.json"),
+        format!(".clroom/out/generations/{adjacent}/manifest.json"),
         serde_json::to_vec(&manifest).unwrap(),
     )
     .unwrap();
     root.write(
-        ".taskseal/out/current.json",
+        ".clroom/out/current.json",
         serde_json::to_vec(&serde_json::json!({
             "schema_version": "current.v1",
             "digest": adjacent,
@@ -189,7 +185,7 @@ fn refuses_replaced_source_symlink_inside_an_existing_generation() {
     let manifest = build_manifest(&value).unwrap();
     publish(&root, value.artifacts(), &manifest).unwrap();
     let output = path.join(format!(
-        ".taskseal/out/generations/{}/context.md",
+        ".clroom/out/generations/{}/context.md",
         manifest.digest
     ));
     fs::remove_file(&output).unwrap();

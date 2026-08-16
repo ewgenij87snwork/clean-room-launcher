@@ -57,21 +57,17 @@ pub fn run(invoked_as: &str, args: impl IntoIterator<Item = String>) -> ExitCode
 }
 
 fn run_codex(source: &mut impl Iterator<Item = String>) -> ExitCode {
-    let Some(boundary) = (match next_argument(source) {
+    let first = match next_argument(source) {
         Ok(argument) => argument,
         Err(exit) => return exit,
-    }) else {
-        eprintln!("LOCAL_CODEX_BOUNDARY_REQUIRED: use tseal codex -- [ARGS...]");
-        return ExitCode::from(2);
     };
-    if boundary != "--" {
-        if boundary == "login" {
-            return external_refusal(parser::Command::Provider, false);
-        }
-        eprintln!("LOCAL_CODEX_BOUNDARY_REQUIRED: use tseal codex -- [ARGS...]");
-        return ExitCode::from(2);
+    if first
+        .as_deref()
+        .is_some_and(|argument| matches!(argument, "login" | "logout"))
+    {
+        return external_refusal(parser::Command::Provider, false);
     }
-    let mut args = Vec::new();
+    let mut args = first.into_iter().collect::<Vec<_>>();
     while let Some(argument) = match next_argument(source) {
         Ok(argument) => argument,
         Err(exit) => return exit,
@@ -180,12 +176,7 @@ fn run_local(invoked_as: &str, args: Vec<String>) -> ExitCode {
     match command {
         parser::Command::Help => unreachable!("help is handled before parsing"),
         parser::Command::Guided => {
-            let screen = screen::render_unqualified(screen::PrepareReady {
-                provider: "Codex",
-                project: "project://offerstream",
-                preview: "18 KB at start · 43 KB less (read-only measurement)",
-                skills: "5 summaries now · 38 load on use · 4 unavailable",
-            });
+            let screen = screen::render_unqualified(screen::PrepareReady { provider: "Codex" });
             println!("{}", screen.join("\n"));
             if screen::terminal_is_interactive() {
                 if std::io::stdout().flush().is_err() {
@@ -194,7 +185,7 @@ fn run_local(invoked_as: &str, args: Vec<String>) -> ExitCode {
                 }
                 match screen::read_unqualified_action() {
                     Ok(screen::UnqualifiedAction::ContinueLocally) => {
-                        return run_taskseal_owned_local(invoked_as, parser::Command::Status);
+                        return run_launcher_owned_local(invoked_as, parser::Command::Status);
                     }
                     Ok(screen::UnqualifiedAction::LaunchCodex) => {
                         return match process::launch_codex(&[]) {
@@ -234,13 +225,13 @@ fn run_local(invoked_as: &str, args: Vec<String>) -> ExitCode {
         parser::Command::Provider | parser::Command::Generic => {
             unreachable!("external commands refuse before tail collection")
         }
-        command => return run_taskseal_owned_local(invoked_as, command),
+        command => return run_launcher_owned_local(invoked_as, command),
     }
 
     ExitCode::SUCCESS
 }
 
-fn run_taskseal_owned_local(invoked_as: &str, command: parser::Command) -> ExitCode {
+fn run_launcher_owned_local(invoked_as: &str, command: parser::Command) -> ExitCode {
     assert!(matches!(
         command,
         parser::Command::Status

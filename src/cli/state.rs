@@ -73,7 +73,7 @@ impl StateStore {
             PathBuf::from(home)
                 .join("Library")
                 .join("Application Support")
-                .join("TaskSeal"),
+                .join("Clean Room Launcher"),
         ))
     }
 

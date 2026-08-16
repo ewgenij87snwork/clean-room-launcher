@@ -2,9 +2,6 @@ use std::io::{self, IsTerminal};
 
 pub struct PrepareReady {
     pub provider: &'static str,
-    pub project: &'static str,
-    pub preview: &'static str,
-    pub skills: &'static str,
 }
 
 pub struct RenderContext {
@@ -64,23 +61,22 @@ pub fn render_unqualified(ready: PrepareReady) -> Vec<String> {
 
 pub fn render_unqualified_for(ready: PrepareReady, context: RenderContext) -> Vec<String> {
     let mut lines = vec![
-        "TaskSeal · local-first launcher".to_owned(),
+        "Clean Room Launcher".to_owned(),
+        "A clean-room launcher for coding-agent CLIs.".to_owned(),
         String::new(),
-        format!("Project  {}", ready.project),
-        format!("Preview  {}", ready.preview),
-        format!("Skills   {}  Review", ready.skills),
+        "Command  clroom codex [ARGS...]".to_owned(),
         format!(
-            "Provider {} · local launcher ready · nothing launched",
+            "Provider {} · local preauthenticated session only · nothing launched",
             ready.provider
         ),
-        "Writes   .taskseal/project.json + .taskseal/out/ · nothing yet".to_owned(),
-        "Leaves   ~/.codex · ~/.claude · Git/provider state unchanged".to_owned(),
+        "Writes   .clroom/project.json + .clroom/out/ · nothing yet".to_owned(),
+        "Leaves   ~/.codex · Git/provider state unchanged".to_owned(),
         String::new(),
     ];
     if !context.interactive {
         lines.extend([
             "Continue locally".to_owned(),
-            "  tseal status · tseal scan · tseal prepare · tseal check".to_owned(),
+            "  clroom status · clroom scan · clroom prepare · clroom check".to_owned(),
         ]);
     } else if context.plain {
         lines.extend([
@@ -121,9 +117,7 @@ pub fn render_unqualified_for(ready: PrepareReady, context: RenderContext) -> Ve
 
 fn labelled_value(line: &str) -> Option<(&'static str, &str)> {
     [
-        ("Project", "Project  "),
-        ("Preview", "Preview  "),
-        ("Skills", "Skills   "),
+        ("Command", "Command  "),
         ("Provider", "Provider "),
         ("Writes", "Writes   "),
         ("Leaves", "Leaves   "),

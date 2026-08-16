@@ -69,7 +69,7 @@ fn compile_is_deterministic_and_verify_refuses_tampered_output() {
     );
     root.write(
         format!(
-            ".taskseal/out/generations/{}/context.md",
+            ".clroom/out/generations/{}/context.md",
             report.manifest.digest
         ),
         b"tamper",

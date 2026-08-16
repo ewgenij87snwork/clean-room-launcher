@@ -1,13 +1,15 @@
-TaskSeal — guided AI CLI launcher
+Clean Room Launcher
+A clean-room launcher for coding-agent CLIs.
 
-Usage: tseal [COMMAND]
+Usage: clroom [COMMAND]
 
 Start with:
-  tseal                 Review setup before a provider launch
-  tseal doctor --root . Check installation safely
+  clroom                 Review setup before a provider launch
+  clroom codex [ARGS...] Launch the installed Codex CLI natively
+  clroom doctor --root . Check installation safely
 
 Learn:
-  tseal help inspect    Explain an available skill decision
+  clroom help inspect    Explain an available skill decision
 
 Commands:
   help [COMMAND]        Show concise help

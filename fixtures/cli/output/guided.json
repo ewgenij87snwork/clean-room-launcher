@@ -1,1 +1,1 @@
-{"command":"guided","next_action":"tseal prepare","schema_version":"taskseal.output.v1","status":"P06_REQUIRED"}
+{"command":"guided","next_action":"clroom prepare","schema_version":"taskseal.output.v1","status":"P06_REQUIRED"}

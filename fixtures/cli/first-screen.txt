@@ -1,13 +1,7 @@
-TaskSeal · ready to prepare a clean start for Codex 0.xx
+Clean Room Launcher
+A clean-room launcher for coding-agent CLIs.
 
-Project  project://offerstream
-Preview  18 KB at start · 43 KB less (read-only measurement)
-Skills   5 summaries now · 38 load on use · 4 unavailable  Review
-Writes   .taskseal/project.json + .taskseal/out/ · nothing yet
-Leaves   ~/.codex · ~/.claude · Git/provider settings unchanged
-
-› Start Codex with clean context  Recommended
-  Review or change setup
-  Exit
-
-↑↓ select · Enter confirm · Esc exit
+Command  clroom codex [ARGS...]
+Provider Codex · local preauthenticated session only · nothing launched
+Writes   .clroom/project.json + .clroom/out/ · nothing yet
+Leaves   ~/.codex · Git/provider state unchanged

@@ -51,7 +51,7 @@ pub fn place_context(
     if current != *manifest {
         return Err(PlacementError("PLACEMENT_MANIFEST_MISMATCH"));
     }
-    let context_path = format!(".taskseal/out/generations/{}/context.md", manifest.digest);
+    let context_path = format!(".clroom/out/generations/{}/context.md", manifest.digest);
     let context = project
         .read(&context_path)
         .map_err(|_| PlacementError("PLACEMENT_CONTEXT_UNAVAILABLE"))?;
@@ -69,15 +69,15 @@ pub fn place_context(
     let context_digest = sha256_hex(&context);
     let declaration_digest = declaration_digest(declaration);
     let target = format!(
-        ".taskseal/runtime/generations/{declaration_digest}/{}",
+        ".clroom/runtime/generations/{declaration_digest}/{}",
         manifest.digest
     );
-    ensure_dir(project, ".taskseal")?;
-    ensure_dir(project, ".taskseal/runtime")?;
-    ensure_dir(project, ".taskseal/runtime/generations")?;
+    ensure_dir(project, ".clroom")?;
+    ensure_dir(project, ".clroom/runtime")?;
+    ensure_dir(project, ".clroom/runtime/generations")?;
     ensure_dir(
         project,
-        &format!(".taskseal/runtime/generations/{declaration_digest}"),
+        &format!(".clroom/runtime/generations/{declaration_digest}"),
     )?;
     match project.symlink_metadata(&target) {
         Ok(metadata) if metadata.is_dir() && !metadata.is_symlink() => {

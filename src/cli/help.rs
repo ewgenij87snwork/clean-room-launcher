@@ -38,9 +38,9 @@ const COMMANDS: &[CommandSpec] = &[
     CommandSpec {
         command: Command::Provider,
         canonical: "codex",
-        aliases: &["claude"],
-        summary: "Refuse provider execution under zero-auth",
-        description: "Refuse provider execution under zero-auth",
+        aliases: &[],
+        summary: "Launch the installed Codex CLI natively",
+        description: "Launch the installed Codex CLI with unchanged arguments",
         usage: "codex [ARGS...]",
         example: "codex --help",
     },
@@ -170,7 +170,7 @@ pub fn top(invoked_as: &str) -> String {
     let explain = resolve("explain").expect("explain registry entry is required");
     let doctor = resolve("doctor").expect("doctor registry entry is required");
     format!(
-        "TaskSeal — guided AI CLI launcher\n\nUsage: {invoked_as} [COMMAND]\n\nStart with:\n  {invoked_as}                 Review setup before a provider launch\n  {invoked_as} {doctor} --root . {doctor_summary}\n\nLearn:\n  {invoked_as} {help} {inspect}    Explain an available skill decision\n\nCommands:\n  {help} [COMMAND]        {help_summary}\n  {inspect} <skill>       {inspect_summary}\n  {explain} <skill>       {explain_summary}",
+        "Clean Room Launcher\nA clean-room launcher for coding-agent CLIs.\n\nUsage: {invoked_as} [COMMAND]\n\nStart with:\n  {invoked_as}                 Review setup before a provider launch\n  {invoked_as} codex [ARGS...] Launch the installed Codex CLI natively\n  {invoked_as} {doctor} --root . {doctor_summary}\n\nLearn:\n  {invoked_as} {help} {inspect}    Explain an available skill decision\n\nCommands:\n  {help} [COMMAND]        {help_summary}\n  {inspect} <skill>       {inspect_summary}\n  {explain} <skill>       {explain_summary}",
         doctor = doctor.canonical,
         doctor_summary = doctor.summary,
         help = help.canonical,
@@ -188,7 +188,7 @@ pub fn card(invoked_as: &str, token: &str) -> Option<String> {
 
 fn render_card(invoked_as: &str, spec: &CommandSpec) -> String {
     format!(
-        "TaskSeal {}\n\n{} without changing state.\n\nUsage: {invoked_as} {}\n\nExample:\n  {invoked_as} {}\n\nFor more: {invoked_as} help",
+        "Clean Room Launcher — {}\n\n{} without changing state.\n\nUsage: {invoked_as} {}\n\nExample:\n  {invoked_as} {}\n\nFor more: {invoked_as} help",
         spec.canonical, spec.description, spec.usage, spec.example
     )
 }

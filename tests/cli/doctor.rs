@@ -4,7 +4,7 @@ use std::process::Command;
 fn doctor_reports_unqualified_adapters_without_claiming_provider_support_or_mutating_root() {
     let root = env!("CARGO_MANIFEST_DIR");
     let before = std::fs::read_dir(root).unwrap().count();
-    let output = Command::new(env!("CARGO_BIN_EXE_taskseal"))
+    let output = Command::new(env!("CARGO_BIN_EXE_clroom"))
         .args(["doctor", "--root", root])
         .output()
         .expect("doctor must run");
@@ -21,7 +21,7 @@ fn doctor_reports_unqualified_adapters_without_claiming_provider_support_or_muta
 #[test]
 fn doctor_refuses_invalid_schema_config_and_published_artifact_with_stable_codes() {
     let base = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
-    let scratch = std::env::temp_dir().join(format!("taskseal-doctor-{}", std::process::id()));
+    let scratch = std::env::temp_dir().join(format!("clroom-doctor-{}", std::process::id()));
     let _ = std::fs::remove_dir_all(&scratch);
     std::fs::create_dir_all(scratch.join("schemas/contracts")).unwrap();
     std::fs::create_dir_all(scratch.join("adapters/declarations")).unwrap();
@@ -37,7 +37,7 @@ fn doctor_refuses_invalid_schema_config_and_published_artifact_with_stable_codes
         )
         .unwrap();
     }
-    let binary = env!("CARGO_BIN_EXE_taskseal");
+    let binary = env!("CARGO_BIN_EXE_clroom");
     let run = |root: &std::path::Path| {
         Command::new(binary)
             .args(["doctor", "--root", root.to_str().unwrap()])
@@ -68,8 +68,8 @@ fn doctor_refuses_invalid_schema_config_and_published_artifact_with_stable_codes
         scratch.join("adapters/declarations/codex.toml"),
     )
     .unwrap();
-    std::fs::create_dir_all(scratch.join(".taskseal/out")).unwrap();
-    std::fs::write(scratch.join(".taskseal/out/current.json"), "corrupt").unwrap();
+    std::fs::create_dir_all(scratch.join(".clroom/out")).unwrap();
+    std::fs::write(scratch.join(".clroom/out/current.json"), "corrupt").unwrap();
     assert!(
         String::from_utf8(run(&scratch).stderr)
             .unwrap()

@@ -1,10 +1,10 @@
 use std::process::Command;
 
 fn run(args: &[&str]) -> std::process::Output {
-    Command::new(env!("CARGO_BIN_EXE_tseal"))
+    Command::new(env!("CARGO_BIN_EXE_clroom"))
         .args(args)
         .output()
-        .expect("tseal must run")
+        .expect("clroom must run")
 }
 
 #[test]

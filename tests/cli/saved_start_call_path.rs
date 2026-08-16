@@ -8,7 +8,7 @@ use std::{
 
 fn scratch(name: &str) -> PathBuf {
     let root =
-        std::env::temp_dir().join(format!("taskseal-call-path-{name}-{}", std::process::id()));
+        std::env::temp_dir().join(format!("clroom-call-path-{name}-{}", std::process::id()));
     let _ = fs::remove_dir_all(&root);
     fs::create_dir_all(&root).unwrap();
     root
@@ -17,7 +17,7 @@ fn scratch(name: &str) -> PathBuf {
 #[test]
 fn final_zero_auth_ingestion_saved_start_refuses_before_argv_hashing() {
     let home = scratch("sensitive-prehash");
-    let store = StateStore::at(home.join("Library/Application Support/TaskSeal"));
+    let store = StateStore::at(home.join("Library/Application Support/Clean Room Launcher"));
     fs::create_dir_all(store.root()).unwrap();
     fs::set_permissions(store.root(), fs::Permissions::from_mode(0o700)).unwrap();
     fs::write(
@@ -32,7 +32,7 @@ fn final_zero_auth_ingestion_saved_start_refuses_before_argv_hashing() {
     fs::set_permissions(store.state_path(), fs::Permissions::from_mode(0o600)).unwrap();
     let before = fs::read(store.state_path()).unwrap();
 
-    let output = Command::new(env!("CARGO_BIN_EXE_tseal"))
+    let output = Command::new(env!("CARGO_BIN_EXE_clroom"))
         .args(["start", "1", "--approve"])
         .env("HOME", &home)
         .output()
@@ -47,7 +47,7 @@ fn final_zero_auth_ingestion_saved_start_refuses_before_argv_hashing() {
 }
 
 fn save(home: &Path, access_class: AccessClass) {
-    StateStore::at(home.join("Library/Application Support/TaskSeal"))
+    StateStore::at(home.join("Library/Application Support/Clean Room Launcher"))
         .save(SavedStart {
             provider: "codex".to_owned(),
             argv: vec!["--model".to_owned(), "private-model".to_owned()],
@@ -62,7 +62,7 @@ fn save(home: &Path, access_class: AccessClass) {
 fn starts_command_reads_private_store_without_printing_argv() {
     let home = scratch("starts");
     save(&home, AccessClass::Standard);
-    let output = Command::new(env!("CARGO_BIN_EXE_tseal"))
+    let output = Command::new(env!("CARGO_BIN_EXE_clroom"))
         .arg("starts")
         .env("HOME", &home)
         .output()
@@ -77,7 +77,7 @@ fn starts_command_reads_private_store_without_printing_argv() {
 fn standard_start_requires_explicit_approval_then_stops_before_provider_birth() {
     let home = scratch("standard");
     save(&home, AccessClass::Standard);
-    let cancelled = Command::new(env!("CARGO_BIN_EXE_tseal"))
+    let cancelled = Command::new(env!("CARGO_BIN_EXE_clroom"))
         .args(["start", "1"])
         .env("HOME", &home)
         .output()
@@ -88,7 +88,7 @@ fn standard_start_requires_explicit_approval_then_stops_before_provider_birth() 
         "CONSENT_CANCELLED\n"
     );
 
-    let approved = Command::new(env!("CARGO_BIN_EXE_tseal"))
+    let approved = Command::new(env!("CARGO_BIN_EXE_clroom"))
         .args(["start", "1", "--approve"])
         .env("HOME", &home)
         .output()
@@ -104,7 +104,7 @@ fn standard_start_requires_explicit_approval_then_stops_before_provider_birth() 
 fn full_access_start_never_uses_the_standard_approval_path() {
     let home = scratch("full-access");
     save(&home, AccessClass::FullAccess);
-    let output = Command::new(env!("CARGO_BIN_EXE_tseal"))
+    let output = Command::new(env!("CARGO_BIN_EXE_clroom"))
         .args(["start", "1", "--approve"])
         .env("HOME", &home)
         .output()

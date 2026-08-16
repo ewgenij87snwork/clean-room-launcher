@@ -69,7 +69,7 @@ fn l2_requires_scope_graph_typed_sections_and_evidence() {
         "scope_kind":"repo",
         "parent_scope_ids":[],
         "sections":{"deny_union":["no ambient HOME"]},
-        "provenance":[{"source_id":"project","source_kind":"project","source_ref":".taskseal/scopes/root.json","sha256":"0".repeat(64)}],
+        "provenance":[{"source_id":"project","source_kind":"project","source_ref":".clroom/scopes/root.json","sha256":"0".repeat(64)}],
         "approval":{"status":"approved","receipt_id":"approval-1"},
         "source_hashes":[{"source_id":"project","sha256":"0".repeat(64)}]
     });
