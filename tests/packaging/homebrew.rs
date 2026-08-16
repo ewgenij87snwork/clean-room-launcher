@@ -56,7 +56,7 @@ fn fake_lifecycle_closed_refusal_matrix_is_canonical_and_cleanup_owned() {
         ("metadata_substitution", "ARTIFACT_METADATA_MISMATCH"),
         ("stale_link", "ROLLBACK_REFUSED"),
         ("unexpected_installed_path", "INSTALL_REFUSED"),
-        ("smoke_refusal", "DUAL_NAME_PARITY_REFUSED"),
+        ("smoke_refusal", "INSTALL_REFUSED"),
         ("config_mutation", "CONFIG_MUTATION_REFUSED"),
         ("sentinel_taskseal_mutation", "CONFIG_MUTATION_REFUSED"),
         ("sentinel_provider_mutation", "CONFIG_MUTATION_REFUSED"),
@@ -90,20 +90,19 @@ fn fixture_archive_pair_is_deterministic_distinct_and_executable_parity() {
     assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
     let manifest = fs::read_to_string(temp.join("fixture-archives.json")).unwrap();
     assert!(manifest.contains("0.0.1") && manifest.contains("0.0.2"));
-    assert!(manifest.contains("taskseal-v0.0.1") && manifest.contains("taskseal-v0.0.2"));
-    assert_ne!(fs::read(temp.join("taskseal-v0.0.1-aarch64-apple-darwin.tar.gz")).unwrap(), fs::read(temp.join("taskseal-v0.0.2-aarch64-apple-darwin.tar.gz")).unwrap());
+    assert!(manifest.contains("clean-room-launcher-v0.0.1") && manifest.contains("clean-room-launcher-v0.0.2"));
+    assert_ne!(fs::read(temp.join("clean-room-launcher-v0.0.1-aarch64-apple-darwin.tar.gz")).unwrap(), fs::read(temp.join("clean-room-launcher-v0.0.2-aarch64-apple-darwin.tar.gz")).unwrap());
     let inspect = r#"import sys, tarfile
 for path, version in zip(sys.argv[1:], ('0.0.1', '0.0.2')):
   with tarfile.open(path, 'r:gz') as archive:
     names = {member.name: member for member in archive.getmembers() if member.isfile()}
-    root = f'taskseal-v{version}-aarch64-apple-darwin'
-    assert set(names) == {f'{root}/LICENSE', f'{root}/NOTICE', f'{root}/VERSION', f'{root}/bin/taskseal', f'{root}/bin/tseal', f'{root}/share/doc/taskseal/CHANGELOG.md'}
-    assert names[f'{root}/bin/taskseal'].mode & 0o777 == 0o755 and names[f'{root}/bin/tseal'].mode & 0o777 == 0o755
-    assert archive.extractfile(names[f'{root}/bin/taskseal']).read() == archive.extractfile(names[f'{root}/bin/tseal']).read()
+    root = f'clean-room-launcher-v{version}-aarch64-apple-darwin'
+    assert set(names) == {f'{root}/LICENSE', f'{root}/NOTICE', f'{root}/VERSION', f'{root}/bin/clroom', f'{root}/share/doc/clean-room-launcher/CHANGELOG.md'}
+    assert names[f'{root}/bin/clroom'].mode & 0o777 == 0o755
     version_text = archive.extractfile(names[f'{root}/VERSION']).read().decode()
     assert f'version={version}' in version_text and 'evidence_class=lifecycle-fixture' in version_text and 'source_commit=' in version_text and 'target=aarch64-apple-darwin' in version_text
 "#;
-    let first = temp.join("taskseal-v0.0.1-aarch64-apple-darwin.tar.gz"); let second = temp.join("taskseal-v0.0.2-aarch64-apple-darwin.tar.gz");
+    let first = temp.join("clean-room-launcher-v0.0.1-aarch64-apple-darwin.tar.gz"); let second = temp.join("clean-room-launcher-v0.0.2-aarch64-apple-darwin.tar.gz");
     assert!(Command::new("python3").args(["-c", inspect, first.to_str().unwrap(), second.to_str().unwrap()]).status().unwrap().success());
 }
 
@@ -134,14 +133,14 @@ fn real_mode_prepares_only_a_disposable_local_git_source_and_real_current_eviden
     let archives = temp.join("archives");
     let generator = root().join("tests/packaging/fixtures/homebrew/make_fixture_archives.py");
     assert!(Command::new("python3").args([generator.to_str().unwrap(), "--output-dir", archives.to_str().unwrap()]).status().unwrap().success());
-    let archive = archives.join("taskseal-v0.0.1-aarch64-apple-darwin.tar.gz");
-    let next_archive = archives.join("taskseal-v0.0.2-aarch64-apple-darwin.tar.gz");
+    let archive = archives.join("clean-room-launcher-v0.0.1-aarch64-apple-darwin.tar.gz");
+    let next_archive = archives.join("clean-room-launcher-v0.0.2-aarch64-apple-darwin.tar.gz");
     let digest = String::from_utf8(Command::new("shasum").args(["-a", "256", archive.to_str().unwrap()]).output().unwrap().stdout).unwrap().split_whitespace().next().unwrap().to_owned();
     let next_digest = String::from_utf8(Command::new("shasum").args(["-a", "256", next_archive.to_str().unwrap()]).output().unwrap().stdout).unwrap().split_whitespace().next().unwrap().to_owned();
     let input = temp.join("input-contract.json");
-    fs::write(&input, format!(r#"{{"schema_version":"taskseal.p07.homebrew-input.v1","evidence_class":"real-current","archive":{{"filename":"taskseal-v0.0.1-aarch64-apple-darwin.tar.gz","sha256":"{digest}","size":1}},"artifact":{{"version":"0.0.1","source_commit":"1111111111111111111111111111111111111111","target":"aarch64-apple-darwin","qualification":"NOT_QUALIFIED","signing":"unsigned-preview-only","root":"taskseal-v0.0.1-aarch64-apple-darwin","members":["LICENSE","NOTICE","VERSION","bin/taskseal","bin/tseal","share/doc/taskseal/CHANGELOG.md"],"taskseal_sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","tseal_sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}},"host":{{"system":"Darwin","machine":"arm64","macho_arch":"arm64","minimum_macos":"13.0","homebrew_symbol":"ventura"}}}}"#)).unwrap();
+    fs::write(&input, format!(r#"{{"schema_version":"taskseal.p07.homebrew-input.v1","evidence_class":"real-current","archive":{{"filename":"clean-room-launcher-v0.0.1-aarch64-apple-darwin.tar.gz","sha256":"{digest}","size":1}},"artifact":{{"version":"0.0.1","source_commit":"1111111111111111111111111111111111111111","target":"aarch64-apple-darwin","qualification":"NOT_QUALIFIED","signing":"unsigned-preview-only","root":"clean-room-launcher-v0.0.1-aarch64-apple-darwin","members":["LICENSE","NOTICE","VERSION","bin/clroom","share/doc/clean-room-launcher/CHANGELOG.md"],"clroom_sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}},"host":{{"system":"Darwin","machine":"arm64","macho_arch":"arm64","minimum_macos":"13.0","homebrew_symbol":"ventura"}}}}"#)).unwrap();
     let next_input = temp.join("next-input-contract.json");
-    fs::write(&next_input, format!(r#"{{"schema_version":"taskseal.p07.homebrew-input.v1","evidence_class":"real-current","archive":{{"filename":"taskseal-v0.0.2-aarch64-apple-darwin.tar.gz","sha256":"{next_digest}","size":1}},"artifact":{{"version":"0.0.2","source_commit":"1111111111111111111111111111111111111111","target":"aarch64-apple-darwin","qualification":"NOT_QUALIFIED","signing":"unsigned-preview-only","root":"taskseal-v0.0.2-aarch64-apple-darwin","members":["LICENSE","NOTICE","VERSION","bin/taskseal","bin/tseal","share/doc/taskseal/CHANGELOG.md"],"taskseal_sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","tseal_sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}},"host":{{"system":"Darwin","machine":"arm64","macho_arch":"arm64","minimum_macos":"13.0","homebrew_symbol":"ventura"}}}}"#)).unwrap();
+    fs::write(&next_input, format!(r#"{{"schema_version":"taskseal.p07.homebrew-input.v1","evidence_class":"real-current","archive":{{"filename":"clean-room-launcher-v0.0.2-aarch64-apple-darwin.tar.gz","sha256":"{next_digest}","size":1}},"artifact":{{"version":"0.0.2","source_commit":"1111111111111111111111111111111111111111","target":"aarch64-apple-darwin","qualification":"NOT_QUALIFIED","signing":"unsigned-preview-only","root":"clean-room-launcher-v0.0.2-aarch64-apple-darwin","members":["LICENSE","NOTICE","VERSION","bin/clroom","share/doc/clean-room-launcher/CHANGELOG.md"],"clroom_sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}},"host":{{"system":"Darwin","machine":"arm64","macho_arch":"arm64","minimum_macos":"13.0","homebrew_symbol":"ventura"}}}}"#)).unwrap();
     let workspace = temp.join("workspace"); fs::create_dir_all(&workspace).unwrap(); let result = temp.join("result.json");
     let output = Command::new("python3").current_dir(root()).env("AWS_SECRET_ACCESS_KEY", "must-not-inherit").args(["packaging/homebrew/lifecycle.py", "--brew-source", source.to_str().unwrap(), "--api-cache-source", api_cache.to_str().unwrap(), "--input-contract", input.to_str().unwrap(), "--real-archive", archive.to_str().unwrap(), "--expected-sha256", &digest, "--expected-source-commit", "1111111111111111111111111111111111111111", "--next-input-contract", next_input.to_str().unwrap(), "--next-real-archive", next_archive.to_str().unwrap(), "--next-expected-sha256", &next_digest, "--scenario", "require_native_install_boundary", "--workspace", workspace.to_str().unwrap(), "--output", result.to_str().unwrap()]).output().unwrap();
     assert!(output.status.success(), "stderr={} result={}", String::from_utf8_lossy(&output.stderr), fs::read_to_string(&result).unwrap_or_default());

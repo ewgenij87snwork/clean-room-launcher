@@ -7,14 +7,14 @@ from pathlib import Path
 
 VERSION_KEYS = {"version", "source_commit", "rust_toolchain", "target", "rustc", "cargo", "python", "packaging_script_sha256", "archive_profile", "qualification", "signing", "dependencies"}
 MACOS = {"10.15": "catalina", "11": "big_sur", "12": "monterey", "13": "ventura", "14": "sonoma", "15": "sequoia", "26": "tahoe"}
-REQUIRED = {"LICENSE", "NOTICE", "VERSION", "bin/taskseal", "bin/tseal", "share/doc/taskseal/CHANGELOG.md"}
+REQUIRED = {"LICENSE", "NOTICE", "VERSION", "bin/clroom", "share/doc/clean-room-launcher/CHANGELOG.md"}
 
 class InputRefused(Exception):
     def __init__(self, code): self.code = code; super().__init__(code)
 
 @dataclass(frozen=True)
 class ArchiveLayout:
-    root: str; members: list[str]; taskseal: bytes; tseal: bytes; version: bytes; sha256: str; size: int
+    root: str; members: list[str]; clroom: bytes; version: bytes; sha256: str; size: int
 
 def refuse(code): raise InputRefused(code)
 def strict_key_value_lines(data: bytes) -> dict[str, str]:
@@ -67,17 +67,16 @@ def verify_archive_members(path: Path, digest: str, size: int | None = None) -> 
             if set(rels) != REQUIRED: refuse("ARTIFACT_METADATA_MISMATCH")
             by_rel = {m.name[len(root) + 1:]: m for m in members}
             for rel, member in by_rel.items():
-                if member.mode != (0o755 if rel in {"bin/taskseal", "bin/tseal"} else 0o644): refuse("ARTIFACT_METADATA_MISMATCH")
-            taskseal = tar.extractfile(by_rel["bin/taskseal"]).read(); tseal = tar.extractfile(by_rel["bin/tseal"]).read(); version = tar.extractfile(by_rel["VERSION"]).read()
+                if member.mode != (0o755 if rel == "bin/clroom" else 0o644): refuse("ARTIFACT_METADATA_MISMATCH")
+            clroom = tar.extractfile(by_rel["bin/clroom"]).read(); version = tar.extractfile(by_rel["VERSION"]).read()
     except (OSError, tarfile.TarError, KeyError): refuse("ARTIFACT_METADATA_MISMATCH")
-    if taskseal != tseal: refuse("DUAL_NAME_PARITY_REFUSED")
     parse_version(version)
-    return ArchiveLayout(root, sorted(rels), taskseal, tseal, version, digest, size if size is not None else path.stat().st_size)
+    return ArchiveLayout(root, sorted(rels), clroom, version, digest, size if size is not None else path.stat().st_size)
 def call(*argv):
     return subprocess.run(argv, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, check=False).stdout
 def inspect_macho(binary: bytes) -> tuple[str, str]:
-    with tempfile.TemporaryDirectory(prefix="taskseal-homebrew-input-") as temp:
-        path = Path(temp) / "taskseal"; path.write_bytes(binary); os.chmod(path, 0o700)
+    with tempfile.TemporaryDirectory(prefix="clroom-homebrew-input-") as temp:
+        path = Path(temp) / "clroom"; path.write_bytes(binary); os.chmod(path, 0o700)
         if "Mach-O" not in call("/usr/bin/file", str(path)): refuse("ARTIFACT_METADATA_MISMATCH")
         archs = call("/usr/bin/lipo", "-archs", str(path)); require_macho(archs)
         _, minimum = parse_vtool_build(call("/usr/bin/vtool", "-show-build", str(path)))
@@ -91,8 +90,8 @@ def verify_archive(args):
     layout = verify_exact_digest_and_layout(Path(args.archive), args.expected_sha256)
     fields = parse_version(layout.version)
     if fields["source_commit"] != args.expected_source_commit or fields["target"] != args.expected_target: refuse("ARTIFACT_METADATA_MISMATCH")
-    macho_arch, minimum = inspect_macho(layout.taskseal); symbol = macos_symbol(minimum)
-    return {"schema_version":"taskseal.p07.homebrew-input.v1","evidence_class":"real-current","archive":{"filename":Path(args.archive).name,"sha256":layout.sha256,"size":layout.size},"artifact":{"version":fields["version"],"source_commit":fields["source_commit"],"target":fields["target"],"qualification":fields["qualification"],"signing":fields["signing"],"root":layout.root,"members":layout.members,"taskseal_sha256":hashlib.sha256(layout.taskseal).hexdigest(),"tseal_sha256":hashlib.sha256(layout.tseal).hexdigest()},"host":{"system":"Darwin","machine":"arm64","macho_arch":macho_arch,"minimum_macos":minimum,"homebrew_symbol":symbol}}
+    macho_arch, minimum = inspect_macho(layout.clroom); symbol = macos_symbol(minimum)
+    return {"schema_version":"taskseal.p07.homebrew-input.v1","evidence_class":"real-current","archive":{"filename":Path(args.archive).name,"sha256":layout.sha256,"size":layout.size},"artifact":{"version":fields["version"],"source_commit":fields["source_commit"],"target":fields["target"],"qualification":fields["qualification"],"signing":fields["signing"],"root":layout.root,"members":layout.members,"clroom_sha256":hashlib.sha256(layout.clroom).hexdigest()},"host":{"system":"Darwin","machine":"arm64","macho_arch":macho_arch,"minimum_macos":minimum,"homebrew_symbol":symbol}}
 def main():
     parser = argparse.ArgumentParser(); parser.add_argument("--archive", required=True); parser.add_argument("--expected-sha256", required=True); parser.add_argument("--expected-source-commit", required=True); parser.add_argument("--expected-target", required=True); parser.add_argument("--output", required=True); args = parser.parse_args()
     try:

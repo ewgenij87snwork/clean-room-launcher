@@ -50,16 +50,15 @@ def run_input():
     expect_refusal(lambda: mod.require_host("Linux", "x86_64"), "HOST_UNSUPPORTED")
     expect_refusal(lambda: mod.require_macho("x86_64"), "ARTIFACT_METADATA_MISMATCH")
 
-def archive(path, equal=True):
-    data = b"mach-o-test"; alias = data if equal else b"different"
+def archive(path):
+    data = b"mach-o-test"
     with tarfile.open(path, "w:gz") as tar:
         for name, body, mode in [
-            ("taskseal-v0.1.0-aarch64-apple-darwin/bin/taskseal", data, 0o755),
-            ("taskseal-v0.1.0-aarch64-apple-darwin/bin/tseal", alias, 0o755),
-            ("taskseal-v0.1.0-aarch64-apple-darwin/LICENSE", b"license", 0o644),
-            ("taskseal-v0.1.0-aarch64-apple-darwin/NOTICE", b"notice", 0o644),
-            ("taskseal-v0.1.0-aarch64-apple-darwin/VERSION", version(), 0o644),
-            ("taskseal-v0.1.0-aarch64-apple-darwin/share/doc/taskseal/CHANGELOG.md", b"changes", 0o644),
+            ("clean-room-launcher-v0.1.0-aarch64-apple-darwin/bin/clroom", data, 0o755),
+            ("clean-room-launcher-v0.1.0-aarch64-apple-darwin/LICENSE", b"license", 0o644),
+            ("clean-room-launcher-v0.1.0-aarch64-apple-darwin/NOTICE", b"notice", 0o644),
+            ("clean-room-launcher-v0.1.0-aarch64-apple-darwin/VERSION", version(), 0o644),
+            ("clean-room-launcher-v0.1.0-aarch64-apple-darwin/share/doc/clean-room-launcher/CHANGELOG.md", b"changes", 0o644),
         ]:
             info = tarfile.TarInfo(name); info.size = len(body); info.mode = mode
             tar.addfile(info, io.BytesIO(body))
@@ -69,16 +68,14 @@ def run_archive():
         path = Path(temp) / "fixture.tar.gz"; archive(path)
         digest = hashlib.sha256(path.read_bytes()).hexdigest()
         layout = mod.verify_exact_digest_and_layout(path, digest)
-        assert layout.root == "taskseal-v0.1.0-aarch64-apple-darwin"
+        assert layout.root == "clean-room-launcher-v0.1.0-aarch64-apple-darwin"
         expect_refusal(lambda: mod.verify_exact_digest_and_layout(path, "0" * 64), "ARTIFACT_DIGEST_MISMATCH")
-        bad = Path(temp) / "bad.tar.gz"; archive(bad, equal=False)
-        expect_refusal(lambda: mod.verify_archive_members(bad, hashlib.sha256(bad.read_bytes()).hexdigest()), "DUAL_NAME_PARITY_REFUSED")
 
 def input_contract():
     return {
         "schema_version": "taskseal.p07.homebrew-input.v1", "evidence_class": "real-current",
-        "archive": {"filename": "taskseal-v0.1.0-aarch64-apple-darwin.tar.gz", "sha256": "6" * 64, "size": 42},
-        "artifact": {"version": "0.1.0", "source_commit": "01ad1d894aabe265b08d61d67d39da1a29cad9e4", "target": "aarch64-apple-darwin", "qualification": "NOT_QUALIFIED", "signing": "unsigned-preview-only", "root": "taskseal-v0.1.0-aarch64-apple-darwin", "members": ["LICENSE", "NOTICE", "VERSION", "bin/taskseal", "bin/tseal", "share/doc/taskseal/CHANGELOG.md"], "taskseal_sha256": "a" * 64, "tseal_sha256": "a" * 64},
+        "archive": {"filename": "clean-room-launcher-v0.1.0-aarch64-apple-darwin.tar.gz", "sha256": "6" * 64, "size": 42},
+        "artifact": {"version": "0.1.0", "source_commit": "01ad1d894aabe265b08d61d67d39da1a29cad9e4", "target": "aarch64-apple-darwin", "qualification": "NOT_QUALIFIED", "signing": "unsigned-preview-only", "root": "clean-room-launcher-v0.1.0-aarch64-apple-darwin", "members": ["LICENSE", "NOTICE", "VERSION", "bin/clroom", "share/doc/clean-room-launcher/CHANGELOG.md"], "clroom_sha256": "a" * 64},
         "host": {"system": "Darwin", "machine": "arm64", "macho_arch": "arm64", "minimum_macos": "13.0", "homebrew_symbol": "ventura"},
     }
 
@@ -88,32 +85,32 @@ def run_formula():
         raise AssertionError("renderer missing")
     renderer = importlib.util.module_from_spec(spec); sys.modules[spec.name] = renderer; spec.loader.exec_module(renderer)
     contract = input_contract()
-    url = "http://127.0.0.1:49152/taskseal-v0.1.0-aarch64-apple-darwin.tar.gz"
+    url = "http://127.0.0.1:49152/clean-room-launcher-v0.1.0-aarch64-apple-darwin.tar.gz"
     with tempfile.TemporaryDirectory() as temp:
-        output = Path(temp) / "Formula" / "taskseal-preview.rb"
-        first = renderer.render(contract, "taskseal-preview", url)
-        second = renderer.render(contract, "taskseal-preview", url)
-        assert first == second and b"class TasksealPreview < Formula" in first
+        output = Path(temp) / "Formula" / "clroom-preview.rb"
+        first = renderer.render(contract, "clroom-preview", url)
+        second = renderer.render(contract, "clroom-preview", url)
+        assert first == second and b"class ClroomPreview < Formula" in first
         assert b"depends_on arch:" not in first
         assert b"depends_on macos: :ventura" in first
         assert b"keg_only :versioned_formula" not in first
-        versioned = renderer.render(contract, "taskseal-preview@0.0.1", url)
-        assert b"class TasksealPreviewAT001 < Formula" in versioned
+        versioned = renderer.render(contract, "clroom-preview@0.0.1", url)
+        assert b"class ClroomPreviewAT001 < Formula" in versioned
         assert b"keg_only :versioned_formula" in versioned
         renderer.atomic_write(output, first)
         assert output.read_bytes() == first and (output.stat().st_mode & 0o777) == 0o644
         assert b"post_install" not in first and b'system "curl"' not in first
-        assert b"https://taskseal-preview.invalid/" in first and b"127.0.0.1:49152" in first
+        assert b"https://clroom-preview.invalid/" in first and b"127.0.0.1:49152" in first
         assert b"provider" not in first.lower() and b"login" not in first.lower()
         assert __import__("subprocess").run(["ruby", "-c", str(output)], stdout=__import__("subprocess").PIPE, stderr=__import__("subprocess").PIPE).returncode == 0
-        for bad_url in ["https://127.0.0.1:49152/taskseal-v0.1.0-aarch64-apple-darwin.tar.gz", "http://localhost:49152/taskseal-v0.1.0-aarch64-apple-darwin.tar.gz", "http://127.0.0.1:49152/other.tar.gz", "http://user@127.0.0.1:49152/taskseal-v0.1.0-aarch64-apple-darwin.tar.gz", url + "?x=1"]:
+        for bad_url in ["https://127.0.0.1:49152/clean-room-launcher-v0.1.0-aarch64-apple-darwin.tar.gz", "http://localhost:49152/clean-room-launcher-v0.1.0-aarch64-apple-darwin.tar.gz", "http://127.0.0.1:49152/other.tar.gz", "http://user@127.0.0.1:49152/clean-room-launcher-v0.1.0-aarch64-apple-darwin.tar.gz", url + "?x=1"]:
             expect_formula_refusal(lambda bad_url=bad_url: renderer.render(contract, "taskseal-preview", bad_url), renderer)
-        for bad_id in ["taskseal", "taskseal-preview; system('x')", "taskseal-preview@bad"]:
+        for bad_id in ["clroom", "clroom-preview; system('x')", "clroom-preview@bad"]:
             expect_formula_refusal(lambda bad_id=bad_id: renderer.render(contract, bad_id, url), renderer)
         malformed = dict(contract); malformed["extra"] = True
-        expect_formula_refusal(lambda: renderer.render(malformed, "taskseal-preview", url), renderer)
+        expect_formula_refusal(lambda: renderer.render(malformed, "clroom-preview", url), renderer)
         unknown = json.loads(json.dumps(contract)); unknown["host"]["homebrew_symbol"] = "unknown"
-        expect_formula_refusal(lambda: renderer.render(unknown, "taskseal-preview", url), renderer)
+        expect_formula_refusal(lambda: renderer.render(unknown, "clroom-preview", url), renderer)
         link = Path(temp) / "link.rb"; link.symlink_to(output)
         expect_formula_refusal(lambda: renderer.atomic_write(link, first), renderer)
 

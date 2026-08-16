@@ -6,25 +6,24 @@ signature, notarization, or platform qualification of a release archive.
 The evidence class is `local-source-build` and the result remains
 `NOT_QUALIFIED`.
 
-The repository currently declares `publish = false`; TaskSeal must not be
+The repository currently declares `publish = false`; Clean Room Launcher must not be
 advertised as installable from crates.io. From an explicitly trusted local
 checkout, with dependencies already present locally, install the locked
 source without network access:
 
 ```sh
 CARGO_NET_OFFLINE=true cargo install \
-  --path /absolute/path/to/taskseal \
+  --path /absolute/path/to/clean-room-launcher \
   --locked --offline --root /absolute/private/install-root
 ```
 
-The install must create only the two package-owned executable names
-`taskseal` and `tseal` below the selected Cargo root. Both names must expose
-the same CLI behavior. Remove the source-built package with:
+The install creates only the package-owned `clroom` executable below the
+selected Cargo root. Remove the source-built package with:
 
 ```sh
-cargo uninstall --root /absolute/private/install-root taskseal
+cargo uninstall --root /absolute/private/install-root clean-room-launcher
 ```
 
 Cargo may retain its documented bookkeeping files inside that explicitly
-selected root; uninstall must remove both TaskSeal-owned executables and must
+selected root; uninstall must remove the Clean Room Launcher executable and must
 not touch provider, Git, user configuration, or files outside the root.

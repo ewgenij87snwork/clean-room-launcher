@@ -11,10 +11,10 @@ import sys
 import urllib.parse
 from pathlib import Path
 
-ALLOWED_FORMULA = re.compile(r"taskseal-preview(?:@[0-9]+(?:\.[0-9]+){1,2})?\Z")
+ALLOWED_FORMULA = re.compile(r"clroom-preview(?:@[0-9]+(?:\.[0-9]+){1,2})?\Z")
 HEX64 = re.compile(r"[0-9a-f]{64}\Z")
 VERSION = re.compile(r"[0-9]+(?:\.[0-9]+){1,2}\Z")
-ARCHIVE = re.compile(r"taskseal-v[0-9]+(?:\.[0-9]+){1,2}-aarch64-apple-darwin\.tar\.gz\Z")
+ARCHIVE = re.compile(r"clean-room-launcher-v[0-9]+(?:\.[0-9]+){1,2}-aarch64-apple-darwin\.tar\.gz\Z")
 MACOS = {"catalina", "big_sur", "monterey", "ventura", "sonoma", "sequoia", "tahoe"}
 
 class FormulaRefused(Exception):
@@ -47,7 +47,7 @@ def validate_contract(value: object) -> dict:
         refuse()
     if not isinstance(archive, dict) or set(archive) != {"filename", "sha256", "size"}:
         refuse()
-    if not isinstance(artifact, dict) or set(artifact) != {"version", "source_commit", "target", "qualification", "signing", "root", "members", "taskseal_sha256", "tseal_sha256"}:
+    if not isinstance(artifact, dict) or set(artifact) != {"version", "source_commit", "target", "qualification", "signing", "root", "members", "clroom_sha256"}:
         refuse()
     if not isinstance(host, dict) or set(host) != {"system", "machine", "macho_arch", "minimum_macos", "homebrew_symbol"}:
         refuse()
@@ -55,10 +55,7 @@ def validate_contract(value: object) -> dict:
         refuse()
     if not isinstance(archive["sha256"], str) or not HEX64.fullmatch(archive["sha256"]) or not isinstance(archive["size"], int) or archive["size"] < 1:
         refuse()
-    for key in ("taskseal_sha256", "tseal_sha256"):
-        if not isinstance(artifact[key], str) or not HEX64.fullmatch(artifact[key]):
-            refuse()
-    if artifact["taskseal_sha256"] != artifact["tseal_sha256"] or not isinstance(artifact["version"], str) or not VERSION.fullmatch(artifact["version"]):
+    if not isinstance(artifact["clroom_sha256"], str) or not HEX64.fullmatch(artifact["clroom_sha256"]) or not isinstance(artifact["version"], str) or not VERSION.fullmatch(artifact["version"]):
         refuse()
     if artifact["target"] != "aarch64-apple-darwin" or artifact["qualification"] != "NOT_QUALIFIED" or artifact["signing"] != "unsigned-preview-only":
         refuse()
@@ -78,9 +75,9 @@ def ruby_class_name(formula_id: str) -> str:
     if not ALLOWED_FORMULA.fullmatch(formula_id):
         refuse()
     if "@" not in formula_id:
-        return "TasksealPreview"
+        return "ClroomPreview"
     version = formula_id.split("@", 1)[1].replace(".", "")
-    return "TasksealPreviewAT" + version
+    return "ClroomPreviewAT" + version
 
 def render(contract: dict, formula_id: str, url: str) -> bytes:
     contract = validate_contract(contract)
@@ -89,8 +86,8 @@ def render(contract: dict, formula_id: str, url: str) -> bytes:
     klass = ruby_class_name(formula_id)
     versioned_keg_only = "  keg_only :versioned_formula\n" if "@" in formula_id else ""
     text = f'''class {klass} < Formula
-  desc "Private local lifecycle fixture for an unsigned TaskSeal preview"
-  homepage "https://taskseal-preview.invalid/"
+  desc "Private local lifecycle fixture for an unsigned Clean Room Launcher preview"
+  homepage "https://clroom-preview.invalid/"
   url "{url}"
   version "{artifact["version"]}"
   sha256 "{archive["sha256"]}"
@@ -98,19 +95,15 @@ def render(contract: dict, formula_id: str, url: str) -> bytes:
 {versioned_keg_only}
 
   def install
-    bin.install "bin/taskseal"
-    bin.install "bin/tseal"
-    (share/"taskseal-preview").install "LICENSE", "NOTICE", "VERSION"
+    bin.install "bin/clroom"
+    (share/"clroom-preview").install "LICENSE", "NOTICE", "VERSION"
   end
 
   test do
-    taskseal_status = shell_output("#{'{'}bin{'}'}/taskseal status")
-    tseal_status = shell_output("#{'{'}bin{'}'}/tseal status")
-    assert_equal "taskseal: command accepted\\n", taskseal_status
-    assert_equal taskseal_status, tseal_status
+    clroom_status = shell_output("#{'{'}bin{'}'}/clroom status")
+    assert_equal "clroom: command accepted\\n", clroom_status
     expected = "OUTPUT_UNSUPPORTED_FOR_COMMAND: status; use human output\\n"
-    assert_equal expected, shell_output("#{'{'}bin{'}'}/taskseal --output json status 2>&1", 2)
-    assert_equal expected, shell_output("#{'{'}bin{'}'}/tseal --output json status 2>&1", 2)
+    assert_equal expected, shell_output("#{'{'}bin{'}'}/clroom --output json status 2>&1", 2)
   end
 end
 '''
