@@ -1,7 +1,34 @@
-# Reproducible demo readiness
+# Clean Room Launcher demo
 
-The retained demo is `PREPARED_NOT_QUALIFIED` and its production observation is `NOT_RUN`. It is not a public demo PASS: the exact produced artifact bytes and a clean installed observation are unavailable under the current authority.
+This candidate is a local macOS/arm64 preview. It is not published and remains
+`NOT_QUALIFIED` for public release.
 
-The closed test-only replay binds the P07 source/artifact evidence, the P08 Task 3 capture contract, an artifact SHA-256, and a fixture SHA-256. It accepts only declared non-semantic redaction (`recorded_at`) and rejects edited output, developer-checkout use, unsafe/private capture fields, missing cleanup, stale artifacts, and any fixture promotion.
+The archive contains one executable:
 
-Future owner-gated action: provide the exact candidate artifact and authorize a clean installed capture with command/result sanitization and completed cleanup. Only that separately authorized production run may create a new qualified receipt.
+```text
+bin/clroom
+```
+
+After extracting the exact `clean-room-launcher` archive, inspect the launcher
+without starting a coding-agent CLI:
+
+```sh
+./bin/clroom --help
+./bin/clroom status
+```
+
+To start the locally available coding-agent CLI through the clean-room launch
+boundary, pass its ordinary arguments unchanged:
+
+```sh
+./bin/clroom codex --help
+```
+
+On macOS, `clroom` starts Codex under its filesystem boundary. The launcher
+does not log in, copy credentials, change existing configuration, publish
+anything, or make an unsupported provider claim.
+
+The exact candidate artifact and its SHA-256 are recorded in
+`reports/release/candidate.json`. Public availability, namespace ownership,
+an external clean install, and a fully qualified clean Codex launch remain
+open release conditions.
