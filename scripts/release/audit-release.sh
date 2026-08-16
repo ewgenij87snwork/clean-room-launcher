@@ -18,6 +18,8 @@ import tempfile
 ROOT = Path(sys.argv[1]).resolve()
 PRIVATE_PATH = re.compile(r"(?:/(?:Users|home)/[^/\s]+|[A-Za-z]:\\Users\\[^\\\s]+)")
 CYRILLIC = re.compile(r"[А-Яа-яЁё]")
+OFFICIAL_SPDX_SCHEMA = Path("packaging/supply-chain/schemas/cyclonedx-1.7/spdx.schema.json")
+OFFICIAL_SPDX_SCHEMA_SHA256 = "c87aa7bb5eb503d40b52ec6bf00de8045df15da7a13cea48d290cf6d36a8d2ea"
 UNSUPPORTED_CLAIM = re.compile(
     r"(?:SLSA\s+Level\s+[1-4]|production[- ]ready|fully\s+secure|"
     r"supports?\s+all\s+(?:operating\s+systems|providers)|guaranteed\s+(?:safe|secure))",
@@ -176,7 +178,17 @@ def semgrep_matches(target, pattern):
     return len(payload.get("results", []))
 
 
-def gitleaks_findings(target, report_path, *, archive_depth=0):
+def trusted_official_schema_finding(item, target, trusted_schema):
+    if not regular(trusted_schema) or sha256(trusted_schema) != OFFICIAL_SPDX_SCHEMA_SHA256:
+        return False
+    if item.get("RuleID") != "generic-api-key":
+        return False
+    reported = str(item.get("File", "")).replace("\\", "/")
+    expected = OFFICIAL_SPDX_SCHEMA.as_posix()
+    return reported.endswith(expected) or (target == trusted_schema and reported.endswith(trusted_schema.name))
+
+
+def gitleaks_findings(target, report_path, *, archive_depth=0, trusted_schema=None):
     command = [
         "gitleaks",
         "dir",
@@ -194,9 +206,60 @@ def gitleaks_findings(target, report_path, *, archive_depth=0):
     if result.returncode not in (0, 1):
         refuse("GITLEAKS_ERROR")
     if result.returncode == 0:
-        return 0
+        return {"raw": 0, "accepted": 0, "filtered": 0}
     payload = load_json(report_path)
-    return len(payload) if isinstance(payload, list) else 0
+    if not isinstance(payload, list):
+        refuse("GITLEAKS_ERROR")
+    filtered = 0
+    accepted = 0
+    for item in payload:
+        if trusted_schema is not None and trusted_official_schema_finding(item, target, trusted_schema):
+            filtered += 1
+        else:
+            accepted += 1
+    return {"raw": len(payload), "accepted": accepted, "filtered": filtered}
+
+
+def intentional_empty_assignment_finding(item, source_root):
+    if item.get("code") != 1007:
+        return False
+    try:
+        path = Path(item["file"])
+        if not path.is_absolute():
+            path = source_root / path
+        path = path.resolve()
+        path.relative_to(source_root.resolve())
+        line_number = int(item["line"])
+        column = int(item["column"])
+        body = path.read_text(encoding="utf-8").splitlines()[line_number - 1]
+    except (KeyError, ValueError, OSError, UnicodeError, IndexError):
+        return False
+    if column < 2 or column > len(body) or body[column - 2] != "=" or not body[column - 1].isspace():
+        return False
+    assignments_only = re.fullmatch(r"\s*(?:[A-Za-z_][A-Za-z0-9_]*=[^\s]*\s*)+", body) is not None
+    cdpath_clear = re.search(r"\bCDPATH=\s+cd(?:\s|$)", body) is not None
+    return assignments_only or cdpath_clear
+
+
+def shellcheck_findings(shell_files, source_root):
+    result = run(
+        ["shellcheck", "--format=json", "--severity=warning", *shell_files],
+        cwd=source_root,
+    )
+    if result.returncode not in (0, 1):
+        refuse("SHELLCHECK_ERROR")
+    try:
+        payload = json.loads(result.stdout)
+    except json.JSONDecodeError:
+        refuse("SHELLCHECK_ERROR")
+    if not isinstance(payload, list):
+        refuse("SHELLCHECK_ERROR")
+    filtered = sum(1 for item in payload if intentional_empty_assignment_finding(item, source_root))
+    return {
+        "raw": len(payload),
+        "accepted": len(payload) - filtered,
+        "filtered_intentional_empty_assignments": filtered,
+    }
 
 
 def claim_blockers(claim_root, add):
@@ -263,7 +326,8 @@ def fixture_audit(options):
 
     with tempfile.TemporaryDirectory(prefix="taskseal-p08-audit-fixture-") as temporary:
         temporary = Path(temporary)
-        if gitleaks_findings(fixture_root / "privacy", temporary / "gitleaks.json"):
+        privacy_findings = gitleaks_findings(fixture_root / "privacy", temporary / "gitleaks.json")
+        if privacy_findings["accepted"]:
             add("privacy", "PRIVATE_SECRET", "Gitleaks detected the planted synthetic secret")
         if any(PRIVATE_PATH.search(body) for _, body in text_files(fixture_root / "privacy")):
             add("privacy", "PRIVATE_ABSOLUTE_PATH", "absolute HOME-path fixture detected")
@@ -273,6 +337,24 @@ def fixture_audit(options):
             add("security", "UNSAFE_PROCESS_SHELL", "Semgrep detected untrusted shell execution")
         if semgrep_matches(unsafe, 'std::fs::remove_dir_all("/")'):
             add("security", "UNSAFE_FILESYSTEM_ROOT_DELETE", "Semgrep detected root deletion")
+
+        official_schema = ROOT / OFFICIAL_SPDX_SCHEMA
+        official_schema_findings = gitleaks_findings(
+            official_schema,
+            temporary / "official-schema-gitleaks.json",
+            trusted_schema=official_schema,
+        )
+        fixture_shell_files = sorted(
+            path
+            for base in (ROOT / "scripts/release", ROOT / "packaging")
+            if base.exists()
+            for path in base.rglob("*.sh")
+        )
+        fixture_shellcheck = shellcheck_findings(fixture_shell_files, ROOT)
+        if official_schema_findings != {"raw": 2, "accepted": 0, "filtered": 2}:
+            refuse("OFFICIAL_SCHEMA_FALSE_POSITIVE_BOUNDARY")
+        if fixture_shellcheck != {"raw": 26, "accepted": 0, "filtered_intentional_empty_assignments": 26}:
+            refuse("SHELLCHECK_FALSE_POSITIVE_BOUNDARY")
 
     notice = (fixture_root / "legal" / "NOTICE").read_text(encoding="utf-8")
     if "Third-party dependency notices" not in notice:
@@ -314,6 +396,10 @@ def fixture_audit(options):
         "classes": sorted(required),
         "slices": blockers_for_slices(blockers),
         "blockers_detected": blockers,
+        "scanner_corrections": {
+            "official_schema": official_schema_findings,
+            "shellcheck": fixture_shellcheck,
+        },
         "promotion_eligible": False,
     }
     atomic_json(output, report, release_mode=False)
@@ -411,11 +497,20 @@ def release_audit(options):
             if planted.exists():
                 shutil.rmtree(planted)
 
-        source_leaks = gitleaks_findings(source_root, temporary / "source-gitleaks.json")
+        source_leaks = gitleaks_findings(
+            source_root,
+            temporary / "source-gitleaks.json",
+            trusted_schema=source_root / OFFICIAL_SPDX_SCHEMA,
+        )
         artifact_leaks = gitleaks_findings(artifact, temporary / "artifact-gitleaks.json", archive_depth=2)
-        if source_leaks or artifact_leaks:
+        if source_leaks["accepted"] or artifact_leaks["accepted"]:
             add("privacy", "PRIVATE_SECRET", "Gitleaks found redacted source or artifact findings")
-        check("privacy", "gitleaks-source-artifact", "PASS" if not (source_leaks or artifact_leaks) else "BLOCKED", f"source={source_leaks};artifact={artifact_leaks}")
+        check(
+            "privacy",
+            "gitleaks-source-artifact",
+            "PASS" if not (source_leaks["accepted"] or artifact_leaks["accepted"]) else "BLOCKED",
+            f"source={source_leaks['accepted']};artifact={artifact_leaks['accepted']};filtered_official={source_leaks['filtered']}",
+        )
 
         artifact_root = temporary / "artifact"
         artifact_root.mkdir()
@@ -463,11 +558,15 @@ def release_audit(options):
             if base.exists()
             for path in base.rglob("*.sh")
         )
-        shellcheck = run(["shellcheck", "--severity=warning", *shell_files], cwd=source_root) if shell_files else None
-        shellcheck_failed = shellcheck is not None and shellcheck.returncode != 0
-        if shellcheck_failed:
+        shellcheck = shellcheck_findings(shell_files, source_root) if shell_files else {"raw": 0, "accepted": 0, "filtered_intentional_empty_assignments": 0}
+        if shellcheck["accepted"]:
             add("security", "SHELL_SAFETY_LINT", "ShellCheck warning-or-higher finding in release or packaging scripts")
-        check("security", "shellcheck-release-packaging", "PASS" if not shellcheck_failed else "BLOCKED", f"files={len(shell_files)}")
+        check(
+            "security",
+            "shellcheck-release-packaging",
+            "PASS" if not shellcheck["accepted"] else "BLOCKED",
+            f"files={len(shell_files)};raw={shellcheck['raw']};accepted={shellcheck['accepted']};filtered_empty_assignments={shellcheck['filtered_intentional_empty_assignments']}",
+        )
 
         audit_db = cargo_home / "rustsec-advisory-db"
         if not audit_db.is_dir():

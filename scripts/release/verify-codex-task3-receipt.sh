@@ -82,8 +82,10 @@ git -C "$repo" log --format=%H "$implementation_head..$tip" -- "$receipt_path" |
 done >"$commits_tmp"
 [ "$(wc -l <"$commits_tmp" | tr -d ' ')" = 1 ] || refuse RECEIPT_COMMIT_NOT_UNIQUE
 seal_commit=$(cat "$commits_tmp")
-set -- $(git -C "$repo" rev-list --parents -n 1 "$seal_commit")
-[ "$#" -eq 2 ] && [ "$2" = "$implementation_head" ] || refuse RECEIPT_NOT_DIRECT_CHILD
+parent_line=$(git -C "$repo" rev-list --parents -n 1 "$seal_commit")
+parent_fields=$(printf '%s\n' "$parent_line" | awk '{print NF}')
+seal_parent=$(printf '%s\n' "$parent_line" | awk 'NF == 2 {print $2}')
+[ "$parent_fields" -eq 2 ] && [ "$seal_parent" = "$implementation_head" ] || refuse RECEIPT_NOT_DIRECT_CHILD
 changed=$(git -C "$repo" diff-tree --no-commit-id --name-only -r "$seal_commit")
 [ "$changed" = "$receipt_path" ] || refuse RECEIPT_CHILD_NOT_RECEIPT_ONLY
 git -C "$repo" merge-base --is-ancestor "$seal_commit" "$tip" 2>/dev/null || refuse RECEIPT_NOT_DURABLE_AT_TIP
