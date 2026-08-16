@@ -529,6 +529,7 @@ def release_audit(options):
     blockers = []
     checks = []
     seen = set()
+    namespace_queries = []
 
     def add(slice_id, code, evidence):
         if code in seen:
@@ -791,6 +792,17 @@ def release_audit(options):
             check("namespace", "official-registry-ownership", "NOT_RUN", "blocked before query by absent owner-approved public name")
         else:
             namespace = load_json(namespace_record)
+            namespace_queries = [
+                {
+                    "registry": item.get("registry"),
+                    "name": item.get("name"),
+                    "access": "bound prior read-only evidence",
+                    "observed_status": str(item.get("http_status", item.get("status"))),
+                    "recorded_at": namespace.get("recorded_at"),
+                }
+                for item in namespace.get("queries", [])
+                if item.get("registry") != "local PATH"
+            ]
             if not all(namespace.get(key) is True for key in ("approved_public_name", "repository_owned", "package_owned", "binary_names_owned")):
                 add("namespace", "NAMESPACE_OWNERSHIP_UNPROVEN", "namespace record is incomplete")
             check("namespace", "official-registry-ownership", "PASS" if "NAMESPACE_OWNERSHIP_UNPROVEN" not in seen else "BLOCKED", "dated owner record")
@@ -822,8 +834,13 @@ def release_audit(options):
             "promotion_eligible": False,
         },
         "external_queries": [
-            {"registry": "RustSec advisory database", "access": "read-only", "recorded_at": recorded_at},
-            {"registry": "crates.io package index", "access": "read-only", "recorded_at": recorded_at},
+            {
+                "registry": "RustSec advisory database",
+                "access": "read-only local snapshot",
+                "snapshot_head": audit_db_head.stdout.strip(),
+                "scanned_at": recorded_at,
+            },
+            *namespace_queries,
         ],
         "standard_tools": [
             {"name": "cargo-audit", "version": "0.22.2", "sha256": sha256(tool_root / "bin/cargo-audit")},
