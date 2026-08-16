@@ -13,7 +13,10 @@ pub(crate) mod state;
 mod zero_auth;
 
 use std::io::Write;
+use std::path::PathBuf;
 use std::process::ExitCode;
+
+use taskseal::adapters::codex::isolation::{IsolationInputs, plan};
 
 pub fn run(invoked_as: &str, args: impl IntoIterator<Item = String>) -> ExitCode {
     let mut source = args.into_iter();
@@ -74,13 +77,34 @@ fn run_codex(source: &mut impl Iterator<Item = String>) -> ExitCode {
     } {
         args.push(argument);
     }
-    match process::launch_codex(&args) {
+    match launch_isolated_codex(&args) {
         Ok(exit) => exit,
         Err(message) => {
             eprintln!("{message}");
             ExitCode::from(2)
         }
     }
+}
+
+fn launch_isolated_codex(args: &[String]) -> Result<ExitCode, String> {
+    let home = std::env::var_os("HOME").map(PathBuf::from).ok_or_else(|| {
+        "CLROOM_ISOLATION_INVALID: HOME is unavailable; continue locally".to_owned()
+    })?;
+    let inputs = IsolationInputs {
+        codex_home: std::env::var_os("CODEX_HOME")
+            .map(PathBuf::from)
+            .unwrap_or_else(|| home.join(".codex")),
+        home,
+    };
+    let project = std::env::current_dir().map_err(|_| {
+        "CLROOM_ISOLATION_INVALID: current project is unavailable; continue locally".to_owned()
+    })?;
+    let executable = process::resolve_codex_executable()?;
+    let plan = plan(&project, &executable, &inputs).map_err(|_| {
+        "CLROOM_ISOLATION_INVALID: current project or context boundary is invalid; continue locally"
+            .to_owned()
+    })?;
+    process::launch_isolated_codex(&plan, &executable, args)
 }
 
 fn next_argument(source: &mut impl Iterator<Item = String>) -> Result<Option<String>, ExitCode> {

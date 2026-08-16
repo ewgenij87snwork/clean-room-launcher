@@ -18,6 +18,8 @@ mod foreground_process;
 mod help;
 #[path = "cli/local_codex_launch.rs"]
 mod local_codex_launch;
+#[path = "cli/isolated_codex_launch.rs"]
+mod isolated_codex_launch;
 #[path = "cli/non_tty_json.rs"]
 mod non_tty_json;
 #[path = "cli/saved_start_call_path.rs"]
