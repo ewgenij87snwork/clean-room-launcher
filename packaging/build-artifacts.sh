@@ -5,10 +5,10 @@ out_dir=${1:-"$root/target/artifacts"}
 target=${TASKSEAL_TARGET:-}
 version=$(sed -n 's/^version = "\([^"]*\)"/\1/p' "$root/Cargo.toml" | head -1)
 commit=${TASKSEAL_SOURCE_COMMIT:-}
-if [[ -z "$commit" && -d "$root/.git" ]]; then commit=$(git -C "$root" rev-parse HEAD); fi
+if [[ -z "$commit" ]] && git -C "$root" rev-parse --is-inside-work-tree >/dev/null 2>&1; then commit=$(git -C "$root" rev-parse HEAD); fi
 toolchain=$(sed -n 's/^channel = "\([^"]*\)"/\1/p' "$root/rust-toolchain.toml" | head -1)
 [[ $commit =~ ^[0-9a-f]{40}$|^[0-9a-f]{64}$ ]] || { echo "invalid source commit" >&2; exit 2; }
-if [[ -d "$root/.git" ]]; then
+if git -C "$root" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   [[ "$commit" == "$(git -C "$root" rev-parse HEAD)" ]] || { echo "source commit must equal checked-out HEAD" >&2; exit 2; }
   git -C "$root" diff --quiet || { echo "tracked source changes prevent exact binding" >&2; exit 2; }
 fi
