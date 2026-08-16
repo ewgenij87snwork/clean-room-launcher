@@ -10,7 +10,7 @@ generated runtime state, artifact identity and release receipts.
 ## Trust boundaries and attacker-controlled inputs
 
 Trust boundaries exist between the parent environment and the isolated runtime,
-between source skills and generated context, between TaskSeal and a provider
+between source skills and generated context, between Clean Room Launcher and a provider
 CLI, and between a built artifact and its release evidence. Attacker-controlled
 inputs include project files, skill metadata, command arguments, environment
 variables, archive members, paths and symlinks, provider output and edited
@@ -21,7 +21,7 @@ receipts.
 - HOME contamination can expose parent configuration, unrelated skills or
   private files to a supposedly clean launch.
 - Path and symlink escape can redirect placement, reads, writes or cleanup
-  outside TaskSeal-owned runtime roots.
+  outside Clean Room Launcher-owned runtime roots.
 - Malicious context can use admitted files or skill metadata to influence a
   provider outside the intended task boundary.
 - Adapter or provider drift can make evidence from one executable, version,
@@ -41,7 +41,7 @@ receipts.
   digests before provider birth; unsupported or stale tuples remain
   `NOT_QUALIFIED`.
 - Build an allowlisted environment, refuse collisions before placement, reject
-  symlinks and path traversal, and clean only digest-bound TaskSeal-owned state.
+  symlinks and path traversal, and clean only digest-bound launcher-owned state.
 - Preserve provider-native skill loading and record only bounded observations;
   never retain raw provider output, prompts, credentials or transcripts.
 - Require normalized archives, locked dependencies, checksums, SBOM and
