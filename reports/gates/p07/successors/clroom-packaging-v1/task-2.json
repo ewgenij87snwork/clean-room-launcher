@@ -1,0 +1,39 @@
+{
+  "schema_version": "taskseal.p07.clroom-packaging.v1",
+  "plan_id": "P07-CLROOM-PACKAGING-V1",
+  "result": "PASS",
+  "qualification": "NOT_QUALIFIED",
+  "receipt_role": "receipt-only-child",
+  "implementation_head": "b06f0580dc12436e25bdad6f84dbd100eeb5eeb9",
+  "artifact": {
+    "name": "clean-room-launcher-v0.1.0-aarch64-apple-darwin.tar.gz",
+    "sha256": "4c42ef66e7196d6ebb1fbe67808d89aab6aa69db23ed8921ab576a4332da2e4a",
+    "contains_only_binary": "bin/clroom"
+  },
+  "lifecycle": {
+    "mode": "bounded-disposable-local-fixture-no-network",
+    "steps": ["install_n", "upgrade_n_plus_1", "rollback_n", "uninstall_current", "untap"],
+    "cleanup_complete": true
+  },
+  "verification": {
+    "command": "scripts/gates/p07/successors/clroom-packaging-v1/verify.sh",
+    "exit": 0,
+    "marker": "P07_CLROOM_PACKAGING_V1_PASS artifact_sha256=4c42ef66e7196d6ebb1fbe67808d89aab6aa69db23ed8921ab576a4332da2e4a lifecycle=local-fixture-no-network"
+  },
+  "subjects": {
+    "Cargo.toml": "436a1ec82d83aa742d5ff39dec7fa524d5da6cd9d2974a14a3298104b75ceb28",
+    "packaging/build-artifacts.sh": "4aac3f5ffdbd1983fb74e718e61a0e1553d988ed596a2717b1d1c172a6222f9b",
+    "packaging/verify-artifact.py": "52dfb75c9e325a082a33c502ecf288bd12b45883c429d16e1a9fc6a3fd1220e7",
+    "packaging/homebrew/lifecycle.py": "2653f52fbf2cc0c65ac54468423556610f6ccbc748f6c7d5858cdb989a221c48",
+    "scripts/gates/p07/successors/clroom-packaging-v1/verify.sh": "6fb17d1ca983688a30150eff3795d265f749ae93e579039345002117893e0bb0"
+  },
+  "forbidden_actions": {
+    "publication": false,
+    "upload": false,
+    "signing": false,
+    "provider_process": false,
+    "credential_access": false,
+    "main_mutation": false,
+    "integration": false
+  }
+}
