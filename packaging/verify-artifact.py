@@ -3,6 +3,7 @@
 import gzip, hashlib, os, re, sys, tarfile
 
 REQUIRED = {"LICENSE", "NOTICE", "VERSION", "bin/taskseal", "bin/tseal", "share/doc/taskseal/CHANGELOG.md"}
+PRIVATE_HOME = re.compile(rb"(?:/(?:Users|home)/[A-Za-z0-9._-]+(?:/|\x00)|[A-Za-z]:\\Users\\[A-Za-z0-9._-]+(?:\\|\x00))")
 def fail(message):
     print("ARTIFACT_INVALID: " + message, file=sys.stderr); raise SystemExit(1)
 if len(sys.argv) != 2: fail("usage: verify-artifact.py ARCHIVE")
@@ -30,6 +31,7 @@ try:
         taskseal = tar.extractfile(root + "/bin/taskseal").read()
         tseal = tar.extractfile(root + "/bin/tseal").read()
         if taskseal != tseal: fail("tseal is not byte-identical")
+        if PRIVATE_HOME.search(taskseal): fail("binary contains a private HOME path")
         version = tar.extractfile(root + "/VERSION").read().decode("utf-8")
         if "qualification=NOT_QUALIFIED\n" not in version or "source_commit=" not in version: fail("unbound qualification metadata")
         for field in ("notice_generator_sha256", "license_policy_sha256", "notice_policy_sha256", "cargo_lock_sha256"):

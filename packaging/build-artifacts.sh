@@ -22,6 +22,11 @@ fi
 [[ $target_label =~ ^[A-Za-z0-9._-]+$ ]] || { echo "unsafe target label" >&2; exit 2; }
 target_dir=${CARGO_TARGET_DIR:-"$root/target"}
 binary="$target_dir/${target:+$target/}release/taskseal"
+build_cargo_home=${CARGO_HOME:-"${HOME:?HOME is required}/.cargo"}
+if [[ $build_cargo_home != /* ]]; then build_cargo_home="$root/$build_cargo_home"; fi
+build_cargo_home=$(cd "$build_cargo_home" && pwd -P)
+[[ -z ${RUSTFLAGS:-} && -z ${CARGO_ENCODED_RUSTFLAGS:-} ]] || { echo "external rust flags prevent exact path remapping" >&2; exit 2; }
+export CARGO_ENCODED_RUSTFLAGS="--remap-path-prefix=$root=/workspace/taskseal"$'\x1f'"--remap-path-prefix=$build_cargo_home=/cargo"
 export CARGO_NET_OFFLINE=${CARGO_NET_OFFLINE:-true} LC_ALL=C TZ=UTC SOURCE_DATE_EPOCH=0
 cargo build --locked --release --bin taskseal "${cargo_args[@]}"
 [[ -x "$binary" ]] || { echo "built taskseal binary not found" >&2; exit 2; }
