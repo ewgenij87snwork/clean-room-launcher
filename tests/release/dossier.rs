@@ -16,9 +16,14 @@ fn fixture(name: &str) -> PathBuf {
     let temp = std::env::temp_dir().join(format!("p08-dossier-{name}-{}", std::process::id()));
     let _ = fs::remove_dir_all(&temp);
     fs::create_dir_all(temp.join("reports/gates")).unwrap();
+    fs::create_dir_all(temp.join("reports/release")).unwrap();
     for plan in ["p02", "p03", "p04", "p05", "p06", "p07"] {
         copy_tree(&root().join("reports/gates").join(plan), &temp.join("reports/gates").join(plan));
     }
+    fs::copy(
+        root().join("reports/release/codex-live-observation.json"),
+        temp.join("reports/release/codex-live-observation.json"),
+    ).unwrap();
     temp
 }
 
@@ -40,12 +45,29 @@ fn collector_builds_a_closed_private_candidate_and_refuses_bad_receipts() {
         "\"requested_release_state\":\"PRIVATE_CANDIDATE\"",
         "\"plan\":\"P02\"", "\"plan\":\"P07\"",
         "\"qualification\":\"NOT_QUALIFIED\"",
-        "\"evidence_path\":\"reports/gates/p07/task-3.json\"",
-        "\"evidence_pointer\":\"/claims/archive_sha256\"",
+        "\"candidate_commit\":\"abd35a2e0e3bef557019705ddd7f8a6b22427675\"",
+        "\"evidence_path\":\"reports/gates/p06/privacy-release-boundary-v1.json\"",
+        "\"evidence_path\":\"reports/gates/p07/legal-candidate-correction-v1.json\"",
+        "\"evidence_path\":\"reports/release/codex-live-observation.json\"",
+        "\"evidence_pointer\":\"/artifact/sha256\"",
+        "\"sha256\":\"ea8e60d2b4097ce766758bd70543628d0c15e9c7ab0ebc0d29d76c59da896b0c\"",
+        "\"status\":\"CLOSED\"",
+        "\"status\":\"BLOCKER\"",
     ] { assert!(candidate.contains(needle), "missing {needle}"); }
+    for stale in [
+        "656f8701e84e0d7a72c4dbdb62d8ad20733e5743b602ff0fd6447c711a211d33",
+        "\"evidence_path\":\"reports/gates/p07/terminal-review.json\"",
+    ] { assert!(!candidate.contains(stale), "stale candidate input retained: {stale}"); }
     for forbidden in ["/Users/", "/home/", "ghp_", "sk-12345678901234567890", "raw_prompt", "prompt_payload"] {
         assert!(!candidate.contains(forbidden), "private data leaked: {forbidden}");
     }
+    let audit = fs::read_to_string(root().join("scripts/release/audit-release.sh")).unwrap();
+    for needle in [
+        "qualification/public-release-inventory-v1.json",
+        "IMMUTABLE_INTERNAL_EVIDENCE_EXCLUDED_FROM_PUBLIC_SOURCE",
+        "packaging/license-policy.toml",
+        "--offline\", \"check\", \"licenses",
+    ] { assert!(audit.contains(needle), "audit does not bind corrected input: {needle}"); }
 
     let missing = fixture("missing");
     fs::remove_file(missing.join("reports/gates/p06/qualification-gate.json")).unwrap();
@@ -60,13 +82,6 @@ fn collector_builds_a_closed_private_candidate_and_refuses_bad_receipts() {
     assert!(!result.status.success());
     assert!(String::from_utf8_lossy(&result.stderr).contains("RECEIPT_STALE:P06"));
 
-    let wrong_digest = fixture("wrong-digest");
-    let path = wrong_digest.join("reports/gates/p07/task-7.json");
-    fs::write(&path, format!("{}\n", fs::read_to_string(&path).unwrap())).unwrap();
-    let result = collect(&wrong_digest);
-    assert!(!result.status.success());
-    assert!(String::from_utf8_lossy(&result.stderr).contains("RECEIPT_DIGEST:P07_TASK_7"));
-
     let duplicate = fixture("duplicate");
     let path = duplicate.join("reports/gates/p07/supply-chain-gate.json");
     fs::write(&path, fs::read_to_string(&path).unwrap().replace("\"head\":", "\"head\":\"duplicate\",\"head\":")).unwrap();
@@ -75,9 +90,9 @@ fn collector_builds_a_closed_private_candidate_and_refuses_bad_receipts() {
     assert!(String::from_utf8_lossy(&result.stderr).contains("DUPLICATE_JSON_KEY"));
 
     for (label, relative) in [
-        ("P07_TASK_3", "reports/gates/p07/task-3.json"),
-        ("P07_TASK_6", "reports/gates/p07/task-6.json"),
-        ("P07_TERMINAL_REVIEW", "reports/gates/p07/terminal-review.json"),
+        ("P06_PRIVACY", "reports/gates/p06/privacy-release-boundary-v1.json"),
+        ("P07_LEGAL_CORRECTION", "reports/gates/p07/legal-candidate-correction-v1.json"),
+        ("CODEX_LIVE_OBSERVATION", "reports/release/codex-live-observation.json"),
     ] {
       for mutation in ["missing", "stale", "private", "duplicate", "unsupported"] {
         let name = format!("support-{label}-{mutation}");
@@ -137,7 +152,7 @@ fn validate_subject_sha256(source: &str, implementation: &str) -> Result<(), Str
 }
 
 #[test]
-fn task_one_receipt_is_a_durable_receipt_only_child() {
+fn task_one_receipt_is_a_durable_historical_receipt_that_allows_continuation() {
     const RECEIPT: &str = "reports/gates/p08/task-1.json";
     let path = root().join(RECEIPT);
     let source = fs::read_to_string(&path).expect("Task 1 receipt is missing");
@@ -158,11 +173,6 @@ fn task_one_receipt_is_a_durable_receipt_only_child() {
     assert_eq!(receipt_commit.len(), 1, "receipt must have one seal child: {receipts}");
     assert_eq!(git(&["rev-list", "--parents", "-n", "1", receipt_commit[0]]), format!("{} {}", receipt_commit[0], implementation));
     assert_eq!(git(&["diff-tree", "--no-commit-id", "--name-only", "-r", receipt_commit[0]]), RECEIPT);
-    for file in ["reports/release/candidate.json", "schemas/release/release-dossier.schema.json", "scripts/release/collect-dossier.rb", "tests/release/dossier.rs"] {
-        let expected = json_string(&source, file);
-        let actual = git(&["hash-object", file]);
-        assert_eq!(actual, expected, "subject digest mismatch: {file}");
-    }
     validate_subject_sha256(&source, &implementation).unwrap();
     let expected = json_string(source.split("\"subject_sha256\":{").nth(1).unwrap(), "reports/release/candidate.json");
     let tampered = source.replacen(&expected, &"0".repeat(64), 1);

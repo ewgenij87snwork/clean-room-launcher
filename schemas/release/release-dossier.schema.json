@@ -1,1 +1,196 @@
-{"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"https://taskseal.invalid/schemas/release/release-dossier.schema.json","type":"object","additionalProperties":false,"required":["schema_version","candidate_commit","requested_release_state","qualification","receipts","source_artifact","release_artifact","checksums","sbom","provenance","tuple_matrix","known_risks"],"properties":{"schema_version":{"const":"taskseal.release-dossier.v1"},"candidate_commit":{"const":"f2b152654db9cf851345b819d616aa00d9048ff2"},"requested_release_state":{"const":"PRIVATE_CANDIDATE"},"qualification":{"const":"NOT_QUALIFIED"},"receipts":{"type":"array","minItems":6,"maxItems":6,"prefixItems":[{"$ref":"#/$defs/p02"},{"$ref":"#/$defs/p03"},{"$ref":"#/$defs/p04"},{"$ref":"#/$defs/p05"},{"$ref":"#/$defs/p06"},{"$ref":"#/$defs/p07"}],"items":false},"source_artifact":{"const":{"evidence_path":"reports/gates/p07/task-3.json","evidence_pointer":"/claims/source_commit","commit":"01ad1d894aabe265b08d61d67d39da1a29cad9e4"}},"release_artifact":{"$ref":"#/$defs/archive"},"checksums":{"$ref":"#/$defs/archive"},"sbom":{"const":{"evidence_path":"reports/gates/p07/task-6.json","evidence_pointer":"/controls/cyclonedx_profile","profile":"1.7"}},"provenance":{"const":{"evidence_path":"reports/gates/p07/task-6.json","evidence_pointer":"/controls/slsa_predicate","predicate":"https://slsa.dev/provenance/v1"}},"tuple_matrix":{"const":[{"evidence_path":"reports/gates/p06/qualification-gate.json","evidence_pointer":"/required_tuple/qualification","qualification":"NOT_QUALIFIED"}]},"known_risks":{"const":[{"evidence_path":"reports/gates/p07/terminal-review.json","evidence_pointer":"/verdict","status":"BLOCKER"}]}},"$defs":{"receipt":{"type":"object","additionalProperties":false,"required":["plan","path","sha256","schema_version","result"],"properties":{"plan":{"type":"string"},"path":{"type":"string"},"sha256":{"type":"string","pattern":"^[0-9a-f]{64}$"},"schema_version":{"type":"string"},"result":{"type":"string"}}},"p02":{"allOf":[{"$ref":"#/$defs/receipt"},{"properties":{"plan":{"const":"P02"},"path":{"const":"reports/gates/p02/contract-gate.json"},"sha256":{"const":"da9b437812a49727e9b7e8daee4207967b405ce7c228f29bdbc4b142d491785c"}}}]},"p03":{"allOf":[{"$ref":"#/$defs/receipt"},{"properties":{"plan":{"const":"P03"},"path":{"const":"reports/gates/p03/core-gate.json"},"sha256":{"const":"e2eb5bc1e861e6c2159e75bc632e3fdc9f9240ce07c3039d050b30b3111bdd6c"}}}]},"p04":{"allOf":[{"$ref":"#/$defs/receipt"},{"properties":{"plan":{"const":"P04"},"path":{"const":"reports/gates/p04/acceptance-evidence.json"},"sha256":{"const":"d9abc02b9cde8bf223f246477695b42582a0038745977207319d6f04d7a44265"}}}]},"p05":{"allOf":[{"$ref":"#/$defs/receipt"},{"properties":{"plan":{"const":"P05"},"path":{"const":"reports/gates/p05/cli-gate.json"},"sha256":{"const":"58170e1607f93773d019bee79e2b9d028bf970d06b3fec0f04dbfbe60548fd21"}}}]},"p06":{"allOf":[{"$ref":"#/$defs/receipt"},{"properties":{"plan":{"const":"P06"},"path":{"const":"reports/gates/p06/qualification-gate.json"},"sha256":{"const":"29c7b2bf3b06d9f9a161cf05f5674af0ee4a46d34b8b961d319a2cbeb7265a54"}}}]},"p07":{"allOf":[{"$ref":"#/$defs/receipt"},{"properties":{"plan":{"const":"P07"},"path":{"const":"reports/gates/p07/supply-chain-gate.json"},"sha256":{"const":"b1c9dc8bc97120661da3430cc925436fdeb7dabf0f1d2e0835f3f533e5c8ba95"}}}]},"archive":{"const":{"evidence_path":"reports/gates/p07/task-3.json","evidence_pointer":"/claims/archive_sha256","sha256":"656f8701e84e0d7a72c4dbdb62d8ad20733e5743b602ff0fd6447c711a211d33"}}}}
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://taskseal.invalid/schemas/release/release-dossier.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "candidate_commit",
+    "requested_release_state",
+    "qualification",
+    "receipts",
+    "source_artifact",
+    "release_artifact",
+    "checksums",
+    "sbom",
+    "provenance",
+    "tuple_matrix",
+    "known_risks"
+  ],
+  "properties": {
+    "schema_version": { "const": "taskseal.release-dossier.v1" },
+    "candidate_commit": { "const": "abd35a2e0e3bef557019705ddd7f8a6b22427675" },
+    "requested_release_state": { "const": "PRIVATE_CANDIDATE" },
+    "qualification": { "const": "NOT_QUALIFIED" },
+    "receipts": {
+      "type": "array",
+      "minItems": 6,
+      "maxItems": 6,
+      "prefixItems": [
+        { "$ref": "#/$defs/p02" },
+        { "$ref": "#/$defs/p03" },
+        { "$ref": "#/$defs/p04" },
+        { "$ref": "#/$defs/p05" },
+        { "$ref": "#/$defs/p06" },
+        { "$ref": "#/$defs/p07" }
+      ],
+      "items": false
+    },
+    "source_artifact": {
+      "const": {
+        "evidence_path": "reports/gates/p07/legal-candidate-correction-v1.json",
+        "evidence_pointer": "/artifact/source_commit",
+        "commit": "d722f545ada8d00ed6e564474c40e72ac7632575"
+      }
+    },
+    "release_artifact": {
+      "const": {
+        "evidence_path": "reports/gates/p07/legal-candidate-correction-v1.json",
+        "evidence_pointer": "/artifact/sha256",
+        "sha256": "ea8e60d2b4097ce766758bd70543628d0c15e9c7ab0ebc0d29d76c59da896b0c"
+      }
+    },
+    "checksums": {
+      "const": {
+        "evidence_path": "reports/gates/p07/legal-candidate-correction-v1.json",
+        "evidence_pointer": "/supply_chain/checksums_sha256",
+        "sha256": "9da3b5fd6c579e3f7284b6e8319e82e05e79cef62982eb1ef769679282d0e466"
+      }
+    },
+    "sbom": {
+      "const": {
+        "evidence_path": "reports/gates/p07/legal-candidate-correction-v1.json",
+        "evidence_pointer": "/supply_chain/sbom_sha256",
+        "sha256": "2cd4cdc645a03621579c78ed2dba338d90bfb7c2bc04268218aaa0941ee976f4",
+        "profile": "1.7"
+      }
+    },
+    "provenance": {
+      "const": {
+        "evidence_path": "reports/gates/p07/legal-candidate-correction-v1.json",
+        "evidence_pointer": "/supply_chain/provenance_sha256",
+        "sha256": "c9fd87e5d00715f74770bfb41177d61c0c32ef4635185214a1cc3becfb3b61ae",
+        "predicate": "https://slsa.dev/provenance/v1"
+      }
+    },
+    "tuple_matrix": {
+      "const": [
+        {
+          "evidence_path": "reports/gates/p06/qualification-gate.json",
+          "evidence_pointer": "/required_tuple/qualification",
+          "qualification": "NOT_QUALIFIED"
+        },
+        {
+          "evidence_path": "reports/release/codex-live-observation.json",
+          "evidence_pointer": "/qualification",
+          "qualification": "NOT_QUALIFIED"
+        }
+      ]
+    },
+    "known_risks": {
+      "const": [
+        {
+          "evidence_path": "reports/gates/p06/privacy-release-boundary-v1.json",
+          "evidence_pointer": "/result",
+          "status": "PASS"
+        },
+        {
+          "evidence_path": "reports/gates/p07/legal-candidate-correction-v1.json",
+          "evidence_pointer": "/risk_continuation/current_status",
+          "status": "CLOSED"
+        },
+        {
+          "evidence_path": "reports/release/codex-live-observation.json",
+          "evidence_pointer": "/acceptance/overall",
+          "status": "BLOCKER"
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["plan", "path", "sha256", "schema_version", "result"],
+      "properties": {
+        "plan": { "type": "string" },
+        "path": { "type": "string" },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "schema_version": { "type": "string" },
+        "result": { "type": "string" }
+      }
+    },
+    "p02": {
+      "allOf": [
+        { "$ref": "#/$defs/receipt" },
+        {
+          "properties": {
+            "plan": { "const": "P02" },
+            "path": { "const": "reports/gates/p02/contract-gate.json" },
+            "sha256": { "const": "da9b437812a49727e9b7e8daee4207967b405ce7c228f29bdbc4b142d491785c" }
+          }
+        }
+      ]
+    },
+    "p03": {
+      "allOf": [
+        { "$ref": "#/$defs/receipt" },
+        {
+          "properties": {
+            "plan": { "const": "P03" },
+            "path": { "const": "reports/gates/p03/core-gate.json" },
+            "sha256": { "const": "e2eb5bc1e861e6c2159e75bc632e3fdc9f9240ce07c3039d050b30b3111bdd6c" }
+          }
+        }
+      ]
+    },
+    "p04": {
+      "allOf": [
+        { "$ref": "#/$defs/receipt" },
+        {
+          "properties": {
+            "plan": { "const": "P04" },
+            "path": { "const": "reports/gates/p04/acceptance-evidence.json" },
+            "sha256": { "const": "d9abc02b9cde8bf223f246477695b42582a0038745977207319d6f04d7a44265" }
+          }
+        }
+      ]
+    },
+    "p05": {
+      "allOf": [
+        { "$ref": "#/$defs/receipt" },
+        {
+          "properties": {
+            "plan": { "const": "P05" },
+            "path": { "const": "reports/gates/p05/cli-gate.json" },
+            "sha256": { "const": "58170e1607f93773d019bee79e2b9d028bf970d06b3fec0f04dbfbe60548fd21" }
+          }
+        }
+      ]
+    },
+    "p06": {
+      "allOf": [
+        { "$ref": "#/$defs/receipt" },
+        {
+          "properties": {
+            "plan": { "const": "P06" },
+            "path": { "const": "reports/gates/p06/qualification-gate.json" },
+            "sha256": { "const": "29c7b2bf3b06d9f9a161cf05f5674af0ee4a46d34b8b961d319a2cbeb7265a54" }
+          }
+        }
+      ]
+    },
+    "p07": {
+      "allOf": [
+        { "$ref": "#/$defs/receipt" },
+        {
+          "properties": {
+            "plan": { "const": "P07" },
+            "path": { "const": "reports/gates/p07/supply-chain-gate.json" },
+            "sha256": { "const": "b1c9dc8bc97120661da3430cc925436fdeb7dabf0f1d2e0835f3f533e5c8ba95" }
+          }
+        }
+      ]
+    }
+  }
+}

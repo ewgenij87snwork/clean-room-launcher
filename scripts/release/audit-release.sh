@@ -88,6 +88,77 @@ def load_json(path):
         refuse("JSON_FILE")
 
 
+def build_public_source_projection(repo, source_archive, source_root):
+    inventory_path = repo / "qualification/public-release-inventory-v1.json"
+    inventory = load_json(inventory_path)
+    expected_keys = {
+        "schema_version",
+        "result",
+        "public_paths",
+        "conditional_public_paths",
+        "excluded_internal_paths",
+        "negative_fixture_paths",
+        "generic_fixture_root",
+        "history_policy",
+    }
+    if set(inventory) != expected_keys:
+        refuse("PUBLIC_INVENTORY_SCHEMA")
+    if (
+        inventory.get("schema_version") != "taskseal.p06.public-release-inventory.v1"
+        or inventory.get("result") != "PASS"
+        or inventory.get("history_policy") != "IMMUTABLE_INTERNAL_EVIDENCE_EXCLUDED_FROM_PUBLIC_SOURCE"
+        or inventory.get("excluded_internal_paths") != [".taskseal-dev", "reports/gates", "scripts/gates"]
+        or inventory.get("negative_fixture_paths") != ["tests/fixtures", "tests/release/audit_fixtures"]
+    ):
+        refuse("PUBLIC_INVENTORY_SCHEMA")
+
+    required = inventory.get("public_paths")
+    conditional = inventory.get("conditional_public_paths")
+    if not all(
+        isinstance(values, list)
+        and values == sorted(set(values))
+        and all(isinstance(item, str) and item and not Path(item).is_absolute() and ".." not in Path(item).parts for item in values)
+        for values in (required, conditional)
+    ):
+        refuse("PUBLIC_INVENTORY_PATHS")
+    for excluded in inventory["excluded_internal_paths"]:
+        if any(item == excluded or item.startswith(excluded + "/") for item in required + conditional):
+            refuse("PUBLIC_INVENTORY_BOUNDARY")
+
+    archive_paths = []
+    for relative in required:
+        exists = run(["git", "cat-file", "-e", f"HEAD:{relative}"], cwd=repo)
+        if exists.returncode:
+            refuse("PUBLIC_INVENTORY_REQUIRED_PATH")
+        archive_paths.append(relative)
+    for relative in conditional:
+        exists = run(["git", "cat-file", "-e", f"HEAD:{relative}"], cwd=repo)
+        if not exists.returncode:
+            archive_paths.append(relative)
+
+    archived = run(
+        ["git", "archive", "--format=tar", "-o", source_archive, "HEAD", "--", *archive_paths],
+        cwd=repo,
+    )
+    if archived.returncode:
+        refuse("SOURCE_ARCHIVE")
+    unpacked = run(["tar", "-xf", source_archive, "-C", source_root], cwd=repo)
+    if unpacked.returncode:
+        refuse("SOURCE_ARCHIVE")
+    if load_json(source_root / "qualification/public-release-inventory-v1.json") != inventory:
+        refuse("PUBLIC_INVENTORY_STALE")
+    if any(path.is_symlink() for path in source_root.rglob("*")):
+        refuse("PUBLIC_INVENTORY_SYMLINK")
+    for excluded in inventory["excluded_internal_paths"]:
+        if (source_root / excluded).exists():
+            refuse("PUBLIC_INVENTORY_BOUNDARY")
+    for relative in inventory["negative_fixture_paths"]:
+        planted = source_root / relative
+        if planted.exists():
+            shutil.rmtree(planted)
+    return inventory, archive_paths
+
+
 def run(command, *, cwd, env=None, timeout=300):
     merged = dict(os.environ)
     if env:
@@ -493,16 +564,7 @@ def release_audit(options):
         source_archive = temporary / "source.tar"
         source_root = temporary / "source"
         source_root.mkdir()
-        archived = run(["git", "archive", "--format=tar", "-o", source_archive, "HEAD"], cwd=repo)
-        if archived.returncode:
-            refuse("SOURCE_ARCHIVE")
-        unpacked = run(["tar", "-xf", source_archive, "-C", source_root], cwd=repo)
-        if unpacked.returncode:
-            refuse("SOURCE_ARCHIVE")
-        for relative in ("fixtures", "tests/fixtures", "tests/release/audit_fixtures"):
-            planted = source_root / relative
-            if planted.exists():
-                shutil.rmtree(planted)
+        public_inventory, public_paths = build_public_source_projection(repo, source_archive, source_root)
 
         source_leaks = gitleaks_findings(
             source_root,
@@ -523,20 +585,11 @@ def release_audit(options):
         artifact_root.mkdir()
         safe_extract(artifact, artifact_root)
         private_hits = 0
-        public_roots = [
-            source_root / name
-            for name in ("docs", "scripts", "reports", "schemas", "site", "src", "packaging")
-            if (source_root / name).exists()
-        ]
-        public_roots += [source_root / name for name in ("SECURITY.md", "GOVERNANCE.md", "CHANGELOG.md") if (source_root / name).exists()]
-        for public_root in public_roots + [artifact_root]:
-            if public_root.is_file():
-                try:
-                    private_hits += int(bool(PRIVATE_PATH.search(public_root.read_text(encoding="utf-8"))))
-                except UnicodeError:
-                    pass
-            else:
-                private_hits += sum(1 for _, body in text_files(public_root) if PRIVATE_PATH.search(body))
+        for path, body in text_files(source_root):
+            relative = path.relative_to(source_root)
+            if not relative.parts or relative.parts[0] != "tests":
+                private_hits += int(bool(PRIVATE_PATH.search(body)))
+        private_hits += sum(1 for _, body in text_files(artifact_root) if PRIVATE_PATH.search(body))
         binaries = [path for path in artifact_root.rglob("*") if regular(path) and path.parent.name == "bin"]
         for binary in binaries:
             strings = run(["strings", binary], cwd=repo)
@@ -544,7 +597,12 @@ def release_audit(options):
                 private_hits += 1
         if private_hits:
             add("privacy", "PRIVATE_ABSOLUTE_PATH", "absolute HOME path found in public text or artifact strings")
-        check("privacy", "private-path-source-artifact", "PASS" if not private_hits else "BLOCKED", f"findings={private_hits}")
+        check(
+            "privacy",
+            "private-path-source-artifact",
+            "PASS" if not private_hits else "BLOCKED",
+            f"findings={private_hits};public_paths={len(public_paths)};negative_fixtures={len(public_inventory['negative_fixture_paths'])}",
+        )
 
         verified = run(["python3", repo / "packaging/verify-artifact.py", artifact], cwd=repo)
         if verified.returncode:
@@ -610,11 +668,22 @@ def release_audit(options):
             f"db={audit_db_head.stdout.strip()};advisories={len(vulnerabilities)}",
         )
 
-        deny_licenses = run(["cargo", "deny", "--locked", "check", "licenses"], cwd=repo, env=standard_env, timeout=600)
+        license_policy = repo / "packaging/license-policy.toml"
+        deny_licenses = run(
+            ["cargo", "deny", "--config", license_policy, "--locked", "--offline", "check", "licenses"],
+            cwd=repo,
+            env=standard_env,
+            timeout=600,
+        )
         if deny_licenses.returncode:
             add("legal", "DEPENDENCY_LICENSE_POLICY", "cargo-deny license policy refused the locked graph")
-        check("legal", "cargo-deny-licenses", "PASS" if not deny_licenses.returncode else "BLOCKED", "locked dependency graph")
-        deny_sources = run(["cargo", "deny", "--locked", "check", "sources"], cwd=repo, env=standard_env, timeout=600)
+        check("legal", "cargo-deny-licenses", "PASS" if not deny_licenses.returncode else "BLOCKED", "locked graph + accepted P07 policy")
+        deny_sources = run(
+            ["cargo", "deny", "--config", license_policy, "--locked", "--offline", "check", "sources"],
+            cwd=repo,
+            env=standard_env,
+            timeout=600,
+        )
         if deny_sources.returncode:
             add("security", "DEPENDENCY_SOURCE_POLICY", "cargo-deny source policy refused the locked graph")
         check("security", "cargo-deny-sources", "PASS" if not deny_sources.returncode else "BLOCKED", "locked dependency graph")

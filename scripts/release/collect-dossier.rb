@@ -14,16 +14,17 @@ RECEIPTS = {
   "P06" => ["reports/gates/p06/qualification-gate.json", "29c7b2bf3b06d9f9a161cf05f5674af0ee4a46d34b8b961d319a2cbeb7265a54"],
   "P07" => ["reports/gates/p07/supply-chain-gate.json", "b1c9dc8bc97120661da3430cc925436fdeb7dabf0f1d2e0835f3f533e5c8ba95"]
 }.freeze
-P07_TASK7_DIGEST = "d0f599d30b2f33381d99c548f0509c6d31131ee6bb0142ccd3b3c151c8c83142"
 SUPPORT = {
-  "P07_TASK_3" => ["reports/gates/p07/task-3.json", "26d05b906e14c6c9aeaf24b392082578ac788689b4cac7a088b80da170e2caef"],
-  "P07_TASK_6" => ["reports/gates/p07/task-6.json", "6756fdb82159ef0e298aca6e242cfad261ce4a06f04ec829042b3cd16f030e41"],
-  "P07_TERMINAL_REVIEW" => ["reports/gates/p07/terminal-review.json", "01d2443724994511f72f3f7dee9b33963702f673ce8f7a19c02443702edb784b"]
+  "P06_PRIVACY" => ["reports/gates/p06/privacy-release-boundary-v1.json", "e7e5a064f288e974f6775923cc2108c5fc096bca03571d16e81aff32bdbb13fd"],
+  "P07_LEGAL_CORRECTION" => ["reports/gates/p07/legal-candidate-correction-v1.json", "34aa4a611977f906cb14431dcc3a0fb6031c3ac831115e5ec84f2ed7f2bf88a9"],
+  "CODEX_LIVE_OBSERVATION" => ["reports/release/codex-live-observation.json", "7c3a260f83b0b05ed09bf37f48293268e0625d8d77f95cee9689390c08e64ec2"]
 }.freeze
-SOURCE_COMMIT = "01ad1d894aabe265b08d61d67d39da1a29cad9e4"
-RELEASE_SHA256 = "656f8701e84e0d7a72c4dbdb62d8ad20733e5743b602ff0fd6447c711a211d33"
-CANDIDATE_COMMIT = "f2b152654db9cf851345b819d616aa00d9048ff2"
-TERMINAL_REVIEW_SUBJECT = "09b3d2486b8ee727fd5b547ee2c163bc05b38600"
+SOURCE_COMMIT = "d722f545ada8d00ed6e564474c40e72ac7632575"
+RELEASE_SHA256 = "ea8e60d2b4097ce766758bd70543628d0c15e9c7ab0ebc0d29d76c59da896b0c"
+CHECKSUMS_SHA256 = "9da3b5fd6c579e3f7284b6e8319e82e05e79cef62982eb1ef769679282d0e466"
+SBOM_SHA256 = "2cd4cdc645a03621579c78ed2dba338d90bfb7c2bc04268218aaa0941ee976f4"
+PROVENANCE_SHA256 = "c9fd87e5d00715f74770bfb41177d61c0c32ef4635185214a1cc3becfb3b61ae"
+CANDIDATE_COMMIT = "abd35a2e0e3bef557019705ddd7f8a6b22427675"
 PRIVATE = %r{(?:/Users/|/home/|ghp_[A-Za-z0-9]{20,}|sk-[A-Za-z0-9_-]{20,}|AKIA[A-Z0-9]{16}|raw_prompt|prompt_payload)}
 
 def refuse(message)
@@ -102,13 +103,10 @@ def exact_keys?(value, keys)
   value.is_a?(Hash) && value.keys.sort == keys.sort
 end
 
-def validate_support!(task3, task6, terminal)
-  claims = task3["claims"]
-  refuse("EVIDENCE_SCHEMA:P07_TASK_3") unless task3["schema_version"] == "taskseal.p07.task-receipt.v1" && task3["task"] == 3 && claims.is_a?(Hash) && claims["source_commit"] == SOURCE_COMMIT && claims["archive_sha256"] == RELEASE_SHA256
-  controls = task6["controls"]
-  evidence_ids = task6.dig("acceptance", "evidence_ids")
-  refuse("EVIDENCE_SCHEMA:P07_TASK_6") unless task6["schema_version"] == "taskseal.p07.task-receipt.v1" && task6["task"] == 6 && controls.is_a?(Hash) && controls["cyclonedx_profile"] == "1.7" && controls["slsa_predicate"] == "https://slsa.dev/provenance/v1" && evidence_ids.is_a?(Array) && evidence_ids.include?("EVD-P07-T6-GREEN")
-  refuse("EVIDENCE_SCHEMA:P07_TERMINAL_REVIEW") unless terminal["schema_version"] == "taskseal.terminal-review.v1" && terminal["subject"] == TERMINAL_REVIEW_SUBJECT && terminal["verdict"] == "BLOCKER" && terminal["blockers"].is_a?(Array) && !terminal["blockers"].empty?
+def validate_support!(privacy, legal, codex)
+  refuse("EVIDENCE_SCHEMA:P06_PRIVACY") unless privacy["schema_version"] == "taskseal.p06.privacy-release-boundary.v1" && privacy["result"] == "PASS" && privacy.dig("subjects", "qualification/public-release-inventory-v1.json") == "0de3bd1b4fb706e0e790e92463750b044b10ae325981be2d870f4ffceb613044"
+  refuse("EVIDENCE_SCHEMA:P07_LEGAL_CORRECTION") unless legal["schema_version"] == "taskseal.p07.legal-candidate-correction.v1" && legal["result"] == "PASS" && legal.dig("artifact", "source_commit") == SOURCE_COMMIT && legal.dig("artifact", "sha256") == RELEASE_SHA256 && legal.dig("supply_chain", "checksums_sha256") == CHECKSUMS_SHA256 && legal.dig("supply_chain", "sbom_sha256") == SBOM_SHA256 && legal.dig("supply_chain", "provenance_sha256") == PROVENANCE_SHA256 && legal.dig("risk_continuation", "current_status") == "CLOSED"
+  refuse("EVIDENCE_SCHEMA:CODEX_LIVE_OBSERVATION") unless codex["schema_version"] == "taskseal.p08.codex-live-observation.v1" && codex["result"] == "OBSERVED_NOT_QUALIFIED" && codex["qualification"] == "NOT_QUALIFIED" && codex.dig("binding", "release_artifact", "artifact_sha256") == RELEASE_SHA256 && codex.dig("acceptance", "p06_exact_qualified_tuple") == false && codex.dig("acceptance", "overall") == false
 end
 
 def validate_dossier!(dossier)
@@ -121,15 +119,22 @@ def validate_dossier!(dossier)
     refuse("DOSSIER_SCHEMA") unless exact_keys?(entry, %w[plan path sha256 schema_version result]) && entry["plan"] == plan && entry["path"] == path && entry["sha256"] == digest && entry["schema_version"].is_a?(String) && entry["result"].is_a?(String)
   end
   expected_links = {
-    "source_artifact" => { "evidence_path" => SUPPORT["P07_TASK_3"].first, "evidence_pointer" => "/claims/source_commit", "commit" => SOURCE_COMMIT },
-    "release_artifact" => { "evidence_path" => SUPPORT["P07_TASK_3"].first, "evidence_pointer" => "/claims/archive_sha256", "sha256" => RELEASE_SHA256 },
-    "checksums" => { "evidence_path" => SUPPORT["P07_TASK_3"].first, "evidence_pointer" => "/claims/archive_sha256", "sha256" => RELEASE_SHA256 },
-    "sbom" => { "evidence_path" => SUPPORT["P07_TASK_6"].first, "evidence_pointer" => "/controls/cyclonedx_profile", "profile" => "1.7" },
-    "provenance" => { "evidence_path" => SUPPORT["P07_TASK_6"].first, "evidence_pointer" => "/controls/slsa_predicate", "predicate" => "https://slsa.dev/provenance/v1" }
+    "source_artifact" => { "evidence_path" => SUPPORT["P07_LEGAL_CORRECTION"].first, "evidence_pointer" => "/artifact/source_commit", "commit" => SOURCE_COMMIT },
+    "release_artifact" => { "evidence_path" => SUPPORT["P07_LEGAL_CORRECTION"].first, "evidence_pointer" => "/artifact/sha256", "sha256" => RELEASE_SHA256 },
+    "checksums" => { "evidence_path" => SUPPORT["P07_LEGAL_CORRECTION"].first, "evidence_pointer" => "/supply_chain/checksums_sha256", "sha256" => CHECKSUMS_SHA256 },
+    "sbom" => { "evidence_path" => SUPPORT["P07_LEGAL_CORRECTION"].first, "evidence_pointer" => "/supply_chain/sbom_sha256", "sha256" => SBOM_SHA256, "profile" => "1.7" },
+    "provenance" => { "evidence_path" => SUPPORT["P07_LEGAL_CORRECTION"].first, "evidence_pointer" => "/supply_chain/provenance_sha256", "sha256" => PROVENANCE_SHA256, "predicate" => "https://slsa.dev/provenance/v1" }
   }
   expected_links.each { |key, value| refuse("DOSSIER_SCHEMA") unless dossier[key] == value }
-  refuse("DOSSIER_SCHEMA") unless dossier["tuple_matrix"] == [{ "evidence_path" => RECEIPTS["P06"].first, "evidence_pointer" => "/required_tuple/qualification", "qualification" => "NOT_QUALIFIED" }]
-  refuse("DOSSIER_SCHEMA") unless dossier["known_risks"] == [{ "evidence_path" => SUPPORT["P07_TERMINAL_REVIEW"].first, "evidence_pointer" => "/verdict", "status" => "BLOCKER" }]
+  refuse("DOSSIER_SCHEMA") unless dossier["tuple_matrix"] == [
+    { "evidence_path" => RECEIPTS["P06"].first, "evidence_pointer" => "/required_tuple/qualification", "qualification" => "NOT_QUALIFIED" },
+    { "evidence_path" => SUPPORT["CODEX_LIVE_OBSERVATION"].first, "evidence_pointer" => "/qualification", "qualification" => "NOT_QUALIFIED" }
+  ]
+  refuse("DOSSIER_SCHEMA") unless dossier["known_risks"] == [
+    { "evidence_path" => SUPPORT["P06_PRIVACY"].first, "evidence_pointer" => "/result", "status" => "PASS" },
+    { "evidence_path" => SUPPORT["P07_LEGAL_CORRECTION"].first, "evidence_pointer" => "/risk_continuation/current_status", "status" => "CLOSED" },
+    { "evidence_path" => SUPPORT["CODEX_LIVE_OBSERVATION"].first, "evidence_pointer" => "/acceptance/overall", "status" => "BLOCKER" }
+  ]
 end
 
 def parse_args(argv)
@@ -148,29 +153,30 @@ end
 def collect(options)
   root = File.realpath(options.fetch("--root"))
   receipts = RECEIPTS.map { |plan, (path, digest)| read_receipt(root, plan, path, digest) }.to_h { |entry| [entry["plan"], entry] }
-  p07 = JSON.parse(File.read(File.join(root, RECEIPTS.fetch("P07").first)))
-  refuse("RECEIPT_DIGEST:P07_TASK_7") unless p07.dig("receipts", "7") == P07_TASK7_DIGEST
-  task7_path = File.join(root, "reports/gates/p07/task-7.json")
-  refuse("RECEIPT_MISSING:P07_TASK_7") unless File.file?(task7_path) && !File.symlink?(task7_path)
-  refuse("RECEIPT_DIGEST:P07_TASK_7") unless Digest::SHA256.file(task7_path).hexdigest == P07_TASK7_DIGEST
-  task3 = read_evidence(root, "P07_TASK_3", *SUPPORT.fetch("P07_TASK_3"))
-  task6 = read_evidence(root, "P07_TASK_6", *SUPPORT.fetch("P07_TASK_6"))
-  terminal = read_evidence(root, "P07_TERMINAL_REVIEW", *SUPPORT.fetch("P07_TERMINAL_REVIEW"))
-  validate_support!(task3, task6, terminal)
-  refuse("EVIDENCE_CLOSED") unless p07["head"] == CANDIDATE_COMMIT
+  privacy = read_evidence(root, "P06_PRIVACY", *SUPPORT.fetch("P06_PRIVACY"))
+  legal = read_evidence(root, "P07_LEGAL_CORRECTION", *SUPPORT.fetch("P07_LEGAL_CORRECTION"))
+  codex = read_evidence(root, "CODEX_LIVE_OBSERVATION", *SUPPORT.fetch("CODEX_LIVE_OBSERVATION"))
+  validate_support!(privacy, legal, codex)
   dossier = {
     "schema_version" => "taskseal.release-dossier.v1",
     "candidate_commit" => CANDIDATE_COMMIT,
     "requested_release_state" => options.fetch("--requested-state"),
     "qualification" => "NOT_QUALIFIED",
     "receipts" => receipts.values,
-    "source_artifact" => { "evidence_path" => SUPPORT["P07_TASK_3"].first, "evidence_pointer" => "/claims/source_commit", "commit" => SOURCE_COMMIT },
-    "release_artifact" => { "evidence_path" => SUPPORT["P07_TASK_3"].first, "evidence_pointer" => "/claims/archive_sha256", "sha256" => RELEASE_SHA256 },
-    "checksums" => { "evidence_path" => SUPPORT["P07_TASK_3"].first, "evidence_pointer" => "/claims/archive_sha256", "sha256" => RELEASE_SHA256 },
-    "sbom" => { "evidence_path" => "reports/gates/p07/task-6.json", "evidence_pointer" => "/controls/cyclonedx_profile", "profile" => "1.7" },
-    "provenance" => { "evidence_path" => "reports/gates/p07/task-6.json", "evidence_pointer" => "/controls/slsa_predicate", "predicate" => "https://slsa.dev/provenance/v1" },
-    "tuple_matrix" => [{ "evidence_path" => RECEIPTS["P06"].first, "evidence_pointer" => "/required_tuple/qualification", "qualification" => "NOT_QUALIFIED" }],
-    "known_risks" => [{ "evidence_path" => SUPPORT["P07_TERMINAL_REVIEW"].first, "evidence_pointer" => "/verdict", "status" => "BLOCKER" }]
+    "source_artifact" => { "evidence_path" => SUPPORT["P07_LEGAL_CORRECTION"].first, "evidence_pointer" => "/artifact/source_commit", "commit" => SOURCE_COMMIT },
+    "release_artifact" => { "evidence_path" => SUPPORT["P07_LEGAL_CORRECTION"].first, "evidence_pointer" => "/artifact/sha256", "sha256" => RELEASE_SHA256 },
+    "checksums" => { "evidence_path" => SUPPORT["P07_LEGAL_CORRECTION"].first, "evidence_pointer" => "/supply_chain/checksums_sha256", "sha256" => CHECKSUMS_SHA256 },
+    "sbom" => { "evidence_path" => SUPPORT["P07_LEGAL_CORRECTION"].first, "evidence_pointer" => "/supply_chain/sbom_sha256", "sha256" => SBOM_SHA256, "profile" => "1.7" },
+    "provenance" => { "evidence_path" => SUPPORT["P07_LEGAL_CORRECTION"].first, "evidence_pointer" => "/supply_chain/provenance_sha256", "sha256" => PROVENANCE_SHA256, "predicate" => "https://slsa.dev/provenance/v1" },
+    "tuple_matrix" => [
+      { "evidence_path" => RECEIPTS["P06"].first, "evidence_pointer" => "/required_tuple/qualification", "qualification" => "NOT_QUALIFIED" },
+      { "evidence_path" => SUPPORT["CODEX_LIVE_OBSERVATION"].first, "evidence_pointer" => "/qualification", "qualification" => "NOT_QUALIFIED" }
+    ],
+    "known_risks" => [
+      { "evidence_path" => SUPPORT["P06_PRIVACY"].first, "evidence_pointer" => "/result", "status" => "PASS" },
+      { "evidence_path" => SUPPORT["P07_LEGAL_CORRECTION"].first, "evidence_pointer" => "/risk_continuation/current_status", "status" => "CLOSED" },
+      { "evidence_path" => SUPPORT["CODEX_LIVE_OBSERVATION"].first, "evidence_pointer" => "/acceptance/overall", "status" => "BLOCKER" }
+    ]
   }
   validate_dossier!(dossier)
   encoded = JSON.generate(dossier) + "\n"
