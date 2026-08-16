@@ -1,0 +1,91 @@
+{
+  "schema_version": "taskseal.p07.artifact-privacy-correction.v1",
+  "plan_id": "P07",
+  "task_continuation": [3, 6, 8],
+  "result": "PASS",
+  "qualification": "NOT_QUALIFIED",
+  "recorded_at": "2026-08-16T11:37:40Z",
+  "acceptance": {
+    "id": "ACC-P07-ARTIFACT-PRIVACY-CORRECTION-V1",
+    "reproduced_blocker": "PRIVATE_ABSOLUTE_PATH",
+    "operator_result": "The replacement archive is byte-identical across two clean exported roots, contains no concrete HOME path in either installed binary, retains the 143-component NOTICE, and passes exact-subject CycloneDX and SLSA verification."
+  },
+  "binding": {
+    "input_head": "c89b220601446808a8e8fe5ae1c3ad442f9ce555",
+    "implementation_head": "b6581cb70686b2a32a0ea8496a9c15794f0bb6ca",
+    "receipt_seal_role": "receipt-only-child",
+    "canonical_plan_sha256": "13b52c1e3a8fd0d82a963cb492fb35b687fcfb42f87bad6bef2e77ac13ba670e",
+    "triggering_audit": {
+      "path": "reports/release/audit.json",
+      "sha256": "2691540b89f7f58c5cf36457cb44436aacaa4b6e682fa324ea16826b8f0f46e1",
+      "scan_head": "b7eebe1a3a02a50dd36ce505540091bf5eadb7c8"
+    }
+  },
+  "subjects": {
+    "packaging/build-artifacts.sh": "ed8a1082c9ae8c435111d25c85735f4804d6bf1dfaaae7588dd55851c3664ce4",
+    "packaging/verify-artifact.py": "de506d1ad865bb922bb6f3f76d789bdaa01aeb5be2cdaf0766e68ea208ea0142",
+    "tests/packaging/legal_notice_test.py": "a2fe64887ee60181e7a006def9e5c75531cd3d0017e44edc9f518d3f642d59cf"
+  },
+  "diagnosis": {
+    "audit_private_findings": 9,
+    "source_pattern_literals": 7,
+    "artifact_binaries_with_concrete_home_paths": 2,
+    "root_cause": "Rust dependency source locations were embedded from the local Cargo registry into both byte-identical installed binary names.",
+    "correction": "rustc path-prefix remapping replaces the clean source root and Cargo home with neutral deterministic roots; the artifact verifier rejects concrete HOME paths in binary bytes."
+  },
+  "artifact": {
+    "filename": "taskseal-v0.1.0-aarch64-apple-darwin.tar.gz",
+    "sha256": "49a685a98df13fa59766d9032dca7229cfa3e996b1b9b92ec59be8da1b899cf7",
+    "size": 708265,
+    "source_commit": "b6581cb70686b2a32a0ea8496a9c15794f0bb6ca",
+    "target": "aarch64-apple-darwin",
+    "builds": 2,
+    "byte_identical": true,
+    "binary_concrete_home_paths": 0,
+    "notice_components": 143,
+    "signing": "unsigned-preview-only",
+    "qualification": "NOT_QUALIFIED"
+  },
+  "supply_chain": {
+    "checksums_sha256": "d8661e584ab79298cd0a59f24d61cd60b52cc3e06a12e44f5d757ed9383ff4f9",
+    "sbom_sha256": "6219362b6c2f333fe48047f0363f32c03f2015f85b6c00aad937b96221568c59",
+    "provenance_sha256": "b8c997f55d23dd8d8b5853bdf3f5a14f29416b5ed30b95095af4adcf19b41225",
+    "cyclonedx": "1.7",
+    "slsa_predicate": "https://slsa.dev/provenance/v1",
+    "subject_bound": true
+  },
+  "verification": {
+    "red": {
+      "command": "python3 packaging/verify-artifact.py <prior-ea8e60-artifact>",
+      "exit": 1,
+      "marker": "ARTIFACT_INVALID: binary contains a private HOME path"
+    },
+    "policy_green": {
+      "command": "P07_CARGO_DENY=<cargo-deny-0.20.2> python3 tests/packaging/legal_notice_test.py",
+      "exit": 0,
+      "marker": "P07_LEGAL_NOTICE_PASS components=143 fallbacks=5"
+    },
+    "artifact_green": {
+      "command": "two clean git-archive roots, separate HOME and target directories, locked offline build, byte comparison and canonical artifact verification",
+      "exit": 0,
+      "marker": "P07_PRIVATE_FREE_REPRODUCIBLE_ARTIFACT_PASS sha256=49a685a98df13fa59766d9032dca7229cfa3e996b1b9b92ec59be8da1b899cf7 size=708265 builds=2"
+    },
+    "supply_chain_green": {
+      "command": "generate and verify exact-subject checksums, CycloneDX 1.7 SBOM and SLSA v1.2 provenance",
+      "exit": 0,
+      "marker": "P07_SUPPLY_CHAIN_VERIFY_PASS qualification=NOT_QUALIFIED"
+    }
+  },
+  "controls": {
+    "historical_receipts_rewritten": false,
+    "task7_rerun": false,
+    "network": false,
+    "provider_requests": false,
+    "credential_access": false,
+    "keychain_access": false,
+    "publication": false,
+    "upload": false,
+    "main_mutation": false,
+    "integration": false
+  }
+}
