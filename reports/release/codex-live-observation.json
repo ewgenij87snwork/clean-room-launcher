@@ -1,0 +1,151 @@
+{
+  "schema_version": "taskseal.p08.codex-live-observation.v1",
+  "plan_id": "P08",
+  "task": 3,
+  "acceptance_id": "ACC-P08-T3",
+  "result": "OBSERVED_NOT_QUALIFIED",
+  "qualification": "NOT_QUALIFIED",
+  "reason": "P06_EXACT_TUPLE_NOT_QUALIFIED_AND_CURRENT_TUPLE_MISMATCH",
+  "additional_blockers": [
+    "GLOBAL_PROVIDER_CONTEXT_ISOLATION_UNPROVEN",
+    "LIVE_STARTUP_CONTEXT_BYTE_COUNT_NOT_RETAINED"
+  ],
+  "binding": {
+    "input_head": "706e67ed4f1f697ec8117d0c41ad78cd7a4b9c45",
+    "release_artifact": {
+      "path": "target/release-candidate/d722f545ada8d00ed6e564474c40e72ac7632575/taskseal-v0.1.0-aarch64-apple-darwin.tar.gz",
+      "artifact_sha256": "ea8e60d2b4097ce766758bd70543628d0c15e9c7ab0ebc0d29d76c59da896b0c",
+      "size": 708323,
+      "installed_tseal_sha256": "3ebcba17d54a983c2c3ab504b7ea7975b7654f275d8465826690e39e8047d52b"
+    },
+    "p04_canary_evidence": {
+      "path": "reports/gates/p04/acceptance-evidence.json",
+      "sha256": "d9abc02b9cde8bf223f246477695b42582a0038745977207319d6f04d7a44265",
+      "catalog_admitted": 2,
+      "startup_context_bytes": 527,
+      "full_bodies_at_startup": 0,
+      "needed_body_sha256": "5f07933adc98d602398359e57783d348658eaa60fa7907da263b53291f8184b1",
+      "unused_and_protected_body_sha256": "32eea1ee666999e53a16feb944d355ef49bcff8ec379a3e02ee690172752f55e"
+    },
+    "p06_required_qualification": {
+      "path": "qualification/codex/macos-aarch64-0.147.0.json",
+      "sha256": "80cc549451e0b82dd67c232c3d5e798b1154c1a8e03da4f550b663b7d4de5b3b",
+      "gate_path": "reports/gates/p06/qualification-gate.json",
+      "gate_sha256": "29c7b2bf3b06d9f9a161cf05f5674af0ee4a46d34b8b961d319a2cbeb7265a54",
+      "state_preservation_path": "reports/gates/p06/task-11.json",
+      "state_preservation_sha256": "89337194023b589e7a45f97c5122181c19c4b8e87f828516eb65743dd0ca19be"
+    }
+  },
+  "current_codex_tuple": {
+    "provider_id": "codex",
+    "version": [0, 146, 1],
+    "executable_sha256": "35d248101b211d6248ad4e6b8c1d441fe81236da87afb9f3e9ea51a049e9f179",
+    "os": "macos",
+    "arch": "aarch64",
+    "session": "PREAUTHENTICATED_PROVIDER_NATIVE_EPHEMERAL"
+  },
+  "required_p06_tuple": {
+    "provider_id": "codex",
+    "version": [0, 147, 0],
+    "recorded_artifact_digest": "19c4f144c5226a9f17c58e6f0fa854843b0f77a6eb420f40e2745a12f10f5d37",
+    "os": "macos",
+    "arch": "aarch64",
+    "qualification": "NOT_QUALIFIED",
+    "tuple_match": false
+  },
+  "campaign": {
+    "started_at": "2026-08-16T11:06:08Z",
+    "completed_at": "2026-08-16T11:08:02Z",
+    "process_budget": 5,
+    "processes_executed": 5,
+    "model_requests": 4,
+    "context_inspection": {
+      "exit": 0,
+      "stdout_sha256": "a70a534549c9d29dcc4c60481737892a7ae2c3bb48857a8bb5d54a9f728a7cbc",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "required_context_observed": true,
+      "catalog_visible": true,
+      "full_bodies_absent": true,
+      "forbidden_sibling_absent": true
+    },
+    "non_terminal_supporting_observations": [
+      {
+        "id": "pipe-launch",
+        "exit": 0,
+        "stdout_sha256": "004a8b61713207aecf2c5fd47e57299367d0fd2cfb457475fcbbb6fbbe9d00eb",
+        "stderr_sha256": "1aa26269eb1cc57f86b235a03cda53c004edb5b1e9fc99d4da4f00843293d721",
+        "required_context_observed": true,
+        "needed_body_observed": true,
+        "unused_and_protected_bodies_absent": true
+      },
+      {
+        "id": "pipe-relaunch-changed-input",
+        "exit": 0,
+        "stdout_sha256": "32e3c1511d1ed16cf83812ffca9b3682ea4290fea873695469ad747252367ad8",
+        "stderr_sha256": "1aa26269eb1cc57f86b235a03cda53c004edb5b1e9fc99d4da4f00843293d721",
+        "required_context_observed": true,
+        "needed_body_observed": true,
+        "unused_and_protected_bodies_absent": true
+      }
+    ],
+    "terminal_launch": {
+      "exit": 0,
+      "real_terminal": true,
+      "stdout_sha256": "7fefd6781831e12fed17149b49f14abe24523029a779e0dcbd90aaf24baf92f3",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "required_context_observed": true,
+      "needed_body_observed": true,
+      "forbidden_sibling_absent": true,
+      "unused_and_protected_bodies_absent": true
+    },
+    "terminal_relaunch": {
+      "exit": 0,
+      "real_terminal": true,
+      "changed_input": true,
+      "stdout_sha256": "7ca13c27ce4fc5a663451e2898d7cef78d42387043f5e7d8b0c0cca6e15ffe4f",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "required_context_observed": true,
+      "needed_body_observed": true,
+      "forbidden_sibling_absent": true,
+      "unused_and_protected_bodies_absent": true
+    },
+    "local_compact_screen": {
+      "exit": 0,
+      "real_terminal": true,
+      "compact_screen": true,
+      "output_sha256": "c4437b9bd9cf18820f86274184d2c5a3844ee9ee82fa22949be5aec09d2e3287",
+      "provider_process": false
+    },
+    "cleanup": {
+      "protected_canaries_unchanged": true,
+      "worktree_unchanged": true,
+      "raw_provider_output_retained": false,
+      "installed_candidate_removed": true,
+      "temporary_roots_removed": true
+    }
+  },
+  "acceptance": {
+    "artifact_bound": true,
+    "compact_screen": true,
+    "required_context_and_catalog": true,
+    "first_start": true,
+    "real_terminal": true,
+    "relaunch": true,
+    "cleanup": true,
+    "global_provider_context_isolation": false,
+    "live_startup_context_byte_count_retained": false,
+    "p06_exact_qualified_tuple": false,
+    "overall": false
+  },
+  "controls": {
+    "fixture_promoted": false,
+    "credential_or_keychain_read_by_taskseal": false,
+    "browser_or_login": false,
+    "raw_provider_output_retained": false,
+    "claude_processes": 0,
+    "publication": false,
+    "external_contact": false,
+    "main_mutation": false,
+    "integration": false
+  }
+}

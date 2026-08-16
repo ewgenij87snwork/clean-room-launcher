@@ -624,4 +624,53 @@ fn committed_alpha_receipt_keeps_live_action_unexecuted_and_exact() {
     }
 }
 
+#[test]
+fn committed_live_observation_binds_the_campaign_without_promoting_the_stale_p06_tuple() {
+    let observation =
+        fs::read_to_string(root().join("reports/release/codex-live-observation.json"))
+            .expect("sanitized Codex live observation is missing");
+    for required in [
+        "\"schema_version\": \"taskseal.p08.codex-live-observation.v1\"",
+        "\"result\": \"OBSERVED_NOT_QUALIFIED\"",
+        "\"reason\": \"P06_EXACT_TUPLE_NOT_QUALIFIED_AND_CURRENT_TUPLE_MISMATCH\"",
+        "\"artifact_sha256\": \"ea8e60d2b4097ce766758bd70543628d0c15e9c7ab0ebc0d29d76c59da896b0c\"",
+        "\"installed_tseal_sha256\": \"3ebcba17d54a983c2c3ab504b7ea7975b7654f275d8465826690e39e8047d52b\"",
+        "\"version\": [0, 146, 1]",
+        "\"executable_sha256\": \"35d248101b211d6248ad4e6b8c1d441fe81236da87afb9f3e9ea51a049e9f179\"",
+        "\"process_budget\": 5",
+        "\"processes_executed\": 5",
+        "\"model_requests\": 4",
+        "\"real_terminal\": true",
+        "\"required_context_observed\": true",
+        "\"needed_body_observed\": true",
+        "\"unused_and_protected_bodies_absent\": true",
+        "\"protected_canaries_unchanged\": true",
+        "\"raw_provider_output_retained\": false",
+        "\"temporary_roots_removed\": true",
+        "\"qualification\": \"NOT_QUALIFIED\"",
+        "\"tuple_match\": false",
+        "\"GLOBAL_PROVIDER_CONTEXT_ISOLATION_UNPROVEN\"",
+        "\"LIVE_STARTUP_CONTEXT_BYTE_COUNT_NOT_RETAINED\"",
+        "\"p06_exact_qualified_tuple\": false",
+        "\"overall\": false",
+    ] {
+        assert!(observation.contains(required), "missing {required}");
+    }
+    for forbidden in [
+        "TASKSEAL_SKILL_BODY_",
+        "provider_response",
+        "raw_prompt",
+        "auth.json",
+        "access_token",
+        "/Users/",
+        "\"qualification\": \"QUALIFIED\"",
+        "\"result\": \"PASS\"",
+    ] {
+        assert!(
+            !observation.contains(forbidden),
+            "unsafe or unsupported retained claim: {forbidden}"
+        );
+    }
+}
+
 use std::io::Write;
