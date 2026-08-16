@@ -1,0 +1,137 @@
+{
+  "schema_version": "taskseal.p08.task-receipt.v1",
+  "plan_id": "P08",
+  "task": 7,
+  "acceptance_id": "ACC-P08-T7",
+  "qualification": "NOT_QUALIFIED",
+  "result": "BLOCKED",
+  "binding": {
+    "input_head": "f7ca711d072d896dfe506f5568250b26328942a2",
+    "implementation_head": "d839f572e88015ad15c17ccaa72e123f64bb70d9",
+    "receipt_commit_parent": "d839f572e88015ad15c17ccaa72e123f64bb70d9",
+    "receipt_seal_role": "receipt-only-child-blocked-result"
+  },
+  "evidence": [
+    {
+      "id": "EVD-P08-T7-RED",
+      "command": "CARGO_MANIFEST_DIR=\"$PWD\" rustc --edition=2024 --test tests/release/audit_fixtures/forbidden_classes.rs -o /private/tmp/p08-task7-audit-red && /private/tmp/p08-task7-audit-red --nocapture",
+      "exit": 101,
+      "result": "focused fixture corpus failed because scripts/release/audit-release.sh was absent"
+    },
+    {
+      "id": "EVD-P08-T7-GREEN",
+      "command": "CARGO_MANIFEST_DIR=\"$PWD\" rustc --edition=2024 --test tests/release/audit_fixtures/forbidden_classes.rs -o /private/tmp/p08-task7-audit-green && /private/tmp/p08-task7-audit-green --nocapture",
+      "exit": 0,
+      "result": "1 focused test passed; all 15 direct forbidden conditions across six fixture classes were detected"
+    },
+    {
+      "id": "EVD-P08-T7-FINAL",
+      "command": "TASKSEAL_AUDIT_RECORDED_AT=\"2026-08-16T09:28:01Z\" scripts/release/audit-release.sh --repo \"$PWD\" --artifact /private/tmp/p07-clean-roots4.F3BnzJ/out-a/taskseal-v0.1.0-aarch64-apple-darwin.tar.gz --output \"$PWD/reports/release/audit.json\" --tool-root /private/tmp/taskseal-p08-tools.VF1se8 --cargo-home /private/tmp/taskseal-p08-cargo-home.wlnPPj",
+      "exit": 3,
+      "result": "P08_TASK7_AUDIT_BLOCKED slices=5 blockers=12"
+    }
+  ],
+  "subjects": {
+    "reports/release/audit.json": "66a0a78df30d1ea15f8e7f6f1c6d0e30f4adabc8f3d54ea75176e28fd2d96773",
+    "scripts/release/audit-release.sh": "125f5f86db243732497337756329b724a1f3357560fcef037287332d5df095d1",
+    "tests/release/audit_fixtures/forbidden_classes.rs": "651e954fcf72d37a0e082b107a82041895dccf499edadea57bf0d70a0a932700",
+    "tests/release/audit_fixtures/corpus/advisory/osv.json": "7c4b0b4f09cee23044f12c439d77e8b5c0be681c03f2717903fed323bd91d090",
+    "tests/release/audit_fixtures/corpus/claims/SECURITY.md": "4cc03b1f8b8a21370bcec4b4ec9e296bfece5b9483db776adf0d3b140018dddb",
+    "tests/release/audit_fixtures/corpus/claims/public.md": "ed7e11c528eed9a7c3b26fd24d796a638aabe2b1ac85475f5b887d10440e5683",
+    "tests/release/audit_fixtures/corpus/claims/tracking.rs": "7574e8b7db89cffd578bcb72c8f2e8f9c0d76bba35f1b9ab2b24d89daa1f73ec",
+    "tests/release/audit_fixtures/corpus/legal/NOTICE": "9a5bf2bed5d16f9c55ec04650c8dff30ced995ab93c48b43d45828e88f4e564e",
+    "tests/release/audit_fixtures/corpus/namespace/ownership.json": "395dfc37c974dbe29a6dd435025aad6b2e7b2137dc3acfbdddae603e84daea90",
+    "tests/release/audit_fixtures/corpus/privacy/leak.txt": "35b91b99e976ce1788ed5a066e2fda1492cf371139d48abca8ea12fae6c8c918",
+    "tests/release/audit_fixtures/corpus/unsafe/unsafe.rs": "751fbf6472b04df2a614cea8eff828487e09fb0dd5f1fe0c725c7dc45980f5be"
+  },
+  "subject_sha256": {
+    "algorithm": "sha256 of sorted path, tab, sha256, newline records",
+    "value": "95891da728b37a60153266fa8a8c362745487b0190f6f9d9171d7da289abf713"
+  },
+  "audit_result": {
+    "report_sha256": "66a0a78df30d1ea15f8e7f6f1c6d0e30f4adabc8f3d54ea75176e28fd2d96773",
+    "artifact_sha256": "656f8701e84e0d7a72c4dbdb62d8ad20733e5743b602ff0fd6447c711a211d33",
+    "slices_run": 5,
+    "slices_total": 5,
+    "report_blockers": 12,
+    "confirmed_blockers": 11,
+    "confirmed_blocker_codes": [
+      "BOUNTY_STATUS_MISSING",
+      "PROTECTED_PATH_OWNERSHIP_MISSING",
+      "PUBLIC_RELEASE_COPY_MISSING",
+      "SECURITY_REPORTING_ROUTE_UNVERIFIED",
+      "THREAT_MODEL_INCOMPLETE",
+      "DEPENDENCY_LICENSE_NOTICE_MISSING",
+      "DEPENDENCY_LICENSE_POLICY",
+      "NAMESPACE_OWNERSHIP_UNPROVEN",
+      "PRIVATE_ABSOLUTE_PATH",
+      "SHELL_SAFETY_LINT",
+      "UPSTREAM_RELEASE_RISK_OPEN"
+    ]
+  },
+  "diagnostics": [
+    {
+      "code": "PRIVATE_SECRET",
+      "disposition": "FALSE_POSITIVE",
+      "evidence": "Gitleaks 8.30.1 produced two generic-api-key findings, both in vendored official packaging/supply-chain/schemas/cyclonedx-1.7/spdx.schema.json; artifact findings were zero"
+    },
+    {
+      "code": "PRIVATE_ABSOLUTE_PATH",
+      "disposition": "CONFIRMED_UPSTREAM_PRODUCT_DEFECT",
+      "evidence": "27 tracked source files contain the physical owner HOME path and 20 contain the owner SSOT marker after the final audit fixture exclusions; raw values are intentionally omitted"
+    },
+    {
+      "code": "SHELL_SAFETY_LINT",
+      "disposition": "CONFIRMED_ONE_ACTIONABLE_FINDING_PLUS_SCANNER_NOISE",
+      "evidence": "ShellCheck 0.11.0 found SC2046 at scripts/release/verify-codex-task3-receipt.sh:85; 24 SC1007 findings are embedded Ruby/Python heredoc noise"
+    },
+    {
+      "code": "DEPENDENCY_LICENSE_POLICY",
+      "disposition": "CONFIRMED_UPSTREAM_POLICY_DEFECT",
+      "evidence": "cargo-deny 0.20.2 rejected MIT-0, Zlib and Apache-2.0 WITH LLVM-exception because deny.toml does not explicitly allow them"
+    },
+    {
+      "code": "DEPENDENCY_LICENSE_NOTICE_MISSING",
+      "disposition": "CONFIRMED_UPSTREAM_ARTIFACT_DEFECT",
+      "evidence": "the exact artifact NOTICE omits all 143 dependency components in the artifact-bound CycloneDX SBOM"
+    },
+    {
+      "code": "UPSTREAM_RELEASE_RISK_OPEN",
+      "disposition": "CONFIRMED_STALE_CANDIDATE_RISK",
+      "evidence": "reports/release/candidate.json binds reports/gates/p07/terminal-review.json#/verdict as BLOCKER with three open P07 findings"
+    }
+  ],
+  "passing_checks": {
+    "rustsec_advisories": 0,
+    "artifact_structure": "PASS",
+    "dependency_sources": "PASS",
+    "cargo_cyclonedx_components": 106,
+    "cyclonedx_1_7_slsa_1_2_subject_binding": "PASS",
+    "macos_signing_label": "PASS_UNSIGNED_NOT_QUALIFIED",
+    "semgrep_unsafe_process_filesystem": "PASS",
+    "artifact_secret_findings": 0
+  },
+  "boundaries": {
+    "readme_changed": false,
+    "naming_changed": false,
+    "marketing_copy_changed": false,
+    "namespace_query_executed": false,
+    "namespace_query_reason": "owner-approved public name is absent",
+    "publication": false,
+    "upload": false,
+    "external_contact": false,
+    "provider_requests": false,
+    "credentials": false,
+    "keychain": false,
+    "main_mutation": false,
+    "integration": false
+  },
+  "next_required_actions": [
+    "Separately authorize the owning P06/public-boundary correction for tracked owner HOME and SSOT paths; P08 must not rewrite P06 evidence.",
+    "Separately authorize the owning dependency-license policy and P07 artifact-notice corrections; P08 must not patch deny.toml or packaging.",
+    "Regenerate the P08 candidate only after its bound P07 terminal evidence is current and no longer BLOCKER.",
+    "Finish the owner-controlled public name, repository/package ownership and README/copy lane before any namespace query or public claim.",
+    "Provide CODEOWNERS, explicit no-bounty status and the required threat model/security route in their owning authorized task before Task 7 can PASS."
+  ],
+  "sealed_at": "2026-08-16T09:31:27Z"
+}
