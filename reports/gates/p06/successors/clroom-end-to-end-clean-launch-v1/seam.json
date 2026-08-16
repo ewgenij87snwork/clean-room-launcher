@@ -1,0 +1,135 @@
+{
+  "schema_version": "clroom.provider-seam-diagnostic.v1",
+  "plan_id": "P06-CLROOM-END-TO-END-CLEAN-LAUNCH-V1",
+  "task": 1,
+  "recorded_at": "2026-08-16T13:51:40Z",
+  "result": "SEAM_IMPOSSIBLE_FOR_EXACT_TUPLE",
+  "qualification": "NOT_QUALIFIED",
+  "progression": "STOPPED_AT_TASK_1_TASK_2_NOT_AUTHORIZED",
+  "binding": {
+    "input_head": "e900591d4f0371e6a72946a03f3f6eee5e75610c",
+    "plan_sha256": "9843181d72945ba8321e5597d769d48444cd25049470a0cc1e23f3f5c40a0886",
+    "design_sha256": "498886d1bbe27204c771fb59d54280e34c948848657aa6af7c4f11d917284eab"
+  },
+  "tuple": {
+    "provider_id": "codex",
+    "executable_realpath": "/Users/ysorokin/.codex/packages/standalone/releases/0.147.0-aarch64-apple-darwin/bin/codex",
+    "executable_sha256": "19c4f144c5226a9f17c58e6f0fa854843b0f77a6eb420f40e2745a12f10f5d37",
+    "cli_version": "codex-cli 0.147.0",
+    "os": "macOS 26.5.1",
+    "os_build": "25F80",
+    "kernel": "Darwin 25.5.0",
+    "arch": "arm64"
+  },
+  "supported_interface_census": {
+    "invocation_config_override": true,
+    "exec_ignore_user_config": "CONFIG_TOML_ONLY_AUTH_STILL_USES_CODEX_HOME",
+    "exec_ignore_rules": "EXECPOLICY_ONLY",
+    "model_instructions_file": "BASE_INSTRUCTIONS_ONLY",
+    "project_doc_max_bytes_zero": "PROJECT_AGENTS_ONLY",
+    "global_agents_disable": false,
+    "skills_include_instructions_false": "AUTOMATIC_CATALOG_ONLY",
+    "skill_disable_selector": "EXACT_PATH_OR_NAME_ONLY",
+    "skill_discovery_root_allowlist": false
+  },
+  "local_no_provider_observation": {
+    "verifier": "scripts/gates/p06/test-t8-root-discovery-verify.sh",
+    "command": "P06_CODEX_BIN=/Users/ysorokin/.local/bin/codex scripts/gates/p06/test-t8-root-discovery-verify.sh",
+    "exit_code": 0,
+    "marker": "P06_T8_ROOT_DISCOVERY_TEST_PASS",
+    "global_codex_home_agents_seen": true,
+    "project_agents_seen_when_git_rooted": true,
+    "task_agents_seen": true,
+    "ambient_home_agents_seen": false,
+    "network": "DENIED_BY_OS_SANDBOX",
+    "provider_request": false,
+    "raw_debug_removed": true
+  },
+  "decision": {
+    "violated_invariant": "EXCLUDED_AMBIENT_GLOBAL_INSTRUCTION_ABSENT",
+    "technical_reason": "NORMAL_PREAUTHENTICATED_AUTH_AND_GLOBAL_AGENTS_SHARE_CODEX_HOME_BUT_0_147_0_HAS_NO_SUPPORTED_GLOBAL_AGENTS_DISABLE",
+    "skill_boundary_reason": "DISCOVERY_HAS_AMBIENT_USER_ADMIN_SYSTEM_AND_REPOSITORY_ROOTS_WITHOUT_A_SUPPORTED_ROOT_ALLOWLIST; CATALOG_SUPPRESSION_DOES_NOT_DISABLE_EXPLICIT_SKILL_BODY_INJECTION",
+    "normal_auth_candidate": {
+      "provider_owned_auth_preserved": true,
+      "global_codex_home_agents_excluded": false
+    },
+    "clean_codex_home_candidate": {
+      "global_codex_home_agents_excluded": true,
+      "normal_preauthenticated_auth_preserved": false,
+      "forbidden_credential_transfer_required": true
+    },
+    "real_observer_campaign": "NOT_RUN_STRUCTURAL_IMPOSSIBILITY_WAS_DECISIVE"
+  },
+  "required_observation_disposition": {
+    "provider_owned_preauthenticated_session": "REUSED_PREDECESSOR_EVIDENCE_NOT_ACCESSED",
+    "admitted_launch_canary": "NOT_RUN_STRUCTURAL_IMPOSSIBILITY",
+    "excluded_ambient_global_instruction": "FAILED_LOCAL_NO_PROVIDER_OBSERVATION",
+    "excluded_ambient_skill": "UNSUPPORTED_CLOSED_BOUNDARY",
+    "project_policy": "ROOTED_L0_L2_L3_OBSERVED",
+    "native_argv_stdio_exit_signal": "REUSED_PREDECESSOR_PUBLIC_IDENTITY_RECEIPT",
+    "auth_untouched": true,
+    "browser_or_login": false,
+    "applied_byte_match": "NOT_RUN_STRUCTURAL_IMPOSSIBILITY",
+    "raw_output_deleted": true
+  },
+  "process_ledger": {
+    "budgeted_provider_processes_used": 0,
+    "budgeted_provider_processes_limit": 10,
+    "budgeted_provider_processes_remaining": 10,
+    "provider_requests": 0,
+    "real_campaign": [],
+    "local_offline_cli_diagnostics_are_not_provider_birth": true
+  },
+  "evidence": [
+    {
+      "path": "scripts/gates/p06/t8-root-discovery-verify.sh",
+      "sha256": "78f4406cd31cb45411fead5e9e10a4b1a9f45a9f76c4e1b9e51280dda55fc2f2"
+    },
+    {
+      "path": "scripts/gates/p06/test-t8-root-discovery-verify.sh",
+      "sha256": "3c17239cd882a3d6e7dcbbf0c9c9db6edf5a7d247e198d157da15751f916e051"
+    },
+    {
+      "path": "reports/gates/p06/outputs/task-8-root-discovery-current.txt",
+      "sha256": "3e887c215fb3300ba36510eaaf988e71b69acf707faf0046735aebe66ba6f12b"
+    },
+    {
+      "path": "reports/gates/p06/task-8-rooted-disposition.json",
+      "sha256": "250bd5a4d1591213ebd4ea145991572da5a0356aed777e179a74ae25db899d18"
+    },
+    {
+      "path": "reports/gates/p06/clroom-public-identity-correction-v1.json",
+      "sha256": "c1c3efceac7287e50f9d40632805ba6d19c75534fb1eafc51d7f970bfbd3ecbc"
+    }
+  ],
+  "primary_sources": [
+    "https://developers.openai.com/codex/cli/reference",
+    "https://developers.openai.com/codex/config-reference",
+    "https://developers.openai.com/codex/guides/agents-md",
+    "https://developers.openai.com/codex/skills",
+    "https://github.com/openai/codex/blob/rust-v0.147.0/codex-rs/exec/src/cli.rs#L38-L40",
+    "https://github.com/openai/codex/blob/rust-v0.147.0/codex-rs/exec/src/lib.rs#L295-L344",
+    "https://github.com/openai/codex/blob/rust-v0.147.0/codex-rs/codex-home/src/instructions/mod.rs#L24-L72",
+    "https://github.com/openai/codex/blob/rust-v0.147.0/codex-rs/core/src/thread_manager.rs#L1378-L1389",
+    "https://github.com/openai/codex/blob/rust-v0.147.0/codex-rs/core/src/agents_md.rs#L52-L100",
+    "https://github.com/openai/codex/blob/rust-v0.147.0/codex-rs/core/src/agents_md.rs#L272-L339",
+    "https://github.com/openai/codex/blob/rust-v0.147.0/codex-rs/core/src/config/mod.rs#L3894-L3906",
+    "https://github.com/openai/codex/blob/rust-v0.147.0/codex-rs/ext/skills/src/host_roots.rs#L87-L145",
+    "https://github.com/openai/codex/blob/rust-v0.147.0/codex-rs/ext/skills/src/host_roots.rs#L168-L213",
+    "https://github.com/openai/codex/blob/rust-v0.147.0/codex-rs/ext/skills/src/extension.rs#L188-L238",
+    "https://github.com/openai/codex/blob/rust-v0.147.0/codex-rs/ext/skills/src/extension.rs#L359-L452",
+    "https://github.com/openai/codex/blob/rust-v0.147.0/codex-rs/core-skills/src/config_rules.rs#L11-L71"
+  ],
+  "controls": {
+    "credentials_or_keychain_read_list_hash_copy_move_mount_or_symlink": false,
+    "browser_or_login": false,
+    "raw_provider_output_retained": 0,
+    "provider_processes": 0,
+    "claude_or_other_provider": false,
+    "publication_or_upload": false,
+    "p07_or_p08_mutation": false,
+    "main_mutation": false,
+    "integration": false,
+    "task_2_started": false
+  }
+}
