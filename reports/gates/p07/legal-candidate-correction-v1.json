@@ -1,0 +1,144 @@
+{
+  "schema_version": "taskseal.p07.legal-candidate-correction.v1",
+  "plan_id": "P07",
+  "task_continuation": [
+    3,
+    6,
+    8
+  ],
+  "result": "PASS",
+  "qualification": "NOT_QUALIFIED",
+  "recorded_at": "2026-08-16T10:45:00Z",
+  "acceptance": {
+    "id": "ACC-P07-LEGAL-CANDIDATE-CORRECTION-V1",
+    "reproduced_blockers": [
+      "DEPENDENCY_LICENSE_NOTICE_MISSING",
+      "DEPENDENCY_LICENSE_POLICY",
+      "UPSTREAM_RELEASE_RISK_OPEN"
+    ],
+    "operator_result": "One current locked-graph policy accepts all 143 SBOM components, one artifact NOTICE contains every component and its packaged license texts, and two clean exported roots reproduce the same exact unsigned NOT_QUALIFIED archive. The stale historical P07 review risk is superseded by accepted Task 8 plus this current correction evidence, not rewritten."
+  },
+  "binding": {
+    "input_head": "6b960198e2564c4d9c84bbd93b6c694202f766a6",
+    "implementation_head": "d722f545ada8d00ed6e564474c40e72ac7632575",
+    "receipt_seal_role": "receipt-only-child",
+    "canonical_plan_sha256": "13b52c1e3a8fd0d82a963cb492fb35b687fcfb42f87bad6bef2e77ac13ba670e",
+    "cargo_lock_sha256": "2439fcbc5d10c1dff038af1530146bfd73b081007503979e2f7dd85bb97431f8"
+  },
+  "subjects": {
+    "packaging/build-artifacts.sh": "3b80f9f81bae772053ec7bdce3876b99657536d1872b2b0c4ca8bc5fb6336904",
+    "packaging/dependency-notice-policy.json": "f06508f6f57de255004ec707b6fe92826d9396f7bff8eb64ca3fa02828a13966",
+    "packaging/generate-notice.py": "423c5a1c5bd2c76fc0d04f9b59b32676fa7d89fa601a52198e66d7a389cba2cb",
+    "packaging/license-policy.toml": "f72e39d5854d81bf96a4e0c392ef1cc78b741d951bfc48c75e891fb9b21fa791",
+    "packaging/licenses/MIT.txt": "a306b08221195a76a7c37ffeb370dde0948993091e8b10f454b17fda1673d885",
+    "packaging/verify-artifact.py": "f6c984adb1e635f1e6f4ff012204fd195e3c8dcc0122811cd971208017b50af4",
+    "tests/packaging/legal_notice_test.py": "b8d5516c7203413b60033b1272e1fe8c474b64519bd4e507ec578329840abe70"
+  },
+  "license_policy": {
+    "tool": "cargo-deny 0.20.2",
+    "graph": "Cargo.lock including dev and build dependencies",
+    "result": "PASS",
+    "global_allowlist_expanded": false,
+    "package_scoped_exceptions": [
+      {
+        "package": "borrow-or-share@0.2.4",
+        "expression": "MIT-0",
+        "packaged_text_sha256": "010492e490b92ec85db01daad2a290ea5959f29314a1c4ff25e7a172e223abf9",
+        "official_source": "https://spdx.org/licenses/MIT-0.html"
+      },
+      {
+        "package": "foldhash@0.2.0",
+        "expression": "Zlib",
+        "packaged_text_sha256": "b1181a40b2a7b25cf66fd01481713bc1005df082c53ef73e851e55071b102744",
+        "official_source": "https://spdx.org/licenses/Zlib.html"
+      },
+      {
+        "package": "winx@0.36.4",
+        "expression": "Apache-2.0 WITH LLVM-exception",
+        "packaged_text_sha256": "268872b9816f90fd8e85db5a28d33f8150ebb8dd016653fb39ef1f94f2686bc5",
+        "official_sources": [
+          "https://spdx.org/licenses/Apache-2.0.html",
+          "https://spdx.org/licenses/LLVM-exception.html"
+        ]
+      }
+    ],
+    "compatibility_basis": [
+      "https://www.mozilla.org/en-US/MPL/2.0/FAQ/",
+      "https://embarkstudios.github.io/cargo-deny/checks/licenses/cfg.html"
+    ]
+  },
+  "notice": {
+    "component_count": 143,
+    "packaged_license_files": 254,
+    "canonical_spdx_fallbacks": 5,
+    "canonical_fallback_source": "https://spdx.org/licenses/MIT.txt",
+    "canonical_fallback_sha256": "a306b08221195a76a7c37ffeb370dde0948993091e8b10f454b17fda1673d885",
+    "notice_sha256": "8d2a0e8e2ed9f06e68143745784cb034b96c4d37b22afc9e87d24be3e9c007be",
+    "private_findings": 0
+  },
+  "artifact": {
+    "filename": "taskseal-v0.1.0-aarch64-apple-darwin.tar.gz",
+    "sha256": "ea8e60d2b4097ce766758bd70543628d0c15e9c7ab0ebc0d29d76c59da896b0c",
+    "size": 708323,
+    "source_commit": "d722f545ada8d00ed6e564474c40e72ac7632575",
+    "target": "aarch64-apple-darwin",
+    "builds": 2,
+    "byte_identical": true,
+    "signing": "unsigned-preview-only",
+    "qualification": "NOT_QUALIFIED"
+  },
+  "supply_chain": {
+    "checksums_sha256": "9da3b5fd6c579e3f7284b6e8319e82e05e79cef62982eb1ef769679282d0e466",
+    "sbom_sha256": "2cd4cdc645a03621579c78ed2dba338d90bfb7c2bc04268218aaa0941ee976f4",
+    "provenance_sha256": "c9fd87e5d00715f74770bfb41177d61c0c32ef4635185214a1cc3becfb3b61ae",
+    "cyclonedx": "1.7",
+    "slsa_predicate": "https://slsa.dev/provenance/v1",
+    "subject_bound": true
+  },
+  "risk_continuation": {
+    "historical_review": {
+      "path": "reports/gates/p07/terminal-review.json",
+      "sha256": "01d2443724994511f72f3f7dee9b33963702f673ce8f7a19c02443702edb784b",
+      "status": "STALE_SUPERSEDED_NOT_REWRITTEN"
+    },
+    "accepted_task_8": {
+      "path": "reports/gates/p07/task-8.json",
+      "sha256": "5b5d571bf28a9dcb0d61717efe8b66076d2716c29d028d92ca917c10fa727110",
+      "result": "accepted"
+    },
+    "current_status": "CLOSED"
+  },
+  "evidence": [
+    {
+      "id": "EVD-P07-LEGAL-RED",
+      "command": "P07_CARGO_DENY=<cargo-deny-0.20.2> python3 tests/packaging/legal_notice_test.py",
+      "exit": 1,
+      "marker": "P07_LEGAL_NOTICE_REFUSED:IMPLEMENTATION_MISSING"
+    },
+    {
+      "id": "EVD-P07-LEGAL-GREEN",
+      "command": "P07_CARGO_DENY=<cargo-deny-0.20.2> python3 tests/packaging/legal_notice_test.py",
+      "exit": 0,
+      "marker": "P07_LEGAL_NOTICE_PASS components=143 fallbacks=5",
+      "diagnostic": "The first implementation observation corrected the test's static escaped-regex needle; no production policy or acceptance expectation was weakened."
+    },
+    {
+      "id": "EVD-P07-ARTIFACT-CAMPAIGN",
+      "command": "two clean git-archive roots, separate target directories, locked offline build, artifact verification, CycloneDX/SLSA generation and verification",
+      "exit": 0,
+      "marker": "P07_REPRODUCIBLE_ARTIFACT_PASS sha256=ea8e60d2b4097ce766758bd70543628d0c15e9c7ab0ebc0d29d76c59da896b0c",
+      "variance": "The initial orchestration environment omitted the Rust toolchain PATH and both lanes exited 127 before rustc or cargo started. The changed-input campaign used an explicit bounded PATH; no unchanged retry occurred."
+    }
+  ],
+  "controls": {
+    "historical_receipts_rewritten": false,
+    "croom_claimed": false,
+    "provider_requests": false,
+    "credential_access": false,
+    "keychain_access": false,
+    "publication": false,
+    "upload": false,
+    "main_mutation": false,
+    "integration": false
+  }
+}
