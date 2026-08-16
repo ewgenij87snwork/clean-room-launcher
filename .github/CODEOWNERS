@@ -1,0 +1,17 @@
+# Status: NOT_YET_ENFORCEABLE
+#
+# No public repository or verified repository-owner identity exists yet, so an
+# active host account mapping would be fabricated. Before public source is
+# created, the verified owner must replace this comment-only contract with real
+# CODEOWNERS mappings and enable the corresponding protected-branch reviews.
+#
+# Protected paths requiring that verified owner mapping:
+# SECURITY.md
+# .github/workflows/
+# .github/CODEOWNERS
+# scripts/gates/
+# scripts/release/
+# packaging/
+# qualification/
+# reports/gates/
+# reports/release/

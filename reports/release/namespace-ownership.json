@@ -1,0 +1,33 @@
+{
+  "schema_version": "taskseal.release-namespace-ownership.v1",
+  "recorded_at": "2026-08-16T10:51:17Z",
+  "public_product_name": "Clean Room Launcher",
+  "category": "A clean-room launcher for coding-agent CLIs.",
+  "intended_command": "croom",
+  "approved_public_name": true,
+  "repository_owned": false,
+  "package_owned": false,
+  "binary_names_owned": false,
+  "croom_implemented": false,
+  "queries": [
+    {
+      "registry": "crates.io",
+      "name": "croom",
+      "http_status": 404,
+      "access": "read-only"
+    },
+    {
+      "registry": "Homebrew Formulae",
+      "name": "croom",
+      "http_status": 404,
+      "access": "read-only"
+    },
+    {
+      "registry": "local PATH",
+      "name": "croom",
+      "status": "ABSENT",
+      "access": "read-only"
+    }
+  ],
+  "result": "NOT_OWNED_NOT_RESERVED"
+}

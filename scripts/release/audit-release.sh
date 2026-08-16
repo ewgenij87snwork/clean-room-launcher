@@ -278,6 +278,8 @@ def claim_blockers(claim_root, add):
         add("claims", "SECURITY_REPORTING_ROUTE_MISSING", "private reporting route is absent or public disclosure is allowed")
     if not re.search(r"(?:no\s+bounty|does\s+not\s+offer\s+(?:a\s+)?bounty)", security, re.IGNORECASE):
         add("claims", "BOUNTY_STATUS_MISSING", "current no-bounty status is not explicit")
+    if "NOT_YET_AVAILABLE" in security:
+        add("claims", "SECURITY_REPORTING_ROUTE_UNVERIFIED", "security policy honestly records that no verified private reporting route exists")
 
     threat_terms = {
         "protected assets": r"protected\s+assets?",
@@ -296,8 +298,13 @@ def claim_blockers(claim_root, add):
     if missing:
         add("claims", "THREAT_MODEL_INCOMPLETE", f"missing {len(missing)} required threat-model classes")
 
-    if not any(path.name == "CODEOWNERS" for path, _ in bodies):
+    codeowners = next((body for path, body in bodies if path.name == "CODEOWNERS"), "")
+    if not codeowners:
         add("claims", "PROTECTED_PATH_OWNERSHIP_MISSING", "CODEOWNERS evidence is absent")
+    elif "NOT_YET_ENFORCEABLE" in codeowners:
+        add("claims", "PROTECTED_PATH_OWNERSHIP_UNVERIFIED", "CODEOWNERS contract has no verified repository-owner mapping")
+    elif not any(line.strip() and not line.lstrip().startswith("#") for line in codeowners.splitlines()):
+        add("claims", "PROTECTED_PATH_OWNERSHIP_MISSING", "CODEOWNERS has no active protected-path mapping")
     if TELEMETRY_OR_BACKEND.search(joined):
         add("claims", "TELEMETRY_OR_BACKEND_PRESENT", "analytics, telemetry, backend or network client marker detected")
     if CYRILLIC.search(joined):
