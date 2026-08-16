@@ -26,6 +26,13 @@ fn run_with_digest(dir: &Path, artifact: &Path, receipt: &Path, capture: &Path, 
         "--capture", capture.to_str().unwrap(), "--output", result.to_str().unwrap(), "--test-only-fixture",
     ]).env("TASKSEAL_TEST_ONLY_FIXTURE", "1").current_dir(dir).output().unwrap()
 }
+fn run_exact(dir: &Path, artifact: &Path, installed: &Path, receipt: &Path, capture: &Path, result: &Path) -> std::process::Output {
+    Command::new(root().join("scripts/release/run-demo.sh")).args([
+        "--artifact", artifact.to_str().unwrap(), "--artifact-sha256", "656f8701e84e0d7a72c4dbdb62d8ad20733e5743b602ff0fd6447c711a211d33",
+        "--installed-tseal", installed.to_str().unwrap(), "--fixture", receipt.to_str().unwrap(), "--fixture-sha256", &sha256(receipt),
+        "--capture", capture.to_str().unwrap(), "--output", result.to_str().unwrap(), "--test-only-fixture",
+    ]).env("TASKSEAL_TEST_ONLY_FIXTURE", "1").current_dir(dir).output().unwrap()
+}
 fn reproduced_clean_install() -> (PathBuf, PathBuf, PathBuf) {
     let dir = std::env::temp_dir().join(format!("p08-demo-real-{}", std::process::id()));
     let _ = fs::remove_dir_all(&dir); fs::create_dir_all(dir.join("source")).unwrap(); fs::create_dir_all(dir.join("target")).unwrap(); fs::create_dir_all(dir.join("out")).unwrap();
@@ -71,6 +78,9 @@ fn arbitrary_artifact_digest_cannot_replace_committed_p07_digest() {
     let output = run_with_digest(&dir, &artifact, &receipt, &dir.join("capture.json"), &dir.join("out.json"), &sha256(&artifact));
     assert!(!output.status.success());
     assert!(String::from_utf8_lossy(&output.stderr).contains("P07_ARTIFACT_DIGEST"));
+    let exact_declared = run_with_digest(&dir, &artifact, &receipt, &dir.join("capture.json"), &dir.join("exact-out.json"), "656f8701e84e0d7a72c4dbdb62d8ad20733e5743b602ff0fd6447c711a211d33");
+    assert!(!exact_declared.status.success());
+    assert!(String::from_utf8_lossy(&exact_declared.stderr).contains("STALE_ARTIFACT"));
 }
 
 #[test]
@@ -85,6 +95,7 @@ fn production_and_developer_checkout_are_never_demo_success_paths() {
 
 #[test]
 fn stale_wrong_unsafe_or_edited_demo_inputs_refuse() {
+    let (real_dir, artifact, installed) = reproduced_clean_install();
     for (name, fixture_body, capture_body, expected) in [
         ("wrong-fixture", FIXTURE.replacen("\"promotion_eligible\":false", "\"promotion_eligible\":true", 1), CAPTURE.to_owned(), "FIXTURE_NON_PROMOTABLE"),
         ("private-path", FIXTURE.to_owned(), CAPTURE.replacen("\"recorded_at\":\"REDACTED_NON_SEMANTIC\"", "\"private_path\":\"/Users/owner\",\"recorded_at\":\"REDACTED_NON_SEMANTIC\"", 1), "PRIVATE_PATH"),
@@ -93,8 +104,10 @@ fn stale_wrong_unsafe_or_edited_demo_inputs_refuse() {
         ("missing-cleanup", FIXTURE.to_owned(), CAPTURE.replacen("\"completed\":true", "\"completed\":false", 1), "CLEANUP"),
         ("edited-output", FIXTURE.to_owned(), CAPTURE.replacen("catalog: 2 skills", "edited success", 1), "CAPTURE_RESULT"),
     ] {
-        let (dir, artifact, receipt) = fixture(name, &fixture_body, &capture_body);
-        let output = run(&dir, &artifact, &receipt, &dir.join("capture.json"), &dir.join("out.json"));
+        let dir = real_dir.join(name); fs::create_dir_all(&dir).unwrap();
+        let receipt = dir.join("fixture.json"); let capture = dir.join("capture.json");
+        fs::write(&receipt, &fixture_body).unwrap(); fs::write(&capture, &capture_body).unwrap();
+        let output = run_exact(&dir, &artifact, &installed, &receipt, &capture, &dir.join("out.json"));
         assert!(!output.status.success(), "{name} accepted");
         assert!(String::from_utf8_lossy(&output.stderr).contains(expected), "{name}: {}", String::from_utf8_lossy(&output.stderr));
     }

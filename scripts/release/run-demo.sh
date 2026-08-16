@@ -38,13 +38,14 @@ printf %s "$fixture_sha" | grep -Eq '^[0-9a-f]{64}$' || refuse FIXTURE_DIGEST 66
 [ "$(shasum -a 256 "$fixture" | awk '{print $1}')" = "$fixture_sha" ] || refuse WRONG_FIXTURE 66
 
 [ "$test_only" = true ] && [ "${TASKSEAL_TEST_ONLY_FIXTURE:-}" = 1 ] || refuse PRODUCTION_NOT_RUN 67
+artifact_real=$(ruby -e 'puts File.realpath(ARGV[0])' "$artifact" 2>/dev/null) || refuse EVIDENCE_MISSING 65
+case "$artifact_real" in "$root"|"$root"/*) refuse DEVELOPER_CHECKOUT_REFUSED 67;; esac
 p07_digest=$(ruby -rjson -e 'x=JSON.parse(File.read(ARGV[0])); abort unless x["schema_version"]=="taskseal.p07.task-receipt.v1" && x["task"]==3 && x.dig("claims","source_commit")=="01ad1d894aabe265b08d61d67d39da1a29cad9e4"; puts x.dig("claims","archive_sha256")' "$root/reports/gates/p07/task-3.json" 2>/dev/null) || refuse P07_ARTIFACT_EVIDENCE 67
 [ "$p07_digest" = "656f8701e84e0d7a72c4dbdb62d8ad20733e5743b602ff0fd6447c711a211d33" ] || refuse P07_ARTIFACT_EVIDENCE 67
 [ "$artifact_sha" = "$p07_digest" ] || refuse P07_ARTIFACT_DIGEST 67
 actual_artifact_sha=$(shasum -a 256 "$artifact" | awk '{print $1}')
-artifact_bytes_verified=false
-[ "$actual_artifact_sha" = "$artifact_sha" ] && artifact_bytes_verified=true
-[ "$artifact_bytes_verified" = true ] || [ "$test_only" = true ] || refuse STALE_ARTIFACT 67
+[ "$actual_artifact_sha" = "$artifact_sha" ] || refuse STALE_ARTIFACT 67
+artifact_bytes_verified=true
 if [ "$artifact_bytes_verified" = true ]; then
   [ -n "$installed_tseal" ] && [ -f "$installed_tseal" ] && [ -x "$installed_tseal" ] || refuse CLEAN_INSTALL_REQUIRED 67
   installed_real=$(ruby -e 'puts File.realpath(ARGV[0])' "$installed_tseal" 2>/dev/null) || refuse CLEAN_INSTALL_REQUIRED 67
@@ -59,8 +60,6 @@ PY
 ) || refuse CLEAN_INSTALL_REQUIRED 67
   [ "$archive_tseal_sha" = "$(shasum -a 256 "$installed_real" | awk '{print $1}')" ] || refuse INSTALLED_ARTIFACT_MISMATCH 67
 fi
-[ "$(ruby -e 'puts File.realpath(ARGV[0])' "$artifact" 2>/dev/null)" != "$root" ] || refuse DEVELOPER_CHECKOUT_REFUSED 67
-case "$(ruby -e 'puts File.realpath(ARGV[0])' "$artifact" 2>/dev/null)" in "$root"/*) refuse DEVELOPER_CHECKOUT_REFUSED 67;; esac
 [ "$(dirname "$output")" != "$root/reports/release" ] || refuse TEST_OUTPUT_MUST_NOT_REPLACE_PRODUCTION 67
 
 error_file=$(mktemp "${TMPDIR:-/tmp}/taskseal-demo-error.XXXXXX")
