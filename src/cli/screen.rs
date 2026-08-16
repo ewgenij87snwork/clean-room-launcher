@@ -1,4 +1,7 @@
-use std::io::{self, IsTerminal};
+use std::{
+    io::{self, IsTerminal},
+    path::Path,
+};
 
 pub struct PrepareReady {
     pub provider: &'static str,
@@ -113,6 +116,16 @@ pub fn render_unqualified_for(ready: PrepareReady, context: RenderContext) -> Ve
             }
         })
         .collect()
+}
+
+pub fn render_isolated_preview(project: &Path, provider: &str) -> Vec<String> {
+    vec![
+        "Clean Room Launcher".to_owned(),
+        format!("Project  {}", project.display()),
+        "Protects global instructions and ambient skills".to_owned(),
+        format!("Provider {provider} · existing provider state stays untouched"),
+        "Action   Launch Codex".to_owned(),
+    ]
 }
 
 fn labelled_value(line: &str) -> Option<(&'static str, &str)> {

@@ -12,7 +12,7 @@ mod starts;
 pub(crate) mod state;
 mod zero_auth;
 
-use std::io::Write;
+use std::io::{IsTerminal, Write};
 use std::path::PathBuf;
 use std::process::ExitCode;
 
@@ -104,6 +104,12 @@ fn launch_isolated_codex(args: &[String]) -> Result<ExitCode, String> {
         "CLROOM_ISOLATION_INVALID: current project or context boundary is invalid; continue locally"
             .to_owned()
     })?;
+    if std::io::stdout().is_terminal() {
+        println!(
+            "{}",
+            screen::render_isolated_preview(&plan.project, "Codex").join("\n")
+        );
+    }
     process::launch_isolated_codex(&plan, &executable, args)
 }
 

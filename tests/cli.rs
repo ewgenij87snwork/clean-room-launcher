@@ -20,6 +20,8 @@ mod help;
 mod local_codex_launch;
 #[path = "cli/isolated_codex_launch.rs"]
 mod isolated_codex_launch;
+#[path = "cli/isolated_launch_screen.rs"]
+mod isolated_launch_screen;
 #[path = "cli/non_tty_json.rs"]
 mod non_tty_json;
 #[path = "cli/saved_start_call_path.rs"]
