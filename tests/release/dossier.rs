@@ -45,17 +45,19 @@ fn collector_builds_a_closed_private_candidate_and_refuses_bad_receipts() {
         "\"requested_release_state\":\"PRIVATE_CANDIDATE\"",
         "\"plan\":\"P02\"", "\"plan\":\"P07\"",
         "\"qualification\":\"NOT_QUALIFIED\"",
-        "\"candidate_commit\":\"abd35a2e0e3bef557019705ddd7f8a6b22427675\"",
+        "\"candidate_commit\":\"c6f9d8f1cfa65c63bf34595eee056ff5d9202b25\"",
         "\"evidence_path\":\"reports/gates/p06/privacy-release-boundary-v1.json\"",
         "\"evidence_path\":\"reports/gates/p07/legal-candidate-correction-v1.json\"",
+        "\"evidence_path\":\"reports/gates/p07/artifact-privacy-correction-v1.json\"",
         "\"evidence_path\":\"reports/release/codex-live-observation.json\"",
         "\"evidence_pointer\":\"/artifact/sha256\"",
-        "\"sha256\":\"ea8e60d2b4097ce766758bd70543628d0c15e9c7ab0ebc0d29d76c59da896b0c\"",
+        "\"sha256\":\"49a685a98df13fa59766d9032dca7229cfa3e996b1b9b92ec59be8da1b899cf7\"",
         "\"status\":\"CLOSED\"",
         "\"status\":\"BLOCKER\"",
     ] { assert!(candidate.contains(needle), "missing {needle}"); }
     for stale in [
         "656f8701e84e0d7a72c4dbdb62d8ad20733e5743b602ff0fd6447c711a211d33",
+        "ea8e60d2b4097ce766758bd70543628d0c15e9c7ab0ebc0d29d76c59da896b0c",
         "\"evidence_path\":\"reports/gates/p07/terminal-review.json\"",
     ] { assert!(!candidate.contains(stale), "stale candidate input retained: {stale}"); }
     for forbidden in ["/Users/", "/home/", "ghp_", "sk-12345678901234567890", "raw_prompt", "prompt_payload"] {
@@ -92,6 +94,7 @@ fn collector_builds_a_closed_private_candidate_and_refuses_bad_receipts() {
     for (label, relative) in [
         ("P06_PRIVACY", "reports/gates/p06/privacy-release-boundary-v1.json"),
         ("P07_LEGAL_CORRECTION", "reports/gates/p07/legal-candidate-correction-v1.json"),
+        ("P07_ARTIFACT_PRIVACY", "reports/gates/p07/artifact-privacy-correction-v1.json"),
         ("CODEX_LIVE_OBSERVATION", "reports/release/codex-live-observation.json"),
     ] {
       for mutation in ["missing", "stale", "private", "duplicate", "unsupported"] {

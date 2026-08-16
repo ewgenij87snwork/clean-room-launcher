@@ -16,7 +16,9 @@ import tarfile
 import tempfile
 
 ROOT = Path(sys.argv[1]).resolve()
-PRIVATE_PATH = re.compile(r"(?:/(?:Users|home)/[^/\s]+|[A-Za-z]:\\Users\\[^\\\s]+)")
+PRIVATE_PATH = re.compile(
+    r"(?:/(?:Users|home)/[A-Za-z0-9._-]+(?:/|\b)|[A-Za-z]:\\Users\\[A-Za-z0-9._-]+(?:\\|\b))"
+)
 CYRILLIC = re.compile(r"[А-Яа-яЁё]")
 OFFICIAL_SPDX_SCHEMA = Path("packaging/supply-chain/schemas/cyclonedx-1.7/spdx.schema.json")
 OFFICIAL_SPDX_SCHEMA_SHA256 = "c87aa7bb5eb503d40b52ec6bf00de8045df15da7a13cea48d290cf6d36a8d2ea"
