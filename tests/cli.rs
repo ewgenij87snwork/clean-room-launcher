@@ -22,6 +22,8 @@ mod local_codex_launch;
 mod isolated_codex_launch;
 #[path = "cli/isolated_launch_screen.rs"]
 mod isolated_launch_screen;
+#[path = "cli/isolated_real_codex.rs"]
+mod isolated_real_codex;
 #[path = "cli/non_tty_json.rs"]
 mod non_tty_json;
 #[path = "cli/saved_start_call_path.rs"]
