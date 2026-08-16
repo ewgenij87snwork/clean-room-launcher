@@ -1,0 +1,68 @@
+{
+  "schema_version": "taskseal.p06.privacy-release-boundary.v1",
+  "plan_id": "P06",
+  "task_continuation": [
+    12,
+    13
+  ],
+  "result": "PASS",
+  "recorded_at": "2026-08-16T10:31:00Z",
+  "acceptance": {
+    "id": "ACC-P06-PRIVACY-CORRECTION-V1",
+    "reproduced_blocker": "PRIVATE_ABSOLUTE_PATH",
+    "operator_result": "The exact publishable source inventory excludes ignored authority state and immutable internal gate/receipt evidence while retaining product, packaging, public claims, schemas and tests. No physical owner HOME or owner SSOT path is present in that inventory; historical receipts remain unchanged."
+  },
+  "binding": {
+    "input_head": "9fe34c44a2ae11405cb7861f2f13d1d9dd30f446",
+    "implementation_head": "f98ec76c0c97c77b8f972bb82005eddd74fe7731",
+    "receipt_seal_role": "receipt-only-child",
+    "canonical_plan_sha256": "ce5fed43c3bf9e4856ad476289ec7fa667aea32dc4da3db0a4b1c480f28c62c5",
+    "blocked_task7_receipt": {
+      "path": "reports/gates/p08/task-7.json",
+      "sha256": "2c54a99a5e23badc102ca5df5cdf6f5ad704f05e8c288767c50ab144f3bf8deb"
+    },
+    "blocked_audit": {
+      "path": "reports/release/audit.json",
+      "sha256": "56a975b4d98729a2bc04cfce423ffdb29825c398ea006dceba005b94c86684ff"
+    },
+    "historical_receipt_policy": "IMMUTABLE_UNCHANGED_EXCLUDED_FROM_PUBLIC_SOURCE"
+  },
+  "subjects": {
+    "qualification/public-release-inventory-v1.json": "0de3bd1b4fb706e0e790e92463750b044b10ae325981be2d870f4ffceb613044",
+    "scripts/gates/p06/test-public-release-privacy.sh": "a396d7d02a34e581916dbd4a5fa1f24817a70892f7533d7fbc1a9d28ef1f9d44"
+  },
+  "verification": {
+    "red": {
+      "command": "sh scripts/gates/p06/test-public-release-privacy.sh",
+      "exit": 1,
+      "marker": "P06_PUBLIC_RELEASE_PRIVACY_REFUSED:INVENTORY_MISSING"
+    },
+    "diagnostic": {
+      "changed_input": "Tightened the absolute-HOME recognizer to username characters after the first implementation run matched the literal deny-pattern in packaging/supply-chain/generate.sh; the scanner still detects concrete HOME paths."
+    },
+    "green": {
+      "command": "sh scripts/gates/p06/test-public-release-privacy.sh",
+      "exit": 0,
+      "marker": "P06_PUBLIC_RELEASE_PRIVACY_PASS paths=32 files=316"
+    },
+    "public_paths": 32,
+    "scanned_files": 316,
+    "physical_owner_path_findings": 0,
+    "generic_fixture_path_findings": 0,
+    "excluded_internal_paths": [
+      ".taskseal-dev",
+      "reports/gates",
+      "scripts/gates"
+    ]
+  },
+  "controls": {
+    "historical_receipts_rewritten": false,
+    "provider_requests": false,
+    "credential_access": false,
+    "keychain_access": false,
+    "network": false,
+    "publication": false,
+    "main_mutation": false,
+    "integration": false
+  }
+}
