@@ -6,10 +6,12 @@
   "qualification": "NOT_QUALIFIED",
   "result": "BLOCKED",
   "binding": {
-    "input_head": "f7ca711d072d896dfe506f5568250b26328942a2",
-    "implementation_head": "d839f572e88015ad15c17ccaa72e123f64bb70d9",
-    "receipt_commit_parent": "d839f572e88015ad15c17ccaa72e123f64bb70d9",
-    "receipt_seal_role": "receipt-only-child-blocked-result"
+    "input_head": "bee5f978fec5bc442059658daed2775c8c69a04b",
+    "correction_code_head": "ebf7c2c2b9080fe208682e8d596adfcd1fa3245a",
+    "implementation_head": "cdab953ecbe3ec7c70abea5a3b8d68a17ef30c0c",
+    "receipt_commit_parent": "cdab953ecbe3ec7c70abea5a3b8d68a17ef30c0c",
+    "supersedes_receipt_head": "bee5f978fec5bc442059658daed2775c8c69a04b",
+    "receipt_seal_role": "replacement-receipt-only-child-blocked-result"
   },
   "evidence": [
     {
@@ -29,12 +31,43 @@
       "command": "TASKSEAL_AUDIT_RECORDED_AT=\"2026-08-16T09:28:01Z\" scripts/release/audit-release.sh --repo \"$PWD\" --artifact /private/tmp/p07-clean-roots4.F3BnzJ/out-a/taskseal-v0.1.0-aarch64-apple-darwin.tar.gz --output \"$PWD/reports/release/audit.json\" --tool-root /private/tmp/taskseal-p08-tools.VF1se8 --cargo-home /private/tmp/taskseal-p08-cargo-home.wlnPPj",
       "exit": 3,
       "result": "P08_TASK7_AUDIT_BLOCKED slices=5 blockers=12"
+    },
+    {
+      "id": "EVD-P08-T7-CORRECTION-RED",
+      "command": "CARGO_MANIFEST_DIR=\"$PWD\" rustc --edition=2024 --test tests/release/audit_fixtures/forbidden_classes.rs -o /private/tmp/p08-task7-correction-red && /private/tmp/p08-task7-correction-red --nocapture",
+      "exit": 101,
+      "result": "focused correction proof was absent; ShellCheck reproduced one SC2046 and 26 SC1007 findings"
+    },
+    {
+      "id": "EVD-P08-T7-CORRECTION-GREEN-BOUNDARY-REFUSAL",
+      "command": "CARGO_MANIFEST_DIR=\"$PWD\" rustc --edition=2024 --test tests/release/audit_fixtures/forbidden_classes.rs -o /private/tmp/p08-task7-correction-green && /private/tmp/p08-task7-correction-green --nocapture",
+      "exit": 101,
+      "result": "SHELLCHECK_FALSE_POSITIVE_BOUNDARY exposed the stale expected count 24; the RED evidence contained exact count 26"
+    },
+    {
+      "id": "EVD-P08-T7-CORRECTION-GREEN",
+      "command": "CARGO_MANIFEST_DIR=\"$PWD\" rustc --edition=2024 --test tests/release/audit_fixtures/forbidden_classes.rs -o /private/tmp/p08-task7-correction-green-counted && /private/tmp/p08-task7-correction-green-counted --nocapture",
+      "exit": 0,
+      "result": "1 focused test passed; two pinned official-schema findings filtered, planted secret detected, SC2046 absent and 26 intentional-empty-assignment findings classified"
+    },
+    {
+      "id": "EVD-P08-T7-CORRECTION-RECEIPT-DURABILITY",
+      "command": "sh scripts/release/verify-codex-task3-receipt.sh --repo \"$PWD\" --receipt-file \"$PWD/reports/gates/p08/task-3.json\" --receipt-path reports/gates/p08/task-3.json --tip \"$(git rev-parse HEAD)\"",
+      "exit": 0,
+      "result": "P08_T3_RECEIPT_DURABILITY_PASS implementation=de6af4e624ade9e30b65080ca1bdd29bd19bcd7d seal=ab5a10b9d9ea801876bacad0dce5bfb00728e3f8 tip=bee5f978fec5bc442059658daed2775c8c69a04b"
+    },
+    {
+      "id": "EVD-P08-T7-CORRECTION-FINAL",
+      "command": "TASKSEAL_AUDIT_RECORDED_AT=\"2026-08-16T09:57:49Z\" scripts/release/audit-release.sh --repo \"$PWD\" --artifact /private/tmp/p07-clean-roots4.F3BnzJ/out-a/taskseal-v0.1.0-aarch64-apple-darwin.tar.gz --output \"$PWD/reports/release/audit.json\" --tool-root /private/tmp/taskseal-p08-tools.VF1se8 --cargo-home /private/tmp/taskseal-p08-cargo-home.wlnPPj",
+      "exit": 3,
+      "result": "P08_TASK7_AUDIT_BLOCKED slices=5 blockers=10"
     }
   ],
   "subjects": {
-    "reports/release/audit.json": "66a0a78df30d1ea15f8e7f6f1c6d0e30f4adabc8f3d54ea75176e28fd2d96773",
-    "scripts/release/audit-release.sh": "125f5f86db243732497337756329b724a1f3357560fcef037287332d5df095d1",
-    "tests/release/audit_fixtures/forbidden_classes.rs": "651e954fcf72d37a0e082b107a82041895dccf499edadea57bf0d70a0a932700",
+    "reports/release/audit.json": "56a975b4d98729a2bc04cfce423ffdb29825c398ea006dceba005b94c86684ff",
+    "scripts/release/audit-release.sh": "11dba31d85476706b3e56328373857c8c09978337d6f161352018efee9c2491d",
+    "scripts/release/verify-codex-task3-receipt.sh": "86a005197a3c46e771f77fb2ce94d568ae256844fbf114ceeba8cb5dd9e57d82",
+    "tests/release/audit_fixtures/forbidden_classes.rs": "a6410137d8e031ef47fa2bd576a46dea7f22550a069935ad81d11d6db7523279",
     "tests/release/audit_fixtures/corpus/advisory/osv.json": "7c4b0b4f09cee23044f12c439d77e8b5c0be681c03f2717903fed323bd91d090",
     "tests/release/audit_fixtures/corpus/claims/SECURITY.md": "4cc03b1f8b8a21370bcec4b4ec9e296bfece5b9483db776adf0d3b140018dddb",
     "tests/release/audit_fixtures/corpus/claims/public.md": "ed7e11c528eed9a7c3b26fd24d796a638aabe2b1ac85475f5b887d10440e5683",
@@ -46,15 +79,15 @@
   },
   "subject_sha256": {
     "algorithm": "sha256 of sorted path, tab, sha256, newline records",
-    "value": "95891da728b37a60153266fa8a8c362745487b0190f6f9d9171d7da289abf713"
+    "value": "8e4ea47e43eb78201ffea5257639d31aace7cf000e34d738379f86654855dcb5"
   },
   "audit_result": {
-    "report_sha256": "66a0a78df30d1ea15f8e7f6f1c6d0e30f4adabc8f3d54ea75176e28fd2d96773",
+    "report_sha256": "56a975b4d98729a2bc04cfce423ffdb29825c398ea006dceba005b94c86684ff",
     "artifact_sha256": "656f8701e84e0d7a72c4dbdb62d8ad20733e5743b602ff0fd6447c711a211d33",
     "slices_run": 5,
     "slices_total": 5,
-    "report_blockers": 12,
-    "confirmed_blockers": 11,
+    "report_blockers": 10,
+    "confirmed_blockers": 10,
     "confirmed_blocker_codes": [
       "BOUNTY_STATUS_MISSING",
       "PROTECTED_PATH_OWNERSHIP_MISSING",
@@ -65,15 +98,18 @@
       "DEPENDENCY_LICENSE_POLICY",
       "NAMESPACE_OWNERSHIP_UNPROVEN",
       "PRIVATE_ABSOLUTE_PATH",
-      "SHELL_SAFETY_LINT",
       "UPSTREAM_RELEASE_RISK_OPEN"
+    ],
+    "resolved_correction_codes": [
+      "PRIVATE_SECRET",
+      "SHELL_SAFETY_LINT"
     ]
   },
   "diagnostics": [
     {
       "code": "PRIVATE_SECRET",
-      "disposition": "FALSE_POSITIVE",
-      "evidence": "Gitleaks 8.30.1 produced two generic-api-key findings, both in vendored official packaging/supply-chain/schemas/cyclonedx-1.7/spdx.schema.json; artifact findings were zero"
+      "disposition": "RESOLVED_FALSE_POSITIVE",
+      "evidence": "Gitleaks 8.30.1 accepted zero source and zero artifact findings; exactly two generic-api-key findings were filtered only for the exact official SPDX schema path and pinned SHA-256 c87aa7bb5eb503d40b52ec6bf00de8045df15da7a13cea48d290cf6d36a8d2ea"
     },
     {
       "code": "PRIVATE_ABSOLUTE_PATH",
@@ -82,8 +118,13 @@
     },
     {
       "code": "SHELL_SAFETY_LINT",
-      "disposition": "CONFIRMED_ONE_ACTIONABLE_FINDING_PLUS_SCANNER_NOISE",
-      "evidence": "ShellCheck 0.11.0 found SC2046 at scripts/release/verify-codex-task3-receipt.sh:85; 24 SC1007 findings are embedded Ruby/Python heredoc noise"
+      "disposition": "RESOLVED",
+      "evidence": "unsafe word splitting was removed from the Task 3 receipt verifier and its real durability path passed; ShellCheck 0.11.0 accepted zero findings while classifying exact code-and-source-line matches for 26 intentional empty assignments"
+    },
+    {
+      "code": "CORRECTION_GREEN_BOUNDARY",
+      "disposition": "DIAGNOSED_CHANGED_INPUT",
+      "evidence": "the first GREEN input expected stale count 24 and refused against observed count 26; only that exact fixture expectation changed before the passing run, with no unchanged retry"
     },
     {
       "code": "DEPENDENCY_LICENSE_POLICY",
@@ -109,7 +150,13 @@
     "cyclonedx_1_7_slsa_1_2_subject_binding": "PASS",
     "macos_signing_label": "PASS_UNSIGNED_NOT_QUALIFIED",
     "semgrep_unsafe_process_filesystem": "PASS",
-    "artifact_secret_findings": 0
+    "gitleaks_source_accepted_findings": 0,
+    "gitleaks_official_schema_filtered_findings": 2,
+    "artifact_secret_findings": 0,
+    "shellcheck_raw_findings": 26,
+    "shellcheck_accepted_findings": 0,
+    "shellcheck_filtered_intentional_empty_assignments": 26,
+    "task3_receipt_durability": "PASS"
   },
   "boundaries": {
     "readme_changed": false,
@@ -133,5 +180,5 @@
     "Finish the owner-controlled public name, repository/package ownership and README/copy lane before any namespace query or public claim.",
     "Provide CODEOWNERS, explicit no-bounty status and the required threat model/security route in their owning authorized task before Task 7 can PASS."
   ],
-  "sealed_at": "2026-08-16T09:31:27Z"
+  "sealed_at": "2026-08-16T09:59:13Z"
 }
