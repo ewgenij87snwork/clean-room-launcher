@@ -4,75 +4,76 @@
   "task": 3,
   "acceptance_id": "ACC-P08-T3",
   "qualification": "NOT_QUALIFIED",
-  "result": "PREPARED_NOT_QUALIFIED",
+  "result": "OBSERVED_NOT_QUALIFIED",
   "binding": {
-    "input_head": "a76eb7780a4ae6b981dc0b8eafd9b04019c6ee97",
-    "implementation_head": "de6af4e624ade9e30b65080ca1bdd29bd19bcd7d",
-    "receipt_commit_parent": "de6af4e624ade9e30b65080ca1bdd29bd19bcd7d",
+    "input_head": "706e67ed4f1f697ec8117d0c41ad78cd7a4b9c45",
+    "implementation_head": "285f0e91938e4817b4ab9add4ee046a679e0971d",
+    "receipt_commit_parent": "285f0e91938e4817b4ab9add4ee046a679e0971d",
     "receipt_seal_role": "replacement-receipt-only-child",
-    "replaces_receipt_commit": "a76eb7780a4ae6b981dc0b8eafd9b04019c6ee97",
+    "replaces_receipt_commit": "ab5a10b9d9ea801876bacad0dce5bfb00728e3f8",
     "original_receipt_commit": "1ecba980871681ac8a62e399ae1b9e97db32a8e1",
-    "review_fix_base_head": "a76eb7780a4ae6b981dc0b8eafd9b04019c6ee97"
+    "live_campaign_input_head": "706e67ed4f1f697ec8117d0c41ad78cd7a4b9c45"
   },
   "replaced_receipt": {
     "path": "reports/gates/p08/task-3.json",
-    "commit": "a76eb7780a4ae6b981dc0b8eafd9b04019c6ee97",
-    "sha256": "17513649a09402f1c38de7820d79c9e3980a9d646f2c6c6d4476a6ff760f5bdc",
-    "reason": "round-1 seal preceded the focused-test correction that validates the current replacement receipt"
+    "commit": "ab5a10b9d9ea801876bacad0dce5bfb00728e3f8",
+    "sha256": "dfea6bbc38a0564d33aea34dc9c7194d7512e3b83c8c4c239dc481136d0aeff1",
+    "reason": "owner-authorized current live observations now supersede the earlier preparation-only state without promoting the stale negative P06 tuple"
   },
   "evidence": [
     {
-      "id": "EVD-P08-T3-R2-RED",
-      "command": "CARGO_MANIFEST_DIR=\"$PWD\" rustc --edition=2024 --test tests/release/codex_acceptance.rs -o /tmp/taskseal-codex-acceptance-round2-red && /tmp/taskseal-codex-acceptance-round2-red --nocapture",
+      "id": "EVD-P08-T3-LIVE-RED",
+      "command": "CARGO_MANIFEST_DIR=\"$PWD\" rustc --edition=2024 --test tests/release/codex_acceptance.rs -o <temporary> && <temporary> committed_live_observation_binds_the_campaign_without_promoting_the_stale_p06_tuple --exact --nocapture",
       "exit": 101,
-      "result": "5 passed and 1 failed because the current valid replacement receipt was incorrectly labelled stale"
+      "result": "focused test refused because the sanitized live observation was absent"
     },
     {
-      "id": "EVD-P08-T3-R2-GREEN",
-      "command": "CARGO_MANIFEST_DIR=\"$PWD\" rustc --edition=2024 --test tests/release/codex_acceptance.rs -o /tmp/taskseal-codex-acceptance-round2-reseal && /tmp/taskseal-codex-acceptance-round2-reseal --nocapture",
+      "id": "EVD-P08-T3-LIVE-CAMPAIGN",
+      "command": "bounded in-memory campaign through the exact extracted candidate: one provider-native context inspection, two changed-input pipe observations and two changed-input real-PTY observations",
       "exit": 0,
-      "result": "6 focused tests passed at the actual implementation parent, including current-receipt durability and explicit malformed-format refusal"
+      "result": "5/5 processes completed; required context and invoked body were observed, forbidden/unused/protected bodies were absent, protected state was unchanged, and all raw output/install/temp state was removed"
     },
     {
-      "id": "EVD-P08-T3-R1-RECEIPT",
-      "command": "scripts/release/verify-codex-task3-receipt.sh --repo . --receipt-file reports/gates/p08/task-3.json --receipt-path reports/gates/p08/task-3.json --tip HEAD",
+      "id": "EVD-P08-T3-LIVE-GREEN",
+      "command": "CARGO_MANIFEST_DIR=\"$PWD\" rustc --edition=2024 --test tests/release/codex_acceptance.rs -o <temporary> && <temporary> committed_live_observation_binds_the_campaign_without_promoting_the_stale_p06_tuple --exact --nocapture",
       "exit": 0,
-      "result": "implementation subject SHA-256, aggregate, unique direct receipt-only child and descendant durability verified"
+      "result": "one focused test passed over the sanitized exact-candidate observation and fail-closed P06 mismatch"
     }
   ],
   "subjects": {
     "reports/release/codex-alpha.json": "109f84a1118a867d20fa8bb0796d1ca6dbc6306e395d38986ff713d93115c739",
+    "reports/release/codex-live-observation.json": "7c3a260f83b0b05ed09bf37f48293268e0625d8d77f95cee9689390c08e64ec2",
     "schemas/release/codex-clean-launch-capture.schema.json": "4efb65309afa7b2a70dd533b4d7ad6a38c431466b6ea2dc83eb500a930b5eaab",
     "scripts/release/accept-codex.sh": "d739d59924522d309151b7c2def92c91c225f36ec2f2b1600c381014b7d708d3",
-    "scripts/release/verify-codex-task3-receipt.sh": "ec55665bab1d4156934fe2db457d5eb0e01a975761aa78fe1a2e7be110c5683b",
-    "tests/release/codex_acceptance.rs": "6058e4efdf1728e09f1241031b674e4488230c571e1afafe8ecd5186d5cb6db6"
+    "scripts/release/verify-codex-task3-receipt.sh": "86a005197a3c46e771f77fb2ce94d568ae256844fbf114ceeba8cb5dd9e57d82",
+    "tests/release/codex_acceptance.rs": "c2d264af0f206448641df979a3a73ef7155f9cbadefbdc069cda624df39bd78f"
   },
   "subject_sha256": {
     "algorithm": "sha256 of sorted path, tab, sha256, newline records",
-    "value": "8eccb4d09d583a666a30b471758bc2a244cc78b04cde68017a8717231c7853d1"
+    "value": "9b19802088f8626f10fbd17e1d2dcf1fc5703866deb2285fd3c81ea58c09beda"
   },
-  "live_observation": "NOT_RUN",
-  "owner_gate_reason": "OWNER_GATE_REQUIRED_PROVIDER_PROCESS",
+  "live_observation": "OBSERVED_NOT_QUALIFIED",
+  "qualification_reason": "P06_EXACT_TUPLE_NOT_QUALIFIED_AND_CURRENT_TUPLE_MISMATCH",
   "controls": {
-    "production_p06_p04_paths_and_sha256_pinned": true,
-    "production_artifact_bytes_required": true,
-    "installed_archive_member_matches_external_tseal": true,
-    "developer_checkout_refused": true,
-    "capture_schema_closed_and_sha256_bound": true,
-    "exact_safe_argv": [
-      "tseal",
-      "codex",
-      "--"
-    ],
-    "p04_canary_ids_and_body_sha256_bound": true,
-    "startup_catalog_protected_cleanup_observations_bound": true,
-    "test_only_fixture_cannot_promote": true,
-    "atomic_output_and_post_write_verification": true,
-    "terminal_required": true,
-    "no_provider_process": true,
-    "network": false,
+    "exact_candidate_sha256": "ea8e60d2b4097ce766758bd70543628d0c15e9c7ab0ebc0d29d76c59da896b0c",
+    "current_codex_version": "0.146.1",
+    "current_codex_executable_sha256": "35d248101b211d6248ad4e6b8c1d441fe81236da87afb9f3e9ea51a049e9f179",
+    "required_p06_codex_version": "0.147.0",
+    "required_p06_qualification": "NOT_QUALIFIED",
+    "p06_tuple_match": false,
+    "provider_native_processes": 5,
+    "model_requests": 4,
+    "real_terminal_launch_and_relaunch": true,
+    "required_context_and_needed_body_observed": true,
+    "unused_protected_and_forbidden_bodies_absent": true,
+    "protected_state_unchanged": true,
+    "raw_output_retained": false,
+    "credential_or_keychain_read_by_taskseal": false,
+    "global_provider_context_isolation_proven": false,
+    "live_startup_context_byte_count_retained": false,
+    "fixture_promoted": false,
+    "claude_processes": 0,
     "browser_or_login": false,
-    "credential_read": false,
     "external_contact": false,
     "publication": false,
     "main_mutation": false,
