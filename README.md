@@ -2,8 +2,13 @@
 
 A clean-room launcher for coding-agent CLIs.
 
-## Launch your coding agent without unrelated instructions and skills.
+## Launch your coding agent through a clean-room boundary.
 
-Before your coding agent starts, Clean Room Launcher automatically prepares a clean, lightweight set of instructions and skills. Unrelated global rules, skills from other work, and forgotten instructions are not loaded, so you know what is guiding the agent. You do not need to review, remove, or change your existing setup—it stays exactly as it is.
+On the currently observed macOS Codex path, Clean Room Launcher starts the
+locally available CLI through a filesystem boundary. The boundary keeps the
+project available while denying documented global instruction and ambient skill
+roots for that launch.
 
-Use the automatic clean launch immediately. When you want full control, inspect exactly what the coding agent will receive, include or exclude individual rules and skills, and save reusable profiles for any project or workflow.
+Your existing provider setup is not changed: the launcher does not log in, copy
+credentials, or replace the coding-agent CLI. Public release, additional
+providers, profiles, and manual context selection are not claimed yet.

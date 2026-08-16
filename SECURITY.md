@@ -26,5 +26,5 @@ Do not incur research cost on the assumption that payment is available.
 
 ## Triage data boundary
 
-TaskSeal will never request credentials, provider tokens, transcripts or a copy
+Clean Room Launcher will never request credentials, provider tokens, transcripts or a copy
 of an unrestricted home directory for triage.
