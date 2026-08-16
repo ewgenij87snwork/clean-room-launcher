@@ -11,7 +11,7 @@ ruby -rjson -rdigest -e '
   abort unless candidate["qualification"] == "NOT_QUALIFIED"
   abort unless candidate.dig("artifact", "binary") == "clroom"
   abort unless candidate.dig("artifact", "package") == "clean-room-launcher"
-  abort unless candidate.fetch("known_blockers") == %w[PUBLICATION_NOT_AUTHORIZED NAMESPACE_OWNERSHIP_UNPROVEN EXTERNAL_INSTALL_NOT_RUN CODEX_CLEAN_LAUNCH_NOT_QUALIFIED]
+  abort unless candidate.fetch("known_blockers") == %w[PUBLICATION_NOT_AUTHORIZED NAMESPACE_OWNERSHIP_UNPROVEN EXTERNAL_INSTALL_NOT_RUN]
 
   prepared=JSON.parse(File.read("reports/release/clroom-codex-prepared.json"))
   hash=prepared.delete("output_sha256")
@@ -21,7 +21,8 @@ ruby -rjson -rdigest -e '
 
   expected={
     "reports/gates/p06/successors/clroom-macos-isolated-launch-v1/result.json"=>"15ba7ca41420c855475aab6ff4193914bdaad6dc945003cc32ea474a251755bf",
-    "reports/gates/p07/successors/clroom-packaging-v1/task-2.json"=>"62df830ef0c52e373fa112334e3f2f50bcc8434cdecc74a84c3acdd5004a4568"
+    "reports/gates/p07/successors/clroom-packaging-v1/task-2.json"=>"62df830ef0c52e373fa112334e3f2f50bcc8434cdecc74a84c3acdd5004a4568",
+    "reports/release/clroom-codex-live.json"=>"f96de7724aa5b187b57d689565cda3575c234cf9f58f562270c88a2bfc55ff8b"
   }
   expected.each { |path, digest| abort unless Digest::SHA256.file(path).hexdigest == digest }
 ' || { echo P08_CLROOM_LOCAL_REFUSED:EVIDENCE >&2; exit 1; }

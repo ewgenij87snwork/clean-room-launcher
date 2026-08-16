@@ -8,7 +8,8 @@ class Refused < StandardError; end
 
 RECEIPTS = {
   "P06" => ["reports/gates/p06/successors/clroom-macos-isolated-launch-v1/result.json", "15ba7ca41420c855475aab6ff4193914bdaad6dc945003cc32ea474a251755bf"],
-  "P07" => ["reports/gates/p07/successors/clroom-packaging-v1/task-2.json", "62df830ef0c52e373fa112334e3f2f50bcc8434cdecc74a84c3acdd5004a4568"]
+  "P07" => ["reports/gates/p07/successors/clroom-packaging-v1/task-2.json", "62df830ef0c52e373fa112334e3f2f50bcc8434cdecc74a84c3acdd5004a4568"],
+  "LIVE_CODEX" => ["reports/release/clroom-codex-live.json", "f96de7724aa5b187b57d689565cda3575c234cf9f58f562270c88a2bfc55ff8b"]
 }.freeze
 PRIVATE = %r{/(?:Users|home)/|ghp_[A-Za-z0-9]+|sk-[A-Za-z0-9_-]+}
 
@@ -50,8 +51,10 @@ def collect(args)
   receipts = RECEIPTS.map { |plan, (path, sha)| read_receipt(root, plan, path, sha) }
   p06 = JSON.parse(File.read(File.join(root, RECEIPTS.fetch("P06").first)))
   p07 = JSON.parse(File.read(File.join(root, RECEIPTS.fetch("P07").first)))
+  live = JSON.parse(File.read(File.join(root, RECEIPTS.fetch("LIVE_CODEX").first)))
   refuse("P06_BOUNDARY_UNPROVEN") unless p06["schema_version"] == "clroom.macos-isolated-launch.result.v1" && p06["process_count"] == 1 && p06["real_help_exit_class"] == "HELP_EXIT_0" && p06["raw_retained"] == false
   refuse("P07_PACKAGING_UNPROVEN") unless p07["schema_version"] == "taskseal.p07.clroom-packaging.v1" && p07["result"] == "PASS" && p07.dig("artifact", "contains_only_binary") == "bin/clroom" && p07.dig("lifecycle", "cleanup_complete") == true
+  refuse("LIVE_CODEX_UNPROVEN") unless live["schema_version"] == "clroom.codex-live-acceptance.v1" && live["result"] == "PASS_EXACT_TUPLE" && live["artifact_sha256"] == digest && live["process_count"] == 1 && live["marker_observed"] == true && live["raw_output_retained"] == false && live["cleanup_complete"] == true
   dossier = {
     "schema_version" => "clroom.release-dossier.v1",
     "candidate_commit" => args.fetch("--candidate-commit"),
@@ -59,7 +62,7 @@ def collect(args)
     "qualification" => "NOT_QUALIFIED",
     "artifact" => { "filename" => File.basename(artifact), "sha256" => digest, "binary" => "clroom", "package" => "clean-room-launcher" },
     "receipts" => receipts,
-    "known_blockers" => ["PUBLICATION_NOT_AUTHORIZED", "NAMESPACE_OWNERSHIP_UNPROVEN", "EXTERNAL_INSTALL_NOT_RUN", "CODEX_CLEAN_LAUNCH_NOT_QUALIFIED"]
+    "known_blockers" => ["PUBLICATION_NOT_AUTHORIZED", "NAMESPACE_OWNERSHIP_UNPROVEN", "EXTERNAL_INSTALL_NOT_RUN"]
   }
   encoded = JSON.generate(dossier) + "\n"
   File.write(args.fetch("--output"), encoded)
