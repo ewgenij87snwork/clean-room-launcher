@@ -28,7 +28,7 @@ find "$root" \( -name .git -o -name target -o -name .taskseal-dev \) -prune -o -
 while IFS= read -r file; do
   relative=${file#"$root"/}
   case "$relative" in
-    AGENTS.md|README.md|Cargo.toml|Cargo.lock|rust-toolchain.toml|LICENSE|SECURITY.md|GOVERNANCE.md|CHANGELOG.md|deny.toml|.gitignore|schemas/canonical-json-profile.md) ;;
+    AGENTS.md|README.md|Cargo.toml|Cargo.lock|rust-toolchain.toml|LICENSE|SECURITY.md|GOVERNANCE.md|CHANGELOG.md|deny.toml|.gitignore|.github/CODEOWNERS|.github/workflows/ci.yml|.github/workflows/release-candidate.yml|schemas/canonical-json-profile.md) ;;
     src/*|schemas/contracts/*|fixtures/contracts/*|fixtures/core/*|fixtures/catalog/*|fixtures/cli/*|fixtures/adapters/*|adapters/declarations/*|tests/contracts/*|tests/core/*|tests/catalog/*|tests/cli.rs|tests/cli/*|tests/fixtures/*|tests/adapters.rs|tests/adapters/*|controls/*|scripts/check-public-boundary.sh|scripts/check-control-coverage.rb|scripts/probe/provider-capabilities.sh|scripts/gates/p02/*|scripts/gates/p03/*|scripts/gates/p04/*|scripts/gates/p05/*|scripts/gates/p06/*|reports/contracts/*|reports/gates/p02/*|reports/gates/p03/*|reports/gates/p04/*|reports/gates/p05/*|reports/gates/p06/*) ;;
     *) echo "UNALLOWLISTED_PUBLIC_PATH:$relative" >&2; exit 11 ;;
   esac
