@@ -1,0 +1,54 @@
+{
+  "schema_version": "taskseal.p06.public-release-inventory.v1",
+  "result": "PASS",
+  "public_paths": [
+    ".github/workflows",
+    ".gitignore",
+    "CHANGELOG.md",
+    "Cargo.lock",
+    "Cargo.toml",
+    "GOVERNANCE.md",
+    "LICENSE",
+    "SECURITY.md",
+    "adapters/declarations",
+    "controls",
+    "deny.toml",
+    "docs",
+    "fixtures/adapters",
+    "fixtures/catalog",
+    "fixtures/cli",
+    "fixtures/contracts",
+    "fixtures/core",
+    "packaging",
+    "qualification/public-release-inventory-v1.json",
+    "reports/contracts",
+    "reports/release",
+    "rust-toolchain.toml",
+    "schemas/canonical-json-profile.md",
+    "schemas/contracts",
+    "schemas/release",
+    "scripts/check-control-coverage.rb",
+    "scripts/check-public-boundary.sh",
+    "scripts/probe",
+    "scripts/release",
+    "scripts/release-build",
+    "src",
+    "tests"
+  ],
+  "conditional_public_paths": [
+    ".github/CODEOWNERS",
+    "README.md",
+    "site"
+  ],
+  "excluded_internal_paths": [
+    ".taskseal-dev",
+    "reports/gates",
+    "scripts/gates"
+  ],
+  "negative_fixture_paths": [
+    "tests/fixtures",
+    "tests/release/audit_fixtures"
+  ],
+  "generic_fixture_root": "/workspace/taskseal",
+  "history_policy": "IMMUTABLE_INTERNAL_EVIDENCE_EXCLUDED_FROM_PUBLIC_SOURCE"
+}
