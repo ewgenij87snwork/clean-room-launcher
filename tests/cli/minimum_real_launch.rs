@@ -111,8 +111,13 @@ fn interactive_enter_launches_fake_codex_through_the_isolated_boundary() {
         "Project  {}",
         project.canonicalize().unwrap().display()
     )));
-    assert!(transcript.contains("Protects global instructions and ambient skills"));
+    assert!(transcript.contains("Boundary active · global AGENTS.md and ambient skills excluded"));
+    assert!(transcript.contains("Defaults hooks/plugins off · explicit user overrides win"));
+    assert!(transcript.contains(
+        "Notice   Codex may show `Operation not permitted` for blocked ambient files; expected"
+    ));
     assert!(transcript.contains("Action   Launch Codex"));
+    assert!(!transcript.contains("Launch succeeded"));
 }
 
 #[test]

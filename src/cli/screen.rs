@@ -118,7 +118,10 @@ pub fn render_isolated_preview(project: &Path, provider: &str) -> Vec<String> {
     vec![
         "Clean Room Launcher".to_owned(),
         format!("Project  {}", project.display()),
-        "Protects global instructions and ambient skills".to_owned(),
+        "Boundary active · global AGENTS.md and ambient skills excluded".to_owned(),
+        "Defaults hooks/plugins off · explicit user overrides win".to_owned(),
+        "Notice   Codex may show `Operation not permitted` for blocked ambient files; expected"
+            .to_owned(),
         format!("Provider {provider} · existing provider state stays untouched"),
         "Action   Launch Codex".to_owned(),
     ]
