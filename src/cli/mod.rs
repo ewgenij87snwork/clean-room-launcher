@@ -104,10 +104,10 @@ fn launch_isolated_codex(args: &[String]) -> Result<ExitCode, String> {
         "CLROOM_ISOLATION_INVALID: current project or context boundary is invalid; continue locally"
             .to_owned()
     })?;
-    if std::io::stdout().is_terminal() {
-        println!(
+    if std::io::stderr().is_terminal() {
+        eprintln!(
             "{}",
-            screen::render_isolated_preview(&plan.project, "Codex").join("\n")
+            screen::render_isolated_preview(&plan.project).join("\n")
         );
     }
     process::launch_isolated_codex(&plan, &executable, args)

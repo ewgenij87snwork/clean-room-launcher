@@ -107,16 +107,12 @@ fn interactive_enter_launches_fake_codex_through_the_isolated_boundary() {
     );
     assert_eq!(fs::read_to_string(&capture).unwrap(), "isolated-enter");
     let transcript = String::from_utf8(output.stdout).unwrap().replace('\r', "");
-    assert!(transcript.contains(&format!(
-        "Project  {}",
-        project.canonicalize().unwrap().display()
-    )));
-    assert!(transcript.contains("Boundary active · global AGENTS.md and ambient skills excluded"));
-    assert!(transcript.contains("Defaults hooks/plugins off · explicit user overrides win"));
-    assert!(transcript.contains(
-        "Notice   Codex may show `Operation not permitted` for blocked ambient files; expected"
-    ));
-    assert!(transcript.contains("Action   Launch Codex"));
+    assert!(transcript.contains("CLEAN ROOM"));
+    assert!(transcript.contains("Global AGENTS.md"));
+    assert!(transcript.contains("Global skills"));
+    assert!(transcript.contains("Hooks/plugins"));
+    assert!(transcript.contains("Dev prompt"));
+    assert!(transcript.contains("Notifications"));
     assert!(!transcript.contains("Launch succeeded"));
 }
 

@@ -7,7 +7,7 @@ use std::{
 
 static SCRATCH_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 
-const CODEX_CLEAN_DEFAULTS: &str = "-c\0features.hooks=false\0-c\0features.plugins=false\0-c\0developer_instructions=\"\"\0-c\0notify=[]\0";
+const CODEX_CLEAN_DEFAULTS: &str = "-c\0features.apps=false\0-c\0features.hooks=false\0-c\0features.plugins=false\0-c\0developer_instructions=\"\"\0-c\0notify=[]\0";
 
 fn fake_codex() -> (PathBuf, PathBuf) {
     let dir = std::env::temp_dir().join(format!(

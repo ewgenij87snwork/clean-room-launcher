@@ -5,18 +5,51 @@ mod screen;
 use std::path::Path;
 
 #[test]
-fn isolated_preview_names_the_actual_project_boundary_and_explicit_launch() {
-    // Break caught: the visible launch screen is static or implies changed provider state.
-    let project = Path::new("/private/tmp/clroom-preview-project");
-    let output = screen::render_isolated_preview(project, "Codex").join("\n");
+fn isolated_preview_renders_the_accepted_plain_launch_receipt() {
+    // Break caught: the approved receipt geometry, spacing, or boundary claims drift.
+    let output = screen::render_isolated_preview_for(
+        Path::new("/private/tmp/clroom-preview-project"),
+        screen::RenderContext {
+            width: 100,
+            interactive: true,
+            plain: true,
+        },
+    )
+    .join("\n");
 
-    assert!(output.contains("Project  /private/tmp/clroom-preview-project"));
-    assert!(output.contains("Boundary active · global AGENTS.md and ambient skills excluded"));
-    assert!(output.contains("Defaults hooks/plugins off · explicit user overrides win"));
-    assert!(output.contains(
-        "Notice   Codex may show `Operation not permitted` for blocked ambient files; expected"
-    ));
-    assert!(output.contains("Provider Codex · existing provider state stays untouched"));
-    assert!(output.contains("Action   Launch Codex"));
-    assert!(!output.contains("Launch succeeded"));
+    assert_eq!(
+        output,
+        "\n\n\n\
+╓──○──╖ ╭─ CLEAN ROOM ──────────────────╮\n\
+║░░░░░║⠒│                               │\n\
+║░░░░░║⠒│     Global AGENTS.md  off     │\n\
+║░░░░░║⠒│     Global skills     off     │\n\
+║░░░░░║⠒│     Apps              off     │\n\
+║░░░░░║⠒│     Hooks/plugins     off     │\n\
+║░░░░░║⠒│     Dev prompt        off     │\n\
+║░░░░░║⠒│     Notifications     off     │\n\
+║░░░░░║⠒│                               │\n\
+╙──○──╜ ╰───────────────────────────────╯\n"
+    );
+}
+
+#[test]
+fn isolated_preview_styles_only_the_visual_hierarchy() {
+    // Break caught: ANSI styling changes the receipt text or its five-cell inset.
+    let output = screen::render_isolated_preview_for(
+        Path::new("/tmp/project"),
+        screen::RenderContext {
+            width: 100,
+            interactive: true,
+            plain: false,
+        },
+    )
+    .join("\n");
+
+    assert!(output.starts_with("\n\n\n\u{1b}[2m╓──○──╖\u{1b}[0m "));
+    assert!(output.contains("\u{1b}[1;36mCLEAN ROOM\u{1b}[0m"));
+    assert!(
+        output.contains("\u{1b}[2m║░░░░░║⠒│\u{1b}[0m     \u{1b}[1mGlobal AGENTS.md\u{1b}[0m  off")
+    );
+    assert!(!output.contains("/tmp/project"));
 }

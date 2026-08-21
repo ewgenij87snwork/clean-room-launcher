@@ -114,17 +114,95 @@ pub fn render_unqualified_for(ready: PrepareReady, context: RenderContext) -> Ve
         .collect()
 }
 
-pub fn render_isolated_preview(project: &Path, provider: &str) -> Vec<String> {
-    vec![
-        "Clean Room Launcher".to_owned(),
-        format!("Project  {}", project.display()),
-        "Boundary active · global AGENTS.md and ambient skills excluded".to_owned(),
-        "Defaults hooks/plugins off · explicit user overrides win".to_owned(),
-        "Notice   Codex may show `Operation not permitted` for blocked ambient files; expected"
-            .to_owned(),
-        format!("Provider {provider} · existing provider state stays untouched"),
-        "Action   Launch Codex".to_owned(),
-    ]
+pub fn render_isolated_preview(project: &Path) -> Vec<String> {
+    let width = std::env::var("COLUMNS")
+        .ok()
+        .and_then(|value| value.parse::<usize>().ok())
+        .filter(|width| *width >= 20)
+        .unwrap_or(80);
+    let interactive = std::io::stderr().is_terminal();
+    let plain = !interactive
+        || std::env::var_os("NO_COLOR").is_some()
+        || std::env::var("TERM").is_ok_and(|term| term.eq_ignore_ascii_case("dumb"));
+    render_isolated_preview_for(
+        project,
+        RenderContext {
+            width,
+            interactive,
+            plain,
+        },
+    )
+}
+
+pub fn render_isolated_preview_for(_project: &Path, context: RenderContext) -> Vec<String> {
+    let styled = context.interactive && !context.plain;
+    let panel_width = 33;
+    let content_width = panel_width - 4;
+    let title = "CLEAN ROOM";
+    let title_border = "─".repeat(panel_width - title.chars().count() - 5);
+    let border = "─".repeat(panel_width - 2);
+    // Visual model: a wall-mounted boundary status plaque. The seven-cell mounting
+    // rail stays fixed at the left; one-cell standoff markers connect it to the
+    // right plaque. Plaque height follows `rows` automatically. If row text grows,
+    // change `panel_width` and the exact receipt test together—never hand-pad height.
+    let mounting_rail_top = "╓──○──╖";
+    let mounting_rail_bottom = "╙──○──╜";
+    let mounting_rail_fill = "║░░░░░║";
+    let standoff_marker = "⠒";
+    let mut lines = vec![String::new(), String::new(), String::new()];
+    lines.push(if styled {
+        format!(
+            "\u{1b}[2m{mounting_rail_top}\u{1b}[0m \u{1b}[2m╭─ \u{1b}[0m\u{1b}[1;36m{title}\u{1b}[0m\u{1b}[2m {title_border}╮\u{1b}[0m"
+        )
+    } else {
+        format!("{mounting_rail_top} ╭─ {title} {title_border}╮")
+    });
+    let rows = [
+        ("", ""),
+        (
+            "    Global AGENTS.md  off",
+            "    \u{1b}[1mGlobal AGENTS.md\u{1b}[0m  off",
+        ),
+        (
+            "    Global skills     off",
+            "    \u{1b}[1mGlobal skills\u{1b}[0m     off",
+        ),
+        (
+            "    Apps              off",
+            "    \u{1b}[1mApps\u{1b}[0m              off",
+        ),
+        (
+            "    Hooks/plugins     off",
+            "    \u{1b}[1mHooks/plugins\u{1b}[0m     off",
+        ),
+        (
+            "    Dev prompt        off",
+            "    \u{1b}[1mDev prompt\u{1b}[0m        off",
+        ),
+        (
+            "    Notifications     off",
+            "    \u{1b}[1mNotifications\u{1b}[0m     off",
+        ),
+        ("", ""),
+    ];
+    for (plain, decorated) in rows {
+        let padding = " ".repeat(content_width.saturating_sub(plain.chars().count()));
+        lines.push(if styled {
+            format!(
+                "\u{1b}[2m{mounting_rail_fill}{standoff_marker}│\u{1b}[0m {}{padding} \u{1b}[2m│\u{1b}[0m",
+                decorated
+            )
+        } else {
+            format!("{mounting_rail_fill}{standoff_marker}│ {plain}{padding} │")
+        });
+    }
+    lines.push(if styled {
+        format!("\u{1b}[2m{mounting_rail_bottom} ╰{border}╯\u{1b}[0m")
+    } else {
+        format!("{mounting_rail_bottom} ╰{border}╯")
+    });
+    lines.push(String::new());
+    lines
 }
 
 fn labelled_value(line: &str) -> Option<(&'static str, &str)> {

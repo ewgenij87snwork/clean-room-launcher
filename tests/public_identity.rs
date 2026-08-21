@@ -76,6 +76,7 @@ fn clroom_is_the_only_public_identity_and_preserves_the_native_codex_process() {
             .unwrap()
     };
     let clean_defaults = concat!(
+        "-c\0features.apps=false\0",
         "-c\0features.hooks=false\0",
         "-c\0features.plugins=false\0",
         "-c\0developer_instructions=\"\"\0",

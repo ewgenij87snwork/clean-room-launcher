@@ -13,6 +13,8 @@ pub const ZERO_AUTH_REFUSAL: &str = "ZERO_AUTH_REFUSAL: provider-native preauthe
 
 const CODEX_CLEAN_DEFAULTS: &[&str] = &[
     "-c",
+    "features.apps=false",
+    "-c",
     "features.hooks=false",
     "-c",
     "features.plugins=false",

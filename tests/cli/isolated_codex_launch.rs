@@ -11,6 +11,8 @@ static SCRATCH_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 
 const CODEX_CLEAN_DEFAULTS: &[&str] = &[
     "-c",
+    "features.apps=false",
+    "-c",
     "features.hooks=false",
     "-c",
     "features.plugins=false",
@@ -149,6 +151,8 @@ fn codex_handoff_keeps_explicit_user_overrides_after_clean_defaults() {
     let (_root, project, home, codex_home, bin) = isolated_fixture();
     let capture = bin.join("override-capture");
     let user_args = [
+        "--enable",
+        "apps",
         "--enable",
         "hooks",
         "--enable",
