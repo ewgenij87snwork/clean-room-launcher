@@ -6,9 +6,9 @@ From any project on macOS/Apple Silicon:
 clroom codex
 ```
 
-Before Codex starts, the launcher names the project, confirms that the
-clean-room boundary is active, lists its temporary defaults, and explains the
-expected blocked-file warning.
+Before Codex starts, the launcher prints a compact boundary status plaque. It
+shows global instructions and skills blocked, and apps, hooks, plugins,
+developer instructions and notifications disabled by default.
 
 Use ordinary Codex commands unchanged:
 
@@ -20,7 +20,7 @@ clroom codex exec "summarize this repository"
 Explicit arguments retain final priority:
 
 ```sh
-clroom codex --enable hooks --enable plugins
+clroom codex --enable apps --enable hooks --enable plugins
 ```
 
 The launcher never performs login. If `codex` is missing, it stops locally with

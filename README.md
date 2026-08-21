@@ -1,7 +1,7 @@
 # Clean Room Launcher
 
 A small macOS launcher that starts your existing Codex CLI with ambient agent
-instructions, skills, hooks and notifications out of the way.
+instructions, skills, apps, hooks, plugins and notifications out of the way.
 
 ![Clean Room Launcher alpha demo](docs/assets/clroom-alpha.gif)
 
@@ -10,8 +10,8 @@ cleaner starting point:
 
 - blocks reads of global Codex `AGENTS.md` files and ambient skill roots with
   the built-in macOS sandbox;
-- starts Codex with hooks and plugins off, empty developer instructions and no
-  notifications;
+- starts Codex with apps, hooks and plugins off, empty developer instructions
+  and no notifications;
 - appends your Codex arguments last, so an explicit user override still wins;
 - leaves provider authentication and configuration untouched.
 
@@ -45,7 +45,7 @@ clroom codex
 
 Codex may print `Operation not permitted` when it probes a blocked global
 `AGENTS.md` file. That warning is expected: the clean-room boundary denied the
-read. The launcher explains this before handing the terminal to Codex.
+read. The launch plaque marks global `AGENTS.md` as off before Codex starts.
 
 ## Install with Cargo
 
@@ -63,6 +63,7 @@ No crates.io package is published for this alpha.
 `clroom codex [ARGS...]` starts Codex with these defaults first:
 
 ```text
+-c features.apps=false
 -c features.hooks=false
 -c features.plugins=false
 -c developer_instructions=""
@@ -72,7 +73,7 @@ No crates.io package is published for this alpha.
 Your arguments come after them. For example, this deliberately opts back in:
 
 ```sh
-clroom codex --enable hooks --enable plugins
+clroom codex --enable apps --enable hooks --enable plugins
 ```
 
 ## Security boundary

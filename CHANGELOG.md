@@ -15,14 +15,14 @@ Semantic Versioning after the first public release.
   Silicon.
 - A macOS Seatbelt boundary that blocks global Codex instructions and known
   ambient skill roots while retaining project access.
-- Clean launch defaults for hooks, plugins, developer instructions and
+- Clean launch defaults for apps, hooks, plugins, developer instructions and
   notifications, with explicit user arguments retaining final priority.
 - Deterministic unsigned macOS/arm64 archive and `SHA256SUMS` verification.
 
 ### Changed
 
-- The pre-launch screen now explains the active boundary and the expected
-  blocked-file warning from Codex.
+- The pre-launch screen is a compact boundary status plaque that reports the
+  enforced global boundary and temporary Codex defaults without delaying exec.
 
 ### Deprecated
 

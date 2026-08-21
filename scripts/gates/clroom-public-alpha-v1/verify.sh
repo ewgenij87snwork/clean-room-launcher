@@ -49,6 +49,7 @@ test "$(sed -n 's/^version = "\([^"]*\)"/\1/p' Cargo.toml | head -1)" = 0.1.0-al
   || refuse PACKAGE_VERSION
 grep -Fq 'docs/assets/clroom-alpha.gif' README.md || refuse README_GIF
 grep -Fq 'explicit user override still wins' README.md || refuse README_OVERRIDE
+grep -Fq 'features.apps=false' README.md || refuse README_APPS_DEFAULT
 grep -Fq 'unsigned and unnotarized' README.md || refuse README_ALPHA_BOUNDARY
 grep -Fq 'Operation not permitted' README.md || refuse README_WARNING
 grep -Fq '## [0.1.0-alpha.1]' CHANGELOG.md || refuse CHANGELOG_VERSION
@@ -128,18 +129,19 @@ rustc fixtures/cli/fake-provider.rs -o "$fake_root/bin/codex"
 CLROOM_CAPTURE_PATH="$fake_root/argv" \
 HOME="$fake_root/home" CODEX_HOME="$fake_root/home/.codex" \
 PATH="$fake_root/bin:/usr/bin:/bin" \
-  "$installed" codex --enable hooks --enable plugins features list
+  "$installed" codex --enable apps --enable hooks --enable plugins features list
 python3 - "$fake_root/argv" <<'PY'
 import pathlib, sys
 args = pathlib.Path(sys.argv[1]).read_bytes().split(b"\0")
 if args[-1:] == [b""]:
     args.pop()
 expected = [
+    b"-c", b"features.apps=false",
     b"-c", b"features.hooks=false",
     b"-c", b"features.plugins=false",
     b"-c", b'developer_instructions=""',
     b"-c", b"notify=[]",
-    b"--enable", b"hooks", b"--enable", b"plugins",
+    b"--enable", b"apps", b"--enable", b"hooks", b"--enable", b"plugins",
     b"features", b"list",
 ]
 if args != expected:
@@ -187,13 +189,13 @@ jq -n \
     host:"macOS/arm64",
     checks:{
       public_boundary:true,
-      cli_tests:58,
+      cli_tests:59,
       authority_bootstrap_tests:2,
       archive_verified:true,
       archive_install_help_exit_zero:true,
       cargo_install_completed:true,
       cargo_install_help_prefix_observed:true,
-      clean_defaults:4,
+      clean_defaults:5,
       user_arguments_after_defaults:true
     },
     focused_public_identity_pass:true,
