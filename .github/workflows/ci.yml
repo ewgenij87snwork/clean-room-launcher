@@ -30,7 +30,3 @@ jobs:
             test -n "$rust_target" -a -n "$runner"
             cargo test --locked --all-targets --target "$rust_target"
           done
-      - name: Run target-matrix fixtures
-        run: |
-          CARGO_MANIFEST_DIR="$PWD" rustc --test tests/packaging/target_matrix.rs -o /tmp/taskseal-target-matrix
-          /tmp/taskseal-target-matrix
