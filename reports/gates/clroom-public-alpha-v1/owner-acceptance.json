@@ -1,0 +1,18 @@
+{
+  "schema_version": "clroom.public-alpha.owner-acceptance.v1",
+  "plan_id": "P08-CLROOM-PUBLIC-ALPHA-V1",
+  "runtime_commit": "0c8eb92921dc9b552bb5910f025bb0b31e73dd4e",
+  "owner_observed": true,
+  "offline_defaults_disabled": true,
+  "offline_user_overrides_enabled": true,
+  "real_provider_requests": 1,
+  "response_contract_pass": true,
+  "ambient_stop_hooks_observed": false,
+  "global_agents_denied_warning_observed": true,
+  "raw_prompt_retained": false,
+  "raw_provider_output_retained": false,
+  "screenshot_retained": false,
+  "provider_state_inspected": false,
+  "credential_accessed": false,
+  "result": "PASS"
+}
