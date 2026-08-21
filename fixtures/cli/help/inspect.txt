@@ -1,0 +1,10 @@
+Clean Room Launcher — inspect
+
+Inspect one skill decision without changing state.
+
+Usage: clroom inspect <skill>
+
+Example:
+  clroom inspect skill:rust
+
+For more: clroom help

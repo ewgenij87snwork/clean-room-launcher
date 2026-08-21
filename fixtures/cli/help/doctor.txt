@@ -1,0 +1,10 @@
+Clean Room Launcher — doctor
+
+Check installation safely without changing state.
+
+Usage: clroom doctor --root <path>
+
+Example:
+  clroom doctor --root .
+
+For more: clroom help

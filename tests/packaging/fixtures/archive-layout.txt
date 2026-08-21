@@ -1,0 +1,5 @@
+clean-room-launcher-v0.1.0/bin
+clean-room-launcher-v0.1.0/bin/clroom
+clean-room-launcher-v0.1.0/LICENSE
+clean-room-launcher-v0.1.0/NOTICE
+clean-room-launcher-v0.1.0/VERSION

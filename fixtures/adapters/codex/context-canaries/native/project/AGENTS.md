@@ -1,0 +1,2 @@
+For the native context canary, retain this instruction code:
+4395db3ed4c16654d9c9a5d0af713a0d6019c0fdc6c18a10acbd5f69bd688a6b

@@ -1,0 +1,17 @@
+Clean Room Launcher
+A clean-room launcher for coding-agent CLIs.
+
+Usage: clroom [COMMAND]
+
+Start with:
+  clroom                 Review setup before a provider launch
+  clroom codex [ARGS...] Launch the installed Codex CLI natively
+  clroom doctor --root . Check installation safely
+
+Learn:
+  clroom help inspect    Explain an available skill decision
+
+Commands:
+  help [COMMAND]        Show concise help
+  inspect <skill>       Inspect a skill decision
+  explain <skill>       Explain a skill decision

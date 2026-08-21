@@ -1,0 +1,29 @@
+[advisories]
+unmaintained = "workspace"
+
+[licenses]
+confidence-threshold = 0.93
+include-dev = true
+include-build = true
+unused-license-exception = "deny"
+allow = [
+  "Apache-2.0",
+  "BSD-3-Clause",
+  "MIT",
+  "MPL-2.0",
+  "Unicode-3.0",
+]
+exceptions = [
+  { crate = "borrow-or-share@0.2.4", allow = ["MIT-0"] },
+  { crate = "foldhash@0.2.0", allow = ["Zlib"] },
+  { crate = "winx@0.36.4", allow = ["Apache-2.0 WITH LLVM-exception"] },
+]
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]

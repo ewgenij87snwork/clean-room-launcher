@@ -1,0 +1,7 @@
+Clean Room Launcher
+A clean-room launcher for coding-agent CLIs.
+
+Command  clroom codex [ARGS...]
+Provider Codex · local preauthenticated session only · nothing launched
+Writes   .clroom/project.json + .clroom/out/ · nothing yet
+Leaves   ~/.codex · Git/provider state unchanged

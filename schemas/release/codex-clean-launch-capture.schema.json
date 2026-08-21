@@ -1,0 +1,173 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://taskseal.invalid/schemas/release/codex-clean-launch-capture.schema.json",
+  "title": "TaskSeal Codex clean-launch capture",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "capture_mode",
+    "promotion_eligible",
+    "live_observation",
+    "terminal",
+    "argv",
+    "artifact_provenance",
+    "canaries",
+    "startup",
+    "catalog",
+    "protected_state",
+    "cleanup"
+  ],
+  "properties": {
+    "schema_version": { "const": "taskseal.codex-clean-launch-capture.v1" },
+    "capture_mode": { "enum": ["TEST_ONLY_FIXTURE", "OWNER_AUTHORIZED_LIVE"] },
+    "promotion_eligible": { "type": "boolean" },
+    "live_observation": { "enum": ["NOT_RUN", "OBSERVED"] },
+    "terminal": { "const": true },
+    "argv": {
+      "const": ["tseal", "codex", "--"]
+    },
+    "artifact_provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "install_source",
+        "archive_sha256",
+        "installed_tseal_sha256",
+        "installed_path_class",
+        "developer_checkout"
+      ],
+      "properties": {
+        "install_source": { "const": "RELEASE_ARCHIVE" },
+        "archive_sha256": { "$ref": "#/$defs/sha256" },
+        "installed_tseal_sha256": { "$ref": "#/$defs/sha256" },
+        "installed_path_class": { "const": "EXTERNAL_INSTALL_PREFIX" },
+        "developer_checkout": { "const": false }
+      }
+    },
+    "canaries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["needed", "unused", "protected"],
+      "properties": {
+        "needed": { "$ref": "#/$defs/needed" },
+        "unused": { "$ref": "#/$defs/unused" },
+        "protected": { "$ref": "#/$defs/unused" }
+      }
+    },
+    "startup": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "context_sha256",
+        "context_bytes",
+        "compact_screen",
+        "clean_startup",
+        "full_bodies_visible"
+      ],
+      "properties": {
+        "context_sha256": { "$ref": "#/$defs/sha256" },
+        "context_bytes": { "type": "integer", "minimum": 0 },
+        "compact_screen": { "const": true },
+        "clean_startup": { "const": true },
+        "full_bodies_visible": { "const": 0 }
+      }
+    },
+    "catalog": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "admitted",
+        "loaded_now",
+        "needed_name_visible",
+        "unused_body_present",
+        "invoked_body_available"
+      ],
+      "properties": {
+        "admitted": { "type": "integer", "minimum": 1 },
+        "loaded_now": { "const": 0 },
+        "needed_name_visible": { "const": true },
+        "unused_body_present": { "const": false },
+        "invoked_body_available": { "const": true }
+      }
+    },
+    "protected_state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["before_sha256", "after_sha256", "unchanged"],
+      "properties": {
+        "before_sha256": { "$ref": "#/$defs/sha256" },
+        "after_sha256": { "$ref": "#/$defs/sha256" },
+        "unchanged": { "const": true }
+      }
+    },
+    "cleanup": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["exit", "relaunch", "uninstall"],
+      "properties": {
+        "exit": { "enum": ["NOT_RUN", "OBSERVED_PASS"] },
+        "relaunch": { "enum": ["NOT_RUN", "OBSERVED_PASS"] },
+        "uninstall": { "enum": ["NOT_RUN", "OBSERVED_PASS"] }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "capture_mode": { "const": "TEST_ONLY_FIXTURE" } } },
+      "then": {
+        "properties": {
+          "promotion_eligible": { "const": false },
+          "live_observation": { "const": "NOT_RUN" },
+          "cleanup": {
+            "properties": {
+              "exit": { "const": "NOT_RUN" },
+              "relaunch": { "const": "NOT_RUN" },
+              "uninstall": { "const": "NOT_RUN" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "capture_mode": { "const": "OWNER_AUTHORIZED_LIVE" } } },
+      "then": {
+        "properties": {
+          "promotion_eligible": { "const": true },
+          "live_observation": { "const": "OBSERVED" },
+          "cleanup": {
+            "properties": {
+              "exit": { "const": "OBSERVED_PASS" },
+              "relaunch": { "const": "OBSERVED_PASS" },
+              "uninstall": { "const": "OBSERVED_PASS" }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "needed": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "body_sha256"],
+      "properties": {
+        "id": { "const": "a" },
+        "body_sha256": { "const": "5f07933adc98d602398359e57783d348658eaa60fa7907da263b53291f8184b1" }
+      }
+    },
+    "unused": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "body_sha256"],
+      "properties": {
+        "id": { "const": "b" },
+        "body_sha256": { "const": "32eea1ee666999e53a16feb944d355ef49bcff8ec379a3e02ee690172752f55e" }
+      }
+    }
+  }
+}

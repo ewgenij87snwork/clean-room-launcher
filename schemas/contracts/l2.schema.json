@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://taskseal.org/schemas/l2.v2.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "scope_id", "scope_kind", "parent_scope_ids", "sections", "provenance", "approval", "source_hashes"],
+  "properties": {
+    "schema_version": { "const": "l2.v2" },
+    "scope_id": { "$ref": "#/$defs/id" },
+    "scope_kind": { "enum": ["policy", "repo", "workspace", "package", "local-overlay"] },
+    "parent_scope_ids": { "type": "array", "uniqueItems": true, "maxItems": 32, "items": { "$ref": "#/$defs/id" } },
+    "sections": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "replace": { "$ref": "#/$defs/stringMap" },
+        "append_unique": { "$ref": "#/$defs/stringList" },
+        "deny_union": { "$ref": "#/$defs/stringList" },
+        "map_override": { "$ref": "#/$defs/stringMap" },
+        "ordered_chain": { "$ref": "#/$defs/stringList" },
+        "no_inherit": { "$ref": "#/$defs/stringMap" }
+      }
+    },
+    "provenance": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 256,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["source_id", "source_kind", "source_ref", "sha256"],
+        "properties": {
+          "source_id": { "$ref": "#/$defs/id" },
+          "source_kind": { "enum": ["project", "user-snapshot", "org-policy", "generated", "imported", "native-skill"] },
+          "source_ref": { "type": "string", "minLength": 1, "maxLength": 1024, "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$" },
+          "sha256": { "$ref": "#/$defs/sha256" }
+        }
+      }
+    },
+    "approval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "receipt_id"],
+      "properties": {
+        "status": { "enum": ["unreviewed", "approved", "rejected", "superseded"] },
+        "receipt_id": { "type": ["string", "null"], "minLength": 1, "maxLength": 200 }
+      }
+    },
+    "source_hashes": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 256,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["source_id", "sha256"],
+        "properties": { "source_id": { "$ref": "#/$defs/id" }, "sha256": { "$ref": "#/$defs/sha256" } }
+      }
+    }
+  },
+  "$defs": {
+    "id": { "type": "string", "minLength": 1, "maxLength": 200, "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]*$" },
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "stringList": { "type": "array", "minItems": 1, "maxItems": 1024, "uniqueItems": true, "items": { "type": "string", "minLength": 1, "maxLength": 4096 } },
+    "stringMap": { "type": "object", "minProperties": 1, "maxProperties": 1024, "propertyNames": { "pattern": "^[A-Za-z0-9][A-Za-z0-9._/-]*$" }, "additionalProperties": { "type": "string", "minLength": 1, "maxLength": 4096 } }
+  }
+}

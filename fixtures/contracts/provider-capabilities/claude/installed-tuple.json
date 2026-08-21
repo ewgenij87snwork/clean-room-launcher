@@ -1,0 +1,8 @@
+{
+  "provider": "claude",
+  "version": "2.1.223 (Claude Code)",
+  "executable_sha256": "fcbe0b8d47570c501302dd1ad31cc26ac2810f022c45fa253936a6961dee32bf",
+  "os": "Darwin",
+  "arch": "arm64",
+  "qualification_scope": "no-spend CLI evidence only"
+}

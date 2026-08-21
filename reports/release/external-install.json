@@ -1,0 +1,162 @@
+{
+  "schema_version": "taskseal.p08.external-install.v1",
+  "plan": "P08",
+  "task": 8,
+  "result": "BLOCKED_NOT_QUALIFIED",
+  "qualification": "NOT_QUALIFIED",
+  "recorded_at": "2026-08-21T13:21:41+02:00",
+  "canonical_checkpoint": "c40afcbdf32d34b7e06c3540731592e69166ac1a",
+  "replacement_input_head": "bfe8d3d3778986e2b706716cdd3321354703e2c8",
+  "plan_sha256": "7ff5b34336573af4b7f6abc826dbaec472ae4e317bffb9571c70ec171a40272d",
+  "authority_sha256": "c542aacdb9045bcc4fe5a895247833c55c7e3469b5444d204b9afce02e325a36",
+  "subject": {
+    "artifact_name": "clean-room-launcher-v0.1.0-aarch64-apple-darwin.tar.gz",
+    "artifact_sha256": "a8ed1ab765a64cec6cca2e6acb7820f137753b09513194f1cdbe4f250dfd0986",
+    "sha256sums_sha256": "e262f505ff4c376d71dbc4e009ac9bcc8e7ca6004f6b5c0eebec42a89f3aee98",
+    "readme_sha256": "2a4f0e7e29d9cf738c9eab1a04b2d6c33478efc581630925714d4b113f54c378",
+    "extracted_binary_sha256": "354494cf3625077ddc395648688e6b59a5fc46808152baeca677600fe8fe1f3c",
+    "artifact_file_count": 5,
+    "installation_schema_present": false,
+    "platform": "macos-arm64",
+    "provider": "codex",
+    "provider_status": "NOT_RUN"
+  },
+  "environment": {
+    "baseline_snapshot": "baseline-macos-26.6.2-clean",
+    "source_vm_stopped": true,
+    "baseline_snapshot_current": true,
+    "baseline_snapshot_unchanged": true,
+    "disposable_full_clone_count": 1,
+    "replacement_full_clone_count": 1,
+    "prior_clone_preserved": true,
+    "standard_account": true,
+    "clone_uuid_distinct": true,
+    "clone_bundle_distinct": true,
+    "clone_disk_distinct": true,
+    "linked_clone_dependency": false,
+    "guest_tools_installed": false,
+    "host_sharing_enabled": false,
+    "shared_clipboard_enabled": false,
+    "repository_checkout_transferred": false,
+    "ubuntu_accessed": false,
+    "windows_accessed": false
+  },
+  "transfer": {
+    "transport": "PLAIN_VIRTUAL_DISK_WITH_ISO9660_FILESYSTEM",
+    "filesystem_read_only": true,
+    "approved_file_count": 3,
+    "only_approved_files": true,
+    "filesystem_image_sha256": "ae08b61d48e0365660a9dbac23bc231cb543dd02682c31cf3b61a6d5bdaa5e20",
+    "plain_disk_sha256_after_result": "2fa4731947302957466c1f879ddabe86ce938d51f007d9419e5fe4b1d56f1175",
+    "filesystem_image_unchanged": true,
+    "detached_after_result": true,
+    "temporary_host_transport_deleted": true
+  },
+  "steps": [
+    {
+      "id": "copy_to_writable_workdir",
+      "status": "PASS"
+    },
+    {
+      "id": "checksum_before_extract",
+      "status": "PASS"
+    },
+    {
+      "id": "extract_per_readme",
+      "status": "PASS"
+    },
+    {
+      "id": "prove_launch_from_staged_artifact",
+      "status": "PASS",
+      "code": "BINARY_HASH_MATCH"
+    },
+    {
+      "id": "guided_local_start",
+      "status": "BLOCKED",
+      "code": "LOCAL_STATE_NOT_CREATED"
+    },
+    {
+      "id": "review_skills",
+      "status": "BLOCKED",
+      "code": "SKILL_DECISION_NOT_RENDERED"
+    },
+    {
+      "id": "installation_doctor",
+      "status": "BLOCKED",
+      "code": "INSTALLATION_SCHEMA_MISSING"
+    },
+    {
+      "id": "start_clean_provider",
+      "status": "NOT_RUN",
+      "reason": "PRIOR_PRODUCT_PREREQUISITE_BLOCKER"
+    },
+    {
+      "id": "invoke_deferred_canary",
+      "status": "NOT_RUN",
+      "reason": "PRIOR_PRODUCT_PREREQUISITE_BLOCKER"
+    },
+    {
+      "id": "relaunch_saved_standard_start",
+      "status": "NOT_RUN",
+      "reason": "PRIOR_PRODUCT_PREREQUISITE_BLOCKER"
+    },
+    {
+      "id": "rollback_and_uninstall",
+      "status": "NOT_RUN",
+      "reason": "PRIOR_PRODUCT_PREREQUISITE_BLOCKER"
+    }
+  ],
+  "defects": [
+    {
+      "code": "LOCAL_LIFECYCLE_PREREQUISITE_MISSING",
+      "classification": "PRODUCT_PREREQUISITE",
+      "reproduction": [
+        "Run the documented guided default action from the writable staged-artifact directory.",
+        "Observe a successful launcher status while both declared local state outputs remain absent.",
+        "Run the public skill-inspection example and observe that no skill decision is rendered.",
+        "Run the public doctor example and confirm that its required installation schema is absent from the five-file artifact."
+      ],
+      "workaround_used": false
+    }
+  ],
+  "safety": {
+    "readme_followed_without_controller_coaching": true,
+    "provider_processes": 0,
+    "provider_requests": 0,
+    "raw_provider_output_retained": false,
+    "browser_or_login_requested": false,
+    "provider_state_read": false,
+    "credential_or_keychain_access": false,
+    "system_permission_changed": false,
+    "publication": false,
+    "upload": false,
+    "main_mutation": false,
+    "integration": false,
+    "code_fix": false,
+    "documentation_fix_during_run": false,
+    "staged_readme_corrected_before_run": true,
+    "artifact_rebuild": false
+  },
+  "cleanup": {
+    "clone_stopped": true,
+    "clone_stop_mode": "FORCED_AFTER_GRACEFUL_STOP_DID_NOT_COMPLETE",
+    "clone_preserved": true,
+    "clone_deleted": false,
+    "prior_clone_preserved": true,
+    "temporary_media_detached": true,
+    "temporary_host_files_deleted": true,
+    "diagnostic_captures_deleted": true,
+    "guest_staging_removal_requested": true,
+    "guest_staging_removal_verified": false,
+    "guest_permission_prompt_approved": false,
+    "original_staged_inputs_unchanged": true,
+    "source_vm_stopped": true
+  },
+  "timing": {
+    "started_at": "2026-08-21T12:34:15+02:00",
+    "stopped_at": "2026-08-21T13:21:41+02:00",
+    "wall_elapsed_seconds": 2846
+  },
+  "promotion_eligible": false,
+  "next_action": "RETURN_PRODUCT_DEFECT_TO_OWNING_PLAN; NEW_EXACT_AUTHORITY_REQUIRED_BEFORE_ANY_FIX_OR_REBUILD"
+}

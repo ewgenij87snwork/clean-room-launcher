@@ -1,0 +1,10 @@
+Clean Room Launcher
+A clean-room launcher for coding-agent CLIs.
+
+Command  clroom codex [ARGS...]
+Provider Codex · already installed local CLI · nothing launched
+Writes   no launcher state
+Leaves   existing provider state unchanged
+
+Preview only · provider not launched
+  clroom codex [ARGS...] to launch explicitly

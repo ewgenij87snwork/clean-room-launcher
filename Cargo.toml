@@ -1,0 +1,56 @@
+[package]
+name = "clean-room-launcher"
+version = "0.1.0-alpha.1"
+edition = "2024"
+publish = false
+license = "MPL-2.0"
+
+[lib]
+name = "taskseal"
+
+[dependencies]
+cap-std = { version = "=4.0.2", default-features = false }
+jsonschema = { version = "=0.49.9", default-features = false }
+serde = { version = "=1.0.229", features = ["derive"] }
+serde_json = "=1.0.151"
+serde_yaml = "=0.9.34"
+
+[[test]]
+name = "provider_capability_truth"
+path = "tests/contracts/provider_capability_truth.rs"
+
+[[test]]
+name = "repository_boundary"
+path = "tests/contracts/repository_boundary.rs"
+
+[[test]]
+name = "execution_bootstrap"
+path = "tests/contracts/execution_bootstrap.rs"
+
+[[test]]
+name = "public_boundary"
+path = "tests/contracts/public_boundary.rs"
+
+[[test]]
+name = "schema_vectors"
+path = "tests/contracts/schema_vectors.rs"
+
+[[test]]
+name = "canonical_vectors"
+path = "tests/contracts/canonical_vectors.rs"
+
+[[test]]
+name = "error_receipt_vectors"
+path = "tests/contracts/error_receipt_vectors.rs"
+
+[[test]]
+name = "adapter_registry"
+path = "tests/contracts/adapter_registry.rs"
+
+[[test]]
+name = "trace_metadata"
+path = "tests/contracts/trace_metadata.rs"
+
+[[test]]
+name = "gate_contract"
+path = "tests/contracts/gate_contract.rs"
