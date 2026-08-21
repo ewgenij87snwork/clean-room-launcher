@@ -11,8 +11,8 @@ Prerequisites:
 VERSION=v0.1.0-alpha.1
 ASSET=clean-room-launcher-v0.1.0-alpha.1-aarch64-apple-darwin.tar.gz
 
-curl -fLO "https://github.com/ysorokin/clean-room-launcher/releases/download/$VERSION/$ASSET"
-curl -fLO "https://github.com/ysorokin/clean-room-launcher/releases/download/$VERSION/SHA256SUMS"
+curl -fLO "https://github.com/ewgenij87snwork/clean-room-launcher/releases/download/$VERSION/$ASSET"
+curl -fLO "https://github.com/ewgenij87snwork/clean-room-launcher/releases/download/$VERSION/SHA256SUMS"
 shasum -a 256 -c SHA256SUMS
 tar -xzf "$ASSET"
 mkdir -p "$HOME/.local/bin"
@@ -25,7 +25,7 @@ prefer the source install below; do not disable Gatekeeper globally.
 ## Cargo from the release tag
 
 ```sh
-cargo install --git https://github.com/ysorokin/clean-room-launcher \
+cargo install --git https://github.com/ewgenij87snwork/clean-room-launcher \
   --tag v0.1.0-alpha.1 --locked
 ```
 

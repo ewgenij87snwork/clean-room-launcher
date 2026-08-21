@@ -26,8 +26,8 @@ You need macOS on Apple Silicon and an already installed, working `codex` CLI.
 VERSION=v0.1.0-alpha.1
 ASSET=clean-room-launcher-v0.1.0-alpha.1-aarch64-apple-darwin.tar.gz
 
-curl -fLO "https://github.com/ysorokin/clean-room-launcher/releases/download/$VERSION/$ASSET"
-curl -fLO "https://github.com/ysorokin/clean-room-launcher/releases/download/$VERSION/SHA256SUMS"
+curl -fLO "https://github.com/ewgenij87snwork/clean-room-launcher/releases/download/$VERSION/$ASSET"
+curl -fLO "https://github.com/ewgenij87snwork/clean-room-launcher/releases/download/$VERSION/SHA256SUMS"
 shasum -a 256 -c SHA256SUMS
 tar -xzf "$ASSET"
 
@@ -52,7 +52,7 @@ read. The launch plaque marks global `AGENTS.md` as off before Codex starts.
 Rust users can build the same alpha from the public tag:
 
 ```sh
-cargo install --git https://github.com/ysorokin/clean-room-launcher \
+cargo install --git https://github.com/ewgenij87snwork/clean-room-launcher \
   --tag v0.1.0-alpha.1 --locked
 ```
 
