@@ -42,14 +42,21 @@ timings. Do not retain raw provider output, credentials, guest private data,
 browser/login state, or host/guest private paths. A `PASS` requires every step;
 partial success never upgrades `BLOCKED_NOT_QUALIFIED`.
 
-## Observed disposition — 2026-08-21
+## Replacement disposition — 2026-08-21
 
 - Result: `BLOCKED_NOT_QUALIFIED`.
-- The exact candidate checksum passed before extraction.
-- The immediately following README extraction command was run from the
-  read-only staged medium and could not create its destination. The public
-  README does not direct the tester to a writable working directory.
-- No workaround, provider process, provider request, login, provider-state
-  inspection, code fix, documentation fix or artifact rebuild was attempted.
-- The disposable clone was shut down and preserved. Temporary media was
-  detached after its container digest was rechecked unchanged.
+- The owner-authorized README correction resolved the prior read-only
+  destination blocker. Copy, checksum verification, extraction and staged
+  binary identity proof all passed with the original candidate bytes.
+- The guided local action returned success but created neither declared local
+  state output. The public skill-inspection example rendered no skill decision,
+  and the public doctor path reported a missing installation schema that is not
+  present in the five-file candidate archive.
+- This is a product prerequisite blocker: skill review, deferred-canary
+  invocation, saved relaunch, rollback and uninstall cannot be completed.
+  No workaround, provider process/request, login, provider-state inspection,
+  code fix, documentation change during the run or artifact rebuild occurred.
+- The fresh replacement clone was stopped and preserved alongside the earlier
+  clone. Temporary media and diagnostic captures were detached/deleted. No
+  guest folder permission was granted; guest staging removal was requested but
+  its final absence was not asserted after the permission prompt.
