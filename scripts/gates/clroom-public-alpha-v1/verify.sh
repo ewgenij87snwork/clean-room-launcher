@@ -118,7 +118,9 @@ PY
 )
 test "$archive_binary_sha" = "$(shasum -a 256 "$installed" | awk '{print $1}')" \
   || refuse BINARY_DIGEST
-"$installed" --help | grep -Fq 'Clean Room Launcher' || refuse ARCHIVE_HELP
+installed_help=$("$installed" --help) || refuse ARCHIVE_HELP_EXIT
+printf '%s\n' "$installed_help" | grep -Fq 'Clean Room Launcher' \
+  || refuse ARCHIVE_HELP
 
 fake_root="$scratch/fake"
 mkdir -p "$fake_root/bin" "$fake_root/home/.codex" "$fake_root/project"
@@ -147,7 +149,8 @@ PY
 cargo_root="$scratch/cargo-root"
 CARGO_NET_OFFLINE=true CARGO_TARGET_DIR="$root/target" \
   cargo install --path . --root "$cargo_root" --locked --offline --force >/dev/null
-"$cargo_root/bin/clroom" --help | grep -Fq 'Clean Room Launcher' \
+cargo_help=$("$cargo_root/bin/clroom" --help) || refuse CARGO_INSTALL_HELP_EXIT
+printf '%s\n' "$cargo_help" | grep -Fq 'Clean Room Launcher' \
   || refuse CARGO_INSTALL_HELP
 
 source_commit=$(git rev-parse HEAD)
@@ -187,8 +190,9 @@ jq -n \
       cli_tests:58,
       authority_bootstrap_tests:2,
       archive_verified:true,
-      archive_install_help:true,
-      cargo_install_help:true,
+      archive_install_help_exit_zero:true,
+      cargo_install_completed:true,
+      cargo_install_help_prefix_observed:true,
       clean_defaults:4,
       user_arguments_after_defaults:true
     },
