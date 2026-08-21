@@ -9,6 +9,17 @@ use std::{
 
 static SCRATCH_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 
+const CODEX_CLEAN_DEFAULTS: &[&str] = &[
+    "-c",
+    "features.hooks=false",
+    "-c",
+    "features.plugins=false",
+    "-c",
+    "developer_instructions=\"\"",
+    "-c",
+    "notify=[]",
+];
+
 struct Scratch(PathBuf);
 
 impl Scratch {
@@ -58,12 +69,14 @@ fn isolated_fixture() -> (Scratch, PathBuf, PathBuf, PathBuf, PathBuf) {
          /bin/cat \"$CLROOM_GLOBAL_AGENTS\" >/dev/null 2>&1 && exit 71\n\
          /bin/cat \"$CLROOM_AMBIENT_SKILL\" >/dev/null 2>&1 && exit 72\n\
          printf '%s\\0' \"$@\" > \"$CLROOM_CAPTURE_PATH\"\n\
-         if [ \"$1\" = \"--stdio\" ]; then\n\
-           input=$(/bin/cat)\n\
-           printf 'stdout:%s\\n' \"$input\"\n\
-           printf 'stderr:%s\\n' \"$input\" >&2\n\
-           exit 0\n\
-         fi\n\
+         for argument in \"$@\"; do\n\
+           if [ \"$argument\" = \"--stdio\" ]; then\n\
+             input=$(/bin/cat)\n\
+             printf 'stdout:%s\\n' \"$input\"\n\
+             printf 'stderr:%s\\n' \"$input\" >&2\n\
+             exit 0\n\
+           fi\n\
+         done\n\
          exit 42\n",
     )
     .unwrap();
@@ -88,6 +101,14 @@ fn command(project: &Path, home: &Path, codex_home: &Path, bin: &Path, capture: 
     command
 }
 
+fn expected_argv(user_args: &[&str]) -> Vec<u8> {
+    CODEX_CLEAN_DEFAULTS
+        .iter()
+        .chain(user_args)
+        .flat_map(|argument| argument.as_bytes().iter().copied().chain([0]))
+        .collect()
+}
+
 #[test]
 fn codex_handoff_preserves_literal_argv_exit_and_stdio_inside_the_isolated_boundary() {
     // Break caught: direct Codex execution lets the fake provider read ambient context.
@@ -98,7 +119,10 @@ fn codex_handoff_preserves_literal_argv_exit_and_stdio_inside_the_isolated_bound
         .output()
         .unwrap();
     assert_eq!(output.status.code(), Some(42));
-    assert_eq!(fs::read(&capture).unwrap(), b"--exit-42\0literal value\0");
+    assert_eq!(
+        fs::read(&capture).unwrap(),
+        expected_argv(&["--exit-42", "literal value"])
+    );
 
     let mut child = command(&project, &home, &codex_home, &bin, &capture)
         .args(["codex", "--stdio"])
@@ -117,7 +141,34 @@ fn codex_handoff_preserves_literal_argv_exit_and_stdio_inside_the_isolated_bound
     assert_eq!(output.status, std::process::ExitStatus::from_raw(0));
     assert_eq!(output.stdout, b"stdout:native streams\n");
     assert_eq!(output.stderr, b"stderr:native streams\n");
-    assert_eq!(fs::read(&capture).unwrap(), b"--stdio\0");
+    assert_eq!(fs::read(&capture).unwrap(), expected_argv(&["--stdio"]));
+}
+
+#[test]
+fn codex_handoff_keeps_explicit_user_overrides_after_clean_defaults() {
+    let (_root, project, home, codex_home, bin) = isolated_fixture();
+    let capture = bin.join("override-capture");
+    let user_args = [
+        "--enable",
+        "hooks",
+        "--enable",
+        "plugins",
+        "-c",
+        "developer_instructions=\"owner\"",
+        "-c",
+        "notify=[\"owner\"]",
+        "features",
+        "list",
+    ];
+
+    let output = command(&project, &home, &codex_home, &bin, &capture)
+        .arg("codex")
+        .args(user_args)
+        .output()
+        .unwrap();
+
+    assert_eq!(output.status.code(), Some(42));
+    assert_eq!(fs::read(&capture).unwrap(), expected_argv(&user_args));
 }
 
 #[test]

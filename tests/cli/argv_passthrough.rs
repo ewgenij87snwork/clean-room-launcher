@@ -14,6 +14,7 @@ use super::cli_entry;
 const ZERO_AUTH_REFUSAL: &str = "ZERO_AUTH_REFUSAL: provider-native preauthenticated session unavailable or ambiguous; continue locally\n";
 const ZERO_AUTH_ARGUMENT_REFUSAL: &str =
     "ZERO_AUTH_ARGUMENT_REFUSAL: sensitive argument refused before dispatch; continue locally\n";
+const CODEX_CLEAN_DEFAULTS: &str = "-c\0features.hooks=false\0-c\0features.plugins=false\0-c\0developer_instructions=\"\"\0-c\0notify=[]\0";
 static SCRATCH_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 
 fn scratch(name: &str) -> PathBuf {
@@ -396,7 +397,10 @@ fn direct_provider_route_forwards_safe_native_arguments() {
         .expect("clroom must run");
     assert_eq!(output.status.code(), Some(0));
     assert!(output.stderr.is_empty());
-    assert_eq!(fs::read_to_string(&capture).unwrap(), "--version\0");
+    assert_eq!(
+        fs::read_to_string(&capture).unwrap(),
+        format!("{CODEX_CLEAN_DEFAULTS}--version\0")
+    );
     assert_eq!(fs::read(codex).unwrap(), before);
 }
 

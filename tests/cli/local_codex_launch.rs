@@ -7,6 +7,8 @@ use std::{
 
 static SCRATCH_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 
+const CODEX_CLEAN_DEFAULTS: &str = "-c\0features.hooks=false\0-c\0features.plugins=false\0-c\0developer_instructions=\"\"\0-c\0notify=[]\0";
+
 fn fake_codex() -> (PathBuf, PathBuf) {
     let dir = std::env::temp_dir().join(format!(
         "clroom-codex-launch-{}-{}",
@@ -40,7 +42,7 @@ fn direct_codex_command_launches_literal_local_child_and_returns_status() {
     assert_eq!(output.status.code(), Some(42));
     assert_eq!(
         fs::read_to_string(capture).unwrap(),
-        "--exit-42\0safe-value\0inherited"
+        format!("{CODEX_CLEAN_DEFAULTS}--exit-42\0safe-value\0inherited")
     );
 }
 
@@ -54,7 +56,10 @@ fn codex_without_legacy_boundary_forwards_native_help() {
         .output()
         .expect("clroom must run");
     assert_eq!(output.status.code(), Some(0));
-    assert_eq!(fs::read_to_string(capture).unwrap(), "--help\0");
+    assert_eq!(
+        fs::read_to_string(capture).unwrap(),
+        format!("{CODEX_CLEAN_DEFAULTS}--help\0")
+    );
 }
 
 #[test]

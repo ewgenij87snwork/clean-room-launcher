@@ -11,6 +11,17 @@ use std::os::unix::process::CommandExt;
 
 pub const ZERO_AUTH_REFUSAL: &str = "ZERO_AUTH_REFUSAL: provider-native preauthenticated session unavailable or ambiguous; continue locally";
 
+const CODEX_CLEAN_DEFAULTS: &[&str] = &[
+    "-c",
+    "features.hooks=false",
+    "-c",
+    "features.plugins=false",
+    "-c",
+    "developer_instructions=\"\"",
+    "-c",
+    "notify=[]",
+];
+
 pub fn refuse_external_execution() -> Result<ExitCode, String> {
     Err(ZERO_AUTH_REFUSAL.to_owned())
 }
@@ -46,6 +57,7 @@ pub fn launch_isolated_codex(
         .arg(&plan.profile)
         .arg("--")
         .arg(executable)
+        .args(CODEX_CLEAN_DEFAULTS)
         .args(args);
     #[cfg(unix)]
     {

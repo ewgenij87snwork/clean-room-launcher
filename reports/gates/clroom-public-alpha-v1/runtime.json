@@ -1,0 +1,22 @@
+{
+  "schema_version": "clroom.public-alpha.runtime.v1",
+  "plan_id": "P08-CLROOM-PUBLIC-ALPHA-V1",
+  "input_head": "8e8811a7f604d2ae478c590bcd6b1a14599c8915",
+  "plan_sha256": "90c86ab4bd27c62ae028ee120529f5856dbe7cfbffbc467c5db4211974a92aed",
+  "subjects": {
+    "fixtures/cli/fake-provider.rs": "f5e595010d5dd5849e84b4a5512b2cff8e4f2ca5f228b017b3f5bcdf5c1b96b9",
+    "scripts/gates/clroom-public-alpha-v1/verify-runtime.sh": "f03ba7e19cfa97a7a15c885b42fdcd8f7588ccf0d16e2a9af13cfef887353411",
+    "src/cli/process.rs": "c06fc41eb53bc6ebef669de92b29632422e7a1c334a26421f148bc915cbfcc89",
+    "tests/cli/argv_passthrough.rs": "6f073cb3c3a696ada52daefe73fb38e8b37643234ec0e3ee1862f59af656d1f2",
+    "tests/cli/isolated_codex_launch.rs": "09239824be4888f5bcd47608b396738a25a8b909d8943d2a011b842b32b9ef4f",
+    "tests/cli/local_codex_launch.rs": "b90484439bff625064b89fa348a8de75bdc15e55eabbeb335aa2060b34801588"
+  },
+  "clean_default_count": 4,
+  "fake_provider_argv_cases": 2,
+  "user_arguments_after_defaults": true,
+  "real_provider_processes": 0,
+  "provider_requests": 0,
+  "raw_retained": false,
+  "gate_command": "scripts/gates/clroom-public-alpha-v1/verify-runtime.sh",
+  "gate_marker": "CLROOM_PUBLIC_ALPHA_RUNTIME_PASS"
+}
