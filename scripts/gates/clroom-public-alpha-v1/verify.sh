@@ -45,7 +45,7 @@ grep -Fq 'docs/assets/clroom-alpha.gif' README.md || refuse README_GIF
 grep -Fq 'explicit user override still wins' README.md || refuse README_OVERRIDE
 grep -Fq 'unsigned and unnotarized' README.md || refuse README_ALPHA_BOUNDARY
 grep -Fq 'Operation not permitted' README.md || refuse README_WARNING
-grep -Fq 'v0.1.0-alpha.1' CHANGELOG.md || refuse CHANGELOG_VERSION
+grep -Fq '## [0.1.0-alpha.1]' CHANGELOG.md || refuse CHANGELOG_VERSION
 test -s docs/assets/clroom-alpha.gif || refuse GIF_MISSING
 test "$(file -b docs/assets/clroom-alpha.gif | awk '{print $1}')" = GIF \
   || refuse GIF_FORMAT
