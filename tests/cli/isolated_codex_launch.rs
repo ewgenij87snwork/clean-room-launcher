@@ -74,10 +74,10 @@ fn isolated_fixture() -> (Scratch, PathBuf, PathBuf, PathBuf, PathBuf) {
 fn command(project: &Path, home: &Path, codex_home: &Path, bin: &Path, capture: &Path) -> Command {
     let mut command = Command::new(env!("CARGO_BIN_EXE_clroom"));
     command
-        .current_dir(&project)
-        .env("PATH", &bin)
+        .current_dir(project)
+        .env("PATH", bin)
         .env("HOME", home)
-        .env("CODEX_HOME", &codex_home)
+        .env("CODEX_HOME", codex_home)
         .env("CLROOM_PROJECT_CANARY", project.join("canaries/PROJECT.md"))
         .env("CLROOM_GLOBAL_AGENTS", codex_home.join("AGENTS.md"))
         .env(

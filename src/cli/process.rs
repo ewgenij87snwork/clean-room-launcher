@@ -15,23 +15,6 @@ pub fn refuse_external_execution() -> Result<ExitCode, String> {
     Err(ZERO_AUTH_REFUSAL.to_owned())
 }
 
-/// Transfer control to the user's already-installed local Codex executable.
-/// No environment values are inspected or copied: `Command` inherits the
-/// parent environment and all three standard streams by default.
-pub fn launch_codex(args: &[String]) -> Result<ExitCode, String> {
-    let mut command = Command::new("codex");
-    command.args(args);
-    #[cfg(unix)]
-    {
-        return Err(launch_error(command.exec()));
-    }
-    #[cfg(not(unix))]
-    {
-        let status = command.status().map_err(launch_error)?;
-        Ok(ExitCode::from(status.code().unwrap_or(1) as u8))
-    }
-}
-
 pub fn resolve_codex_executable() -> Result<PathBuf, String> {
     let Some(paths) = env::var_os("PATH") else {
         return Err(local_codex_unavailable());
@@ -66,21 +49,12 @@ pub fn launch_isolated_codex(
         .args(args);
     #[cfg(unix)]
     {
-        return Err(isolated_launch_error(command.exec()));
+        Err(isolated_launch_error(command.exec()))
     }
     #[cfg(not(unix))]
     {
         let status = command.status().map_err(isolated_launch_error)?;
         Ok(ExitCode::from(status.code().unwrap_or(1) as u8))
-    }
-}
-
-fn launch_error(error: io::Error) -> String {
-    if error.kind() == io::ErrorKind::NotFound {
-        local_codex_unavailable()
-    } else {
-        "LOCAL_CODEX_LAUNCH_FAILED: local executable could not be started; continue locally"
-            .to_owned()
     }
 }
 

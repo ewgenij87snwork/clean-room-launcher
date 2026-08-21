@@ -208,17 +208,14 @@ fn run_local(invoked_as: &str, args: Vec<String>) -> ExitCode {
         parser::Command::Guided => {
             let screen = screen::render_unqualified(screen::PrepareReady { provider: "Codex" });
             println!("{}", screen.join("\n"));
-            if screen::terminal_is_interactive() {
+            if output::stdin_is_terminal() && std::io::stdout().is_terminal() {
                 if std::io::stdout().flush().is_err() {
                     eprintln!("INTERACTIVE_OUTPUT_FAILED");
                     return ExitCode::from(2);
                 }
                 match screen::read_unqualified_action() {
-                    Ok(screen::UnqualifiedAction::ContinueLocally) => {
-                        return run_launcher_owned_local(invoked_as, parser::Command::Status);
-                    }
                     Ok(screen::UnqualifiedAction::LaunchCodex) => {
-                        return match process::launch_codex(&[]) {
+                        return match launch_isolated_codex(&[]) {
                             Ok(exit) => exit,
                             Err(message) => {
                                 eprintln!("{message}");
@@ -248,10 +245,6 @@ fn run_local(invoked_as: &str, args: Vec<String>) -> ExitCode {
                 return ExitCode::from(2);
             }
         },
-        parser::Command::Init if !output::stdin_is_terminal() => {
-            eprintln!("NON_INTERACTIVE_INPUT_REQUIRED: rerun init interactively");
-            return ExitCode::from(2);
-        }
         parser::Command::Provider | parser::Command::Generic => {
             unreachable!("external commands refuse before tail collection")
         }
@@ -262,16 +255,18 @@ fn run_local(invoked_as: &str, args: Vec<String>) -> ExitCode {
 }
 
 fn run_launcher_owned_local(invoked_as: &str, command: parser::Command) -> ExitCode {
-    assert!(matches!(
-        command,
-        parser::Command::Status
-            | parser::Command::Scan
-            | parser::Command::Init
-            | parser::Command::Prepare
-            | parser::Command::Check
-            | parser::Command::Explain
-            | parser::Command::Inspect
-    ));
-    println!("{invoked_as}: command accepted");
-    ExitCode::SUCCESS
+    let command = match command {
+        parser::Command::Status => "status",
+        parser::Command::Scan => "scan",
+        parser::Command::Init => "init",
+        parser::Command::Prepare => "prepare",
+        parser::Command::Check => "check",
+        parser::Command::Explain => "explain",
+        parser::Command::Inspect => "inspect",
+        _ => unreachable!("only unavailable local lifecycle commands reach this boundary"),
+    };
+    eprintln!(
+        "LOCAL_LIFECYCLE_UNAVAILABLE: {command} is not implemented in this build; use {invoked_as} codex for the minimum isolated launch"
+    );
+    ExitCode::from(2)
 }

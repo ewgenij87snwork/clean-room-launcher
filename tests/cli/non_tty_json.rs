@@ -27,7 +27,7 @@ fn non_interactive_init_refuses_instead_of_waiting_for_a_choice() {
     assert!(output.stdout.is_empty());
     assert_eq!(
         String::from_utf8(output.stderr).unwrap(),
-        "NON_INTERACTIVE_INPUT_REQUIRED: rerun init interactively\n"
+        "LOCAL_LIFECYCLE_UNAVAILABLE: init is not implemented in this build; use clroom codex for the minimum isolated launch\n"
     );
 }
 

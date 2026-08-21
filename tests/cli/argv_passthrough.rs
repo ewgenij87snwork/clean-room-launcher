@@ -319,7 +319,7 @@ fn final_zero_auth_ingestion_routes_leave_credential_shaped_tails_unread() {
         (vec!["--output", "yaml"], 2, 2),
         (vec!["--json"], 1, 2),
         (vec!["--output", "json", "status"], 3, 2),
-        (vec!["status"], 1, 0),
+        (vec!["status"], 1, 2),
         (vec!["unknown-command"], 1, 2),
     ] {
         let next_calls = Rc::new(Cell::new(0));
@@ -413,19 +413,21 @@ fn generic_boundary_without_an_executable_refuses_safely() {
 }
 
 #[test]
-fn launcher_owned_local_commands_remain_available() {
-    // Break caught: closing external execution accidentally disables local-only operations.
+fn unavailable_launcher_owned_lifecycle_commands_refuse_truthfully() {
+    // Break caught: an unimplemented local operation reports false success.
     for command in ["status", "scan", "prepare", "check"] {
         let output = Command::new(env!("CARGO_BIN_EXE_clroom"))
             .arg(command)
             .output()
             .expect("clroom must run");
-        assert_eq!(output.status.code(), Some(0), "{command}");
+        assert_eq!(output.status.code(), Some(2), "{command}");
+        assert!(output.stdout.is_empty(), "{command}");
         assert_eq!(
-            String::from_utf8(output.stdout).unwrap(),
-            "clroom: command accepted\n",
+            String::from_utf8(output.stderr).unwrap(),
+            format!(
+                "LOCAL_LIFECYCLE_UNAVAILABLE: {command} is not implemented in this build; use clroom codex for the minimum isolated launch\n"
+            ),
             "{command}"
         );
-        assert!(output.stderr.is_empty(), "{command}");
     }
 }

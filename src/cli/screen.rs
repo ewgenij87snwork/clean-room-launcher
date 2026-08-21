@@ -15,7 +15,6 @@ pub struct RenderContext {
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum UnqualifiedAction {
-    ContinueLocally,
     LaunchCodex,
     Stop,
 }
@@ -36,8 +35,7 @@ pub fn read_unqualified_action() -> io::Result<UnqualifiedAction> {
 
 pub fn parse_unqualified_action(input: &str) -> UnqualifiedAction {
     match input.trim() {
-        "" | "1" => UnqualifiedAction::ContinueLocally,
-        "2" => UnqualifiedAction::LaunchCodex,
+        "" | "1" => UnqualifiedAction::LaunchCodex,
         _ => UnqualifiedAction::Stop,
     }
 }
@@ -69,31 +67,29 @@ pub fn render_unqualified_for(ready: PrepareReady, context: RenderContext) -> Ve
         String::new(),
         "Command  clroom codex [ARGS...]".to_owned(),
         format!(
-            "Provider {} · local preauthenticated session only · nothing launched",
+            "Provider {} · already installed local CLI · nothing launched",
             ready.provider
         ),
-        "Writes   .clroom/project.json + .clroom/out/ · nothing yet".to_owned(),
-        "Leaves   ~/.codex · Git/provider state unchanged".to_owned(),
+        "Writes   no launcher state".to_owned(),
+        "Leaves   existing provider state unchanged".to_owned(),
         String::new(),
     ];
     if !context.interactive {
         lines.extend([
-            "Continue locally".to_owned(),
-            "  clroom status · clroom scan · clroom prepare · clroom check".to_owned(),
+            "Preview only · provider not launched".to_owned(),
+            "  clroom codex [ARGS...] to launch explicitly".to_owned(),
         ]);
     } else if context.plain {
         lines.extend([
-            "1. Continue locally  Recommended".to_owned(),
-            "2. Launch Codex".to_owned(),
+            "1. Launch Codex  Recommended".to_owned(),
             String::new(),
-            "Enter continue locally · 2 launch Codex".to_owned(),
+            "Enter launch Codex · q stop".to_owned(),
         ]);
     } else {
         lines.extend([
-            "› Continue locally  Recommended".to_owned(),
-            "  Launch Codex".to_owned(),
+            "› Launch Codex  Recommended".to_owned(),
             String::new(),
-            "Enter continue locally · 2 launch Codex".to_owned(),
+            "Enter launch Codex · q stop".to_owned(),
         ]);
     }
     if context.width >= 80 {
