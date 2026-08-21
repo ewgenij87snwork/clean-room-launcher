@@ -1,34 +1,27 @@
-# Clean Room Launcher demo
+# Demo
 
-This candidate is a local macOS/arm64 preview. It is not published and remains
-`NOT_QUALIFIED` for public release.
-
-The archive contains one executable:
-
-```text
-bin/clroom
-```
-
-After extracting the exact `clean-room-launcher` archive, inspect the launcher
-without starting a coding-agent CLI:
+From any project on macOS/Apple Silicon:
 
 ```sh
-./bin/clroom --help
-./bin/clroom status
+clroom codex
 ```
 
-To start the locally available coding-agent CLI through the clean-room launch
-boundary, pass its ordinary arguments unchanged:
+Before Codex starts, the launcher names the project, confirms that the
+clean-room boundary is active, lists its temporary defaults, and explains the
+expected blocked-file warning.
+
+Use ordinary Codex commands unchanged:
 
 ```sh
-./bin/clroom codex --help
+clroom codex features list
+clroom codex exec "summarize this repository"
 ```
 
-On macOS, `clroom` starts Codex under its filesystem boundary. The launcher
-does not log in, copy credentials, change existing configuration, publish
-anything, or make an unsupported provider claim.
+Explicit arguments retain final priority:
 
-The exact candidate artifact and its SHA-256 are recorded in
-`reports/release/candidate.json`. Public availability, namespace ownership,
-an external clean install, and a fully qualified clean Codex launch remain
-open release conditions.
+```sh
+clroom codex --enable hooks --enable plugins
+```
+
+The launcher never performs login. If `codex` is missing, it stops locally with
+`LOCAL_CODEX_UNAVAILABLE`.

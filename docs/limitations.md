@@ -1,20 +1,17 @@
 # Limitations
 
-- The current v0.1 artifact is an unsigned private candidate and remains
-  `NOT_QUALIFIED`; it is not a stable or published release.
-- Public repository and package namespaces are not reserved or owned. The
-  local artifact executable is `clroom`; public command ownership is still
-  unproven.
-- A verified private vulnerability-reporting route is not available, and the
-  comment-only CODEOWNERS contract is not enforceable until a public repository
-  and verified owner account exist.
+- `v0.1.0-alpha.1` is an unsigned, unnotarized prerelease, not a stable release.
+- Only macOS on Apple Silicon with a locally installed Codex CLI is supported.
+- The boundary is a narrow macOS filesystem denylist, not a VM, container,
+  network sandbox or complete home-directory isolation.
+- Codex may visibly warn that reading a blocked global `AGENTS.md` is not
+  permitted. This is expected and does not mean Codex itself failed.
+- User arguments are intentionally last. Explicit overrides can re-enable hooks
+  or plugins and therefore reduce the clean defaults.
+- The project directory and other host paths remain available unless macOS or
+  Codex applies an additional restriction.
+- The launcher depends on the undocumented longevity of macOS `sandbox-exec`;
+  it fails closed if the boundary cannot be created.
 - No bounty program exists.
-- Claude support is `DEFERRED_NOT_ADVERTISED`; no Claude request, spend or live
-  qualification is part of this candidate.
-- Codex support is limited to the observed macOS local-launch tuple. A fixture
-  or offline harness cannot become a broad live-support claim.
-- macOS local artifact behavior does not qualify Ubuntu or Windows.
-- A genuine external clean install, public fetch, signature verification,
-  publication and namespace ownership have not occurred.
-- The static documentation has no backend, authentication, database, analytics
-  or telemetry.
+- Claude, Linux, Windows, Intel macOS, Homebrew, crates.io, signing and
+  notarization are not claimed.

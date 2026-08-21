@@ -2,22 +2,18 @@
 
 ## Supported versions
 
-No supported public release exists yet. The current artifact is an unsigned,
-private `NOT_QUALIFIED` candidate. Security support begins only for versions
-listed in a future release table in this file.
+| Version | Status |
+| --- | --- |
+| `0.1.0-alpha.1` | Best-effort security fixes during the alpha |
+
+The alpha is unsigned and unnotarized. It is not a stable-support promise.
 
 ## Reporting a vulnerability
 
-Reporting status: `NOT_YET_AVAILABLE`.
-
-This project does not yet have a verified route for a private vulnerability
-report. Do not open a public issue containing exploit details, credentials,
-private paths or user context. Do not send sensitive material to an address,
-account or form that is not published in this file after the public repository
-exists. Until then, retain the report locally.
-
-A future route may use repository-hosted private vulnerability reporting, but
-that route is not claimed or usable today.
+Use **Security → Report a vulnerability** in the GitHub repository. If that
+private reporting button is unavailable, do not put exploit details,
+credentials, private paths, prompts or user context in a public issue. Open a
+minimal public issue asking the maintainer to enable a private channel.
 
 ## Bounty status
 
@@ -26,5 +22,5 @@ Do not incur research cost on the assumption that payment is available.
 
 ## Triage data boundary
 
-Clean Room Launcher will never request credentials, provider tokens, transcripts or a copy
-of an unrestricted home directory for triage.
+Clean Room Launcher will never request credentials, provider tokens,
+transcripts or a copy of an unrestricted home directory for triage.

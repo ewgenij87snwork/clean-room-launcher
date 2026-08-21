@@ -1,18 +1,28 @@
-# Upgrade and remove the local preview
+# Upgrade, roll back and remove
 
-The local preview is an extracted archive. It does not install a daemon,
-service, account, or system-wide configuration.
+The archive install is one executable. It does not install a daemon, service,
+account or system-wide configuration.
 
-To try a newer archive, verify its SHA-256, extract it into a new directory,
-and invoke that directory's `bin/clroom`. Keep the previous directory until
-you have finished the new session.
-
-To roll back, invoke the previous archive directory again:
+Before upgrading, keep the current binary:
 
 ```sh
-./clean-room-launcher-previous/bin/clroom status
+cp "$HOME/.local/bin/clroom" "$HOME/.local/bin/clroom.previous"
 ```
 
-To remove a preview, delete only its extracted archive directory. This does
-not modify your Codex authentication, existing configuration, project files,
-or provider installation.
+Download the new archive, verify `SHA256SUMS`, extract it, then replace only
+`$HOME/.local/bin/clroom`.
+
+To roll back:
+
+```sh
+mv "$HOME/.local/bin/clroom.previous" "$HOME/.local/bin/clroom"
+```
+
+To remove:
+
+```sh
+rm "$HOME/.local/bin/clroom"
+```
+
+These operations do not modify Codex authentication, configuration, projects
+or the Codex installation.

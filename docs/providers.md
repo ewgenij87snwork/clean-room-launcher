@@ -1,10 +1,10 @@
-# Provider support
+# Provider support in v0.1.0-alpha.1
 
-The local preview has one observed launch path:
+The alpha has one supported path:
 
 | Coding-agent CLI | Platform | Status |
 | --- | --- | --- |
-| Local Codex CLI | macOS / arm64 | Local launch boundary observed |
+| Locally installed Codex CLI | macOS / Apple Silicon | Alpha |
 
 Use it as:
 
@@ -12,8 +12,12 @@ Use it as:
 clroom codex [ordinary Codex arguments]
 ```
 
-Clean Room Launcher starts the locally available CLI. It does not replace the
-CLI, create an account, perform browser login, or copy provider credentials.
+Clean Room Launcher resolves `codex` from `PATH`, builds the macOS isolation
+profile, prints the boundary summary, then replaces itself with
+`sandbox-exec … codex`. Terminal streams, signals and exit status remain native.
 
-Other providers and operating systems are not advertised by this preview.
-Their support requires their own observed artifact and launch evidence.
+The launcher does not install Codex, create an account, perform browser login,
+read provider state, or copy provider credentials. Existing provider state is
+used by Codex itself and left untouched.
+
+Claude, Linux, Windows and Intel macOS are not supported by this alpha.

@@ -1,28 +1,43 @@
-# Install the local preview
+# Install v0.1.0-alpha.1
 
-Clean Room Launcher is currently a macOS/arm64 local preview. It is not yet a
-published package or a public release.
+Prerequisites:
 
-Given an exact `clean-room-launcher-*.tar.gz` artifact and its SHA-256, verify
-it before extracting it:
+- macOS on Apple Silicon;
+- a locally installed `codex` CLI that already works on its own.
 
-```sh
-shasum -a 256 clean-room-launcher-*.tar.gz
-tar -xzf clean-room-launcher-*.tar.gz
-```
-
-The extracted archive contains one executable, `bin/clroom`.
+## Release archive
 
 ```sh
-./clean-room-launcher-*/bin/clroom --help
-./clean-room-launcher-*/bin/clroom status
-./clean-room-launcher-*/bin/clroom codex --help
+VERSION=v0.1.0-alpha.1
+ASSET=clean-room-launcher-v0.1.0-alpha.1-aarch64-apple-darwin.tar.gz
+
+curl -fLO "https://github.com/ysorokin/clean-room-launcher/releases/download/$VERSION/$ASSET"
+curl -fLO "https://github.com/ysorokin/clean-room-launcher/releases/download/$VERSION/SHA256SUMS"
+shasum -a 256 -c SHA256SUMS
+tar -xzf "$ASSET"
+mkdir -p "$HOME/.local/bin"
+install -m 0755 "clean-room-launcher-v0.1.0-alpha.1-aarch64-apple-darwin/bin/clroom" "$HOME/.local/bin/clroom"
 ```
 
-`clroom codex …` passes ordinary Codex arguments through the launcher. On the
-currently observed macOS tuple it starts Codex under the clean-room filesystem
-boundary. It does not ask you to log in, copy credentials, or change your
-existing configuration.
+The archive is unsigned and unnotarized. If local macOS policy refuses it,
+prefer the source install below; do not disable Gatekeeper globally.
 
-To remove the preview, delete only the extracted archive directory. It does
-not install a service, background process, account, or system-wide setting.
+## Cargo from the release tag
+
+```sh
+cargo install --git https://github.com/ysorokin/clean-room-launcher \
+  --tag v0.1.0-alpha.1 --locked
+```
+
+The alpha is not published to crates.io.
+
+## Verify the installation
+
+```sh
+clroom --help
+cd your-project
+clroom codex features list
+```
+
+To remove an archive install, delete `$HOME/.local/bin/clroom`. For Cargo, run
+`cargo uninstall clean-room-launcher`. No service or system setting is created.
