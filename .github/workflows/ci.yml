@@ -34,17 +34,3 @@ jobs:
         run: |
           CARGO_MANIFEST_DIR="$PWD" rustc --test tests/packaging/target_matrix.rs -o /tmp/taskseal-target-matrix
           /tmp/taskseal-target-matrix
-
-  qualified-target-lanes:
-    name: Build qualified target lane
-    needs: target-matrix
-    # This list is intentionally empty until a P06 QUALIFIED receipt exists.
-    # When populated, every entry must come from targets.toml's qualified
-    # target and its runner; the runner is never replaced with ubuntu-latest.
-    strategy:
-      matrix:
-        include: []
-    runs-on: ${{ matrix.runner }}
-    steps:
-      - uses: actions/checkout@v4
-      - run: cargo test --locked --all-targets --target "${{ matrix.rust_target }}"
