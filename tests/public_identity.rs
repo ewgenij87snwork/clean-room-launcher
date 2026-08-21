@@ -75,16 +75,25 @@ fn clroom_is_the_only_public_identity_and_preserves_the_native_codex_process() {
             .output()
             .unwrap()
     };
+    let clean_defaults = concat!(
+        "-c\0features.hooks=false\0",
+        "-c\0features.plugins=false\0",
+        "-c\0developer_instructions=\"\"\0",
+        "-c\0notify=[]\0",
+    );
 
     let no_args = native(&[]);
     assert!(no_args.status.success());
-    assert_eq!(fs::read_to_string(&capture).unwrap(), "\0inherited");
+    assert_eq!(
+        fs::read_to_string(&capture).unwrap(),
+        format!("{clean_defaults}inherited")
+    );
 
     let forwarded = native(&["--help", "--approve-for-me", "--yolo"]);
     assert!(forwarded.status.success());
     assert_eq!(
         fs::read_to_string(&capture).unwrap(),
-        "--help\0--approve-for-me\0--yolo\0inherited"
+        format!("{clean_defaults}--help\0--approve-for-me\0--yolo\0inherited")
     );
 
     let mut stdio = Command::new(clroom())

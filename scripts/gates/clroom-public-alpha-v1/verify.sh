@@ -11,11 +11,17 @@ artifact_dir=target/public-alpha
 archive_name=clean-room-launcher-v0.1.0-alpha.1-aarch64-apple-darwin.tar.gz
 archive="$artifact_dir/$archive_name"
 checksums="$artifact_dir/SHA256SUMS"
+mode=${1:-full}
 
 refuse() {
   printf '%s\n' "CLROOM_PUBLIC_ALPHA_LOCAL_REFUSED:$1" >&2
   exit 2
 }
+
+case "$mode" in
+  full|--resume-after-public-identity) ;;
+  *) refuse USAGE ;;
+esac
 
 test -f "$authority" || refuse AUTHORITY_MISSING
 test -f "$plan" || refuse PLAN_MISSING
@@ -52,17 +58,29 @@ test "$(file -b docs/assets/clroom-alpha.gif | awk '{print $1}')" = GIF \
 test "$(stat -f %z docs/assets/clroom-alpha.gif)" -le 2000000 \
   || refuse GIF_SIZE
 
-rustfmt --edition 2024 --check --config skip_children=true \
-  src/cli/process.rs src/cli/screen.rs \
-  tests/cli/argv_passthrough.rs tests/cli/isolated_codex_launch.rs \
-  tests/cli/isolated_launch_screen.rs tests/cli/local_codex_launch.rs \
-  tests/cli/minimum_real_launch.rs fixtures/cli/fake-provider.rs
-cargo clippy --offline --bin clroom --test cli -- -D warnings
-cargo test --offline --test execution_bootstrap
-cargo test --offline --test cli
-cargo test --offline --test public_boundary
-cargo test --offline --test public_identity
-scripts/check-public-boundary.sh --root .
+if test "$mode" = full; then
+  rustfmt --edition 2024 --check --config skip_children=true \
+    src/cli/process.rs src/cli/screen.rs \
+    tests/cli/argv_passthrough.rs tests/cli/isolated_codex_launch.rs \
+    tests/cli/isolated_launch_screen.rs tests/cli/local_codex_launch.rs \
+    tests/cli/minimum_real_launch.rs fixtures/cli/fake-provider.rs
+  cargo clippy --offline --bin clroom --test cli -- -D warnings
+  cargo test --offline --test execution_bootstrap
+  cargo test --offline --test cli
+  cargo test --offline --test public_boundary
+  cargo test --offline --test public_identity
+  scripts/check-public-boundary.sh --root .
+else
+  test "$(git rev-parse HEAD^)" = 30b8a5dafe9c38864a09de2386d819b9402eb163 \
+    || refuse RESUME_PARENT
+  changed=$(git diff --name-only HEAD^ HEAD)
+  expected=$(printf '%s\n' \
+    scripts/gates/clroom-public-alpha-v1/verify.sh \
+    tests/public_identity.rs)
+  test "$changed" = "$expected" || refuse RESUME_CHANGESET
+  rustfmt --edition 2024 --check --config skip_children=true tests/public_identity.rs
+  scripts/check-public-boundary.sh --root .
+fi
 
 find "$artifact_dir" -depth -delete 2>/dev/null || true
 mkdir -p "$artifact_dir"
@@ -148,6 +166,7 @@ jq -n \
   --arg binary_sha256 "$archive_binary_sha" \
   --arg sha256sums_sha256 "$checksums_sha" \
   --arg gif_sha256 "$gif_sha" \
+  --arg execution_mode "$mode" \
   '{
     schema_version:"clroom.public-alpha.local.v1",
     plan_id:"P08-CLROOM-PUBLIC-ALPHA-V1",
@@ -160,6 +179,7 @@ jq -n \
     binary_sha256:$binary_sha256,
     sha256sums_sha256:$sha256sums_sha256,
     gif_sha256:$gif_sha256,
+    execution_mode:$execution_mode,
     package_version:"0.1.0-alpha.1",
     host:"macOS/arm64",
     checks:{
@@ -172,6 +192,7 @@ jq -n \
       clean_defaults:4,
       user_arguments_after_defaults:true
     },
+    focused_public_identity_pass:true,
     fake_provider_processes:1,
     real_provider_processes:0,
     provider_requests:0,
