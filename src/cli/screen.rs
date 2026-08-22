@@ -114,7 +114,7 @@ pub fn render_unqualified_for(ready: PrepareReady, context: RenderContext) -> Ve
         .collect()
 }
 
-pub fn render_isolated_preview(project: &Path) -> Vec<String> {
+pub fn render_isolated_preview(project: &Path, selected_global_skills: usize) -> Vec<String> {
     let width = std::env::var("COLUMNS")
         .ok()
         .and_then(|value| value.parse::<usize>().ok())
@@ -126,6 +126,7 @@ pub fn render_isolated_preview(project: &Path) -> Vec<String> {
         || std::env::var("TERM").is_ok_and(|term| term.eq_ignore_ascii_case("dumb"));
     render_isolated_preview_for(
         project,
+        selected_global_skills,
         RenderContext {
             width,
             interactive,
@@ -134,7 +135,11 @@ pub fn render_isolated_preview(project: &Path) -> Vec<String> {
     )
 }
 
-pub fn render_isolated_preview_for(_project: &Path, context: RenderContext) -> Vec<String> {
+pub fn render_isolated_preview_for(
+    _project: &Path,
+    selected_global_skills: usize,
+    context: RenderContext,
+) -> Vec<String> {
     let styled = context.interactive && !context.plain;
     let panel_width = 33;
     let content_width = panel_width - 4;
@@ -157,33 +162,38 @@ pub fn render_isolated_preview_for(_project: &Path, context: RenderContext) -> V
     } else {
         format!("{mounting_rail_top} ╭─ {title} {title_border}╮")
     });
-    let rows = [
-        ("", ""),
+    let skill_state = if selected_global_skills == 0 {
+        "off".to_owned()
+    } else {
+        format!("{selected_global_skills} on")
+    };
+    let rows = vec![
+        (String::new(), String::new()),
         (
-            "    Global AGENTS.md  off",
-            "    \u{1b}[1mGlobal AGENTS.md\u{1b}[0m  off",
+            "    Global AGENTS.md  off".to_owned(),
+            "    \u{1b}[1mGlobal AGENTS.md\u{1b}[0m  off".to_owned(),
         ),
         (
-            "    Global skills     off",
-            "    \u{1b}[1mGlobal skills\u{1b}[0m     off",
+            format!("    Global skills{skill_state:>8}"),
+            format!("    \u{1b}[1mGlobal skills\u{1b}[0m{skill_state:>8}"),
         ),
         (
-            "    Apps              off",
-            "    \u{1b}[1mApps\u{1b}[0m              off",
+            "    Apps              off".to_owned(),
+            "    \u{1b}[1mApps\u{1b}[0m              off".to_owned(),
         ),
         (
-            "    Hooks/plugins     off",
-            "    \u{1b}[1mHooks/plugins\u{1b}[0m     off",
+            "    Hooks/plugins     off".to_owned(),
+            "    \u{1b}[1mHooks/plugins\u{1b}[0m     off".to_owned(),
         ),
         (
-            "    Dev prompt        off",
-            "    \u{1b}[1mDev prompt\u{1b}[0m        off",
+            "    Dev prompt        off".to_owned(),
+            "    \u{1b}[1mDev prompt\u{1b}[0m        off".to_owned(),
         ),
         (
-            "    Notifications     off",
-            "    \u{1b}[1mNotifications\u{1b}[0m     off",
+            "    Notifications     off".to_owned(),
+            "    \u{1b}[1mNotifications\u{1b}[0m     off".to_owned(),
         ),
-        ("", ""),
+        (String::new(), String::new()),
     ];
     for (plain, decorated) in rows {
         let padding = " ".repeat(content_width.saturating_sub(plain.chars().count()));

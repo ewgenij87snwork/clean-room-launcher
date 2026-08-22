@@ -8,6 +8,11 @@ Start with:
   clroom codex [ARGS...] Launch the installed Codex CLI natively
   clroom doctor --root . Check installation safely
 
+Choose skills for one launch:
+  clroom codex --skill-set=code-review,@review
+  Direct skills, namespaces, and named @sets share this one option.
+  Skill sets file: /tmp/clroom-help-config/clroom/skill-sets.yaml
+
 Learn:
   clroom help inspect    Explain an available skill decision
 

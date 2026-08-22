@@ -169,8 +169,13 @@ pub fn top(invoked_as: &str) -> String {
     let inspect = resolve("inspect").expect("inspect registry entry is required");
     let explain = resolve("explain").expect("explain registry entry is required");
     let doctor = resolve("doctor").expect("doctor registry entry is required");
+    let home = std::env::var_os("HOME")
+        .map(std::path::PathBuf::from)
+        .unwrap_or_else(|| std::path::PathBuf::from("$HOME"));
+    let skill_sets_path = super::skill_sets::config_path(&home)
+        .unwrap_or_else(|_| std::path::PathBuf::from("$HOME/.config/clroom/skill-sets.yaml"));
     format!(
-        "Clean Room Launcher\nA clean-room launcher for coding-agent CLIs.\n\nUsage: {invoked_as} [COMMAND]\n\nStart with:\n  {invoked_as}                 Review setup before a provider launch\n  {invoked_as} codex [ARGS...] Launch the installed Codex CLI natively\n  {invoked_as} {doctor} --root . {doctor_summary}\n\nLearn:\n  {invoked_as} {help} {inspect}    Explain an available skill decision\n\nCommands:\n  {help} [COMMAND]        {help_summary}\n  {inspect} <skill>       {inspect_summary}\n  {explain} <skill>       {explain_summary}",
+        "Clean Room Launcher\nA clean-room launcher for coding-agent CLIs.\n\nUsage: {invoked_as} [COMMAND]\n\nStart with:\n  {invoked_as}                 Review setup before a provider launch\n  {invoked_as} codex [ARGS...] Launch the installed Codex CLI natively\n  {invoked_as} {doctor} --root . {doctor_summary}\n\nChoose skills for one launch:\n  {invoked_as} codex --skill-set=code-review,@review\n  Direct skills, namespaces, and named @sets share this one option.\n  Skill sets file: {skill_sets_path}\n\nLearn:\n  {invoked_as} {help} {inspect}    Explain an available skill decision\n\nCommands:\n  {help} [COMMAND]        {help_summary}\n  {inspect} <skill>       {inspect_summary}\n  {explain} <skill>       {explain_summary}",
         doctor = doctor.canonical,
         doctor_summary = doctor.summary,
         help = help.canonical,
@@ -179,6 +184,7 @@ pub fn top(invoked_as: &str) -> String {
         inspect_summary = inspect.summary,
         explain = explain.canonical,
         explain_summary = explain.summary,
+        skill_sets_path = skill_sets_path.display(),
     )
 }
 

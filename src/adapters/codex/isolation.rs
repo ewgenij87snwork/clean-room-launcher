@@ -1,4 +1,5 @@
 use std::{
+    collections::BTreeSet,
     env, fs,
     path::{Path, PathBuf},
 };
@@ -7,6 +8,7 @@ use std::{
 pub struct IsolationPlan {
     pub profile: String,
     pub project: PathBuf,
+    pub selected_global_skills: usize,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -22,12 +24,38 @@ pub enum IsolationError {
     InvalidExecutable,
     InvalidHome,
     InvalidCodexHome,
+    InvalidSkillSelector(String),
+    UnknownSkillSelector(String),
+    AmbiguousSkillSelector(String),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct GlobalSkill {
+    name: String,
+    namespace: Option<String>,
+    entry_path: PathBuf,
+    canonical_path: PathBuf,
+}
+
+#[derive(Debug, Default)]
+struct SkillSelection {
+    canonical_paths: BTreeSet<PathBuf>,
+    allowed_paths: BTreeSet<PathBuf>,
 }
 
 pub fn plan(
     project: &Path,
     executable: &Path,
     inputs: &IsolationInputs,
+) -> Result<IsolationPlan, IsolationError> {
+    plan_with_skills(project, executable, inputs, &[])
+}
+
+pub fn plan_with_skills(
+    project: &Path,
+    executable: &Path,
+    inputs: &IsolationInputs,
+    selectors: &[String],
 ) -> Result<IsolationPlan, IsolationError> {
     if env::consts::OS != "macos" || env::consts::ARCH != "aarch64" {
         return Err(IsolationError::UnsupportedPlatform);
@@ -44,11 +72,24 @@ pub fn plan(
         codex_home.join("AGENTS.md"),
         codex_home.join("AGENTS.override.md"),
     ];
-    let denied_subpaths = [
+    let denied_roots = [
         codex_home.join("skills"),
         home.join(".agents/skills"),
         PathBuf::from("/private/etc/codex/skills"),
     ];
+    let inventory = if selectors.is_empty() {
+        Vec::new()
+    } else {
+        discover_global_skills(&denied_roots)
+    };
+    let selection = resolve_skill_selectors(selectors, &inventory)?;
+    let mut denied_subpaths = denied_roots.into_iter().collect::<BTreeSet<_>>();
+    denied_subpaths.extend(
+        inventory
+            .iter()
+            .map(|skill| skill.canonical_path.clone())
+            .filter(|path| !path.starts_with(&project)),
+    );
 
     let mut profile = String::from("(version 1)\n(allow default)\n");
     profile.push_str("(deny file-read*");
@@ -63,8 +104,158 @@ pub fn plan(
         profile.push_str("\")");
     }
     profile.push_str(")\n");
+    if !selection.allowed_paths.is_empty() {
+        profile.push_str("(allow file-read*");
+        for path in selection.allowed_paths {
+            profile.push_str("\n  (subpath \"");
+            profile.push_str(&escape_scheme_path(&path)?);
+            profile.push_str("\")");
+        }
+        profile.push_str(")\n");
+    }
 
-    Ok(IsolationPlan { profile, project })
+    Ok(IsolationPlan {
+        profile,
+        project,
+        selected_global_skills: selection.canonical_paths.len(),
+    })
+}
+
+fn discover_global_skills(roots: &[PathBuf]) -> Vec<GlobalSkill> {
+    let mut inventory = Vec::new();
+    for root in roots {
+        let Ok(entries) = fs::read_dir(root) else {
+            continue;
+        };
+        for entry in entries.flatten() {
+            let Some(name) = entry.file_name().to_str().map(str::to_owned) else {
+                continue;
+            };
+            let entry_path = entry.path();
+            if !fs::metadata(entry_path.join("SKILL.md")).is_ok_and(|metadata| metadata.is_file()) {
+                continue;
+            }
+            let Ok(canonical_path) = fs::canonicalize(&entry_path) else {
+                continue;
+            };
+            if !fs::metadata(&canonical_path).is_ok_and(|metadata| metadata.is_dir()) {
+                continue;
+            }
+            inventory.push(GlobalSkill {
+                namespace: plugin_namespace(&canonical_path),
+                name,
+                entry_path,
+                canonical_path,
+            });
+        }
+    }
+    inventory.sort_by(|left, right| {
+        (&left.name, &left.namespace, &left.canonical_path).cmp(&(
+            &right.name,
+            &right.namespace,
+            &right.canonical_path,
+        ))
+    });
+    inventory
+}
+
+fn plugin_namespace(skill_path: &Path) -> Option<String> {
+    let skills_root = skill_path
+        .ancestors()
+        .find(|ancestor| ancestor.file_name().is_some_and(|name| name == "skills"))?;
+    let package_root = skills_root.parent()?;
+    for manifest in [
+        package_root.join(".codex-plugin/plugin.json"),
+        package_root.join(".claude-plugin/plugin.json"),
+    ] {
+        let Ok(metadata) = fs::metadata(&manifest) else {
+            continue;
+        };
+        if !metadata.is_file() || metadata.len() > 64 * 1024 {
+            continue;
+        }
+        let Ok(bytes) = fs::read(&manifest) else {
+            continue;
+        };
+        let Ok(value) = serde_json::from_slice::<serde_json::Value>(&bytes) else {
+            continue;
+        };
+        if let Some(name) = value.get("name").and_then(serde_json::Value::as_str)
+            && valid_skill_name(name)
+        {
+            return Some(name.to_owned());
+        }
+    }
+    None
+}
+
+fn resolve_skill_selectors(
+    selectors: &[String],
+    inventory: &[GlobalSkill],
+) -> Result<SkillSelection, IsolationError> {
+    let mut selection = SkillSelection::default();
+    for selector in selectors {
+        validate_selector(selector)?;
+
+        let matched = if let Some((namespace, name)) = selector.split_once(':') {
+            let exact = distinct_paths(inventory.iter().filter(|skill| {
+                skill.namespace.as_deref() == Some(namespace) && skill.name == name
+            }));
+            if exact.len() > 1 {
+                return Err(IsolationError::AmbiguousSkillSelector(selector.clone()));
+            }
+            exact
+        } else {
+            let exact = distinct_paths(inventory.iter().filter(|skill| skill.name == *selector));
+            let namespace = distinct_paths(
+                inventory
+                    .iter()
+                    .filter(|skill| skill.namespace.as_deref() == Some(selector.as_str())),
+            );
+            if exact.len() > 1 || (!exact.is_empty() && !namespace.is_empty()) {
+                return Err(IsolationError::AmbiguousSkillSelector(selector.clone()));
+            }
+            if exact.is_empty() { namespace } else { exact }
+        };
+
+        if matched.is_empty() {
+            return Err(IsolationError::UnknownSkillSelector(selector.clone()));
+        }
+        selection.canonical_paths.extend(matched);
+    }
+
+    for skill in inventory
+        .iter()
+        .filter(|skill| selection.canonical_paths.contains(&skill.canonical_path))
+    {
+        selection.allowed_paths.insert(skill.entry_path.clone());
+        selection.allowed_paths.insert(skill.canonical_path.clone());
+    }
+    Ok(selection)
+}
+
+fn distinct_paths<'a>(skills: impl Iterator<Item = &'a GlobalSkill>) -> BTreeSet<PathBuf> {
+    skills.map(|skill| skill.canonical_path.clone()).collect()
+}
+
+fn validate_selector(selector: &str) -> Result<(), IsolationError> {
+    let mut parts = selector.split(':');
+    let first = parts.next().unwrap_or_default();
+    let second = parts.next();
+    if !valid_skill_name(first)
+        || second.is_some_and(|part| !valid_skill_name(part))
+        || parts.next().is_some()
+    {
+        return Err(IsolationError::InvalidSkillSelector(selector.to_owned()));
+    }
+    Ok(())
+}
+
+fn valid_skill_name(name: &str) -> bool {
+    !name.is_empty()
+        && name.chars().all(|character| {
+            character.is_ascii_alphanumeric() || matches!(character, '-' | '_' | '.')
+        })
 }
 
 fn canonical_directory(path: &Path) -> Option<PathBuf> {
