@@ -1,4 +1,5 @@
 use std::{
+    fs,
     io::{self, IsTerminal},
     path::Path,
 };
@@ -11,6 +12,57 @@ pub struct RenderContext {
     pub width: usize,
     pub interactive: bool,
     pub plain: bool,
+}
+
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub struct PlaqueFeatureState {
+    apps: bool,
+    hooks: bool,
+    plugins: bool,
+}
+
+impl PlaqueFeatureState {
+    pub fn from_provider_args(args: &[String]) -> Self {
+        let mut state = Self::default();
+        let mut args = args.iter();
+        while let Some(argument) = args.next() {
+            if argument == "--" {
+                break;
+            }
+            if matches!(argument.as_str(), "--enable" | "--disable") {
+                if let Some(feature) = args.next() {
+                    state.set(feature, argument == "--enable");
+                }
+            } else if let Some(feature) = argument.strip_prefix("--enable=") {
+                state.set(feature, true);
+            } else if let Some(feature) = argument.strip_prefix("--disable=") {
+                state.set(feature, false);
+            }
+        }
+        state
+    }
+
+    fn set(&mut self, feature: &str, enabled: bool) {
+        match feature {
+            "apps" => self.apps = enabled,
+            "hooks" => self.hooks = enabled,
+            "plugins" => self.plugins = enabled,
+            _ => {}
+        }
+    }
+
+    fn apps_label(self) -> &'static str {
+        if self.apps { "on" } else { "off" }
+    }
+
+    fn hooks_plugins_label(self) -> &'static str {
+        match (self.hooks, self.plugins) {
+            (false, false) => "off",
+            (true, false) => "on/off",
+            (false, true) => "off/on",
+            (true, true) => "on",
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -61,60 +113,99 @@ pub fn render_unqualified(ready: PrepareReady) -> Vec<String> {
 }
 
 pub fn render_unqualified_for(ready: PrepareReady, context: RenderContext) -> Vec<String> {
-    let mut lines = vec![
-        "Clean Room Launcher".to_owned(),
-        "A clean-room launcher for coding-agent CLIs.".to_owned(),
-        String::new(),
-        "Command  clroom codex [ARGS...]".to_owned(),
-        format!(
-            "Provider {} · already installed local CLI · nothing launched",
-            ready.provider
-        ),
-        "Writes   no launcher state".to_owned(),
-        "Leaves   existing provider state unchanged".to_owned(),
-        String::new(),
-    ];
+    let _provider = ready.provider;
+    let styled = context.interactive && !context.plain;
+    let tagline = if context.interactive {
+        "Ready to launch Codex without unrelated global instructions or skills."
+    } else {
+        "Launch Codex without unrelated global instructions and skills."
+    };
+    let mut lines = vec![if styled {
+        "\u{1b}[1;36mClean Room Launcher\u{1b}[0m".to_owned()
+    } else {
+        "Clean Room Launcher".to_owned()
+    }];
+    lines.extend(wrap(tagline, context.width).into_iter().map(|line| {
+        if styled {
+            format!("\u{1b}[2m{line}\u{1b}[0m")
+        } else {
+            line
+        }
+    }));
+    lines.push(String::new());
+    lines.extend(render_preflight_command(context.width, styled));
+    lines.push(String::new());
     if !context.interactive {
         lines.extend([
             "Preview only · provider not launched".to_owned(),
-            "  clroom codex [ARGS...] to launch explicitly".to_owned(),
+            "Run clroom codex [CODEX_ARGS...]".to_owned(),
         ]);
     } else if context.plain {
         lines.extend([
-            "1. Launch Codex  Recommended".to_owned(),
+            "1. Launch Codex".to_owned(),
             String::new(),
-            "Enter launch Codex · q stop".to_owned(),
+            "Enter to launch · q to quit".to_owned(),
         ]);
     } else {
         lines.extend([
-            "› Launch Codex  Recommended".to_owned(),
+            "\u{1b}[1m› Launch Codex\u{1b}[0m".to_owned(),
             String::new(),
-            "Enter launch Codex · q stop".to_owned(),
+            "\u{1b}[2mEnter to launch · q to quit\u{1b}[0m".to_owned(),
         ]);
     }
-    if context.width >= 80 {
-        return lines;
-    }
     lines
-        .into_iter()
-        .flat_map(|line| {
-            if line.is_empty() {
-                return vec![line];
-            }
-            if let Some((label, value)) = labelled_value(&line) {
-                let mut stacked = vec![label.to_owned()];
-                stacked.extend(wrap(value, context.width));
-                stacked
-            } else if line.chars().count() <= context.width {
-                vec![line]
-            } else {
-                wrap(&line, context.width)
-            }
-        })
-        .collect()
 }
 
-pub fn render_isolated_preview(project: &Path, selected_global_skills: usize) -> Vec<String> {
+fn render_preflight_command(width: usize, styled: bool) -> Vec<String> {
+    let base = "clroom codex";
+    let selector = "--skill-set=any-my-skill,@any-my-skill-set";
+    let approval = "--approve-for-me";
+    let plain = format!("{base} {selector} {approval}");
+    if plain.chars().count() <= width {
+        return vec![if styled {
+            format!("\u{1b}[1m{base} \u{1b}[1;36m{selector}\u{1b}[0m \u{1b}[1m{approval}\u{1b}[0m")
+        } else {
+            plain
+        }];
+    }
+    let base_line = format!("{base} \\");
+    let selector_line = format!("  {selector} \\");
+    if selector_line.chars().count() <= width {
+        return if styled {
+            vec![
+                format!("\u{1b}[1m{base_line}\u{1b}[0m"),
+                format!("\u{1b}[1;36m{selector}\u{1b}[0m \u{1b}[1m\\\u{1b}[0m"),
+                format!("  \u{1b}[1m{approval}\u{1b}[0m"),
+            ]
+        } else {
+            vec![base_line, selector_line, format!("  {approval}")]
+        };
+    }
+    let (direct_skill, named_set) = selector
+        .split_once(',')
+        .expect("the documented selector has one direct skill and one named set");
+    if styled {
+        vec![
+            format!("\u{1b}[1m{base_line}\u{1b}[0m"),
+            format!("  \u{1b}[1;36m{direct_skill},\\\u{1b}[0m"),
+            format!("\u{1b}[1;36m{named_set}\u{1b}[0m \u{1b}[1m\\\u{1b}[0m"),
+            format!("  \u{1b}[1m{approval}\u{1b}[0m"),
+        ]
+    } else {
+        vec![
+            base_line,
+            format!("  {direct_skill},\\"),
+            format!("{named_set} \\"),
+            format!("  {approval}"),
+        ]
+    }
+}
+
+pub fn render_isolated_preview(
+    project: &Path,
+    selected_global_skills: usize,
+    feature_state: PlaqueFeatureState,
+) -> Vec<String> {
     let width = std::env::var("COLUMNS")
         .ok()
         .and_then(|value| value.parse::<usize>().ok())
@@ -127,6 +218,7 @@ pub fn render_isolated_preview(project: &Path, selected_global_skills: usize) ->
     render_isolated_preview_for(
         project,
         selected_global_skills,
+        feature_state,
         RenderContext {
             width,
             interactive,
@@ -136,16 +228,21 @@ pub fn render_isolated_preview(project: &Path, selected_global_skills: usize) ->
 }
 
 pub fn render_isolated_preview_for(
-    _project: &Path,
+    project: &Path,
     selected_global_skills: usize,
+    feature_state: PlaqueFeatureState,
     context: RenderContext,
 ) -> Vec<String> {
     let styled = context.interactive && !context.plain;
     let panel_width = 33;
     let content_width = panel_width - 4;
     let title = "CLEAN ROOM";
+    let version = concat!("v", env!("CARGO_PKG_VERSION"));
     let title_border = "─".repeat(panel_width - title.chars().count() - 5);
-    let border = "─".repeat(panel_width - 2);
+    let version_border = format!(
+        "{} {version} ─",
+        "─".repeat(panel_width - version.chars().count() - 5)
+    );
     // Visual model: a wall-mounted boundary status plaque. The seven-cell mounting
     // rail stays fixed at the left; one-cell standoff markers connect it to the
     // right plaque. Plaque height follows `rows` automatically. If row text grows,
@@ -167,6 +264,8 @@ pub fn render_isolated_preview_for(
     } else {
         format!("{selected_global_skills} on")
     };
+    let apps_state = feature_state.apps_label();
+    let hooks_plugins_state = feature_state.hooks_plugins_label();
     let rows = vec![
         (String::new(), String::new()),
         (
@@ -178,12 +277,12 @@ pub fn render_isolated_preview_for(
             format!("    \u{1b}[1mGlobal skills\u{1b}[0m{skill_state:>8}"),
         ),
         (
-            "    Apps              off".to_owned(),
-            "    \u{1b}[1mApps\u{1b}[0m              off".to_owned(),
+            format!("    Apps{apps_state:>17}"),
+            format!("    \u{1b}[1mApps\u{1b}[0m{apps_state:>17}"),
         ),
         (
-            "    Hooks/plugins     off".to_owned(),
-            "    \u{1b}[1mHooks/plugins\u{1b}[0m     off".to_owned(),
+            format!("    Hooks/plugins{hooks_plugins_state:>8}"),
+            format!("    \u{1b}[1mHooks/plugins\u{1b}[0m{hooks_plugins_state:>8}"),
         ),
         (
             "    Dev prompt        off".to_owned(),
@@ -206,24 +305,65 @@ pub fn render_isolated_preview_for(
             format!("{mounting_rail_fill}{standoff_marker}│ {plain}{padding} │")
         });
     }
-    lines.push(if styled {
-        format!("\u{1b}[2m{mounting_rail_bottom} ╰{border}╯\u{1b}[0m")
+    let project_skills = count_project_skills(project);
+    let main_bottom_border = if project_skills > 0 {
+        "───────╥───────────────╥───────"
     } else {
-        format!("{mounting_rail_bottom} ╰{border}╯")
+        &version_border
+    };
+    lines.push(if styled {
+        format!("\u{1b}[2m{mounting_rail_bottom} ╰{main_bottom_border}╯\u{1b}[0m")
+    } else {
+        format!("{mounting_rail_bottom} ╰{main_bottom_border}╯")
     });
+    if project_skills > 0 {
+        let card_indent = " ".repeat(mounting_rail_top.chars().count() + 1);
+        let project_skill_state = format!("{project_skills} on");
+        let plain = format!("    Project skills{project_skill_state:>7}");
+        let padding = " ".repeat(content_width.saturating_sub(plain.chars().count()));
+        // An untitled project-skills satellite plaque attaches directly to the
+        // main plaque through paired mixed-weight tee standoffs. Keep both
+        // borders synchronized when panel geometry changes.
+        lines.push(if styled {
+            format!("{card_indent}\u{1b}[2m╭───────╨───────────────╨───────╮\u{1b}[0m")
+        } else {
+            format!("{card_indent}╭───────╨───────────────╨───────╮")
+        });
+        lines.push(if styled {
+            format!(
+                "{card_indent}\u{1b}[2m│\u{1b}[0m     \u{1b}[1mProject skills\u{1b}[0m{project_skill_state:>7}{padding} \u{1b}[2m│\u{1b}[0m"
+            )
+        } else {
+            format!("{card_indent}│ {plain}{padding} │")
+        });
+        lines.push(if styled {
+            format!("{card_indent}\u{1b}[2m╰{version_border}╯\u{1b}[0m")
+        } else {
+            format!("{card_indent}╰{version_border}╯")
+        });
+    }
     lines.push(String::new());
     lines
 }
 
-fn labelled_value(line: &str) -> Option<(&'static str, &str)> {
-    [
-        ("Command", "Command  "),
-        ("Provider", "Provider "),
-        ("Writes", "Writes   "),
-        ("Leaves", "Leaves   "),
-    ]
-    .into_iter()
-    .find_map(|(label, prefix)| line.strip_prefix(prefix).map(|value| (label, value)))
+fn count_project_skills(project: &Path) -> usize {
+    let Ok(project) = fs::canonicalize(project) else {
+        return 0;
+    };
+    let Ok(entries) = fs::read_dir(project.join(".agents/skills")) else {
+        return 0;
+    };
+    entries
+        .flatten()
+        .filter(|entry| {
+            let Ok(skill) = fs::canonicalize(entry.path()) else {
+                return false;
+            };
+            skill.starts_with(&project)
+                && fs::metadata(&skill).is_ok_and(|metadata| metadata.is_dir())
+                && fs::metadata(skill.join("SKILL.md")).is_ok_and(|metadata| metadata.is_file())
+        })
+        .count()
 }
 
 fn wrap(text: &str, width: usize) -> Vec<String> {

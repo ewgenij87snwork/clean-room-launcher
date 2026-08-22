@@ -310,52 +310,14 @@ fn codex_handoff_admits_one_namespaced_skill_without_its_siblings() {
 }
 
 #[test]
-fn codex_handoff_rejects_invalid_unknown_and_ambiguous_selectors_before_exec() {
+fn codex_handoff_rejects_invalid_and_unknown_selectors_before_exec() {
     let (root, project, home, codex_home, bin) = isolated_fixture();
     add_selective_skill_fixture(&root, &home, &project);
-    fs::create_dir_all(home.join(".agents/skills/superpowers")).unwrap();
-    fs::write(
-        home.join(".agents/skills/superpowers/SKILL.md"),
-        b"same name as namespace\n",
-    )
-    .unwrap();
-    fs::create_dir_all(codex_home.join("skills/arrow")).unwrap();
-    fs::write(
-        codex_home.join("skills/arrow/SKILL.md"),
-        b"different arrow\n",
-    )
-    .unwrap();
-
-    let second_plugin = root.join("second-plugin-cache/superpowers");
-    fs::create_dir_all(second_plugin.join(".codex-plugin")).unwrap();
-    fs::write(
-        second_plugin.join(".codex-plugin/plugin.json"),
-        br#"{"name":"superpowers","version":"2.0.0"}"#,
-    )
-    .unwrap();
-    fs::create_dir_all(second_plugin.join("skills/systematic-debugging")).unwrap();
-    fs::write(
-        second_plugin.join("skills/systematic-debugging/SKILL.md"),
-        b"different systematic debugging\n",
-    )
-    .unwrap();
-    fs::create_dir_all(codex_home.join("skills")).unwrap();
-    std::os::unix::fs::symlink(
-        second_plugin.join("skills/systematic-debugging"),
-        codex_home.join("skills/systematic-debugging"),
-    )
-    .unwrap();
     let capture = bin.join("invalid-selector-provider-capture");
 
     for (selector, expected) in [
         ("", "invalid skill selector"),
         ("missing", "unknown skill selector 'missing'"),
-        ("superpowers", "ambiguous skill selector 'superpowers'"),
-        ("arrow", "ambiguous skill selector 'arrow'"),
-        (
-            "superpowers:systematic-debugging",
-            "ambiguous skill selector 'superpowers:systematic-debugging'",
-        ),
     ] {
         let skills_argument = format!("--skill-set={selector}");
         let output = command(&project, &home, &codex_home, &bin, &capture)
@@ -370,6 +332,92 @@ fn codex_handoff_rejects_invalid_unknown_and_ambiguous_selectors_before_exec() {
         );
         assert!(!capture.exists(), "selector={selector}");
     }
+}
+
+#[test]
+fn codex_handoff_prefers_codex_local_duplicates_and_denies_agents_bodies() {
+    // Break caught: granting both duplicate bodies makes Codex expose duplicate
+    // picker rows even though the user selected each logical skill only once.
+    let (root, project, home, codex_home, bin) = isolated_fixture();
+    let first_plugin = add_selective_skill_fixture(&root, &home, &project);
+    let codex_skills = codex_home.join("skills");
+    fs::create_dir_all(codex_skills.join("arrow")).unwrap();
+    fs::write(
+        codex_skills.join("arrow/SKILL.md"),
+        b"second arrow source\n",
+    )
+    .unwrap();
+
+    let second_plugin = root.join("second-plugin-cache/superpowers");
+    fs::create_dir_all(second_plugin.join(".codex-plugin")).unwrap();
+    fs::write(
+        second_plugin.join(".codex-plugin/plugin.json"),
+        br#"{"name":"superpowers","version":"2.0.0"}"#,
+    )
+    .unwrap();
+    fs::create_dir_all(second_plugin.join("skills/systematic-debugging")).unwrap();
+    fs::write(
+        second_plugin.join("skills/systematic-debugging/SKILL.md"),
+        b"second systematic-debugging source\n",
+    )
+    .unwrap();
+    std::os::unix::fs::symlink(
+        second_plugin.join("skills/systematic-debugging"),
+        codex_skills.join("systematic-debugging"),
+    )
+    .unwrap();
+
+    let capture = bin.join("duplicate-native-provider-capture");
+    let fake = bin.join("codex");
+    fs::write(
+        &fake,
+        "#!/bin/sh\n\
+         /bin/ls \"$HOME/.agents/skills\" >/dev/null || exit 73\n\
+         /bin/ls \"$CODEX_HOME/skills\" >/dev/null || exit 74\n\
+         /bin/cat \"$CLROOM_ARROW_CODEX\" >/dev/null || exit 75\n\
+         /bin/cat \"$CLROOM_ARROW_AGENTS\" >/dev/null 2>&1 && exit 76\n\
+         /bin/cat \"$CLROOM_SYSTEMATIC_CODEX\" >/dev/null || exit 77\n\
+         /bin/cat \"$CLROOM_SYSTEMATIC_AGENTS\" >/dev/null 2>&1 && exit 78\n\
+         /bin/cat \"$CLROOM_UNSELECTED\" >/dev/null 2>&1 && exit 79\n\
+         printf '%s\\0' \"$@\" > \"$CLROOM_CAPTURE_PATH\"\n\
+         exit 42\n",
+    )
+    .unwrap();
+    fs::set_permissions(&fake, fs::Permissions::from_mode(0o700)).unwrap();
+
+    let output = command(&project, &home, &codex_home, &bin, &capture)
+        .args([
+            "codex",
+            "--skill-set=arrow,superpowers:systematic-debugging",
+            "--version",
+        ])
+        .env("CLROOM_ARROW_CODEX", codex_skills.join("arrow/SKILL.md"))
+        .env(
+            "CLROOM_ARROW_AGENTS",
+            home.join(".agents/skills/arrow/SKILL.md"),
+        )
+        .env(
+            "CLROOM_SYSTEMATIC_CODEX",
+            second_plugin.join("skills/systematic-debugging/SKILL.md"),
+        )
+        .env(
+            "CLROOM_SYSTEMATIC_AGENTS",
+            first_plugin.join("skills/systematic-debugging/SKILL.md"),
+        )
+        .env(
+            "CLROOM_UNSELECTED",
+            first_plugin.join("skills/brainstorming/SKILL.md"),
+        )
+        .output()
+        .unwrap();
+
+    assert_eq!(
+        output.status.code(),
+        Some(42),
+        "stderr={}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert_eq!(fs::read(&capture).unwrap(), expected_argv(&["--version"]));
 }
 
 #[test]

@@ -1,6 +1,6 @@
 # Limitations
 
-- `v0.1.0-alpha.2` is an unsigned, unnotarized prerelease, not a stable release.
+- `v0.1.0-alpha.3` is an unsigned, unnotarized prerelease, not a stable release.
 - Only macOS on Apple Silicon with a locally installed Codex CLI is supported.
 - The boundary is a narrow macOS filesystem denylist, not a VM, container,
   network sandbox or complete home-directory isolation.

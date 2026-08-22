@@ -1,22 +1,20 @@
-Clean Room Launcher
-A clean-room launcher for coding-agent CLIs.
 
-Usage: clroom [COMMAND]
 
-Start with:
-  clroom                 Review setup before a provider launch
-  clroom codex [ARGS...] Launch the installed Codex CLI natively
-  clroom doctor --root . Check installation safely
+Clean Room Launcher v0.1.0-alpha.3
+Launch Codex without
+unrelated global instructions and skills.
 
-Choose skills for one launch:
-  clroom codex --skill-set=code-review,@review
-  Direct skills, namespaces, and named @sets share this one option.
-  Skill sets file: /tmp/clroom-help-config/clroom/skill-sets.yaml
+Launch example:
+clroom codex --skill-set=any-my-skill,@any-my-skill-set --approve-for-me
 
-Learn:
-  clroom help inspect    Explain an available skill decision
+Usage
+  clroom codex [CODEX_ARGS...] Launch Codex
+  clroom doctor --root .     Check installation
 
-Commands:
-  help [COMMAND]        Show concise help
-  inspect <skill>       Inspect a skill decision
-  explain <skill>       Explain a skill decision
+Skill sets
+  /tmp/clroom-help-config/clroom/skill-sets.yaml
+  Open file and create skill groups and reuse them by name, such as
+  @any-my-skill-set.
+
+More
+  clroom help <command>

@@ -1,5 +1,5 @@
 use std::{
-    collections::BTreeSet,
+    collections::{BTreeMap, BTreeSet},
     env, fs,
     path::{Path, PathBuf},
 };
@@ -26,13 +26,13 @@ pub enum IsolationError {
     InvalidCodexHome,
     InvalidSkillSelector(String),
     UnknownSkillSelector(String),
-    AmbiguousSkillSelector(String),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct GlobalSkill {
     name: String,
     namespace: Option<String>,
+    source_precedence: usize,
     entry_path: PathBuf,
     canonical_path: PathBuf,
 }
@@ -41,6 +41,7 @@ struct GlobalSkill {
 struct SkillSelection {
     canonical_paths: BTreeSet<PathBuf>,
     allowed_paths: BTreeSet<PathBuf>,
+    logical_skills: BTreeSet<(Option<String>, String)>,
 }
 
 pub fn plan(
@@ -83,7 +84,7 @@ pub fn plan_with_skills(
         discover_global_skills(&denied_roots)
     };
     let selection = resolve_skill_selectors(selectors, &inventory)?;
-    let mut denied_subpaths = denied_roots.into_iter().collect::<BTreeSet<_>>();
+    let mut denied_subpaths = denied_roots.iter().cloned().collect::<BTreeSet<_>>();
     denied_subpaths.extend(
         inventory
             .iter()
@@ -105,8 +106,23 @@ pub fn plan_with_skills(
     }
     profile.push_str(")\n");
     if !selection.allowed_paths.is_empty() {
+        profile.push_str("(allow file-read-metadata");
+        for root in &denied_roots {
+            profile.push_str("\n  (subpath \"");
+            profile.push_str(&escape_scheme_path(root)?);
+            profile.push_str("\")");
+        }
+        profile.push_str(")\n");
         profile.push_str("(allow file-read*");
+        for root in &denied_roots {
+            profile.push_str("\n  (literal \"");
+            profile.push_str(&escape_scheme_path(root)?);
+            profile.push_str("\")");
+        }
         for path in selection.allowed_paths {
+            profile.push_str("\n  (literal \"");
+            profile.push_str(&escape_scheme_path(&path)?);
+            profile.push_str("\")");
             profile.push_str("\n  (subpath \"");
             profile.push_str(&escape_scheme_path(&path)?);
             profile.push_str("\")");
@@ -117,13 +133,13 @@ pub fn plan_with_skills(
     Ok(IsolationPlan {
         profile,
         project,
-        selected_global_skills: selection.canonical_paths.len(),
+        selected_global_skills: selection.logical_skills.len(),
     })
 }
 
 fn discover_global_skills(roots: &[PathBuf]) -> Vec<GlobalSkill> {
     let mut inventory = Vec::new();
-    for root in roots {
+    for (source_precedence, root) in roots.iter().enumerate() {
         let Ok(entries) = fs::read_dir(root) else {
             continue;
         };
@@ -144,17 +160,25 @@ fn discover_global_skills(roots: &[PathBuf]) -> Vec<GlobalSkill> {
             inventory.push(GlobalSkill {
                 namespace: plugin_namespace(&canonical_path),
                 name,
+                source_precedence,
                 entry_path,
                 canonical_path,
             });
         }
     }
     inventory.sort_by(|left, right| {
-        (&left.name, &left.namespace, &left.canonical_path).cmp(&(
-            &right.name,
-            &right.namespace,
-            &right.canonical_path,
-        ))
+        (
+            &left.name,
+            &left.namespace,
+            left.source_precedence,
+            &left.canonical_path,
+        )
+            .cmp(&(
+                &right.name,
+                &right.namespace,
+                right.source_precedence,
+                &right.canonical_path,
+            ))
     });
     inventory
 }
@@ -194,48 +218,43 @@ fn resolve_skill_selectors(
     inventory: &[GlobalSkill],
 ) -> Result<SkillSelection, IsolationError> {
     let mut selection = SkillSelection::default();
+    let mut winners = BTreeMap::new();
     for selector in selectors {
         validate_selector(selector)?;
 
         let matched = if let Some((namespace, name)) = selector.split_once(':') {
-            let exact = distinct_paths(inventory.iter().filter(|skill| {
-                skill.namespace.as_deref() == Some(namespace) && skill.name == name
-            }));
-            if exact.len() > 1 {
-                return Err(IsolationError::AmbiguousSkillSelector(selector.clone()));
-            }
-            exact
+            inventory
+                .iter()
+                .filter(|skill| skill.namespace.as_deref() == Some(namespace) && skill.name == name)
+                .collect::<Vec<_>>()
         } else {
-            let exact = distinct_paths(inventory.iter().filter(|skill| skill.name == *selector));
-            let namespace = distinct_paths(
-                inventory
-                    .iter()
-                    .filter(|skill| skill.namespace.as_deref() == Some(selector.as_str())),
-            );
-            if exact.len() > 1 || (!exact.is_empty() && !namespace.is_empty()) {
-                return Err(IsolationError::AmbiguousSkillSelector(selector.clone()));
-            }
-            if exact.is_empty() { namespace } else { exact }
+            inventory
+                .iter()
+                .filter(|skill| {
+                    skill.name == *selector || skill.namespace.as_deref() == Some(selector.as_str())
+                })
+                .collect::<Vec<_>>()
         };
 
         if matched.is_empty() {
             return Err(IsolationError::UnknownSkillSelector(selector.clone()));
         }
-        selection.canonical_paths.extend(matched);
+        for skill in matched {
+            winners
+                .entry((skill.namespace.clone(), skill.name.clone()))
+                .or_insert(skill);
+        }
     }
 
-    for skill in inventory
-        .iter()
-        .filter(|skill| selection.canonical_paths.contains(&skill.canonical_path))
-    {
+    for (logical_skill, skill) in winners {
+        selection.logical_skills.insert(logical_skill);
+        selection
+            .canonical_paths
+            .insert(skill.canonical_path.clone());
         selection.allowed_paths.insert(skill.entry_path.clone());
         selection.allowed_paths.insert(skill.canonical_path.clone());
     }
     Ok(selection)
-}
-
-fn distinct_paths<'a>(skills: impl Iterator<Item = &'a GlobalSkill>) -> BTreeSet<PathBuf> {
-    skills.map(|skill| skill.canonical_path.clone()).collect()
 }
 
 fn validate_selector(selector: &str) -> Result<(), IsolationError> {
