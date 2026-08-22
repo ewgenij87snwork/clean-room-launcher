@@ -7,6 +7,31 @@ Semantic Versioning after the first public release.
 
 ## [Unreleased]
 
+## [0.1.0-alpha.3] - 2026-08-22
+
+### Added
+
+- `clroom --version` and `clroom -V`, with the package version also visible in
+  help and on the launch plaque.
+- A conditional plaque card reporting valid project-local skills that remain
+  available to Codex.
+
+### Changed
+
+- Help and the pre-launch review use a concise, adaptive presentation.
+- The plaque reflects explicit user overrides for apps, hooks and plugins.
+
+### Fixed
+
+- Native Codex skill discovery can enumerate known roots while unselected skill
+  contents remain outside the launch boundary.
+- Duplicate selected global skills resolve once using Codex root precedence.
+
+### Security
+
+- Discovery access is limited to root metadata and listing; unselected skill
+  bodies remain unreadable.
+
 ## [0.1.0-alpha.2] - 2026-08-22
 
 ### Added

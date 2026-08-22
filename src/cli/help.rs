@@ -1,3 +1,5 @@
+use std::io::IsTerminal;
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Command {
     Guided,
@@ -19,7 +21,6 @@ pub struct CommandSpec {
     pub command: Command,
     pub canonical: &'static str,
     pub aliases: &'static [&'static str],
-    pub summary: &'static str,
     pub description: &'static str,
     pub usage: &'static str,
     pub example: &'static str,
@@ -30,7 +31,6 @@ const COMMANDS: &[CommandSpec] = &[
         command: Command::Help,
         canonical: "help",
         aliases: &["--help", "-h"],
-        summary: "Show concise help",
         description: "Show concise help",
         usage: "help [COMMAND]",
         example: "help inspect",
@@ -39,16 +39,14 @@ const COMMANDS: &[CommandSpec] = &[
         command: Command::Provider,
         canonical: "codex",
         aliases: &[],
-        summary: "Launch the installed Codex CLI natively",
         description: "Launch the installed Codex CLI with unchanged arguments",
-        usage: "codex [ARGS...]",
+        usage: "codex [CODEX_ARGS...]",
         example: "codex --help",
     },
     CommandSpec {
         command: Command::Generic,
         canonical: "--",
         aliases: &[],
-        summary: "Refuse external execution under zero-auth",
         description: "Refuse external execution under zero-auth",
         usage: "-- <executable> [ARGS...]",
         example: "-- executable --help",
@@ -57,7 +55,6 @@ const COMMANDS: &[CommandSpec] = &[
         command: Command::Status,
         canonical: "status",
         aliases: &[],
-        summary: "Show current status",
         description: "Show current status",
         usage: "status",
         example: "status",
@@ -66,7 +63,6 @@ const COMMANDS: &[CommandSpec] = &[
         command: Command::Starts,
         canonical: "starts",
         aliases: &["start"],
-        summary: "Show saved starts",
         description: "Show saved starts",
         usage: "starts",
         example: "starts",
@@ -75,7 +71,6 @@ const COMMANDS: &[CommandSpec] = &[
         command: Command::Scan,
         canonical: "scan",
         aliases: &[],
-        summary: "Scan local inputs",
         description: "Scan local inputs",
         usage: "scan",
         example: "scan",
@@ -84,7 +79,6 @@ const COMMANDS: &[CommandSpec] = &[
         command: Command::Init,
         canonical: "init",
         aliases: &[],
-        summary: "Initialize local setup",
         description: "Initialize local setup",
         usage: "init",
         example: "init",
@@ -93,7 +87,6 @@ const COMMANDS: &[CommandSpec] = &[
         command: Command::Prepare,
         canonical: "prepare",
         aliases: &[],
-        summary: "Prepare local context",
         description: "Prepare local context",
         usage: "prepare",
         example: "prepare",
@@ -102,7 +95,6 @@ const COMMANDS: &[CommandSpec] = &[
         command: Command::Check,
         canonical: "check",
         aliases: &[],
-        summary: "Check local context",
         description: "Check local context",
         usage: "check",
         example: "check",
@@ -111,7 +103,6 @@ const COMMANDS: &[CommandSpec] = &[
         command: Command::Explain,
         canonical: "explain",
         aliases: &[],
-        summary: "Explain a skill decision",
         description: "Explain one skill decision",
         usage: "explain <skill>",
         example: "explain skill:rust",
@@ -120,7 +111,6 @@ const COMMANDS: &[CommandSpec] = &[
         command: Command::Inspect,
         canonical: "inspect",
         aliases: &[],
-        summary: "Inspect a skill decision",
         description: "Inspect one skill decision",
         usage: "inspect <skill>",
         example: "inspect skill:rust",
@@ -129,7 +119,6 @@ const COMMANDS: &[CommandSpec] = &[
         command: Command::Doctor,
         canonical: "doctor",
         aliases: &[],
-        summary: "Check installation safely",
         description: "Check installation safely",
         usage: "doctor --root <path>",
         example: "doctor --root .",
@@ -165,31 +154,245 @@ pub fn respond(args: &[String], invoked_as: &str) -> Result<Option<String>, Stri
 }
 
 pub fn top(invoked_as: &str) -> String {
-    let help = resolve("help").expect("help registry entry is required");
-    let inspect = resolve("inspect").expect("inspect registry entry is required");
-    let explain = resolve("explain").expect("explain registry entry is required");
-    let doctor = resolve("doctor").expect("doctor registry entry is required");
     let home = std::env::var_os("HOME")
         .map(std::path::PathBuf::from)
         .unwrap_or_else(|| std::path::PathBuf::from("$HOME"));
     let skill_sets_path = super::skill_sets::config_path(&home)
         .unwrap_or_else(|_| std::path::PathBuf::from("$HOME/.config/clroom/skill-sets.yaml"));
-    format!(
-        "Clean Room Launcher\nA clean-room launcher for coding-agent CLIs.\n\nUsage: {invoked_as} [COMMAND]\n\nStart with:\n  {invoked_as}                 Review setup before a provider launch\n  {invoked_as} codex [ARGS...] Launch the installed Codex CLI natively\n  {invoked_as} {doctor} --root . {doctor_summary}\n\nChoose skills for one launch:\n  {invoked_as} codex --skill-set=code-review,@review\n  Direct skills, namespaces, and named @sets share this one option.\n  Skill sets file: {skill_sets_path}\n\nLearn:\n  {invoked_as} {help} {inspect}    Explain an available skill decision\n\nCommands:\n  {help} [COMMAND]        {help_summary}\n  {inspect} <skill>       {inspect_summary}\n  {explain} <skill>       {explain_summary}",
-        doctor = doctor.canonical,
-        doctor_summary = doctor.summary,
-        help = help.canonical,
-        inspect = inspect.canonical,
-        help_summary = help.summary,
-        inspect_summary = inspect.summary,
-        explain = explain.canonical,
-        explain_summary = explain.summary,
-        skill_sets_path = skill_sets_path.display(),
+    let width = std::env::var("COLUMNS")
+        .ok()
+        .and_then(|value| value.parse::<usize>().ok())
+        .filter(|width| *width >= 20)
+        .unwrap_or(80);
+    let force_color =
+        std::env::var_os("CLICOLOR_FORCE").is_some_and(|value| value.to_string_lossy() != "0");
+    let styled = (std::io::stdout().is_terminal() || force_color)
+        && std::env::var_os("NO_COLOR").is_none()
+        && !std::env::var("TERM").is_ok_and(|term| term.eq_ignore_ascii_case("dumb"));
+    render_top(
+        invoked_as,
+        &display_skill_sets_path(&skill_sets_path, &home),
+        width,
+        styled,
+    )
+    .join("\n")
+}
+
+fn render_top(invoked_as: &str, skill_sets_path: &str, width: usize, styled: bool) -> Vec<String> {
+    let mut lines = vec![String::new(), String::new()];
+    let version = format!("v{}", env!("CARGO_PKG_VERSION"));
+    lines.push(if styled {
+        format!("\u{1b}[1;36mClean Room Launcher\u{1b}[0m \u{1b}[2m{version}\u{1b}[0m")
+    } else {
+        format!("Clean Room Launcher {version}")
+    });
+    for tagline_line in [
+        "Launch Codex without",
+        "unrelated global instructions and skills.",
+    ] {
+        lines.extend(styled_wrapped(tagline_line, width, 0, styled, Style::Dim));
+    }
+    lines.push(String::new());
+    lines.extend(styled_wrapped(
+        "Launch example:",
+        width,
+        0,
+        styled,
+        Style::Dim,
+    ));
+    lines.extend(primary_command(invoked_as, width, styled));
+    lines.push(String::new());
+    lines.push(section("Usage", styled));
+    lines.extend(usage(
+        &format!("{invoked_as} codex [CODEX_ARGS...]"),
+        "Launch Codex",
+        width,
+        styled,
+    ));
+    lines.extend(usage(
+        &format!("{invoked_as} doctor --root ."),
+        "Check installation",
+        width,
+        styled,
+    ));
+    lines.push(String::new());
+    lines.push(section("Skill sets", styled));
+    lines.extend(styled_wrapped(
+        skill_sets_path,
+        width,
+        2,
+        styled,
+        Style::Plain,
+    ));
+    lines.extend(styled_wrapped(
+        "Open file and create skill groups and reuse them by name, such as @any-my-skill-set.",
+        width,
+        2,
+        styled,
+        Style::SkillSetNote,
+    ));
+    lines.push(String::new());
+    lines.push(section("More", styled));
+    lines.push(format!("  {invoked_as} help <command>"));
+    lines.push(String::new());
+    lines
+}
+
+#[derive(Clone, Copy)]
+enum Style {
+    Plain,
+    Dim,
+    SkillSetNote,
+}
+
+fn styled_wrapped(
+    text: &str,
+    width: usize,
+    indent: usize,
+    styled: bool,
+    style: Style,
+) -> Vec<String> {
+    wrap_words(text, width.saturating_sub(indent).max(1))
+        .into_iter()
+        .map(|line| {
+            let plain = format!("{}{line}", " ".repeat(indent));
+            if !styled {
+                return plain;
+            }
+            match style {
+                Style::Plain => plain,
+                Style::Dim => format!("\u{1b}[2m{plain}\u{1b}[0m"),
+                Style::SkillSetNote => format!(
+                    "\u{1b}[2m{}\u{1b}[0m",
+                    plain.replace(
+                        "@any-my-skill-set",
+                        "\u{1b}[0;36m@any-my-skill-set\u{1b}[0;2m",
+                    )
+                ),
+            }
+        })
+        .collect()
+}
+
+fn primary_command(invoked_as: &str, width: usize, styled: bool) -> Vec<String> {
+    let base = format!("{invoked_as} codex");
+    let selector = "--skill-set=any-my-skill,@any-my-skill-set";
+    let approval = "--approve-for-me";
+    let plain = format!("{base} {selector} {approval}");
+    if plain.chars().count() <= width {
+        return vec![if styled {
+            format!("\u{1b}[1m{base} \u{1b}[1;36m{selector}\u{1b}[0m \u{1b}[1m{approval}\u{1b}[0m")
+        } else {
+            plain
+        }];
+    }
+    let base_line = format!("{base} \\");
+    let selector_line = format!("  {selector} \\");
+    if selector_line.chars().count() <= width {
+        return if styled {
+            vec![
+                format!("\u{1b}[1m{base_line}\u{1b}[0m"),
+                format!("\u{1b}[1;36m{selector}\u{1b}[0m \u{1b}[1m\\\u{1b}[0m"),
+                format!("  \u{1b}[1m{approval}\u{1b}[0m"),
+            ]
+        } else {
+            vec![base_line, selector_line, format!("  {approval}")]
+        };
+    }
+    let (direct_skill, named_set) = selector
+        .split_once(',')
+        .expect("the documented selector has one direct skill and one named set");
+    if styled {
+        vec![
+            format!("\u{1b}[1m{base_line}\u{1b}[0m"),
+            format!("  \u{1b}[1;36m{direct_skill},\\\u{1b}[0m"),
+            format!("\u{1b}[1;36m{named_set}\u{1b}[0m \u{1b}[1m\\\u{1b}[0m"),
+            format!("  \u{1b}[1m{approval}\u{1b}[0m"),
+        ]
+    } else {
+        vec![
+            base_line,
+            format!("  {direct_skill},\\"),
+            format!("{named_set} \\"),
+            format!("  {approval}"),
+        ]
+    }
+}
+
+fn usage(command: &str, description: &str, width: usize, styled: bool) -> Vec<String> {
+    let command_column = 27usize.max(command.chars().count() + 1);
+    let command_padding = " ".repeat(command_column - command.chars().count());
+    let plain = format!("  {command}{command_padding}{description}");
+    if plain.chars().count() <= width {
+        return vec![if styled {
+            format!("  \u{1b}[1m{command}\u{1b}[0m{command_padding}{description}")
+        } else {
+            plain
+        }];
+    }
+    vec![
+        if styled {
+            format!("  \u{1b}[1m{command}\u{1b}[0m")
+        } else {
+            format!("  {command}")
+        },
+        format!("    {description}"),
+    ]
+}
+
+fn section(name: &str, styled: bool) -> String {
+    if styled {
+        format!("\u{1b}[1m{name}\u{1b}[0m")
+    } else {
+        name.to_owned()
+    }
+}
+
+fn display_skill_sets_path(path: &std::path::Path, home: &std::path::Path) -> String {
+    path.strip_prefix(home).map_or_else(
+        |_| path.display().to_string(),
+        |relative| format!("~/{}", relative.display()),
     )
 }
 
+fn wrap_words(text: &str, width: usize) -> Vec<String> {
+    let mut lines = Vec::new();
+    let mut line = String::new();
+    for word in text.split_whitespace() {
+        let next = line.chars().count() + usize::from(!line.is_empty()) + word.chars().count();
+        if next > width && !line.is_empty() {
+            lines.push(line);
+            line = word.to_owned();
+        } else {
+            if !line.is_empty() {
+                line.push(' ');
+            }
+            line.push_str(word);
+        }
+    }
+    if !line.is_empty() {
+        lines.push(line);
+    }
+    lines
+}
+
 pub fn card(invoked_as: &str, token: &str) -> Option<String> {
+    if matches!(token, "skill-set" | "skill-sets") {
+        return Some(render_skill_set_card(invoked_as));
+    }
     resolve(token).map(|spec| render_card(invoked_as, spec))
+}
+
+fn render_skill_set_card(invoked_as: &str) -> String {
+    let home = std::env::var_os("HOME")
+        .map(std::path::PathBuf::from)
+        .unwrap_or_else(|| std::path::PathBuf::from("$HOME"));
+    let skill_sets_path = super::skill_sets::config_path(&home)
+        .unwrap_or_else(|_| std::path::PathBuf::from("$HOME/.config/clroom/skill-sets.yaml"));
+    let skill_sets_path = display_skill_sets_path(&skill_sets_path, &home);
+    format!(
+        "Clean Room Launcher — skill-set\n\nChoose global skills for one Codex launch.\nProject-local skills stay available automatically.\n\nUsage:\n  {invoked_as} codex --skill-set=<SKILL_OR_SET>[,...] [CODEX_ARGS...]\n\nSelectors:\n  any-my-skill                   one global skill\n  any-namespace                 every skill in one namespace\n  any-namespace:any-other-skill one namespaced skill\n  @any-my-skill-set             one reusable group\n\nSkill sets:\n  {skill_sets_path}\n\n  any-my-skill-set:\n    - any-my-skill\n    - any-namespace:any-other-skill\n\nExample:\n  {invoked_as} codex --skill-set=any-my-skill,@any-my-skill-set --approve-for-me\n"
+    )
 }
 
 fn render_card(invoked_as: &str, spec: &CommandSpec) -> String {

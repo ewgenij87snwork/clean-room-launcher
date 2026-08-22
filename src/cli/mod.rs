@@ -27,6 +27,10 @@ pub fn run(invoked_as: &str, args: impl IntoIterator<Item = String>) -> ExitCode
     }) else {
         return run_local(invoked_as, Vec::new());
     };
+    if matches!(first.as_str(), "--version" | "-V") {
+        println!("clroom {}", env!("CARGO_PKG_VERSION"));
+        return ExitCode::SUCCESS;
+    }
     if first == "codex" {
         return run_codex(&mut source);
     }
@@ -106,9 +110,15 @@ fn launch_isolated_codex(args: &[String]) -> Result<ExitCode, String> {
     let plan = plan_with_skills(&project, &executable, &inputs, &selectors)
         .map_err(isolation_error_message)?;
     if std::io::stderr().is_terminal() {
+        let feature_state = screen::PlaqueFeatureState::from_provider_args(&provider_args);
         eprintln!(
             "{}",
-            screen::render_isolated_preview(&plan.project, plan.selected_global_skills).join("\n")
+            screen::render_isolated_preview(
+                &plan.project,
+                plan.selected_global_skills,
+                feature_state,
+            )
+            .join("\n")
         );
     }
     process::launch_isolated_codex(&plan, &executable, &provider_args)
@@ -143,9 +153,6 @@ fn isolation_error_message(error: IsolationError) -> String {
         ),
         IsolationError::UnknownSkillSelector(selector) => format!(
             "CLROOM_SKILL_SELECTOR_UNKNOWN: unknown skill selector '{selector}'; continue locally"
-        ),
-        IsolationError::AmbiguousSkillSelector(selector) => format!(
-            "CLROOM_SKILL_SELECTOR_AMBIGUOUS: ambiguous skill selector '{selector}'; use namespace:skill"
         ),
         _ => "CLROOM_ISOLATION_INVALID: current project or context boundary is invalid; continue locally".to_owned(),
     }

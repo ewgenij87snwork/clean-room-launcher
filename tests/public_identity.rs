@@ -14,7 +14,7 @@ fn scratch(name: &str) -> PathBuf {
 }
 
 fn clroom() -> &'static Path {
-    Path::new(option_env!("CARGO_BIN_EXE_clroom").expect("clroom executable target is required"))
+    Path::new(env!("CARGO_BIN_EXE_clroom"))
 }
 
 fn fake_codex() -> (PathBuf, PathBuf) {
@@ -45,7 +45,7 @@ fn clroom_is_the_only_public_identity_and_preserves_the_native_codex_process() {
     assert!(bare.status.success());
     let bare_stdout = String::from_utf8(bare.stdout).unwrap();
     assert!(bare_stdout.contains("Clean Room Launcher"));
-    assert!(bare_stdout.contains("A clean-room launcher for coding-agent CLIs."));
+    assert!(bare_stdout.contains("Launch Codex without unrelated global instructions and skills."));
     assert!(bare_stdout.contains("clroom codex"));
     for stale in ["TaskSeal", "taskseal", "tseal", "croom"] {
         assert!(
@@ -57,11 +57,10 @@ fn clroom_is_the_only_public_identity_and_preserves_the_native_codex_process() {
     let help = run(&["--help"]);
     assert!(help.status.success());
     let help_stdout = String::from_utf8(help.stdout).unwrap();
-    assert!(
-        help_stdout
-            .starts_with("Clean Room Launcher\nA clean-room launcher for coding-agent CLIs.\n")
-    );
-    assert!(help_stdout.contains("Usage: clroom"));
+    assert!(help_stdout.starts_with(
+        "\n\nClean Room Launcher v0.1.0-alpha.3\nLaunch Codex without\nunrelated global instructions and skills.\n"
+    ));
+    assert!(help_stdout.contains("\nUsage\n  clroom codex [CODEX_ARGS...]"));
 
     let (codex, capture) = fake_codex();
     let provider_path = codex.parent().unwrap();

@@ -1,11 +1,8 @@
 Clean Room Launcher
-A clean-room launcher for coding-agent CLIs.
+Ready to launch Codex without unrelated global instructions or skills.
 
-Command  clroom codex [ARGS...]
-Provider Codex · already installed local CLI · nothing launched
-Writes   no launcher state
-Leaves   existing provider state unchanged
+clroom codex --skill-set=any-my-skill,@any-my-skill-set --approve-for-me
 
-1. Launch Codex  Recommended
+1. Launch Codex
 
-Enter launch Codex · q stop
+Enter to launch · q to quit

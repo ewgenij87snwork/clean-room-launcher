@@ -9,11 +9,46 @@ fn run(args: &[&str]) -> std::process::Output {
         .expect("clroom must run")
 }
 
+fn strip_ansi(value: &str) -> String {
+    let mut output = String::new();
+    let mut chars = value.chars().peekable();
+    while let Some(character) = chars.next() {
+        if character == '\u{1b}' && chars.peek() == Some(&'[') {
+            chars.next();
+            for code in chars.by_ref() {
+                if code.is_ascii_alphabetic() {
+                    break;
+                }
+            }
+        } else {
+            output.push(character);
+        }
+    }
+    output
+}
+
+fn top_fixture() -> String {
+    format!("{}\n", include_str!("../../fixtures/cli/help/top.txt"))
+}
+
 #[test]
 fn top_help_aliases_render_the_same_concise_index() {
     // Break caught: help aliases drift or expose a provider-option wall.
-    let expected = include_str!("../../fixtures/cli/help/top.txt");
+    let expected = top_fixture();
     for args in [&["help"][..], &["--help"], &["-h"]] {
+        let output = run(args);
+        assert_eq!(output.status.code(), Some(0));
+        assert_eq!(String::from_utf8(output.stdout).unwrap(), expected);
+        assert!(output.stderr.is_empty());
+    }
+}
+
+#[test]
+fn version_flags_report_the_packaged_clroom_version() {
+    // Break caught: users cannot identify the installed launcher build, or a
+    // version flag is accidentally forwarded to Codex instead of handled here.
+    let expected = format!("clroom {}\n", env!("CARGO_PKG_VERSION"));
+    for args in [&["--version"][..], &["-V"]] {
         let output = run(args);
         assert_eq!(output.status.code(), Some(0));
         assert_eq!(String::from_utf8(output.stdout).unwrap(), expected);
@@ -28,10 +63,107 @@ fn top_help_shows_the_single_skill_set_option_and_resolved_file() {
     let output = run(&["--help"]);
     assert_eq!(output.status.code(), Some(0));
     let stdout = String::from_utf8(output.stdout).unwrap();
-    assert!(stdout.contains("--skill-set=code-review,@review"));
+    assert!(stdout.contains("--skill-set=any-my-skill,@any-my-skill-set --approve-for-me"));
     assert!(stdout.contains("/tmp/clroom-help-config/clroom/skill-sets.yaml"));
+    assert!(stdout.contains(
+        "Open file and create skill groups and reuse them by name, such as\n  @any-my-skill-set."
+    ));
+    assert!(stdout.contains("clroom codex [CODEX_ARGS...]"));
     assert!(!stdout.contains("--skills="));
     assert!(output.stderr.is_empty());
+}
+
+#[test]
+fn tty_help_uses_hierarchy_without_changing_redirected_output() {
+    // Break caught: the title, launch command, and reusable sets collapse into
+    // the same visual weight or redirected help leaks terminal escapes.
+    let styled = Command::new(env!("CARGO_BIN_EXE_clroom"))
+        .arg("--help")
+        .env("HOME", "/tmp/clroom-help-home")
+        .env("XDG_CONFIG_HOME", "/tmp/clroom-help-config")
+        .env_remove("NO_COLOR")
+        .env("TERM", "xterm-256color")
+        .env("CLICOLOR_FORCE", "1")
+        .output()
+        .expect("clroom must run");
+    assert_eq!(styled.status.code(), Some(0));
+    let styled = String::from_utf8(styled.stdout).unwrap();
+    assert!(styled.starts_with(
+        "\n\n\u{1b}[1;36mClean Room Launcher\u{1b}[0m \u{1b}[2mv0.1.0-alpha.3\u{1b}[0m\n"
+    ));
+    assert!(styled.contains(
+        "\u{1b}[2mLaunch Codex without\u{1b}[0m\n\u{1b}[2munrelated global instructions and skills.\u{1b}[0m"
+    ));
+    assert!(styled.contains("\u{1b}[2mLaunch example:\u{1b}[0m\n\u{1b}[1mclroom codex "));
+    assert!(styled.contains("\u{1b}[1mclroom codex "));
+    assert!(styled.contains("\u{1b}[1;36m--skill-set=any-my-skill,@any-my-skill-set\u{1b}[0m"));
+    assert!(styled.contains(
+        "\u{1b}[2m  Open file and create skill groups and reuse them by name, such as\u{1b}[0m\n\u{1b}[2m  \u{1b}[0;36m@any-my-skill-set\u{1b}[0;2m.\u{1b}[0m"
+    ));
+    assert_eq!(strip_ansi(&styled), top_fixture());
+
+    let plain = run(&["--help"]);
+    assert!(!String::from_utf8(plain.stdout).unwrap().contains('\u{1b}'));
+
+    for terminal_guard in [("NO_COLOR", "1"), ("TERM", "dumb")] {
+        let guarded = Command::new(env!("CARGO_BIN_EXE_clroom"))
+            .arg("--help")
+            .env("HOME", "/tmp/clroom-help-home")
+            .env("XDG_CONFIG_HOME", "/tmp/clroom-help-config")
+            .env_remove("NO_COLOR")
+            .env("TERM", "xterm-256color")
+            .env("CLICOLOR_FORCE", "1")
+            .env(terminal_guard.0, terminal_guard.1)
+            .output()
+            .expect("clroom must run");
+        assert_eq!(guarded.status.code(), Some(0));
+        assert!(
+            !String::from_utf8(guarded.stdout)
+                .unwrap()
+                .contains('\u{1b}')
+        );
+    }
+}
+
+#[test]
+fn narrow_help_wraps_the_launch_command_at_semantic_boundaries() {
+    // Break caught: the primary command splits in the middle of an option or
+    // overflows the terminal before users can copy it.
+    let output = Command::new(env!("CARGO_BIN_EXE_clroom"))
+        .arg("--help")
+        .env("HOME", "/tmp/h")
+        .env_remove("XDG_CONFIG_HOME")
+        .env("COLUMNS", "40")
+        .output()
+        .expect("clroom must run");
+    assert_eq!(output.status.code(), Some(0));
+    let stdout = String::from_utf8(output.stdout).unwrap();
+    assert!(stdout.contains(
+        "clroom codex \\\n  --skill-set=any-my-skill,\\\n@any-my-skill-set \\\n  --approve-for-me"
+    ));
+    assert!(stdout.lines().all(|line| line.chars().count() <= 40));
+}
+
+#[test]
+fn skill_set_help_topic_explains_selectors_and_the_editable_yaml_file() {
+    // Break caught: top-level help points users toward command help, but the
+    // skill-set concept has no actionable destination.
+    for topic in ["skill-set", "skill-sets"] {
+        let output = run(&["help", topic]);
+        assert_eq!(output.status.code(), Some(0));
+        let stdout = String::from_utf8(output.stdout).unwrap();
+        assert!(stdout.contains("clroom codex --skill-set=<SKILL_OR_SET>[,...] [CODEX_ARGS...]"));
+        assert!(stdout.contains("/tmp/clroom-help-config/clroom/skill-sets.yaml"));
+        assert!(stdout.contains("any-my-skill-set:"));
+        assert!(stdout.contains("  - any-my-skill"));
+        assert!(stdout.contains("  - any-namespace:any-other-skill"));
+        assert!(
+            stdout.contains(
+                "clroom codex --skill-set=any-my-skill,@any-my-skill-set --approve-for-me"
+            )
+        );
+        assert!(output.stderr.is_empty());
+    }
 }
 
 #[test]

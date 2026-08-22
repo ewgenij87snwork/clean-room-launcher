@@ -16,6 +16,24 @@ fn transcript(context: screen::RenderContext) -> String {
     )
 }
 
+fn strip_ansi(value: &str) -> String {
+    let mut output = String::new();
+    let mut chars = value.chars().peekable();
+    while let Some(character) = chars.next() {
+        if character == '\u{1b}' && chars.peek() == Some(&'[') {
+            chars.next();
+            for code in chars.by_ref() {
+                if code.is_ascii_alphabetic() {
+                    break;
+                }
+            }
+        } else {
+            output.push(character);
+        }
+    }
+    output
+}
+
 fn assert_zero_auth_actions(screen: &str) {
     let lower = screen.to_ascii_lowercase();
     for prohibited in [
@@ -36,10 +54,7 @@ fn assert_zero_auth_actions(screen: &str) {
             "unqualified transcript exposed prohibited CTA fragment {prohibited:?}:\n{screen}"
         );
     }
-    assert!(
-        screen.contains("Launch Codex")
-            || screen.contains("clroom codex [ARGS...] to launch explicitly")
-    );
+    assert!(screen.contains("Launch Codex"));
 }
 
 #[test]
@@ -54,7 +69,7 @@ fn captured_non_tty_run_emits_exact_local_continuity_without_a_prompt() {
         include_str!("../../fixtures/cli/first-screen-unqualified-non-tty.txt")
     );
     assert!(screen.lines().all(|line| line.chars().count() <= 80));
-    assert!(screen.contains("already installed local CLI"));
+    assert!(screen.contains("Preview only · provider not launched"));
     assert!(!screen.contains("Enter"));
     assert!(!screen.contains('›'));
     assert_zero_auth_actions(&screen);
@@ -69,9 +84,12 @@ fn interactive_tty_has_the_exact_launch_confirmation_transcript() {
         plain: false,
     });
     assert_eq!(
-        actual,
+        strip_ansi(&actual),
         include_str!("../../fixtures/cli/first-screen-unqualified-tty.txt")
     );
+    assert!(actual.starts_with("\u{1b}[1;36mClean Room Launcher\u{1b}[0m\n"));
+    assert!(actual.contains("\u{1b}[1mclroom codex "));
+    assert!(actual.contains("\u{1b}[1;36m--skill-set=any-my-skill,@any-my-skill-set\u{1b}[0m"));
     assert_zero_auth_actions(&actual);
 }
 
@@ -84,10 +102,14 @@ fn narrow_interactive_tty_has_an_exact_non_overflowing_transcript() {
         plain: false,
     });
     assert_eq!(
-        actual,
+        strip_ansi(&actual),
         include_str!("../../fixtures/cli/first-screen-unqualified-narrow.txt")
     );
-    assert!(actual.lines().all(|line| line.chars().count() <= 40));
+    assert!(
+        strip_ansi(&actual)
+            .lines()
+            .all(|line| line.chars().count() <= 40)
+    );
     assert_zero_auth_actions(&actual);
 }
 
@@ -104,6 +126,7 @@ fn plain_interactive_tty_has_exact_numbered_local_choices() {
         include_str!("../../fixtures/cli/first-screen-unqualified-plain.txt")
     );
     assert!(!actual.contains('›'));
+    assert!(!actual.contains('\u{1b}'));
     assert_zero_auth_actions(&actual);
 }
 
