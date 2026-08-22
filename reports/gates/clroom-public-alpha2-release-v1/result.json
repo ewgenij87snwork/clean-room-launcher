@@ -25,10 +25,67 @@
     "tests_passed": 213
   },
   "timings": {
-    "gate_duration_ms": 25000
+    "gate_duration_ms": 25000,
+    "release_duration_ms": 1797000
+  },
+  "public_release": {
+    "repository": "https://github.com/ewgenij87snwork/clean-room-launcher",
+    "branch": "feat/clroom-public-alpha-v1",
+    "parent_commit": "508f080753de35348d5996501a668e08b7e6da66",
+    "commit": "c5b8eb9b9a67895404d3ccf00c1c1815adea03f1",
+    "tree": "759aa7da9182b266f0b06f538716b2b65ebfbdba",
+    "tag": {
+      "name": "v0.1.0-alpha.2",
+      "object": "68161a585f2158d1422e484b2eb646a5bb3ab96d",
+      "commit": "c5b8eb9b9a67895404d3ccf00c1c1815adea03f1",
+      "annotated": true
+    },
+    "release_url": "https://github.com/ewgenij87snwork/clean-room-launcher/releases/tag/v0.1.0-alpha.2",
+    "prerelease": true,
+    "draft": false,
+    "asset_count": 2,
+    "archive": {
+      "file": "clean-room-launcher-v0.1.0-alpha.2-aarch64-apple-darwin.tar.gz",
+      "sha256": "420f33975859342a44c395f9928875e31b84de9ef4bfd389c4ab99c5ad3d418b",
+      "bytes": 478108,
+      "binary_sha256": "15ab848b55c0e35bb666c11b33c89a7faaa1088c64dbc5bf1608167623bc4145"
+    },
+    "checksums": {
+      "file": "SHA256SUMS",
+      "sha256": "f4a73149b6d28b3304795928ffd40a7f4ec4f258eeba45e9f661374a970bae39",
+      "bytes": 129,
+      "verified_before_extraction": true
+    },
+    "ci": {
+      "run_id": 32566317255,
+      "url": "https://github.com/ewgenij87snwork/clean-room-launcher/actions/runs/32566317255",
+      "head": "c5b8eb9b9a67895404d3ccf00c1c1815adea03f1",
+      "result": "PASS"
+    },
+    "checks": {
+      "normal_child_of_prior_public_head": true,
+      "non_force_push": true,
+      "public_boundary": true,
+      "runtime_sources_match_accepted_local_source": true,
+      "strict_scoped_lint": true,
+      "deterministic_archive": true,
+      "fresh_cargo_tag_install": true,
+      "fresh_release_asset_install": true,
+      "alpha1_unchanged": true
+    },
+    "public_projection_test_note": {
+      "result": "NOT_APPLICABLE_TO_HISTORY_CLEAN_PROJECTION",
+      "failure_class": "EXCLUDED_INTERNAL_RECEIPTS",
+      "attempts": 2,
+      "criteria_weakened": false,
+      "local_full_offline_regression_passed": true
+    },
+    "fresh_cargo_install_binary_sha256": "a71f0f9ced649f8df7561e4580c1261eced1baf19a7714ab0e56be167e3c30c8",
+    "alpha1_tag_object": "3ab3115487392b1acac7719a4e97d74a712a7f4e",
+    "alpha1_tag_commit": "a444b829b68364da64657347b2d40fe859ef3327"
   },
   "real_provider_processes": 0,
   "provider_requests": 0,
-  "publication": false,
+  "publication": true,
   "raw_provider_output_retained": false
 }
