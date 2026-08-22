@@ -7,6 +7,7 @@ mod output;
 mod parser;
 mod process;
 mod screen;
+mod skill_sets;
 mod starts;
 #[allow(dead_code)] // T8 is the first user-flow consumer; T7 seals the store and its TDD contract.
 pub(crate) mod state;
@@ -16,7 +17,7 @@ use std::io::{IsTerminal, Write};
 use std::path::PathBuf;
 use std::process::ExitCode;
 
-use taskseal::adapters::codex::isolation::{IsolationInputs, plan};
+use taskseal::adapters::codex::isolation::{IsolationError, IsolationInputs, plan_with_skills};
 
 pub fn run(invoked_as: &str, args: impl IntoIterator<Item = String>) -> ExitCode {
     let mut source = args.into_iter();
@@ -87,9 +88,11 @@ fn run_codex(source: &mut impl Iterator<Item = String>) -> ExitCode {
 }
 
 fn launch_isolated_codex(args: &[String]) -> Result<ExitCode, String> {
+    let (selection_terms, provider_args) = select_global_skills(args)?;
     let home = std::env::var_os("HOME").map(PathBuf::from).ok_or_else(|| {
         "CLROOM_ISOLATION_INVALID: HOME is unavailable; continue locally".to_owned()
     })?;
+    let selectors = skill_sets::expand(&selection_terms, &home)?;
     let inputs = IsolationInputs {
         codex_home: std::env::var_os("CODEX_HOME")
             .map(PathBuf::from)
@@ -100,17 +103,52 @@ fn launch_isolated_codex(args: &[String]) -> Result<ExitCode, String> {
         "CLROOM_ISOLATION_INVALID: current project is unavailable; continue locally".to_owned()
     })?;
     let executable = process::resolve_codex_executable()?;
-    let plan = plan(&project, &executable, &inputs).map_err(|_| {
-        "CLROOM_ISOLATION_INVALID: current project or context boundary is invalid; continue locally"
-            .to_owned()
-    })?;
+    let plan = plan_with_skills(&project, &executable, &inputs, &selectors)
+        .map_err(isolation_error_message)?;
     if std::io::stderr().is_terminal() {
         eprintln!(
             "{}",
-            screen::render_isolated_preview(&plan.project).join("\n")
+            screen::render_isolated_preview(&plan.project, plan.selected_global_skills).join("\n")
         );
     }
-    process::launch_isolated_codex(&plan, &executable, args)
+    process::launch_isolated_codex(&plan, &executable, &provider_args)
+}
+
+fn select_global_skills(args: &[String]) -> Result<(Vec<String>, Vec<String>), String> {
+    let mut selectors = None;
+    let mut provider_args = Vec::with_capacity(args.len());
+    let mut launcher_options = true;
+    for argument in args {
+        if launcher_options && argument == "--" {
+            launcher_options = false;
+            provider_args.push(argument.clone());
+        } else if launcher_options && argument == "--skill-set" {
+            return Err("CLROOM_SKILL_SELECTOR_INVALID: invalid skill selector; use --skill-set=name[,namespace:name,@set]".to_owned());
+        } else if launcher_options && let Some(value) = argument.strip_prefix("--skill-set=") {
+            if selectors.is_some() {
+                return Err("CLROOM_SKILL_SELECTOR_INVALID: invalid skill selector; use one --skill-set= option".to_owned());
+            }
+            selectors = Some(value.split(',').map(str::to_owned).collect());
+        } else {
+            provider_args.push(argument.clone());
+        }
+    }
+    Ok((selectors.unwrap_or_default(), provider_args))
+}
+
+fn isolation_error_message(error: IsolationError) -> String {
+    match error {
+        IsolationError::InvalidSkillSelector(selector) => format!(
+            "CLROOM_SKILL_SELECTOR_INVALID: invalid skill selector '{selector}'; use --skill-set=name[,namespace:name,@set]"
+        ),
+        IsolationError::UnknownSkillSelector(selector) => format!(
+            "CLROOM_SKILL_SELECTOR_UNKNOWN: unknown skill selector '{selector}'; continue locally"
+        ),
+        IsolationError::AmbiguousSkillSelector(selector) => format!(
+            "CLROOM_SKILL_SELECTOR_AMBIGUOUS: ambiguous skill selector '{selector}'; use namespace:skill"
+        ),
+        _ => "CLROOM_ISOLATION_INVALID: current project or context boundary is invalid; continue locally".to_owned(),
+    }
 }
 
 fn next_argument(source: &mut impl Iterator<Item = String>) -> Result<Option<String>, ExitCode> {

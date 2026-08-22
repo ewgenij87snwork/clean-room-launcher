@@ -111,6 +111,32 @@ fn expected_argv(user_args: &[&str]) -> Vec<u8> {
         .collect()
 }
 
+fn add_selective_skill_fixture(root: &Scratch, home: &Path, project: &Path) -> PathBuf {
+    let global_skills = home.join(".agents/skills");
+    let plugin = root.join("plugin-cache/superpowers");
+    fs::create_dir_all(global_skills.join("arrow")).unwrap();
+    fs::write(global_skills.join("arrow/SKILL.md"), b"exact\n").unwrap();
+    fs::create_dir_all(project.join(".agents/skills/project-only")).unwrap();
+    fs::write(
+        project.join(".agents/skills/project-only/SKILL.md"),
+        b"project\n",
+    )
+    .unwrap();
+    fs::create_dir_all(plugin.join(".codex-plugin")).unwrap();
+    fs::write(
+        plugin.join(".codex-plugin/plugin.json"),
+        br#"{"name":"superpowers","version":"1.0.0"}"#,
+    )
+    .unwrap();
+    for name in ["systematic-debugging", "brainstorming"] {
+        let target = plugin.join("skills").join(name);
+        fs::create_dir_all(&target).unwrap();
+        fs::write(target.join("SKILL.md"), format!("{name}\n")).unwrap();
+        std::os::unix::fs::symlink(&target, global_skills.join(name)).unwrap();
+    }
+    plugin
+}
+
 #[test]
 fn codex_handoff_preserves_literal_argv_exit_and_stdio_inside_the_isolated_boundary() {
     // Break caught: direct Codex execution lets the fake provider read ambient context.
@@ -164,6 +190,351 @@ fn codex_handoff_keeps_explicit_user_overrides_after_clean_defaults() {
         "features",
         "list",
     ];
+
+    let output = command(&project, &home, &codex_home, &bin, &capture)
+        .arg("codex")
+        .args(user_args)
+        .output()
+        .unwrap();
+
+    assert_eq!(output.status.code(), Some(42));
+    assert_eq!(fs::read(&capture).unwrap(), expected_argv(&user_args));
+}
+
+#[test]
+fn codex_handoff_admits_one_exact_skill_and_a_complete_namespace_for_this_run() {
+    // Break caught: selection is forwarded to Codex or the sandbox still blocks
+    // explicitly invited skills while admitting unrelated global skills.
+    let (root, project, home, codex_home, bin) = isolated_fixture();
+    let plugin = add_selective_skill_fixture(&root, &home, &project);
+    let capture = bin.join("selected-namespace-capture");
+    let fake = bin.join("codex");
+    fs::write(
+        &fake,
+        "#!/bin/sh\n\
+         /bin/cat \"$CLROOM_PROJECT_SKILL\" >/dev/null || exit 73\n\
+         /bin/cat \"$CLROOM_EXACT_SKILL\" >/dev/null || exit 74\n\
+         /bin/cat \"$CLROOM_NAMESPACE_SKILL_A\" >/dev/null || exit 75\n\
+         /bin/cat \"$CLROOM_NAMESPACE_SKILL_B\" >/dev/null || exit 76\n\
+         /bin/cat \"$CLROOM_AMBIENT_SKILL\" >/dev/null 2>&1 && exit 77\n\
+         printf '%s\\0' \"$@\" > \"$CLROOM_CAPTURE_PATH\"\n\
+         exit 42\n",
+    )
+    .unwrap();
+    fs::set_permissions(&fake, fs::Permissions::from_mode(0o700)).unwrap();
+
+    let output = command(&project, &home, &codex_home, &bin, &capture)
+        .args([
+            "codex",
+            "--skill-set=arrow,superpowers",
+            "--exit-42",
+            "literal value",
+        ])
+        .env(
+            "CLROOM_PROJECT_SKILL",
+            project.join(".agents/skills/project-only/SKILL.md"),
+        )
+        .env(
+            "CLROOM_EXACT_SKILL",
+            home.join(".agents/skills/arrow/SKILL.md"),
+        )
+        .env(
+            "CLROOM_NAMESPACE_SKILL_A",
+            plugin.join("skills/systematic-debugging/SKILL.md"),
+        )
+        .env(
+            "CLROOM_NAMESPACE_SKILL_B",
+            plugin.join("skills/brainstorming/SKILL.md"),
+        )
+        .output()
+        .unwrap();
+
+    assert_eq!(output.status.code(), Some(42));
+    assert_eq!(
+        fs::read(&capture).unwrap(),
+        expected_argv(&["--exit-42", "literal value"])
+    );
+}
+
+#[test]
+fn codex_handoff_admits_one_namespaced_skill_without_its_siblings() {
+    let (root, project, home, codex_home, bin) = isolated_fixture();
+    let plugin = add_selective_skill_fixture(&root, &home, &project);
+    let capture = bin.join("selected-exact-capture");
+    let fake = bin.join("codex");
+    fs::write(
+        &fake,
+        "#!/bin/sh\n\
+         /bin/cat \"$CLROOM_PROJECT_SKILL\" >/dev/null || exit 73\n\
+         /bin/cat \"$CLROOM_EXACT_SKILL\" >/dev/null || exit 74\n\
+         /bin/cat \"$CLROOM_NAMESPACE_SKILL_A\" >/dev/null || exit 75\n\
+         /bin/cat \"$CLROOM_NAMESPACE_SKILL_B\" >/dev/null 2>&1 && exit 76\n\
+         /bin/cat \"$CLROOM_AMBIENT_SKILL\" >/dev/null 2>&1 && exit 77\n\
+         printf '%s\\0' \"$@\" > \"$CLROOM_CAPTURE_PATH\"\n\
+         exit 42\n",
+    )
+    .unwrap();
+    fs::set_permissions(&fake, fs::Permissions::from_mode(0o700)).unwrap();
+
+    let output = command(&project, &home, &codex_home, &bin, &capture)
+        .args([
+            "codex",
+            "--skill-set=arrow,superpowers:systematic-debugging",
+            "features",
+            "list",
+        ])
+        .env(
+            "CLROOM_PROJECT_SKILL",
+            project.join(".agents/skills/project-only/SKILL.md"),
+        )
+        .env(
+            "CLROOM_EXACT_SKILL",
+            home.join(".agents/skills/arrow/SKILL.md"),
+        )
+        .env(
+            "CLROOM_NAMESPACE_SKILL_A",
+            plugin.join("skills/systematic-debugging/SKILL.md"),
+        )
+        .env(
+            "CLROOM_NAMESPACE_SKILL_B",
+            plugin.join("skills/brainstorming/SKILL.md"),
+        )
+        .output()
+        .unwrap();
+
+    assert_eq!(output.status.code(), Some(42));
+    assert_eq!(
+        fs::read(&capture).unwrap(),
+        expected_argv(&["features", "list"])
+    );
+}
+
+#[test]
+fn codex_handoff_rejects_invalid_unknown_and_ambiguous_selectors_before_exec() {
+    let (root, project, home, codex_home, bin) = isolated_fixture();
+    add_selective_skill_fixture(&root, &home, &project);
+    fs::create_dir_all(home.join(".agents/skills/superpowers")).unwrap();
+    fs::write(
+        home.join(".agents/skills/superpowers/SKILL.md"),
+        b"same name as namespace\n",
+    )
+    .unwrap();
+    fs::create_dir_all(codex_home.join("skills/arrow")).unwrap();
+    fs::write(
+        codex_home.join("skills/arrow/SKILL.md"),
+        b"different arrow\n",
+    )
+    .unwrap();
+
+    let second_plugin = root.join("second-plugin-cache/superpowers");
+    fs::create_dir_all(second_plugin.join(".codex-plugin")).unwrap();
+    fs::write(
+        second_plugin.join(".codex-plugin/plugin.json"),
+        br#"{"name":"superpowers","version":"2.0.0"}"#,
+    )
+    .unwrap();
+    fs::create_dir_all(second_plugin.join("skills/systematic-debugging")).unwrap();
+    fs::write(
+        second_plugin.join("skills/systematic-debugging/SKILL.md"),
+        b"different systematic debugging\n",
+    )
+    .unwrap();
+    fs::create_dir_all(codex_home.join("skills")).unwrap();
+    std::os::unix::fs::symlink(
+        second_plugin.join("skills/systematic-debugging"),
+        codex_home.join("skills/systematic-debugging"),
+    )
+    .unwrap();
+    let capture = bin.join("invalid-selector-provider-capture");
+
+    for (selector, expected) in [
+        ("", "invalid skill selector"),
+        ("missing", "unknown skill selector 'missing'"),
+        ("superpowers", "ambiguous skill selector 'superpowers'"),
+        ("arrow", "ambiguous skill selector 'arrow'"),
+        (
+            "superpowers:systematic-debugging",
+            "ambiguous skill selector 'superpowers:systematic-debugging'",
+        ),
+    ] {
+        let skills_argument = format!("--skill-set={selector}");
+        let output = command(&project, &home, &codex_home, &bin, &capture)
+            .args(["codex", skills_argument.as_str(), "--version"])
+            .output()
+            .unwrap();
+        assert_eq!(output.status.code(), Some(2), "selector={selector}");
+        let stderr = String::from_utf8(output.stderr).unwrap();
+        assert!(
+            stderr.contains(expected),
+            "selector={selector}, stderr={stderr}"
+        );
+        assert!(!capture.exists(), "selector={selector}");
+    }
+}
+
+#[test]
+fn codex_handoff_expands_multiple_named_sets_and_direct_skills_without_rewriting_config() {
+    // Break caught: @set references leak to Codex, overlapping sets fail, or
+    // clroom mutates the human-owned YAML while composing this launch.
+    let (root, project, home, codex_home, bin) = isolated_fixture();
+    let plugin = add_selective_skill_fixture(&root, &home, &project);
+    let capture = bin.join("selected-sets-capture");
+    let fake = bin.join("codex");
+    fs::write(
+        &fake,
+        "#!/bin/sh\n\
+         /bin/cat \"$CLROOM_PROJECT_SKILL\" >/dev/null || exit 73\n\
+         /bin/cat \"$CLROOM_EXACT_SKILL\" >/dev/null || exit 74\n\
+         /bin/cat \"$CLROOM_NAMESPACE_SKILL_A\" >/dev/null || exit 75\n\
+         /bin/cat \"$CLROOM_NAMESPACE_SKILL_B\" >/dev/null || exit 76\n\
+         /bin/cat \"$CLROOM_AMBIENT_SKILL\" >/dev/null 2>&1 && exit 77\n\
+         printf '%s\\0' \"$@\" > \"$CLROOM_CAPTURE_PATH\"\n\
+         exit 42\n",
+    )
+    .unwrap();
+    fs::set_permissions(&fake, fs::Permissions::from_mode(0o700)).unwrap();
+
+    let config_home = root.join("config");
+    let config = config_home.join("clroom/skill-sets.yaml");
+    fs::create_dir_all(config.parent().unwrap()).unwrap();
+    let yaml = b"review:\n  - arrow\n  - superpowers:systematic-debugging\ndebugging:\n  - superpowers\n  - arrow\ndocumentation:\n  - superpowers:brainstorming\n";
+    fs::write(&config, yaml).unwrap();
+
+    let output = command(&project, &home, &codex_home, &bin, &capture)
+        .args([
+            "codex",
+            "--skill-set=@review,@debugging,@documentation,arrow",
+            "features",
+            "list",
+        ])
+        .env("XDG_CONFIG_HOME", &config_home)
+        .env(
+            "CLROOM_PROJECT_SKILL",
+            project.join(".agents/skills/project-only/SKILL.md"),
+        )
+        .env(
+            "CLROOM_EXACT_SKILL",
+            home.join(".agents/skills/arrow/SKILL.md"),
+        )
+        .env(
+            "CLROOM_NAMESPACE_SKILL_A",
+            plugin.join("skills/systematic-debugging/SKILL.md"),
+        )
+        .env(
+            "CLROOM_NAMESPACE_SKILL_B",
+            plugin.join("skills/brainstorming/SKILL.md"),
+        )
+        .output()
+        .unwrap();
+
+    assert_eq!(output.status.code(), Some(42));
+    assert_eq!(
+        fs::read(&capture).unwrap(),
+        expected_argv(&["features", "list"])
+    );
+    assert_eq!(fs::read(&config).unwrap(), yaml);
+}
+
+#[test]
+fn codex_handoff_rejects_invalid_named_sets_before_exec_without_echoing_yaml() {
+    // Break caught: a missing, unknown, malformed, or nested set reaches Codex
+    // or exposes the user's config content in an error.
+    for (name, yaml, selector, expected) in [
+        (
+            "missing-file",
+            None,
+            "@review",
+            "skill-set file is unavailable",
+        ),
+        (
+            "unknown-set",
+            Some("review:\n  - arrow\n"),
+            "@missing",
+            "unknown skill set '@missing'",
+        ),
+        (
+            "malformed-yaml",
+            Some("PRIVATE_MARKER: [\n"),
+            "@review",
+            "skill-set file is invalid",
+        ),
+        (
+            "empty-set",
+            Some("review: []\n"),
+            "@review",
+            "skill-set file is invalid",
+        ),
+        (
+            "invalid-selector",
+            Some("review:\n  - invalid:selector:shape\n"),
+            "@review",
+            "skill-set file is invalid",
+        ),
+        (
+            "nested-set",
+            Some("review:\n  - '@debugging'\n"),
+            "@review",
+            "nested skill set '@debugging' is not allowed",
+        ),
+    ] {
+        let (root, project, home, codex_home, bin) = isolated_fixture();
+        add_selective_skill_fixture(&root, &home, &project);
+        let capture = bin.join(format!("{name}-provider-capture"));
+        let config_home = root.join("config");
+        let config = config_home.join("clroom/skill-sets.yaml");
+        if let Some(yaml) = yaml {
+            fs::create_dir_all(config.parent().unwrap()).unwrap();
+            fs::write(&config, yaml).unwrap();
+        }
+
+        let argument = format!("--skill-set={selector}");
+        let output = command(&project, &home, &codex_home, &bin, &capture)
+            .args(["codex", argument.as_str(), "--version"])
+            .env("XDG_CONFIG_HOME", &config_home)
+            .output()
+            .unwrap();
+
+        assert_eq!(output.status.code(), Some(2), "case={name}");
+        let stderr = String::from_utf8(output.stderr).unwrap();
+        assert!(stderr.contains(expected), "case={name}, stderr={stderr}");
+        assert!(
+            stderr.contains(config.to_str().unwrap()),
+            "case={name}, stderr={stderr}"
+        );
+        assert!(!stderr.contains("PRIVATE_MARKER"), "case={name}");
+        assert!(!capture.exists(), "case={name}");
+    }
+}
+
+#[test]
+fn codex_handoff_rejects_a_relative_xdg_skill_set_path_before_exec() {
+    // Break caught: an unsafe explicit config root silently falls back to HOME,
+    // making clroom read a different set file than the user requested.
+    let (root, project, home, codex_home, bin) = isolated_fixture();
+    add_selective_skill_fixture(&root, &home, &project);
+    let capture = bin.join("unsafe-config-path-provider-capture");
+
+    let output = command(&project, &home, &codex_home, &bin, &capture)
+        .args(["codex", "--skill-set=@review", "--version"])
+        .env("XDG_CONFIG_HOME", "relative/config")
+        .output()
+        .unwrap();
+
+    assert_eq!(output.status.code(), Some(2));
+    assert_eq!(
+        String::from_utf8(output.stderr).unwrap(),
+        "CLROOM_SKILL_SET_CONFIG_PATH_INVALID: skill-set config root is unavailable\n"
+    );
+    assert!(!capture.exists());
+}
+
+#[test]
+fn codex_handoff_forwards_the_unreleased_old_skills_spelling_to_codex() {
+    // Break caught: clroom keeps two launcher flags for one concept and can
+    // never forward a future provider-native --skills option.
+    let (_root, project, home, codex_home, bin) = isolated_fixture();
+    let capture = bin.join("provider-native-skills-capture");
+    let user_args = ["--skills=provider-native", "--version"];
 
     let output = command(&project, &home, &codex_home, &bin, &capture)
         .arg("codex")

@@ -3,6 +3,8 @@ use std::process::Command;
 fn run(args: &[&str]) -> std::process::Output {
     Command::new(env!("CARGO_BIN_EXE_clroom"))
         .args(args)
+        .env("HOME", "/tmp/clroom-help-home")
+        .env("XDG_CONFIG_HOME", "/tmp/clroom-help-config")
         .output()
         .expect("clroom must run")
 }
@@ -17,6 +19,19 @@ fn top_help_aliases_render_the_same_concise_index() {
         assert_eq!(String::from_utf8(output.stdout).unwrap(), expected);
         assert!(output.stderr.is_empty());
     }
+}
+
+#[test]
+fn top_help_shows_the_single_skill_set_option_and_resolved_file() {
+    // Break caught: users need a second launcher flag or cannot find the one
+    // file where reusable @sets are edited.
+    let output = run(&["--help"]);
+    assert_eq!(output.status.code(), Some(0));
+    let stdout = String::from_utf8(output.stdout).unwrap();
+    assert!(stdout.contains("--skill-set=code-review,@review"));
+    assert!(stdout.contains("/tmp/clroom-help-config/clroom/skill-sets.yaml"));
+    assert!(!stdout.contains("--skills="));
+    assert!(output.stderr.is_empty());
 }
 
 #[test]

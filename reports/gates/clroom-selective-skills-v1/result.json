@@ -1,0 +1,51 @@
+{
+  "schema_version": "clroom.selective-skills.local.v1",
+  "plan_id": "P08-CLROOM-SELECTIVE-SKILLS-V1",
+  "result": "PASS",
+  "plan_sha256": "63f6174165657f3cffb71aeaff3b37db032f1e771d583e993f663ab21d66747b",
+  "input_head": "45fcf9fe9f4f66d45b611683d67ac242b65ebf8d",
+  "binding": "commit contains this receipt and the hashed subjects",
+  "subjects": {
+    "README.md": "e8d678a2a3fedb84ac6c2b5478eccd49d802b21501af41ef62f6caf1d831453b",
+    "docs/assets/clean-room-launcher-hero.png": "31ea126f3653922d4ea380b29fe81268f5f3820776b19fe2b840913433d58633",
+    "fixtures/cli/help/top.txt": "95a36849f6b513db7746ea462f86aff682462abcc9eae32a8e2a1fda068de250",
+    "src/adapters/codex/isolation.rs": "22f7a3d990bf1c8051cc7e388076c26d333192cedc02ba601ff8b5d781564d9a",
+    "src/cli/help.rs": "2915a984280b5dfd8db61ef51d1f467559ff14f8d3cafed12f8c4be7cda76e34",
+    "src/cli/mod.rs": "0c0cb63bf43fa8b459f4a3dccd74776128c59e9fe33c3ac5fa7f87b4e5fb7a5f",
+    "src/cli/screen.rs": "c1c58987bf8480e47a2037007417975be6a21caca6b3e0493adb790bfefd9026",
+    "src/cli/skill_sets.rs": "c11f62589da77302eb5a2c9d9c9ccb0eb44a231b4efcd4d5de81b077c6fd60ed",
+    "tests/adapters/codex/isolation.rs": "0ea6a812209ce97d9ebd2883fc89ee3f804d6dd5f72e85596638200cc84fa0af",
+    "tests/cli/help.rs": "457dbc30b669bfa3e90b24ab3366b380a1f0b4e24d4460f35db1dd63754b0555",
+    "tests/cli/isolated_codex_launch.rs": "57fa7bc4b6232e4b0f2dc4037ce1f4748f79f2a1c96009a1a86db4cb050eb07d",
+    "tests/cli/isolated_launch_screen.rs": "e73fe6321a67b201ae6436e951224d6232b538515abd0aeab6e8945497dbc80b",
+    "scripts/gates/clroom-selective-skills-v1/verify.sh": "a926a06767c9c10eb762ba1d57b09ca13d1773f851b3bb257a38c2039ed6d6b0"
+  },
+  "subject_count": 13,
+  "hero_sha256": "31ea126f3653922d4ea380b29fe81268f5f3820776b19fe2b840913433d58633",
+  "checks": {
+    "single_skill_set_option": true,
+    "direct_skill_selector": true,
+    "namespace_selector": true,
+    "exact_namespaced_selector": true,
+    "multiple_named_sets": true,
+    "overlap_deduplication": true,
+    "project_local_skills_automatic": true,
+    "invalid_inputs_fail_before_codex": true,
+    "user_config_read_only": true,
+    "plaque_selected_count": true,
+    "full_offline_regression": true,
+    "public_boundary": true
+  },
+  "counts": {
+    "tests_passed": 213,
+    "focused_selector_cases": 10,
+    "plaque_cases": 3
+  },
+  "timings": {
+    "gate_duration_ms": 23000
+  },
+  "real_provider_processes": 0,
+  "provider_requests": 0,
+  "publication": false,
+  "raw_provider_output_retained": false
+}

@@ -5,7 +5,7 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
-use taskseal::adapters::codex::isolation::{plan, IsolationInputs};
+use taskseal::adapters::codex::isolation::{IsolationInputs, plan};
 
 struct TempRoot(PathBuf);
 
@@ -95,7 +95,9 @@ fn plan_renders_denies_for_nonexistent_synthetic_codex_home_without_inspecting_i
     )
     .unwrap();
 
-    assert!(isolation
-        .profile
-        .contains(missing_codex_home.to_str().unwrap()));
+    assert!(
+        isolation
+            .profile
+            .contains(missing_codex_home.to_str().unwrap())
+    );
 }
