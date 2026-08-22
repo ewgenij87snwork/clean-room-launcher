@@ -1,6 +1,8 @@
 # Clean Room Launcher
 
-![Clean Room Launcher keeps ambient global inputs outside while project context, CLI arguments, and selected global skills reach Codex.](docs/assets/clean-room-launcher-hero.png)
+![Clean Room Launcher keeps unrelated inherited context outside one Codex launch while admitting project context, CLI arguments, and selected skills.](docs/assets/clean-room-launcher-ad.gif)
+
+*Same local Codex. Only the context intentionally admitted for this launch.*
 
 A clean-room launcher for coding agents (Codex for now).
 
