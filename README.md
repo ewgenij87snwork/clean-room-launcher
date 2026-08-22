@@ -99,8 +99,8 @@ confirmation step, second launch, or artificial delay.
 You need macOS on Apple Silicon and an already installed, working `codex` CLI.
 
 ```sh
-VERSION=v0.1.0-alpha.1
-ASSET=clean-room-launcher-v0.1.0-alpha.1-aarch64-apple-darwin.tar.gz
+VERSION=v0.1.0-alpha.2
+ASSET=clean-room-launcher-v0.1.0-alpha.2-aarch64-apple-darwin.tar.gz
 
 curl -fLO "https://github.com/ewgenij87snwork/clean-room-launcher/releases/download/$VERSION/$ASSET"
 curl -fLO "https://github.com/ewgenij87snwork/clean-room-launcher/releases/download/$VERSION/SHA256SUMS"
@@ -108,7 +108,7 @@ shasum -a 256 -c SHA256SUMS
 tar -xzf "$ASSET"
 
 mkdir -p "$HOME/.local/bin"
-install -m 0755 "clean-room-launcher-v0.1.0-alpha.1-aarch64-apple-darwin/bin/clroom" "$HOME/.local/bin/clroom"
+install -m 0755 "clean-room-launcher-v0.1.0-alpha.2-aarch64-apple-darwin/bin/clroom" "$HOME/.local/bin/clroom"
 export PATH="$HOME/.local/bin:$PATH"
 clroom --help
 ```
@@ -125,7 +125,7 @@ Rust users can build the same alpha from the public tag:
 
 ```sh
 cargo install --git https://github.com/ewgenij87snwork/clean-room-launcher \
-  --tag v0.1.0-alpha.1 --locked
+  --tag v0.1.0-alpha.2 --locked
 ```
 
 No crates.io package is published for this alpha.
@@ -307,14 +307,14 @@ Removing Clean Room Launcher does not modify Codex or its authentication.
 
 ## Project status
 
-`v0.1.0-alpha.1` is a public, unsigned, and unnotarized prerelease for macOS
+`v0.1.0-alpha.2` is a public, unsigned, and unnotarized prerelease for macOS
 on Apple Silicon.
 
 It supports the locally installed Codex CLI through a focused clean-room
 boundary. It is not a stable-support promise.
 
 See the
-[GitHub prerelease](https://github.com/ewgenij87snwork/clean-room-launcher/releases/tag/v0.1.0-alpha.1)
+[GitHub prerelease](https://github.com/ewgenij87snwork/clean-room-launcher/releases/tag/v0.1.0-alpha.2)
 for the archive and `SHA256SUMS`.
 
 ## Security

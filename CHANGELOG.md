@@ -7,6 +7,27 @@ Semantic Versioning after the first public release.
 
 ## [Unreleased]
 
+## [0.1.0-alpha.2] - 2026-08-22
+
+### Added
+
+- One `--skill-set=` option for exact global skills, whole namespaces, exact
+  `namespace:skill` selectors, reusable named `@sets`, and mixed selections.
+- User-owned skill sets from `$XDG_CONFIG_HOME/clroom/skill-sets.yaml` or
+  `~/.config/clroom/skill-sets.yaml`; Clean Room Launcher reads this file only
+  when an `@set` is requested and never creates or rewrites it.
+
+### Changed
+
+- Project-local skills remain automatic while unselected global skills stay
+  outside each launch.
+- The launch plaque reports how many global skills were admitted.
+
+### Security
+
+- Unknown, malformed, nested, unsafe-path, and ambiguous selectors fail before
+  Codex starts.
+
 ## [0.1.0-alpha.1] - 2026-08-21
 
 ### Added

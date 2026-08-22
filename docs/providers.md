@@ -1,4 +1,4 @@
-# Provider support in v0.1.0-alpha.1
+# Provider support in v0.1.0-alpha.2
 
 The alpha has one supported path:
 
