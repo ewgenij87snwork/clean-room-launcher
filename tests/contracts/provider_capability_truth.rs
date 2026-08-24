@@ -17,13 +17,38 @@ fn run_probe(extra_args: &[&str]) -> std::process::Output {
         std::process::id()
     ));
     std::fs::create_dir(&temp_root).expect("create isolated probe temp root");
+    let provider = extra_args
+        .windows(2)
+        .find(|args| args[0] == "--provider")
+        .map(|args| args[1])
+        .expect("probe test declares a provider");
+    let fake_bin = temp_root.join("bin");
+    std::fs::create_dir(&fake_bin).expect("create fake provider bin");
+    let fake_provider = fake_bin.join(provider);
+    let script = match provider {
+        "codex" => {
+            "#!/bin/sh\ncase \"$1\" in\n  --version) printf 'codex 0.147.0\\n' ;;\n  debug)\n    if [ \"$3\" = 'TASKSEAL_START_PROBE' ]; then\n      printf '{\"skills\":[\"TASKSEAL_CANARY_TRIGGER\"]}\\n'\n    else\n      printf '{}\\n'\n    fi\n    ;;\n  *) exit 64 ;;\nesac\n"
+        }
+        "claude" => "#!/bin/sh\nprintf '2.1.223 (Claude Code)\\n'\n",
+        _ => panic!("unsupported fake provider {provider}"),
+    };
+    std::fs::write(&fake_provider, script).expect("write fake provider");
+    std::fs::set_permissions(&fake_provider, std::fs::Permissions::from_mode(0o700))
+        .expect("make fake provider executable");
+    let mut probe_paths = vec![fake_bin.clone()];
+    probe_paths.extend(std::env::split_paths(
+        &std::env::var_os("PATH").unwrap_or_default(),
+    ));
+    let probe_path = std::env::join_paths(probe_paths).expect("construct probe PATH");
     let output = Command::new(root.join("scripts/probe/provider-capabilities.sh"))
         .arg("--root")
         .arg(&root)
         .args(extra_args)
         .env("TMPDIR", &temp_root)
+        .env("PATH", probe_path)
         .output()
         .expect("provider capability probe must be executable");
+    std::fs::remove_dir_all(&fake_bin).expect("remove fake provider bin");
     let residue = std::fs::read_dir(&temp_root)
         .expect("read isolated probe temp root")
         .count();
