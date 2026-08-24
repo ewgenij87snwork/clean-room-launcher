@@ -361,7 +361,11 @@ fn reap_quarantine(quarantine_root: &Path) -> Result<(), ProjectionError> {
             continue;
         };
         if owner_process_state(&owner) == ProcessState::Dead {
-            fs::remove_dir_all(path).map_err(|_| ProjectionError::Unavailable)?;
+            match fs::remove_dir_all(path) {
+                Ok(()) => {}
+                Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+                Err(_) => return Err(ProjectionError::Unavailable),
+            }
         }
     }
     Ok(())
@@ -491,9 +495,11 @@ fn quarantine_and_delete(path: &Path, quarantine_root: &Path) -> Result<(), Proj
     };
     let quarantined = quarantine_root.join(name);
     match fs::rename(path, &quarantined) {
-        Ok(()) => {
-            fs::remove_dir_all(quarantined).map_err(|_| ProjectionError::Unavailable)?;
-        }
+        Ok(()) => match fs::remove_dir_all(quarantined) {
+            Ok(()) => {}
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+            Err(_) => return Err(ProjectionError::Unavailable),
+        },
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(()),
         Err(_) => return Err(ProjectionError::Unavailable),
     }
