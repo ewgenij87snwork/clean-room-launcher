@@ -20,6 +20,8 @@ const QUARANTINE_DIR: &str = "quarantine";
 const SESSION_PREFIX: &str = "session-";
 const OWNER_MARKER: &str = ".clroom-projection-owner-v2";
 const OWNER_MARKER_TEMP: &str = ".clroom-projection-owner-v2.tmp";
+const RELEASE_MARKER: &str = ".clroom-projection-release-v2";
+const RELEASE_MARKER_TEMP: &str = ".clroom-projection-release-v2.tmp";
 const RANDOM_SOURCE: &str = "/dev/urandom";
 const MARKER_LIMIT: u64 = 128;
 const RANDOM_SUFFIX_LEN: usize = 32;
@@ -35,7 +37,7 @@ pub struct Projection {
     allowed_source_paths: Vec<PathBuf>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 enum ProjectionPhase {
     Creating,
     Active,
@@ -46,7 +48,7 @@ impl Drop for Projection {
     fn drop(&mut self) {
         if self.phase == ProjectionPhase::Creating {
             self.phase = ProjectionPhase::Finished;
-            quarantine_and_delete(&self.root, &self.storage_root.join(QUARANTINE_DIR));
+            let _ = quarantine_and_delete(&self.root, &self.storage_root.join(QUARANTINE_DIR));
         }
     }
 }
@@ -113,6 +115,10 @@ impl Projection {
         self.root.join(OWNER_MARKER)
     }
 
+    pub fn release_marker_path(&self) -> PathBuf {
+        self.root.join(RELEASE_MARKER)
+    }
+
     pub fn session_name(&self) -> Option<&str> {
         self.root.file_name()?.to_str()
     }
@@ -121,23 +127,66 @@ impl Projection {
         if consumer_pid == 0 {
             return Err(ProjectionError::Unavailable);
         }
-        write_owner_marker(&self.root, OwnerState::Active(consumer_pid))?;
+        let start = process_start_identity(consumer_pid).ok_or(ProjectionError::Unavailable)?;
+        for approved_source in &self.allowed_source_paths {
+            let current_source =
+                fs::canonicalize(approved_source).map_err(|_| ProjectionError::Unavailable)?;
+            if current_source != *approved_source {
+                return Err(ProjectionError::Unavailable);
+            }
+            let name = approved_source
+                .file_name()
+                .ok_or(ProjectionError::Unavailable)?;
+            let link = self.add_dir.join(".claude/skills").join(name);
+            let link_target = fs::read_link(&link).map_err(|_| ProjectionError::Unavailable)?;
+            let link_target = if link_target.is_absolute() {
+                link_target
+            } else {
+                link.parent()
+                    .ok_or(ProjectionError::Unavailable)?
+                    .join(link_target)
+            };
+            if fs::canonicalize(link_target).map_err(|_| ProjectionError::Unavailable)?
+                != *approved_source
+            {
+                return Err(ProjectionError::Unavailable);
+            }
+        }
+        write_owner_marker(&self.root, OwnerState::Active(consumer_pid, start))?;
         self.phase = ProjectionPhase::Active;
         Ok(())
     }
 
-    pub fn finish_after_consumer_exit(&mut self) {
+    pub fn release_consumer(&mut self, consumer_pid: u32) -> Result<(), ProjectionError> {
+        if self.phase != ProjectionPhase::Active || consumer_pid == 0 {
+            return Err(ProjectionError::Unavailable);
+        }
+        let start = process_start_identity(consumer_pid).ok_or(ProjectionError::Unavailable)?;
+        if marked_projection_owner(&self.root)
+            != Some(OwnerState::Active(consumer_pid, start.clone()))
+        {
+            return Err(ProjectionError::Unavailable);
+        }
+        let session = self.session_name().ok_or(ProjectionError::Unavailable)?;
+        write_release_marker(
+            &self.root,
+            format!("released:{consumer_pid}:{session}:{start}\n"),
+        )
+    }
+
+    pub fn finish_after_consumer_exit(&mut self) -> Result<(), ProjectionError> {
         if self.phase != ProjectionPhase::Finished {
             self.phase = ProjectionPhase::Finished;
-            quarantine_and_delete(&self.root, &self.storage_root.join(QUARANTINE_DIR));
+            quarantine_and_delete(&self.root, &self.storage_root.join(QUARANTINE_DIR))?;
         }
+        Ok(())
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 enum OwnerState {
-    Creating(u32),
-    Active(u32),
+    Creating(u32, String),
+    Active(u32, String),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -159,8 +208,8 @@ fn create_root() -> Result<(PathBuf, PathBuf), ProjectionError> {
     ensure_private_directory(&active_root)?;
     ensure_private_directory(&quarantine_root)?;
 
-    reap_quarantine(&quarantine_root);
-    reap_stale_active(&active_root, &quarantine_root);
+    reap_quarantine(&quarantine_root)?;
+    reap_stale_active(&active_root, &quarantine_root)?;
 
     for _ in 0..16 {
         let sequence = PROJECTION_SEQUENCE.fetch_add(1, Ordering::Relaxed);
@@ -171,7 +220,12 @@ fn create_root() -> Result<(PathBuf, PathBuf), ProjectionError> {
         ));
         match create_private_directory(&candidate) {
             Ok(()) => {
-                if write_owner_marker(&candidate, OwnerState::Creating(std::process::id())).is_err()
+                let Some(start) = process_start_identity(std::process::id()) else {
+                    let _ = fs::remove_dir_all(&candidate);
+                    return Err(ProjectionError::Unavailable);
+                };
+                if write_owner_marker(&candidate, OwnerState::Creating(std::process::id(), start))
+                    .is_err()
                 {
                     let _ = fs::remove_dir_all(&candidate);
                     return Err(ProjectionError::Unavailable);
@@ -255,8 +309,8 @@ fn write_owner_marker(path: &Path, state: OwnerState) -> Result<(), ProjectionEr
         .open(&temporary)
         .map_err(|_| ProjectionError::Unavailable)?;
     let value = match state {
-        OwnerState::Creating(pid) => format!("creating:{pid}:{session_name}\n"),
-        OwnerState::Active(pid) => format!("active:{pid}:{session_name}\n"),
+        OwnerState::Creating(pid, start) => format!("creating:{pid}:{session_name}:{start}\n"),
+        OwnerState::Active(pid, start) => format!("active:{pid}:{session_name}:{start}\n"),
     };
     if file.write_all(value.as_bytes()).is_err() || file.flush().is_err() {
         drop(file);
@@ -271,45 +325,62 @@ fn write_owner_marker(path: &Path, state: OwnerState) -> Result<(), ProjectionEr
     Ok(())
 }
 
+fn write_release_marker(path: &Path, value: String) -> Result<(), ProjectionError> {
+    let marker = path.join(RELEASE_MARKER);
+    let temporary = path.join(RELEASE_MARKER_TEMP);
+    let mut options = OpenOptions::new();
+    options.write(true).create_new(true);
+    #[cfg(unix)]
+    options.mode(0o600);
+    let mut file = options
+        .open(&temporary)
+        .map_err(|_| ProjectionError::Unavailable)?;
+    if file.write_all(value.as_bytes()).is_err() || file.flush().is_err() {
+        let _ = fs::remove_file(&temporary);
+        return Err(ProjectionError::Unavailable);
+    }
+    drop(file);
+    fs::rename(&temporary, &marker).map_err(|_| {
+        let _ = fs::remove_file(&temporary);
+        ProjectionError::Unavailable
+    })
+}
+
 #[cfg(not(unix))]
 fn write_owner_marker(_: &Path, _: OwnerState) -> Result<(), ProjectionError> {
     Err(ProjectionError::Unavailable)
 }
 
-fn reap_quarantine(quarantine_root: &Path) {
+fn reap_quarantine(quarantine_root: &Path) -> Result<(), ProjectionError> {
     let Ok(entries) = fs::read_dir(quarantine_root) else {
-        return;
+        return Err(ProjectionError::Unavailable);
     };
     for entry in entries.flatten() {
         let path = entry.path();
         let Some(owner) = marked_projection_owner(&path) else {
             continue;
         };
-        let pid = match owner {
-            OwnerState::Creating(pid) | OwnerState::Active(pid) => pid,
-        };
-        if process_state(pid) == ProcessState::Dead {
-            let _ = fs::remove_dir_all(path);
+        if owner_process_state(&owner) == ProcessState::Dead {
+            fs::remove_dir_all(path).map_err(|_| ProjectionError::Unavailable)?;
         }
     }
+    Ok(())
 }
 
-fn reap_stale_active(active_root: &Path, quarantine_root: &Path) {
+fn reap_stale_active(active_root: &Path, quarantine_root: &Path) -> Result<(), ProjectionError> {
     let Ok(entries) = fs::read_dir(active_root) else {
-        return;
+        return Err(ProjectionError::Unavailable);
     };
     for entry in entries.flatten() {
         let path = entry.path();
         let Some(owner) = marked_projection_owner(&path) else {
             continue;
         };
-        let pid = match owner {
-            OwnerState::Creating(pid) | OwnerState::Active(pid) => pid,
-        };
-        if process_state(pid) == ProcessState::Dead {
-            quarantine_and_delete(&path, quarantine_root);
+        if owner_process_state(&owner) == ProcessState::Dead {
+            quarantine_and_delete(&path, quarantine_root)?;
         }
     }
+    Ok(())
 }
 
 fn marked_projection_owner(path: &Path) -> Option<OwnerState> {
@@ -330,18 +401,37 @@ fn marked_projection_owner(path: &Path) -> Option<OwnerState> {
     if value.contains('\n') {
         return None;
     }
-    let mut fields = value.split(':');
+    let mut fields = value.splitn(4, ':');
     let state = fields.next()?;
     let pid = parse_process_id(fields.next()?)?;
     let recorded_session = fields.next()?;
-    if fields.next().is_some() || path.file_name()?.to_str()? != recorded_session {
+    let recorded_start = fields.next()?;
+    if path.file_name()?.to_str()? != recorded_session {
         return None;
     }
     let launcher_pid = session_launcher_pid(path)?;
     match state {
-        "creating" if pid == launcher_pid => Some(OwnerState::Creating(pid)),
-        "active" => Some(OwnerState::Active(pid)),
+        "creating" if pid == launcher_pid => {
+            Some(OwnerState::Creating(pid, recorded_start.to_owned()))
+        }
+        "active" => Some(OwnerState::Active(pid, recorded_start.to_owned())),
         _ => None,
+    }
+}
+
+fn owner_process_state(owner: &OwnerState) -> ProcessState {
+    let (pid, recorded_start) = match owner {
+        OwnerState::Creating(pid, start) | OwnerState::Active(pid, start) => (*pid, start),
+    };
+    match process_state(pid) {
+        ProcessState::Live => {
+            if process_start_identity(pid).as_deref() == Some(recorded_start) {
+                ProcessState::Live
+            } else {
+                ProcessState::Dead
+            }
+        }
+        state => state,
     }
 }
 
@@ -392,21 +482,22 @@ fn private_marker(_: &fs::Metadata) -> bool {
     false
 }
 
-fn quarantine_and_delete(path: &Path, quarantine_root: &Path) {
+fn quarantine_and_delete(path: &Path, quarantine_root: &Path) -> Result<(), ProjectionError> {
     if !valid_session_directory(path) {
-        return;
+        return Err(ProjectionError::Unavailable);
     }
     let Some(name) = path.file_name() else {
-        return;
+        return Err(ProjectionError::Unavailable);
     };
     let quarantined = quarantine_root.join(name);
     match fs::rename(path, &quarantined) {
         Ok(()) => {
-            let _ = fs::remove_dir_all(quarantined);
+            fs::remove_dir_all(quarantined).map_err(|_| ProjectionError::Unavailable)?;
         }
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
-        Err(_) => {}
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(()),
+        Err(_) => return Err(ProjectionError::Unavailable),
     }
+    Ok(())
 }
 
 #[cfg(unix)]
@@ -420,25 +511,51 @@ fn process_state(pid: u32) -> ProcessState {
         .stderr(Stdio::null())
         .status()
     {
-        Ok(status) if status.success() => ProcessState::Live,
-        Ok(_) => match Command::new("/bin/ps")
-            .args(["-p", &pid, "-o", "pid="])
+        Ok(status) if status.success() => match Command::new("/bin/ps")
+            .args(["-p", &pid, "-o", "state="])
             .stdin(Stdio::null())
-            .stdout(Stdio::null())
             .stderr(Stdio::null())
-            .status()
+            .output()
         {
-            Ok(status) if status.success() => ProcessState::Live,
-            Ok(status) if status.code() == Some(1) => ProcessState::Dead,
-            _ => ProcessState::Unknown,
+            Ok(output) if output.status.success() => {
+                let state = String::from_utf8_lossy(&output.stdout);
+                if state.trim_start().starts_with('Z') || state.trim().is_empty() {
+                    ProcessState::Dead
+                } else {
+                    ProcessState::Live
+                }
+            }
+            Ok(_) => ProcessState::Unknown,
+            Err(_) => ProcessState::Unknown,
         },
+        Ok(_) => ProcessState::Dead,
         Err(_) => ProcessState::Unknown,
     }
+}
+
+#[cfg(unix)]
+fn process_start_identity(pid: u32) -> Option<String> {
+    let output = Command::new("/bin/ps")
+        .args(["-p", &pid.to_string(), "-o", "lstart="])
+        .stdin(Stdio::null())
+        .stderr(Stdio::null())
+        .output()
+        .ok()?;
+    output
+        .status
+        .success()
+        .then(|| String::from_utf8_lossy(&output.stdout).trim().to_owned())
+        .filter(|s| !s.is_empty())
 }
 
 #[cfg(not(unix))]
 fn process_state(_: u32) -> ProcessState {
     ProcessState::Unknown
+}
+
+#[cfg(not(unix))]
+fn process_start_identity(_: u32) -> Option<String> {
+    None
 }
 
 fn approved_target_roots(home: &Path, discovery_roots: &[PathBuf]) -> Vec<PathBuf> {

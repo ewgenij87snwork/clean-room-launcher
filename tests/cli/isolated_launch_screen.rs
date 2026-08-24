@@ -1,3 +1,6 @@
+#[path = "../../src/cli/launch_contract.rs"]
+#[allow(dead_code)]
+mod launch_contract;
 #[path = "../../src/cli/screen.rs"]
 #[allow(dead_code)]
 mod screen;
@@ -314,4 +317,82 @@ fn isolated_preview_uses_the_last_override_and_stops_at_double_dash() {
 
     assert!(output.contains("     Apps              off     "));
     assert!(output.contains("     Hooks/plugins     off     "));
+}
+
+#[test]
+fn launch_contract_reports_boundary_expansion_unknown_syntax_and_model_neutrality() {
+    use launch_contract::{BoundaryState, LaunchContract};
+    use taskseal::adapters::claude::managed::Presence;
+
+    let codex_expansions = [
+        vec!["-c", "features.apps=true"],
+        vec!["--profile", "team"],
+        vec!["--add-dir", "/tmp/extra"],
+        vec!["--config", "mcp_servers.team.command=helper"],
+        vec!["--sandbox", "danger-full-access"],
+        vec!["--ask-for-approval", "never"],
+    ];
+    for args in codex_expansions {
+        let args = args.into_iter().map(str::to_owned).collect::<Vec<_>>();
+        let contract = LaunchContract::codex(&args);
+        assert_eq!(contract.boundary, BoundaryState::Expanded, "{args:?}");
+        assert_eq!(&contract.argv[contract.argv.len() - args.len()..], args);
+    }
+
+    let claude_expansions = [
+        vec!["--setting-sources", "user,project,local"],
+        vec!["--mcp-config", "/tmp/mcp.json"],
+        vec!["--add-dir", "/tmp/extra"],
+        vec!["--permission-mode", "bypassPermissions"],
+        vec!["--dangerously-skip-permissions"],
+    ];
+    for args in claude_expansions {
+        let args = args.into_iter().map(str::to_owned).collect::<Vec<_>>();
+        let contract = LaunchContract::claude(
+            &args,
+            Path::new("/tmp/selected-projection"),
+            Presence::Absent,
+        );
+        assert_eq!(contract.boundary, BoundaryState::Expanded, "{args:?}");
+        assert_eq!(&contract.argv[contract.argv.len() - args.len()..], args);
+    }
+
+    let unknown = LaunchContract::codex(&["--future-sandbox-boundary".to_owned()]);
+    assert_eq!(unknown.boundary, BoundaryState::Unknown);
+
+    let model = LaunchContract::claude(
+        &["--model".to_owned(), "owner-choice".to_owned()],
+        Path::new("/tmp/selected-projection"),
+        Presence::Absent,
+    );
+    assert_eq!(model.boundary, BoundaryState::Clean);
+    assert!(model.user_or_provider_model_choice);
+    assert!(!model.argv.iter().any(|argument| argument == "haiku"));
+    assert!(!model.argv.iter().any(|argument| argument == "--effort"));
+    assert!(
+        screen::render_launch_contract(
+            model.boundary_label(),
+            model.managed_label(),
+            &model.boundary_controls,
+            model.user_or_provider_model_choice,
+        )
+        .join("\n")
+        .contains("user/provider model choice")
+    );
+
+    let managed = LaunchContract::claude(
+        &[],
+        Path::new("/tmp/selected-projection"),
+        Presence::Present,
+    );
+    assert_eq!(managed.boundary, BoundaryState::Unknown);
+    let rendered = screen::render_launch_contract(
+        managed.boundary_label(),
+        managed.managed_label(),
+        &managed.boundary_controls,
+        managed.user_or_provider_model_choice,
+    )
+    .join("\n");
+    assert!(rendered.contains("managed present"));
+    assert!(rendered.contains("managed/unknown"));
 }

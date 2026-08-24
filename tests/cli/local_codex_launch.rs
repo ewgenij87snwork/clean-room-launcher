@@ -1,5 +1,6 @@
 use std::{
     fs,
+    os::unix::fs::PermissionsExt,
     path::PathBuf,
     process::Command,
     sync::atomic::{AtomicU64, Ordering},
@@ -7,7 +8,7 @@ use std::{
 
 static SCRATCH_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 
-const CODEX_CLEAN_DEFAULTS: &str = "-c\0features.apps=false\0-c\0features.hooks=false\0-c\0features.plugins=false\0-c\0developer_instructions=\"\"\0-c\0notify=[]\0";
+const CODEX_CLEAN_DEFAULTS: &str = "-c\0features.apps=false\0-c\0features.hooks=false\0-c\0features.plugins=false\0-c\0developer_instructions=\"\"\0-c\0notify=[]\0-c\0shell_environment_policy.inherit=\"none\"\0-c\0shell_environment_policy.include_only=[\"PATH\",\"HOME\",\"TMPDIR\",\"TERM\",\"COLORTERM\",\"LANG\",\"LC_ALL\",\"LC_CTYPE\",\"TZ\"]\0-c\0shell_environment_policy.ignore_default_excludes=false\0";
 
 fn fake_codex() -> (PathBuf, PathBuf) {
     let dir = std::env::temp_dir().join(format!(
@@ -18,13 +19,30 @@ fn fake_codex() -> (PathBuf, PathBuf) {
     let _ = fs::remove_dir_all(&dir);
     fs::create_dir_all(&dir).unwrap();
     let executable = dir.join("codex");
-    let source = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("fixtures/cli/fake-provider.rs");
+    let capture = dir.join("capture");
+    let source = dir.join("fake-provider.rs");
+    fs::write(
+        &source,
+        format!(
+            r#"use std::{{env, fs}};
+fn main() {{
+    if env::args().nth(1).as_deref() == Some("--version") {{ println!("0.147.0"); return; }}
+    assert!(env::var_os("CLROOM_INHERITED_MARKER").is_none());
+    let args = env::args().skip(1).collect::<Vec<_>>();
+    fs::write({:?}, format!("{{}}\0", args.join("\0"))).unwrap();
+    if args.iter().any(|argument| argument == "--exit-42") {{ std::process::exit(42); }}
+}}
+"#,
+            capture
+        ),
+    )
+    .unwrap();
     let output = Command::new("rustc")
         .args([source, PathBuf::from("-o"), executable.clone()])
         .output()
         .expect("rustc must start");
     assert!(output.status.success(), "fake provider must compile");
-    let capture = dir.join("capture");
+    fs::set_permissions(&executable, fs::Permissions::from_mode(0o700)).unwrap();
     (executable, capture)
 }
 
@@ -35,14 +53,13 @@ fn direct_codex_command_launches_literal_local_child_and_returns_status() {
     let output = Command::new(env!("CARGO_BIN_EXE_clroom"))
         .args(["codex", "--exit-42", "safe-value"])
         .env("PATH", path)
-        .env("CLROOM_CAPTURE_PATH", &capture)
         .env("CLROOM_INHERITED_MARKER", "inherited")
         .output()
         .expect("clroom must run");
     assert_eq!(output.status.code(), Some(42));
     assert_eq!(
         fs::read_to_string(capture).unwrap(),
-        format!("{CODEX_CLEAN_DEFAULTS}--exit-42\0safe-value\0inherited")
+        format!("{CODEX_CLEAN_DEFAULTS}--exit-42\0safe-value\0")
     );
 }
 
@@ -52,7 +69,7 @@ fn codex_without_legacy_boundary_forwards_native_help() {
     let output = Command::new(env!("CARGO_BIN_EXE_clroom"))
         .args(["codex", "--help"])
         .env("PATH", codex.parent().unwrap())
-        .env("CLROOM_CAPTURE_PATH", &capture)
+        .env("CLROOM_INHERITED_MARKER", "must-not-inherit")
         .output()
         .expect("clroom must run");
     assert_eq!(output.status.code(), Some(0));
@@ -68,7 +85,7 @@ fn codex_sensitive_tail_refuses_before_child_construction() {
     let output = Command::new(env!("CARGO_BIN_EXE_clroom"))
         .args(["codex", "--api-key", "must-not-be-read"])
         .env("PATH", codex.parent().unwrap())
-        .env("CLROOM_CAPTURE_PATH", &capture)
+        .env("CLROOM_INHERITED_MARKER", "must-not-inherit")
         .output()
         .expect("clroom must run");
     assert_eq!(output.status.code(), Some(2));

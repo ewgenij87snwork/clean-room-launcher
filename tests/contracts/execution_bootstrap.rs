@@ -67,10 +67,8 @@ fn root_instructions_match_the_sealed_template() {
         &fs::read(".taskseal-dev/execution-authority.json").expect("private authority exists"),
     )
     .unwrap();
-    let checkpoint = Path::new(authority["plan_checkpoint_path"].as_str().unwrap());
-    let sealed_path = checkpoint
-        .parent()
-        .unwrap()
+    let status = Path::new(authority["status_path"].as_str().unwrap());
+    let sealed_path = status
         .parent()
         .unwrap()
         .join("templates/taskseal-root-AGENTS.md");

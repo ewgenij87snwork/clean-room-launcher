@@ -54,12 +54,19 @@ fn interactive_enter_launches_fake_codex_through_the_isolated_boundary() {
     let fake = bin.join("codex");
     fs::write(
         &fake,
-        "#!/bin/sh\n\
-         /bin/cat \"$CLROOM_PROJECT_CANARY\" >/dev/null || exit 70\n\
-         /bin/cat \"$CLROOM_GLOBAL_AGENTS\" >/dev/null 2>&1 && exit 71\n\
-         /bin/cat \"$CLROOM_AMBIENT_SKILL\" >/dev/null 2>&1 && exit 72\n\
-         printf isolated-enter > \"$CLROOM_CAPTURE_PATH\"\n\
+        format!(
+            "#!/bin/sh\nif [ \"$1\" = --version ]; then printf '0.147.0\\n'; exit 0; fi\n\
+         /bin/cat '{}' >/dev/null || exit 70\n\
+         /bin/cat '{}' >/dev/null 2>&1 && exit 71\n\
+         /bin/cat '{}' >/dev/null 2>&1 && exit 72\n\
+         test -z \"${{CLROOM_INHERITED_MARKER+x}}\" || exit 73\n\
+         printf isolated-enter > '{}'\n\
          exit 42\n",
+            project.join("canaries/PROJECT.md").display(),
+            codex_home.join("AGENTS.md").display(),
+            home.join(".agents/skills/ambient/SKILL.md").display(),
+            capture.display(),
+        ),
     )
     .unwrap();
     fs::set_permissions(&fake, fs::Permissions::from_mode(0o700)).unwrap();
@@ -86,13 +93,7 @@ fn interactive_enter_launches_fake_codex_through_the_isolated_boundary() {
         .env("PATH", &bin)
         .env("HOME", &home)
         .env("CODEX_HOME", &codex_home)
-        .env("CLROOM_PROJECT_CANARY", project.join("canaries/PROJECT.md"))
-        .env("CLROOM_GLOBAL_AGENTS", codex_home.join("AGENTS.md"))
-        .env(
-            "CLROOM_AMBIENT_SKILL",
-            home.join(".agents/skills/ambient/SKILL.md"),
-        )
-        .env("CLROOM_CAPTURE_PATH", &capture)
+        .env("CLROOM_INHERITED_MARKER", "must-not-inherit")
         .env("COLUMNS", "80")
         .env("TERM", "xterm-256color")
         .env_remove("NO_COLOR")
@@ -127,7 +128,7 @@ fn unimplemented_local_lifecycle_commands_refuse_truthfully_without_a_provider()
     let fake = bin.join("codex");
     fs::write(
         &fake,
-        "#!/bin/sh\nprintf launched > \"$CLROOM_CAPTURE_PATH\"\nexit 99\n",
+        "#!/bin/sh\nif [ \"$1\" = --version ]; then printf '0.147.0\\n'; exit 0; fi\nprintf launched > \"$CLROOM_CAPTURE_PATH\"\nexit 99\n",
     )
     .unwrap();
     fs::set_permissions(&fake, fs::Permissions::from_mode(0o700)).unwrap();
@@ -173,7 +174,7 @@ fn bare_non_interactive_preview_never_starts_the_fake_provider() {
     let fake = bin.join("codex");
     fs::write(
         &fake,
-        "#!/bin/sh\nprintf launched > \"$CLROOM_CAPTURE_PATH\"\nexit 99\n",
+        "#!/bin/sh\nif [ \"$1\" = --version ]; then printf '0.147.0\\n'; exit 0; fi\nprintf launched > \"$CLROOM_CAPTURE_PATH\"\nexit 99\n",
     )
     .unwrap();
     fs::set_permissions(&fake, fs::Permissions::from_mode(0o700)).unwrap();

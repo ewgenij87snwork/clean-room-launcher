@@ -70,19 +70,21 @@ pub fn resolve_identity(
             AdapterError::ProviderNativePreauthenticatedSessionAmbiguous
         }
     })?;
+    if !command.is_absolute() {
+        return Err(AdapterError::Unavailable);
+    }
+    if command.file_name().and_then(|name| name.to_str()) != Some(&declaration.executable) {
+        return Err(AdapterError::CommandMismatch);
+    }
     let real_executable = command
         .canonicalize()
         .map_err(|_| AdapterError::Unavailable)?;
-    if real_executable.file_name().and_then(|name| name.to_str()) != Some(&declaration.executable) {
-        return Err(AdapterError::CommandMismatch);
-    }
     let before = std::fs::read(&real_executable).map_err(|_| AdapterError::Unavailable)?;
     let interpreter = interpreter(&before)?;
-    let output = Command::new(&real_executable)
-        .arg("--version")
-        .env_clear()
-        .output()
-        .map_err(|_| AdapterError::Unavailable)?;
+    let output = discover_version_in_closed_sandbox(&real_executable)?;
+    if !output.status.success() {
+        return Err(AdapterError::Version);
+    }
     if std::fs::read(&real_executable).map_err(|_| AdapterError::Unavailable)? != before {
         return Err(AdapterError::Replaced);
     }
@@ -107,6 +109,56 @@ pub fn resolve_identity(
         arch: std::env::consts::ARCH.into(),
         interpreter,
     })
+}
+
+fn discover_version_in_closed_sandbox(
+    executable: &Path,
+) -> Result<std::process::Output, AdapterError> {
+    let sandbox = Path::new("/usr/bin/sandbox-exec");
+    if !sandbox.is_file() {
+        return Err(AdapterError::Unavailable);
+    }
+    // Keep macOS runtime/loader services available, but close the version-only
+    // probe to network, writes, provider state, common auth roots, and user
+    // document surfaces. The executable is re-read and hashed after the probe.
+    let mut profile =
+        String::from("(version 1)\n(allow default)\n(deny network*)\n(deny file-write*)\n");
+    if let Some(home) = std::env::var_os("HOME").map(PathBuf::from) {
+        for denied in [
+            home.join(".ssh"),
+            home.join(".aws"),
+            home.join(".config/gcloud"),
+            home.join(".azure"),
+            home.join(".claude"),
+            home.join(".agents"),
+            home.join(".codex/auth.json"),
+            home.join(".codex/skills"),
+            home.join(".codex/plugins"),
+            home.join("Desktop"),
+            home.join("Documents"),
+            home.join("Downloads"),
+            home.join("Library"),
+        ] {
+            profile.push_str("(deny file-read* (literal \"");
+            profile.push_str(&escape_scheme_path(&denied)?);
+            profile.push_str("\") (subpath \"");
+            profile.push_str(&escape_scheme_path(&denied)?);
+            profile.push_str("\"))\n");
+        }
+    }
+    Command::new(sandbox)
+        .args(["-p", &profile, "--"])
+        .arg(executable)
+        .arg("--version")
+        .env_clear()
+        .current_dir("/")
+        .output()
+        .map_err(|_| AdapterError::Unavailable)
+}
+
+fn escape_scheme_path(path: &Path) -> Result<String, AdapterError> {
+    let value = path.to_str().ok_or(AdapterError::Unavailable)?;
+    Ok(value.replace('\\', "\\\\").replace('"', "\\\""))
 }
 pub fn revalidate_identity(identity: &ProviderIdentity) -> Result<(), AdapterError> {
     if sha256_hex(&std::fs::read(&identity.real_executable).map_err(|_| AdapterError::Unavailable)?)

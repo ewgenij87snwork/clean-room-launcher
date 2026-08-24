@@ -72,11 +72,20 @@ pub fn plan_with_skills(
     let denied_files = [
         codex_home.join("AGENTS.md"),
         codex_home.join("AGENTS.override.md"),
+        codex_home.join("config.toml"),
     ];
     let denied_roots = [
         codex_home.join("skills"),
+        codex_home.join("plugins"),
+        codex_home.join("hooks"),
         home.join(".agents/skills"),
         PathBuf::from("/private/etc/codex/skills"),
+    ];
+    let credential_roots = [
+        home.join(".ssh"),
+        home.join(".aws"),
+        home.join(".config/gcloud"),
+        home.join(".azure"),
     ];
     let inventory = if selectors.is_empty() {
         Vec::new()
@@ -94,14 +103,31 @@ pub fn plan_with_skills(
 
     let mut profile = String::from("(version 1)\n(allow default)\n");
     profile.push_str("(deny file-read*");
-    for path in denied_files {
+    for path in &denied_files {
         profile.push_str("\n  (literal \"");
-        profile.push_str(&escape_scheme_path(&path)?);
+        profile.push_str(&escape_scheme_path(path)?);
         profile.push_str("\")");
     }
     for path in denied_subpaths {
         profile.push_str("\n  (subpath \"");
         profile.push_str(&escape_scheme_path(&path)?);
+        profile.push_str("\")");
+    }
+    for path in &credential_roots {
+        profile.push_str("\n  (subpath \"");
+        profile.push_str(&escape_scheme_path(path)?);
+        profile.push_str("\")");
+    }
+    profile.push_str(")\n");
+    profile.push_str("(deny file-write*");
+    for path in &denied_files {
+        profile.push_str("\n  (literal \"");
+        profile.push_str(&escape_scheme_path(path)?);
+        profile.push_str("\")");
+    }
+    for path in denied_roots.iter().chain(credential_roots.iter()) {
+        profile.push_str("\n  (subpath \"");
+        profile.push_str(&escape_scheme_path(path)?);
         profile.push_str("\")");
     }
     profile.push_str(")\n");

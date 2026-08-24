@@ -69,7 +69,6 @@ fn clroom_is_the_only_public_identity_and_preserves_the_native_codex_process() {
             .arg("codex")
             .args(args)
             .env("PATH", provider_path)
-            .env("CLROOM_CAPTURE_PATH", &capture)
             .env("CLROOM_INHERITED_MARKER", "inherited")
             .output()
             .unwrap()
@@ -80,26 +79,25 @@ fn clroom_is_the_only_public_identity_and_preserves_the_native_codex_process() {
         "-c\0features.plugins=false\0",
         "-c\0developer_instructions=\"\"\0",
         "-c\0notify=[]\0",
+        "-c\0shell_environment_policy.inherit=\"none\"\0",
+        "-c\0shell_environment_policy.include_only=[\"PATH\",\"HOME\",\"TMPDIR\",\"TERM\",\"COLORTERM\",\"LANG\",\"LC_ALL\",\"LC_CTYPE\",\"TZ\"]\0",
+        "-c\0shell_environment_policy.ignore_default_excludes=false\0",
     );
 
     let no_args = native(&[]);
     assert!(no_args.status.success());
-    assert_eq!(
-        fs::read_to_string(&capture).unwrap(),
-        format!("{clean_defaults}inherited")
-    );
+    assert_eq!(fs::read_to_string(&capture).unwrap(), clean_defaults);
 
     let forwarded = native(&["--help", "--approve-for-me", "--yolo"]);
     assert!(forwarded.status.success());
     assert_eq!(
         fs::read_to_string(&capture).unwrap(),
-        format!("{clean_defaults}--help\0--approve-for-me\0--yolo\0inherited")
+        format!("{clean_defaults}--help\0--approve-for-me\0--yolo\0")
     );
 
     let mut stdio = Command::new(clroom())
         .args(["codex", "--stdio"])
         .env("PATH", provider_path)
-        .env("CLROOM_CAPTURE_PATH", &capture)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())

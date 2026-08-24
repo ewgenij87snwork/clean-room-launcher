@@ -41,35 +41,47 @@ fn plan_allows_project_canary_but_sandbox_denies_documented_ambient_canaries() {
     let fake_codex_home = root.path().join("codex-home");
     fs::create_dir_all(&project).unwrap();
     fs::create_dir_all(fake_home.join(".agents/skills/ambient")).unwrap();
+    for root in [".ssh", ".aws", ".config/gcloud", ".azure"] {
+        fs::create_dir_all(fake_home.join(root)).unwrap();
+        fs::write(fake_home.join(root).join("canary"), b"synthetic\n").unwrap();
+    }
     fs::create_dir_all(fake_codex_home.join("skills/ambient")).unwrap();
+    fs::create_dir_all(fake_codex_home.join("plugins/cache/ambient")).unwrap();
     let project_canary = project.join("PROJECT.md");
     let global_agents = fake_codex_home.join("AGENTS.md");
     let ambient_skill = fake_home.join(".agents/skills/ambient/SKILL.md");
+    let ambient_plugin = fake_codex_home.join("plugins/cache/ambient/plugin.json");
     fs::write(&project_canary, b"admitted\n").unwrap();
     fs::write(&global_agents, b"ambient instruction\n").unwrap();
     fs::write(&ambient_skill, b"ambient skill\n").unwrap();
+    fs::write(&ambient_plugin, b"{}\n").unwrap();
     let isolation = plan(
         &project,
         Path::new("/bin/sh"),
         &IsolationInputs {
-            home: fake_home,
+            home: fake_home.clone(),
             codex_home: fake_codex_home,
         },
     )
     .unwrap();
     let output = Command::new("/usr/bin/sandbox-exec")
         .args(["-p", &isolation.profile, "--", "/bin/sh", "-c"])
-        .arg("cat \"$1\" >/dev/null; first=$?; cat \"$2\" >/dev/null 2>&1; second=$?; cat \"$3\" >/dev/null 2>&1; third=$?; printf '%s/%s/%s' \"$first\" \"$second\" \"$third\"; test \"$first/$second/$third\" = 0/1/1")
+        .arg("cat \"$1\" >/dev/null || exit 70; printf 'project-write\\n' >>\"$1\" || exit 71; for path in \"$2\" \"$3\" \"$4\" \"$5\" \"$6\" \"$7\" \"$8\"; do cat \"$path\" >/dev/null 2>&1 && exit 72; printf 'blocked\\n' >>\"$path\" 2>/dev/null && exit 73; done; exit 0")
         .arg("fixture")
         .arg(&project_canary)
         .arg(&global_agents)
         .arg(&ambient_skill)
+        .arg(&ambient_plugin)
+        .arg(fake_home.join(".ssh/canary"))
+        .arg(fake_home.join(".aws/canary"))
+        .arg(fake_home.join(".config/gcloud/canary"))
+        .arg(fake_home.join(".azure/canary"))
         .output()
         .unwrap();
 
     assert!(
         output.status.success(),
-        "sandbox fixture must read project canary and reject both ambient canaries: status={:?} stdout={} stderr={}",
+        "sandbox fixture must read/write the project and reject ambient read/write canaries: status={:?} stdout={} stderr={}",
         output.status,
         String::from_utf8_lossy(&output.stdout),
         String::from_utf8_lossy(&output.stderr)

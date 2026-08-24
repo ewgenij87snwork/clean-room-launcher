@@ -14,7 +14,7 @@ use super::cli_entry;
 const ZERO_AUTH_REFUSAL: &str = "ZERO_AUTH_REFUSAL: provider-native preauthenticated session unavailable or ambiguous; continue locally\n";
 const ZERO_AUTH_ARGUMENT_REFUSAL: &str =
     "ZERO_AUTH_ARGUMENT_REFUSAL: sensitive argument refused before dispatch; continue locally\n";
-const CODEX_CLEAN_DEFAULTS: &str = "-c\0features.apps=false\0-c\0features.hooks=false\0-c\0features.plugins=false\0-c\0developer_instructions=\"\"\0-c\0notify=[]\0";
+const CODEX_CLEAN_DEFAULTS: &str = "-c\0features.apps=false\0-c\0features.hooks=false\0-c\0features.plugins=false\0-c\0developer_instructions=\"\"\0-c\0notify=[]\0-c\0shell_environment_policy.inherit=\"none\"\0-c\0shell_environment_policy.include_only=[\"PATH\",\"HOME\",\"TMPDIR\",\"TERM\",\"COLORTERM\",\"LANG\",\"LC_ALL\",\"LC_CTYPE\",\"TZ\"]\0-c\0shell_environment_policy.ignore_default_excludes=false\0";
 static SCRATCH_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 
 fn scratch(name: &str) -> PathBuf {
@@ -31,13 +31,45 @@ fn scratch(name: &str) -> PathBuf {
 fn fake_provider(name: &str) -> (PathBuf, PathBuf) {
     let dir = scratch(name);
     let executable = dir.join(name);
-    let source = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("fixtures/cli/fake-provider.rs");
+    let capture = dir.join("argv.txt");
+    let capture_literal = format!("{:?}", capture.to_string_lossy());
+    // The identity resolver performs a closed synthetic `--version` probe before
+    // dispatch. Keep this fixture self-contained and answer that probe while
+    // retaining the fixture's native-argument capture behavior.
+    let source = dir.join("fake-provider.rs");
+    let version = if name == "claude" {
+        "2.1.223"
+    } else {
+        "0.147.0"
+    };
+    fs::write(
+        &source,
+        format!(
+            r#"use std::{{fs, io::Read}};
+fn main() {{
+    let args = std::env::args().skip(1).collect::<Vec<_>>();
+    if args == ["--version"] {{ println!("{version}"); return; }}
+    fs::write({capture_literal}, format!("{{}}\0", args.join("\0"))).expect("capture must be writable");
+    if args.iter().any(|argument| argument == "--exit-42") {{ std::process::exit(42); }}
+    if args.iter().any(|argument| argument == "--abort") {{ std::process::abort(); }}
+    if args.iter().any(|argument| argument == "--stdio") {{
+        let mut input = String::new(); std::io::stdin().read_to_string(&mut input).unwrap();
+        println!("stdout:{{input}}"); eprintln!("stderr:{{input}}");
+    }}
+}}
+"#
+        ),
+    )
+    .expect("synthetic provider source must be writable");
     let output = Command::new("rustc")
         .args([source, PathBuf::from("-o"), executable.clone()])
         .output()
         .expect("rustc must start");
-    assert!(output.status.success(), "fake provider must compile");
-    let capture = dir.join("argv.txt");
+    assert!(
+        output.status.success(),
+        "fake provider must compile: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
     (executable, capture)
 }
 

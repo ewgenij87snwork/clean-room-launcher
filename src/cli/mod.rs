@@ -3,6 +3,7 @@ pub(crate) mod consent;
 mod dispatch;
 mod doctor;
 mod help;
+mod launch_contract;
 mod output;
 mod parser;
 mod process;
@@ -140,9 +141,59 @@ fn launch_isolated_codex(args: &[String]) -> Result<ExitCode, String> {
     let project = std::env::current_dir().map_err(|_| {
         "CLROOM_ISOLATION_INVALID: current project is unavailable; continue locally".to_owned()
     })?;
-    let executable = process::resolve_codex_executable()?;
+    let mut contract = launch_contract::LaunchContract::codex(&provider_args);
+    let executable = match process::resolve_codex_executable() {
+        Ok(executable) => executable,
+        Err(error) => {
+            contract.boundary = launch_contract::BoundaryState::NotLaunchable;
+            if std::io::stderr().is_terminal() {
+                let feature_state = screen::PlaqueFeatureState::from_provider_args(&provider_args);
+                eprintln!(
+                    "{}",
+                    screen::render_isolated_preview(&project, selectors.len(), feature_state)
+                        .into_iter()
+                        .chain(screen::render_launch_contract(
+                            contract.boundary_label(),
+                            contract.managed_label(),
+                            &contract.boundary_controls,
+                            contract.user_or_provider_model_choice,
+                        ))
+                        .collect::<Vec<_>>()
+                        .join("\n")
+                );
+            }
+            return Err(error);
+        }
+    };
     let plan = plan_with_skills(&project, &executable, &inputs, &selectors)
         .map_err(isolation_error_message)?;
+    let identity = match process::preflight_codex(&executable) {
+        Ok(identity) => identity,
+        Err(error) => {
+            contract.boundary = launch_contract::BoundaryState::NotLaunchable;
+            if std::io::stderr().is_terminal() {
+                let feature_state = screen::PlaqueFeatureState::from_provider_args(&provider_args);
+                eprintln!(
+                    "{}",
+                    screen::render_isolated_preview(
+                        &plan.project,
+                        plan.selected_global_skills,
+                        feature_state,
+                    )
+                    .into_iter()
+                    .chain(screen::render_launch_contract(
+                        contract.boundary_label(),
+                        contract.managed_label(),
+                        &contract.boundary_controls,
+                        contract.user_or_provider_model_choice,
+                    ))
+                    .collect::<Vec<_>>()
+                    .join("\n")
+                );
+            }
+            return Err(error);
+        }
+    };
     if std::io::stderr().is_terminal() {
         let feature_state = screen::PlaqueFeatureState::from_provider_args(&provider_args);
         eprintln!(
@@ -152,10 +203,18 @@ fn launch_isolated_codex(args: &[String]) -> Result<ExitCode, String> {
                 plan.selected_global_skills,
                 feature_state,
             )
+            .into_iter()
+            .chain(screen::render_launch_contract(
+                contract.boundary_label(),
+                contract.managed_label(),
+                &contract.boundary_controls,
+                contract.user_or_provider_model_choice,
+            ))
+            .collect::<Vec<_>>()
             .join("\n")
         );
     }
-    process::launch_isolated_codex(&plan, &executable, &provider_args)
+    process::launch_isolated_codex(&plan, &executable, &contract, &identity)
 }
 
 fn launch_isolated_claude(args: &[String]) -> Result<ExitCode, String> {
@@ -164,12 +223,41 @@ fn launch_isolated_claude(args: &[String]) -> Result<ExitCode, String> {
         "CLROOM_CLAUDE_ISOLATION_INVALID: HOME is unavailable; continue locally".to_owned()
     })?;
     let selectors = skill_sets::expand(&selection_terms, &home)?;
-    let mut projection = project(&home, &selectors).map_err(projection_error_message)?;
-    let executable = process::resolve_claude_executable()?;
     let current_project = std::env::current_dir().map_err(|_| {
         "CLROOM_CLAUDE_ISOLATION_INVALID: current project is unavailable; continue locally"
             .to_owned()
     })?;
+    let mut projection = project(&home, &selectors).map_err(projection_error_message)?;
+    let mut contract = launch_contract::LaunchContract::claude(
+        &provider_args,
+        &projection.add_dir,
+        taskseal::adapters::claude::managed::probe(),
+    );
+    let executable = match process::resolve_claude_executable() {
+        Ok(executable) => executable,
+        Err(error) => {
+            contract.boundary = launch_contract::BoundaryState::NotLaunchable;
+            if std::io::stderr().is_terminal() {
+                eprintln!(
+                    "{}",
+                    screen::render_claude_preview(
+                        &current_project,
+                        projection.selected_global_skills,
+                    )
+                    .into_iter()
+                    .chain(screen::render_launch_contract(
+                        contract.boundary_label(),
+                        contract.managed_label(),
+                        &contract.boundary_controls,
+                        contract.user_or_provider_model_choice,
+                    ))
+                    .collect::<Vec<_>>()
+                    .join("\n")
+                );
+            }
+            return Err(error);
+        }
+    };
     let isolation = plan_claude(
         &current_project,
         &executable,
@@ -179,14 +267,53 @@ fn launch_isolated_claude(args: &[String]) -> Result<ExitCode, String> {
         projection.allowed_source_paths(),
     )
     .map_err(claude_isolation_error_message)?;
+    let identity = match process::preflight_claude(&executable) {
+        Ok(identity) => identity,
+        Err(error) => {
+            contract.boundary = launch_contract::BoundaryState::NotLaunchable;
+            if std::io::stderr().is_terminal() {
+                eprintln!(
+                    "{}",
+                    screen::render_claude_preview(
+                        &current_project,
+                        projection.selected_global_skills,
+                    )
+                    .into_iter()
+                    .chain(screen::render_launch_contract(
+                        contract.boundary_label(),
+                        contract.managed_label(),
+                        &contract.boundary_controls,
+                        contract.user_or_provider_model_choice,
+                    ))
+                    .collect::<Vec<_>>()
+                    .join("\n")
+                );
+            }
+            return Err(error);
+        }
+    };
     if std::io::stderr().is_terminal() {
         eprintln!(
             "{}",
             screen::render_claude_preview(&current_project, projection.selected_global_skills,)
+                .into_iter()
+                .chain(screen::render_launch_contract(
+                    contract.boundary_label(),
+                    contract.managed_label(),
+                    &contract.boundary_controls,
+                    contract.user_or_provider_model_choice,
+                ))
+                .collect::<Vec<_>>()
                 .join("\n")
         );
     }
-    process::launch_claude(&isolation, &mut projection, &executable, &provider_args)
+    process::launch_claude(
+        &isolation,
+        &mut projection,
+        &executable,
+        &contract,
+        &identity,
+    )
 }
 
 fn select_global_skills(args: &[String]) -> Result<(Vec<String>, Vec<String>), String> {

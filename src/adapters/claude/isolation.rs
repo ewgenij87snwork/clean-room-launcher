@@ -45,12 +45,16 @@ pub fn plan(
         .map(|path| safe_allowed_path(path, &project))
         .collect::<Result<Vec<_>, _>>()?;
 
-    let denied_read_roots = [
+    let denied_read_roots = vec![
         home.join(".claude"),
         home.join(".agents/skills"),
         home.join(".codex/skills"),
         home.join(".codex/plugins/cache"),
         projection_root.clone(),
+        home.join(".ssh"),
+        home.join(".aws"),
+        home.join(".config/gcloud"),
+        home.join(".azure"),
     ];
     let mut denied_write_roots = vec![
         home.join(".claude/skills"),
@@ -59,6 +63,15 @@ pub fn plan(
         home.join(".codex/plugins/cache"),
         home.join(".claude/plugins/cache"),
         projection_root,
+        home.join(".ssh"),
+        home.join(".aws"),
+        home.join(".config/gcloud"),
+        home.join(".azure"),
+    ];
+    let denied_write_files = [
+        home.join(".claude/CLAUDE.md"),
+        home.join(".claude/settings.json"),
+        home.join(".claude/settings.local.json"),
     ];
     denied_write_roots.extend(allowed_source_paths.iter().cloned());
 
@@ -69,28 +82,25 @@ pub fn plan(
     }
     profile.push_str(")\n");
     profile.push_str("(deny file-write*");
+    for path in &denied_write_files {
+        push_literal(&mut profile, path)?;
+    }
     for path in &denied_write_roots {
         push_literal(&mut profile, path)?;
         push_subpath(&mut profile, path)?;
     }
     profile.push_str(")\n");
 
+    // Metadata/listing of denied roots is intentionally not reopened.  The
+    // projected view and explicit source files are the only readable seams.
     profile.push_str("(allow file-read-metadata");
     push_literal(&mut profile, &projection_view)?;
     push_subpath(&mut profile, &projection_view)?;
-    if !allowed_source_paths.is_empty() {
-        for root in &denied_read_roots {
-            push_subpath(&mut profile, root)?;
-        }
-    }
     profile.push_str(")\n");
     profile.push_str("(allow file-read*");
     push_literal(&mut profile, &projection_view)?;
     push_subpath(&mut profile, &projection_view)?;
     if !allowed_source_paths.is_empty() {
-        for root in &denied_read_roots {
-            push_literal(&mut profile, root)?;
-        }
         for path in &allowed_source_paths {
             push_literal(&mut profile, path)?;
             push_subpath(&mut profile, path)?;

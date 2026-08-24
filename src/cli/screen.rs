@@ -14,6 +14,28 @@ pub struct RenderContext {
     pub plain: bool,
 }
 
+pub fn render_launch_contract(
+    boundary_label: &str,
+    managed_label: Option<&str>,
+    boundary_controls: &[&str],
+    user_or_provider_model_choice: bool,
+) -> Vec<String> {
+    let mut lines = vec![format!("Boundary: {boundary_label}")];
+    if let Some(state) = managed_label {
+        lines.push(format!("Managed: managed {state}"));
+    }
+    if !boundary_controls.is_empty() {
+        lines.push(format!(
+            "Boundary controls: {}",
+            boundary_controls.join(", ")
+        ));
+    }
+    if user_or_provider_model_choice {
+        lines.push("Model: user/provider model choice".to_owned());
+    }
+    lines
+}
+
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub struct PlaqueFeatureState {
     apps: bool,

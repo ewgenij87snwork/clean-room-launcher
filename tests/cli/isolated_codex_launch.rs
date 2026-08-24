@@ -20,6 +20,12 @@ const CODEX_CLEAN_DEFAULTS: &[&str] = &[
     "developer_instructions=\"\"",
     "-c",
     "notify=[]",
+    "-c",
+    "shell_environment_policy.inherit=\"none\"",
+    "-c",
+    "shell_environment_policy.include_only=[\"PATH\",\"HOME\",\"TMPDIR\",\"TERM\",\"COLORTERM\",\"LANG\",\"LC_ALL\",\"LC_CTYPE\",\"TZ\"]",
+    "-c",
+    "shell_environment_policy.ignore_default_excludes=false",
 ];
 
 struct Scratch(PathBuf);
@@ -67,10 +73,11 @@ fn isolated_fixture() -> (Scratch, PathBuf, PathBuf, PathBuf, PathBuf) {
     fs::write(
         &fake,
         "#!/bin/sh\n\
-         /bin/cat \"$CLROOM_PROJECT_CANARY\" >/dev/null || exit 70\n\
-         /bin/cat \"$CLROOM_GLOBAL_AGENTS\" >/dev/null 2>&1 && exit 71\n\
-         /bin/cat \"$CLROOM_AMBIENT_SKILL\" >/dev/null 2>&1 && exit 72\n\
-         printf '%s\\0' \"$@\" > \"$CLROOM_CAPTURE_PATH\"\n\
+         if [ \"$1\" = --version ]; then printf '0.147.0\\n'; exit 0; fi\n\
+         /bin/cat \"$PWD/canaries/PROJECT.md\" >/dev/null || exit 70\n\
+         /bin/cat \"$CODEX_HOME/AGENTS.md\" >/dev/null 2>&1 && exit 71\n\
+         /bin/cat \"$HOME/.agents/skills/ambient/SKILL.md\" >/dev/null 2>&1 && exit 72\n\
+         printf '%s\\0' \"$@\" > \"$PWD/.clroom-capture\"\n\
          for argument in \"$@\"; do\n\
            if [ \"$argument\" = \"--stdio\" ]; then\n\
              input=$(/bin/cat)\n\
@@ -86,20 +93,13 @@ fn isolated_fixture() -> (Scratch, PathBuf, PathBuf, PathBuf, PathBuf) {
     (root, project, home, codex_home, bin)
 }
 
-fn command(project: &Path, home: &Path, codex_home: &Path, bin: &Path, capture: &Path) -> Command {
+fn command(project: &Path, home: &Path, codex_home: &Path, bin: &Path, _capture: &Path) -> Command {
     let mut command = Command::new(env!("CARGO_BIN_EXE_clroom"));
     command
         .current_dir(project)
         .env("PATH", bin)
         .env("HOME", home)
-        .env("CODEX_HOME", codex_home)
-        .env("CLROOM_PROJECT_CANARY", project.join("canaries/PROJECT.md"))
-        .env("CLROOM_GLOBAL_AGENTS", codex_home.join("AGENTS.md"))
-        .env(
-            "CLROOM_AMBIENT_SKILL",
-            home.join(".agents/skills/ambient/SKILL.md"),
-        )
-        .env("CLROOM_CAPTURE_PATH", capture);
+        .env("CODEX_HOME", codex_home);
     command
 }
 
@@ -109,6 +109,83 @@ fn expected_argv(user_args: &[&str]) -> Vec<u8> {
         .chain(user_args)
         .flat_map(|argument| argument.as_bytes().iter().copied().chain([0]))
         .collect()
+}
+
+#[cfg(target_os = "macos")]
+#[test]
+fn invalid_codex_identity_renders_not_launchable_before_refusal() {
+    // Break caught: the plaque claims a clean boundary before the closed
+    // identity probe proves that the installed provider cannot be launched.
+    let (_root, project, home, codex_home, bin) = isolated_fixture();
+    let fake = bin.join("codex");
+    fs::write(
+        &fake,
+        "#!/bin/sh\nif [ \"$1\" = --version ]; then printf 'invalid-version\\n'; exit 0; fi\nexit 99\n",
+    )
+    .unwrap();
+    fs::set_permissions(&fake, fs::Permissions::from_mode(0o700)).unwrap();
+
+    let output = Command::new("/usr/bin/expect")
+        .args([
+            "-c",
+            concat!(
+                "set timeout 5\n",
+                "spawn -noecho $env(CLROOM_TEST_BIN) codex --version\n",
+                "expect eof\n",
+                "set child_status [wait]\n",
+                "exit [lindex $child_status 3]\n",
+            ),
+        ])
+        .current_dir(&project)
+        .env("CLROOM_TEST_BIN", env!("CARGO_BIN_EXE_clroom"))
+        .env("PATH", &bin)
+        .env("HOME", &home)
+        .env("CODEX_HOME", &codex_home)
+        .env("COLUMNS", "80")
+        .env("TERM", "xterm-256color")
+        .output()
+        .unwrap();
+
+    assert_eq!(output.status.code(), Some(2));
+    let transcript = String::from_utf8(output.stdout).unwrap().replace('\r', "");
+    assert!(transcript.contains("Boundary: not launchable"));
+    assert!(!transcript.contains("Boundary: clean"));
+    assert!(!project.join(".clroom-capture").exists());
+}
+
+#[cfg(target_os = "macos")]
+#[test]
+fn missing_codex_executable_renders_not_launchable_before_refusal() {
+    // Break caught: executable lookup returns before the launch contract can
+    // report the provider as unavailable.
+    let (root, project, home, codex_home, _bin) = isolated_fixture();
+    let empty_bin = root.join("empty-bin");
+    fs::create_dir_all(&empty_bin).unwrap();
+    let output = Command::new("/usr/bin/expect")
+        .args([
+            "-c",
+            concat!(
+                "set timeout 5\n",
+                "spawn -noecho $env(CLROOM_TEST_BIN) codex --version\n",
+                "expect eof\n",
+                "set child_status [wait]\n",
+                "exit [lindex $child_status 3]\n",
+            ),
+        ])
+        .current_dir(&project)
+        .env("CLROOM_TEST_BIN", env!("CARGO_BIN_EXE_clroom"))
+        .env("PATH", &empty_bin)
+        .env("HOME", &home)
+        .env("CODEX_HOME", &codex_home)
+        .env("COLUMNS", "80")
+        .env("TERM", "xterm-256color")
+        .output()
+        .unwrap();
+
+    assert_eq!(output.status.code(), Some(2));
+    let transcript = String::from_utf8(output.stdout).unwrap().replace('\r', "");
+    assert!(transcript.contains("Boundary: not launchable"));
+    assert!(!transcript.contains("Boundary: clean"));
 }
 
 fn add_selective_skill_fixture(root: &Scratch, home: &Path, project: &Path) -> PathBuf {
@@ -141,7 +218,7 @@ fn add_selective_skill_fixture(root: &Scratch, home: &Path, project: &Path) -> P
 fn codex_handoff_preserves_literal_argv_exit_and_stdio_inside_the_isolated_boundary() {
     // Break caught: direct Codex execution lets the fake provider read ambient context.
     let (_root, project, home, codex_home, bin) = isolated_fixture();
-    let capture = bin.join("capture");
+    let capture = project.join(".clroom-capture");
     let output = command(&project, &home, &codex_home, &bin, &capture)
         .args(["codex", "--exit-42", "literal value"])
         .output()
@@ -175,7 +252,7 @@ fn codex_handoff_preserves_literal_argv_exit_and_stdio_inside_the_isolated_bound
 #[test]
 fn codex_handoff_keeps_explicit_user_overrides_after_clean_defaults() {
     let (_root, project, home, codex_home, bin) = isolated_fixture();
-    let capture = bin.join("override-capture");
+    let capture = project.join(".clroom-capture");
     let user_args = [
         "--enable",
         "apps",
@@ -207,17 +284,18 @@ fn codex_handoff_admits_one_exact_skill_and_a_complete_namespace_for_this_run() 
     // explicitly invited skills while admitting unrelated global skills.
     let (root, project, home, codex_home, bin) = isolated_fixture();
     let plugin = add_selective_skill_fixture(&root, &home, &project);
-    let capture = bin.join("selected-namespace-capture");
+    let capture = project.join(".clroom-capture");
     let fake = bin.join("codex");
     fs::write(
         &fake,
         "#!/bin/sh\n\
-         /bin/cat \"$CLROOM_PROJECT_SKILL\" >/dev/null || exit 73\n\
-         /bin/cat \"$CLROOM_EXACT_SKILL\" >/dev/null || exit 74\n\
-         /bin/cat \"$CLROOM_NAMESPACE_SKILL_A\" >/dev/null || exit 75\n\
-         /bin/cat \"$CLROOM_NAMESPACE_SKILL_B\" >/dev/null || exit 76\n\
-         /bin/cat \"$CLROOM_AMBIENT_SKILL\" >/dev/null 2>&1 && exit 77\n\
-         printf '%s\\0' \"$@\" > \"$CLROOM_CAPTURE_PATH\"\n\
+         if [ \"$1\" = --version ]; then printf '0.147.0\\n'; exit 0; fi\n\
+         /bin/cat \"$PWD/.agents/skills/project-only/SKILL.md\" >/dev/null || exit 73\n\
+         /bin/cat \"$HOME/.agents/skills/arrow/SKILL.md\" >/dev/null || exit 74\n\
+         /bin/cat \"$HOME/.agents/skills/systematic-debugging/SKILL.md\" >/dev/null || exit 75\n\
+         /bin/cat \"$HOME/.agents/skills/brainstorming/SKILL.md\" >/dev/null || exit 76\n\
+         /bin/cat \"$HOME/.agents/skills/ambient/SKILL.md\" >/dev/null 2>&1 && exit 77\n\
+         printf '%s\\0' \"$@\" > \"$PWD/.clroom-capture\"\n\
          exit 42\n",
     )
     .unwrap();
@@ -260,17 +338,18 @@ fn codex_handoff_admits_one_exact_skill_and_a_complete_namespace_for_this_run() 
 fn codex_handoff_admits_one_namespaced_skill_without_its_siblings() {
     let (root, project, home, codex_home, bin) = isolated_fixture();
     let plugin = add_selective_skill_fixture(&root, &home, &project);
-    let capture = bin.join("selected-exact-capture");
+    let capture = project.join(".clroom-capture");
     let fake = bin.join("codex");
     fs::write(
         &fake,
         "#!/bin/sh\n\
-         /bin/cat \"$CLROOM_PROJECT_SKILL\" >/dev/null || exit 73\n\
-         /bin/cat \"$CLROOM_EXACT_SKILL\" >/dev/null || exit 74\n\
-         /bin/cat \"$CLROOM_NAMESPACE_SKILL_A\" >/dev/null || exit 75\n\
-         /bin/cat \"$CLROOM_NAMESPACE_SKILL_B\" >/dev/null 2>&1 && exit 76\n\
-         /bin/cat \"$CLROOM_AMBIENT_SKILL\" >/dev/null 2>&1 && exit 77\n\
-         printf '%s\\0' \"$@\" > \"$CLROOM_CAPTURE_PATH\"\n\
+         if [ \"$1\" = --version ]; then printf '0.147.0\\n'; exit 0; fi\n\
+         /bin/cat \"$PWD/.agents/skills/project-only/SKILL.md\" >/dev/null || exit 73\n\
+         /bin/cat \"$HOME/.agents/skills/arrow/SKILL.md\" >/dev/null || exit 74\n\
+         /bin/cat \"$HOME/.agents/skills/systematic-debugging/SKILL.md\" >/dev/null || exit 75\n\
+         /bin/cat \"$HOME/.agents/skills/brainstorming/SKILL.md\" >/dev/null 2>&1 && exit 76\n\
+         /bin/cat \"$HOME/.agents/skills/ambient/SKILL.md\" >/dev/null 2>&1 && exit 77\n\
+         printf '%s\\0' \"$@\" > \"$PWD/.clroom-capture\"\n\
          exit 42\n",
     )
     .unwrap();
@@ -313,7 +392,7 @@ fn codex_handoff_admits_one_namespaced_skill_without_its_siblings() {
 fn codex_handoff_rejects_invalid_and_unknown_selectors_before_exec() {
     let (root, project, home, codex_home, bin) = isolated_fixture();
     add_selective_skill_fixture(&root, &home, &project);
-    let capture = bin.join("invalid-selector-provider-capture");
+    let capture = project.join(".clroom-capture");
 
     for (selector, expected) in [
         ("", "invalid skill selector"),
@@ -367,19 +446,20 @@ fn codex_handoff_prefers_codex_local_duplicates_and_denies_agents_bodies() {
     )
     .unwrap();
 
-    let capture = bin.join("duplicate-native-provider-capture");
+    let capture = project.join(".clroom-capture");
     let fake = bin.join("codex");
     fs::write(
         &fake,
         "#!/bin/sh\n\
+         if [ \"$1\" = --version ]; then printf '0.147.0\\n'; exit 0; fi\n\
          /bin/ls \"$HOME/.agents/skills\" >/dev/null || exit 73\n\
          /bin/ls \"$CODEX_HOME/skills\" >/dev/null || exit 74\n\
-         /bin/cat \"$CLROOM_ARROW_CODEX\" >/dev/null || exit 75\n\
-         /bin/cat \"$CLROOM_ARROW_AGENTS\" >/dev/null 2>&1 && exit 76\n\
-         /bin/cat \"$CLROOM_SYSTEMATIC_CODEX\" >/dev/null || exit 77\n\
-         /bin/cat \"$CLROOM_SYSTEMATIC_AGENTS\" >/dev/null 2>&1 && exit 78\n\
-         /bin/cat \"$CLROOM_UNSELECTED\" >/dev/null 2>&1 && exit 79\n\
-         printf '%s\\0' \"$@\" > \"$CLROOM_CAPTURE_PATH\"\n\
+         /bin/cat \"$CODEX_HOME/skills/arrow/SKILL.md\" >/dev/null || exit 75\n\
+         /bin/cat \"$HOME/.agents/skills/arrow/SKILL.md\" >/dev/null 2>&1 && exit 76\n\
+         /bin/cat \"$CODEX_HOME/skills/systematic-debugging/SKILL.md\" >/dev/null || exit 77\n\
+         /bin/cat \"$HOME/.agents/skills/systematic-debugging/SKILL.md\" >/dev/null 2>&1 && exit 78\n\
+         /bin/cat \"$HOME/.agents/skills/brainstorming/SKILL.md\" >/dev/null 2>&1 && exit 79\n\
+         printf '%s\\0' \"$@\" > \"$PWD/.clroom-capture\"\n\
          exit 42\n",
     )
     .unwrap();
@@ -426,17 +506,18 @@ fn codex_handoff_expands_multiple_named_sets_and_direct_skills_without_rewriting
     // clroom mutates the human-owned YAML while composing this launch.
     let (root, project, home, codex_home, bin) = isolated_fixture();
     let plugin = add_selective_skill_fixture(&root, &home, &project);
-    let capture = bin.join("selected-sets-capture");
+    let capture = project.join(".clroom-capture");
     let fake = bin.join("codex");
     fs::write(
         &fake,
         "#!/bin/sh\n\
-         /bin/cat \"$CLROOM_PROJECT_SKILL\" >/dev/null || exit 73\n\
-         /bin/cat \"$CLROOM_EXACT_SKILL\" >/dev/null || exit 74\n\
-         /bin/cat \"$CLROOM_NAMESPACE_SKILL_A\" >/dev/null || exit 75\n\
-         /bin/cat \"$CLROOM_NAMESPACE_SKILL_B\" >/dev/null || exit 76\n\
-         /bin/cat \"$CLROOM_AMBIENT_SKILL\" >/dev/null 2>&1 && exit 77\n\
-         printf '%s\\0' \"$@\" > \"$CLROOM_CAPTURE_PATH\"\n\
+         if [ \"$1\" = --version ]; then printf '0.147.0\\n'; exit 0; fi\n\
+         /bin/cat \"$PWD/.agents/skills/project-only/SKILL.md\" >/dev/null || exit 73\n\
+         /bin/cat \"$HOME/.agents/skills/arrow/SKILL.md\" >/dev/null || exit 74\n\
+         /bin/cat \"$HOME/.agents/skills/systematic-debugging/SKILL.md\" >/dev/null || exit 75\n\
+         /bin/cat \"$HOME/.agents/skills/brainstorming/SKILL.md\" >/dev/null || exit 76\n\
+         /bin/cat \"$HOME/.agents/skills/ambient/SKILL.md\" >/dev/null 2>&1 && exit 77\n\
+         printf '%s\\0' \"$@\" > \"$PWD/.clroom-capture\"\n\
          exit 42\n",
     )
     .unwrap();
@@ -527,7 +608,7 @@ fn codex_handoff_rejects_invalid_named_sets_before_exec_without_echoing_yaml() {
     ] {
         let (root, project, home, codex_home, bin) = isolated_fixture();
         add_selective_skill_fixture(&root, &home, &project);
-        let capture = bin.join(format!("{name}-provider-capture"));
+        let capture = project.join(".clroom-capture");
         let config_home = root.join("config");
         let config = config_home.join("clroom/skill-sets.yaml");
         if let Some(yaml) = yaml {
@@ -560,7 +641,7 @@ fn codex_handoff_rejects_a_relative_xdg_skill_set_path_before_exec() {
     // making clroom read a different set file than the user requested.
     let (root, project, home, codex_home, bin) = isolated_fixture();
     add_selective_skill_fixture(&root, &home, &project);
-    let capture = bin.join("unsafe-config-path-provider-capture");
+    let capture = project.join(".clroom-capture");
 
     let output = command(&project, &home, &codex_home, &bin, &capture)
         .args(["codex", "--skill-set=@review", "--version"])
@@ -581,7 +662,7 @@ fn codex_handoff_forwards_the_unreleased_old_skills_spelling_to_codex() {
     // Break caught: clroom keeps two launcher flags for one concept and can
     // never forward a future provider-native --skills option.
     let (_root, project, home, codex_home, bin) = isolated_fixture();
-    let capture = bin.join("provider-native-skills-capture");
+    let capture = project.join(".clroom-capture");
     let user_args = ["--skills=provider-native", "--version"];
 
     let output = command(&project, &home, &codex_home, &bin, &capture)

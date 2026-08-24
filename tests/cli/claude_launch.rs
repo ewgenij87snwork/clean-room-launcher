@@ -1,6 +1,7 @@
 use std::{
+    ffi::OsString,
     fs,
-    os::unix::fs::PermissionsExt,
+    os::unix::{ffi::OsStringExt, fs::PermissionsExt},
     path::{Path, PathBuf},
     process::{Child, Command, Stdio},
     sync::atomic::{AtomicU64, Ordering},
@@ -91,10 +92,14 @@ fn fixture() -> (Scratch, PathBuf, PathBuf, PathBuf, PathBuf) {
     let project = root.join("project");
     let home = root.join("home");
     let bin = root.join("bin");
-    let capture = root.join("capture");
+    let capture = home.join("capture");
     fs::create_dir_all(project.join(".claude/skills/project-only")).unwrap();
     fs::create_dir_all(home.join(".claude/skills/arrow")).unwrap();
     fs::create_dir_all(home.join(".claude/skills/ambient")).unwrap();
+    for root in [".ssh", ".aws", ".config/gcloud", ".azure"] {
+        fs::create_dir_all(home.join(root)).unwrap();
+        fs::write(home.join(root).join("canary"), b"synthetic\n").unwrap();
+    }
     fs::create_dir_all(&bin).unwrap();
     fs::write(project.join("CLAUDE.md"), b"project context\n").unwrap();
     fs::write(
@@ -145,19 +150,21 @@ fn fixture() -> (Scratch, PathBuf, PathBuf, PathBuf, PathBuf) {
     fs::write(
         &fake,
         "#!/bin/sh\n\
-         [ \"$HOME\" = \"$CLROOM_EXPECTED_HOME\" ] || exit 70\n\
+         if [ \"$1\" = --version ]; then printf '2.1.223\\n'; exit 0; fi\n\
          [ -z \"${CLAUDE_CONFIG_DIR+x}\" ] || exit 79\n\
          [ -r \"$HOME/.claude.json\" ] || exit 80\n\
          [ \"$CLAUDE_CODE_DISABLE_AUTO_MEMORY\" = 1 ] || exit 82\n\
          [ \"$CLAUDE_CODE_DISABLE_ALTERNATE_SCREEN\" = 1 ] || exit 87\n\
-         [ -r \"$CLROOM_PROJECT/CLAUDE.md\" ] || exit 71\n\
-         [ -r \"$CLROOM_PROJECT/.claude/skills/project-only/SKILL.md\" ] || exit 72\n\
+         [ \"$CLAUDE_CODE_SUBPROCESS_ENV_SCRUB\" = 1 ] || exit 96\n\
+         [ -r \"$PWD/CLAUDE.md\" ] || exit 71\n\
+         [ -r \"$PWD/.claude/skills/project-only/SKILL.md\" ] || exit 72\n\
          [ ! -r \"$HOME/.claude/CLAUDE.md\" ] || exit 83\n\
          [ ! -r \"$HOME/.claude/settings.json\" ] || exit 84\n\
          [ -r \"$HOME/.claude/skills/arrow/SKILL.md\" ] || exit 86\n\
          [ ! -r \"$HOME/.claude/skills/ambient/SKILL.md\" ] || exit 85\n\
          projection=\n\
          previous=\n\
+         probe_env=\n\
          for argument in \"$@\"; do\n\
            if [ \"$previous\" = add_dir ]; then projection=$argument; previous=; continue; fi\n\
            case \"$argument\" in\n\
@@ -165,6 +172,7 @@ fn fixture() -> (Scratch, PathBuf, PathBuf, PathBuf, PathBuf) {
              project,local) [ \"$previous\" = sources ] || exit 73; previous= ;;\n\
              --strict-mcp-config) : ;;\n\
              --add-dir) previous=add_dir ;;\n\
+             --clroom-env-probe) probe_env=1 ;;\n\
            esac\n\
          done\n\
          [ -n \"$projection\" ] || exit 74\n\
@@ -172,18 +180,31 @@ fn fixture() -> (Scratch, PathBuf, PathBuf, PathBuf, PathBuf) {
          [ -r \"$projection/.claude/skills/arrow/SKILL.md\" ] || exit 76\n\
          [ -r \"$projection/.claude/skills/systematic-debugging/SKILL.md\" ] || exit 77\n\
          [ ! -e \"$projection/.claude/skills/ambient\" ] || exit 78\n\
-         if [ \"${CLROOM_HOLD_PROVIDER-}\" = 1 ]; then\n\
-           printf '%s\n' \"$projection\" > \"$CLROOM_CAPTURE_PROJECTION_PATH\"\n\
-           printf '%s\n' \"$$\" > \"$CLROOM_CAPTURE_PID_PATH\"\n\
+         if [ -f \"$HOME/.clroom-hold-provider\" ]; then\n\
+           printf '%s\n' \"$projection\" > \"$HOME/capture.projection-path\"\n\
+           printf '%s\n' \"$$\" > \"$HOME/capture.provider-pid\"\n\
            trap 'exit 0' TERM INT\n\
            while :; do /bin/sleep 1; done\n\
          fi\n\
-         if [ \"${CLROOM_PROBE_PROTECTED_WRITES-}\" = 1 ]; then\n\
+         if [ -f \"$HOME/.clroom-probe-protected-writes\" ]; then\n\
            if printf 'tampered\n' 2>/dev/null >> \"$HOME/.claude/skills/arrow/SKILL.md\"; then exit 88; fi\n\
            if mkdir \"$projection/tampered\" 2>/dev/null; then exit 89; fi\n\
+           printf 'project-write\n' >> \"$PWD/CLAUDE.md\" || exit 97\n\
+           for path in \"$HOME/.ssh/canary\" \"$HOME/.aws/canary\" \"$HOME/.config/gcloud/canary\" \"$HOME/.azure/canary\"; do\n\
+             /bin/cat \"$path\" >/dev/null 2>&1 && exit 98\n\
+             printf 'blocked\n' >> \"$path\" 2>/dev/null && exit 99\n\
+           done\n\
          fi\n\
-         printf '%s' \"${CLAUDE_CONFIG_DIR-unset}\" > \"$CLROOM_CAPTURE_CONFIG_PATH\"\n\
-         printf '%s\\0' \"$@\" > \"$CLROOM_CAPTURE_PATH\"\n\
+         if [ -n \"$probe_env\" ]; then\n\
+           [ -z \"${UNRELATED_TOKEN+x}\" ] || exit 90\n\
+           [ -z \"${UNRELATED_SECRET+x}\" ] || exit 91\n\
+           [ -z \"${UNRELATED_KEY+x}\" ] || exit 92\n\
+           [ -z \"${MCP_CONFIG+x}\" ] || exit 93\n\
+           [ -n \"${TERM+x}\" ] || exit 94\n\
+           [ -n \"${LANG+x}\" ] || exit 95\n\
+         fi\n\
+         printf '%s' \"${CLAUDE_CONFIG_DIR-unset}\" > \"$HOME/capture.config\"\n\
+         printf '%s\\0' \"$@\" > \"$HOME/capture\"\n\
          exit 42\n",
     )
     .unwrap();
@@ -333,10 +354,18 @@ fn claude_projections_are_session_scoped_and_drop_never_removes_skill_sources() 
 fn claude_projection_reaps_only_marked_dead_clroom_residue() {
     let (_root, _project, home, _bin, _capture) = fixture();
     let sequence = SCRATCH_SEQUENCE.fetch_add(7, Ordering::Relaxed);
-    let mut exited_process = Command::new("/usr/bin/true").spawn().unwrap();
-    let dead_pid = exited_process.id();
-    assert!(exited_process.wait().unwrap().success());
+    let dead_pid = i32::MAX as u32;
     let live_pid = std::process::id();
+    let live_start = String::from_utf8(
+        Command::new("/bin/ps")
+            .args(["-p", &live_pid.to_string(), "-o", "lstart="])
+            .output()
+            .unwrap()
+            .stdout,
+    )
+    .unwrap()
+    .trim()
+    .to_owned();
     let app_root = std::env::temp_dir().join("clroom");
     let base = app_root.join("claude-projections-v2");
     let active = base.join("active");
@@ -406,6 +435,10 @@ fn claude_projection_reaps_only_marked_dead_clroom_residue() {
         legacy.clone(),
     ]);
 
+    for path in &residue.0 {
+        let _ = fs::remove_dir_all(path);
+    }
+
     for (path, pid) in [
         (&dead, dead_pid),
         (&live, live_pid),
@@ -418,11 +451,16 @@ fn claude_projection_reaps_only_marked_dead_clroom_residue() {
     ] {
         fs::create_dir_all(path.join("view/.claude/skills")).unwrap();
         let marker = path.join(".clroom-projection-owner-v2");
+        let recorded_start = if pid == live_pid {
+            live_start.as_str()
+        } else {
+            "synthetic-dead-start"
+        };
         fs::write(
             &marker,
             format!(
-                "active:{pid}:{}\n",
-                path.file_name().unwrap().to_string_lossy()
+                "active:{pid}:{}:{recorded_start}\n",
+                path.file_name().unwrap().to_string_lossy(),
             ),
         )
         .unwrap();
@@ -436,7 +474,9 @@ fn claude_projection_reaps_only_marked_dead_clroom_residue() {
     fs::create_dir_all(mismatched.join("view/.claude/skills")).unwrap();
     fs::write(
         mismatched.join(".clroom-projection-owner-v2"),
-        format!("active:{dead_pid}:session-1-1-88888888888888888888888888888888\n"),
+        format!(
+            "active:{dead_pid}:session-1-1-88888888888888888888888888888888:synthetic-dead-start\n"
+        ),
     )
     .unwrap();
     fs::set_permissions(
@@ -514,6 +554,7 @@ fn claude_projection_survives_launcher_death_until_provider_exits() {
     let (_root, project, home, bin, capture) = fixture();
     let provider_pid_path = capture.with_extension("provider-pid");
     let projection_path = capture.with_extension("projection-path");
+    fs::write(home.join(".clroom-hold-provider"), b"synthetic\n").unwrap();
     let mut launcher = ChildGuard(Some(
         Command::new(env!("CARGO_BIN_EXE_clroom"))
             .current_dir(&project)
@@ -521,7 +562,6 @@ fn claude_projection_survives_launcher_death_until_provider_exits() {
             .env("HOME", &home)
             .env("CLROOM_EXPECTED_HOME", &home)
             .env("CLROOM_PROJECT", &project)
-            .env("CLROOM_HOLD_PROVIDER", "1")
             .env("CLROOM_CAPTURE_PROJECTION_PATH", &projection_path)
             .env("CLROOM_CAPTURE_PID_PATH", &provider_pid_path)
             .args([
@@ -549,9 +589,19 @@ fn claude_projection_survives_launcher_death_until_provider_exits() {
     assert_ne!(launcher.id(), provider_pid);
     let session_name = live_session.file_name().unwrap().to_string_lossy();
     let marker = live_session.join(".clroom-projection-owner-v2");
+    let provider_start = String::from_utf8(
+        Command::new("/bin/ps")
+            .args(["-p", &provider_pid.to_string(), "-o", "lstart="])
+            .output()
+            .unwrap()
+            .stdout,
+    )
+    .unwrap()
+    .trim()
+    .to_owned();
     assert_eq!(
         fs::read_to_string(&marker).unwrap(),
-        format!("active:{provider_pid}:{session_name}\n"),
+        format!("active:{provider_pid}:{session_name}:{provider_start}\n"),
         "the marker must bind the actual consumer PID to this exact session"
     );
     assert_eq!(
@@ -561,6 +611,7 @@ fn claude_projection_survives_launcher_death_until_provider_exits() {
     );
     assert!(signal_process(launcher.id(), "KILL"));
     launcher.wait_after_signal();
+    fs::remove_file(home.join(".clroom-hold-provider")).unwrap();
 
     let trigger_capture = capture.with_extension("trigger");
     let trigger_config = capture.with_extension("trigger-config");
@@ -670,6 +721,57 @@ fn native_claude_accepts_the_materialized_skill_add_dir() {
 }
 
 #[test]
+fn managed_policy_probe_reports_presence_without_reading_policy_contents() {
+    use taskseal::adapters::claude::managed::{Presence, probe_paths};
+
+    let root = Scratch::new();
+    let absent = root.join("absent-managed-policy.json");
+    assert_eq!(probe_paths(&[absent]), Presence::Absent);
+
+    let present = root.join("managed-policy.json");
+    fs::write(&present, b"synthetic policy contents must not be parsed\n").unwrap();
+    assert_eq!(probe_paths(&[present]), Presence::Present);
+
+    let invalid = PathBuf::from(OsString::from_vec(b"invalid\0path".to_vec()));
+    assert_eq!(probe_paths(&[invalid]), Presence::Unknown);
+}
+
+#[test]
+fn claude_parent_environment_is_closed_and_child_scrub_is_enabled() {
+    let (_root, project, home, bin, _capture) = fixture();
+    let output = Command::new(env!("CARGO_BIN_EXE_clroom"))
+        .current_dir(&project)
+        .env("PATH", &bin)
+        .env("HOME", &home)
+        .env("TERM", "xterm-256color")
+        .env("LANG", "C.UTF-8")
+        .env("UNRELATED_TOKEN", "synthetic")
+        .env("UNRELATED_SECRET", "synthetic")
+        .env("UNRELATED_KEY", "synthetic")
+        .env("MCP_CONFIG", "synthetic")
+        .args([
+            "claude",
+            "--skill-set=arrow,superpowers:systematic-debugging",
+            "--clroom-env-probe",
+        ])
+        .output()
+        .unwrap();
+
+    assert_eq!(output.status.code(), Some(42));
+    let args = fs::read(home.join("capture")).unwrap();
+    let args = args
+        .split(|byte| *byte == 0)
+        .filter(|argument| !argument.is_empty())
+        .map(|argument| String::from_utf8_lossy(argument).into_owned())
+        .collect::<Vec<_>>();
+    assert!(
+        args.iter()
+            .any(|argument| argument.contains("failIfUnavailable")),
+        "runtime settings must make Claude's inner sandbox fail closed"
+    );
+}
+
+#[test]
 fn claude_preserves_native_service_state_across_launches_and_keeps_ambient_inputs_out() {
     let (_root, project, home, bin, capture) = fixture();
     let config_capture = capture.with_extension("config");
@@ -699,19 +801,23 @@ fn claude_preserves_native_service_state_across_launches_and_keeps_ambient_input
             .map(|item| String::from_utf8(item.to_vec()).unwrap())
             .collect::<Vec<_>>();
         assert_eq!(
-            args[0..9],
+            args[0..7],
             [
-                "--model",
-                "haiku",
-                "--effort",
-                "low",
                 "--setting-sources",
                 "project,local",
                 "--strict-mcp-config",
+                "--settings",
+                args[4].as_str(),
                 "--add-dir",
-                args[8].as_str(),
+                args[6].as_str(),
             ]
         );
+        for forbidden in ["haiku", "low", "--effort"] {
+            assert!(
+                !args.iter().any(|argument| argument == forbidden),
+                "launcher-injected Claude choice remained: {forbidden}"
+            );
+        }
         assert_eq!(
             args.iter()
                 .filter(|arg| arg.as_str() == "--add-dir")
@@ -719,7 +825,7 @@ fn claude_preserves_native_service_state_across_launches_and_keeps_ambient_input
             1
         );
         assert_eq!(&args[args.len() - 2..], ["--model", "owner-choice"]);
-        let projection = PathBuf::from(&args[8]);
+        let projection = PathBuf::from(&args[6]);
         assert!(
             !projection.exists(),
             "projection must be removed after the child exits"
@@ -733,6 +839,7 @@ fn claude_denies_provider_writes_to_selected_sources_and_projection_control() {
     let (_root, project, home, bin, capture) = fixture();
     let config_capture = capture.with_extension("config");
     let selected_source = home.join(".claude/skills/arrow/SKILL.md");
+    fs::write(home.join(".clroom-probe-protected-writes"), b"synthetic\n").unwrap();
     let output = Command::new(env!("CARGO_BIN_EXE_clroom"))
         .current_dir(&project)
         .env("PATH", &bin)
@@ -741,7 +848,6 @@ fn claude_denies_provider_writes_to_selected_sources_and_projection_control() {
         .env("CLROOM_PROJECT", &project)
         .env("CLROOM_CAPTURE_PATH", &capture)
         .env("CLROOM_CAPTURE_CONFIG_PATH", &config_capture)
-        .env("CLROOM_PROBE_PROTECTED_WRITES", "1")
         .args([
             "claude",
             "--skill-set=arrow,superpowers:systematic-debugging",
@@ -816,6 +922,82 @@ fn interactive_claude_launch_keeps_the_clean_room_plaque_visible() {
             "unexpected Codex-only plaque claim: {codex_only}"
         );
     }
+}
+
+#[cfg(target_os = "macos")]
+#[test]
+fn invalid_claude_identity_renders_not_launchable_before_refusal() {
+    // Break caught: the Claude plaque claims a clean boundary before the
+    // closed identity probe proves that the provider cannot be launched.
+    let (_root, project, home, bin, capture) = fixture();
+    let fake = bin.join("claude");
+    fs::write(
+        &fake,
+        "#!/bin/sh\nif [ \"$1\" = --version ]; then printf 'invalid-version\\n'; exit 0; fi\nexit 99\n",
+    )
+    .unwrap();
+    fs::set_permissions(&fake, fs::Permissions::from_mode(0o700)).unwrap();
+
+    let output = Command::new("/usr/bin/expect")
+        .args([
+            "-c",
+            concat!(
+                "set timeout 5\n",
+                "spawn -noecho $env(CLROOM_TEST_BIN) claude --version\n",
+                "expect eof\n",
+                "set child_status [wait]\n",
+                "exit [lindex $child_status 3]\n",
+            ),
+        ])
+        .current_dir(&project)
+        .env("CLROOM_TEST_BIN", env!("CARGO_BIN_EXE_clroom"))
+        .env("PATH", &bin)
+        .env("HOME", &home)
+        .env("COLUMNS", "80")
+        .env("TERM", "xterm-256color")
+        .output()
+        .unwrap();
+
+    assert_eq!(output.status.code(), Some(2));
+    let transcript = String::from_utf8(output.stdout).unwrap().replace('\r', "");
+    assert!(transcript.contains("Boundary: not launchable"));
+    assert!(!transcript.contains("Boundary: clean"));
+    assert!(!capture.exists());
+}
+
+#[cfg(target_os = "macos")]
+#[test]
+fn missing_claude_executable_renders_not_launchable_before_refusal() {
+    // Break caught: executable lookup returns before the Claude launch
+    // contract can report the provider as unavailable.
+    let (root, project, home, _bin, capture) = fixture();
+    let empty_bin = root.join("empty-bin");
+    fs::create_dir_all(&empty_bin).unwrap();
+    let output = Command::new("/usr/bin/expect")
+        .args([
+            "-c",
+            concat!(
+                "set timeout 5\n",
+                "spawn -noecho $env(CLROOM_TEST_BIN) claude --version\n",
+                "expect eof\n",
+                "set child_status [wait]\n",
+                "exit [lindex $child_status 3]\n",
+            ),
+        ])
+        .current_dir(&project)
+        .env("CLROOM_TEST_BIN", env!("CARGO_BIN_EXE_clroom"))
+        .env("PATH", &empty_bin)
+        .env("HOME", &home)
+        .env("COLUMNS", "80")
+        .env("TERM", "xterm-256color")
+        .output()
+        .unwrap();
+
+    assert_eq!(output.status.code(), Some(2));
+    let transcript = String::from_utf8(output.stdout).unwrap().replace('\r', "");
+    assert!(transcript.contains("Boundary: not launchable"));
+    assert!(!transcript.contains("Boundary: clean"));
+    assert!(!capture.exists());
 }
 
 #[test]
