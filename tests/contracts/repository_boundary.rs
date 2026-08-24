@@ -22,6 +22,26 @@ fn git(root: &Path, args: &[&str]) -> String {
 #[test]
 fn repository_is_an_independent_non_main_sibling() {
     let worktree = std::env::current_dir().expect("current worktree");
+    if !Path::new("AGENTS.md").exists() {
+        assert_eq!(
+            git(&worktree, &["rev-parse", "--show-toplevel"]),
+            worktree.display().to_string()
+        );
+        assert_ne!(git(&worktree, &["branch", "--show-current"]), "main");
+        let inventory: serde_json::Value = serde_json::from_slice(
+            &std::fs::read("qualification/public-release-inventory-v1.json")
+                .expect("public release inventory exists"),
+        )
+        .expect("public release inventory parses");
+        assert!(
+            inventory["excluded_internal_paths"]
+                .as_array()
+                .expect("excluded internal paths are listed")
+                .iter()
+                .any(|path| path == ".taskseal-dev")
+        );
+        return;
+    }
     let authority: serde_json::Value = serde_json::from_slice(
         &std::fs::read(".taskseal-dev/execution-authority.json").expect("private authority"),
     )
