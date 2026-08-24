@@ -241,8 +241,20 @@ fn workflow_is_structurally_bound_to_qualified_entries() {
 }
 
 #[test]
-fn receipt_proves_real_git_topology_and_survives_descendant_heads() {
+fn receipt_is_durable_internally_or_absent_from_public_history() {
     let root = Path::new(env!("CARGO_MANIFEST_DIR"));
+    if !root.join(RECEIPT_PATH).is_file() {
+        let inventory = read("qualification/public-release-inventory-v1.json");
+        assert!(inventory.contains("IMMUTABLE_INTERNAL_EVIDENCE_EXCLUDED_FROM_PUBLIC_SOURCE"));
+        assert!(inventory.contains("\"reports/gates\""));
+        let public_history = git(root, &["log", "--format=%H", "HEAD", "--", RECEIPT_PATH])
+            .expect("public history can be inspected");
+        assert!(
+            public_history.is_empty(),
+            "internal receipt must be absent from public history"
+        );
+        return;
+    }
     let receipt = read(RECEIPT_PATH);
     for field in [
         "\"input_head\": \"ea551a35b058b19e402071cfc07d34862ec9216b\"",
