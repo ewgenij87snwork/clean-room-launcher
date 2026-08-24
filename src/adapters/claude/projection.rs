@@ -450,6 +450,10 @@ fn session_launcher_pid(path: &Path) -> Option<u32> {
     if metadata.file_type().is_symlink() || !metadata.is_dir() {
         return None;
     }
+    generated_session_launcher_pid(path)
+}
+
+fn generated_session_launcher_pid(path: &Path) -> Option<u32> {
     let name = path.file_name().and_then(|name| name.to_str())?;
     let value = name.strip_prefix(SESSION_PREFIX)?;
     let mut parts = value.split('-');
@@ -487,6 +491,17 @@ fn private_marker(_: &fs::Metadata) -> bool {
 }
 
 fn quarantine_and_delete(path: &Path, quarantine_root: &Path) -> Result<(), ProjectionError> {
+    if matches!(
+        fs::symlink_metadata(path),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound
+    ) {
+        if !valid_cleanup_layout(path, quarantine_root) {
+            return Err(ProjectionError::Unavailable);
+        }
+        return generated_session_launcher_pid(path)
+            .map(|_| ())
+            .ok_or(ProjectionError::Unavailable);
+    }
     if !valid_session_directory(path) {
         return Err(ProjectionError::Unavailable);
     }
@@ -504,6 +519,21 @@ fn quarantine_and_delete(path: &Path, quarantine_root: &Path) -> Result<(), Proj
         Err(_) => return Err(ProjectionError::Unavailable),
     }
     Ok(())
+}
+
+fn valid_cleanup_layout(path: &Path, quarantine_root: &Path) -> bool {
+    let Some(active_root) = path.parent() else {
+        return false;
+    };
+    let Some(storage_root) = active_root.parent() else {
+        return false;
+    };
+    active_root.file_name().and_then(|name| name.to_str()) == Some(ACTIVE_DIR)
+        && storage_root.file_name().and_then(|name| name.to_str()) == Some(STORAGE_DIR)
+        && quarantine_root == storage_root.join(QUARANTINE_DIR)
+        && validate_private_directory(storage_root).is_ok()
+        && validate_private_directory(active_root).is_ok()
+        && validate_private_directory(quarantine_root).is_ok()
 }
 
 #[cfg(unix)]
@@ -743,4 +773,79 @@ fn reject_native_name_collisions(selected: &[&GlobalSkill]) -> Result<(), Projec
         }
     }
     Ok(())
+}
+
+#[cfg(all(test, unix))]
+mod tests {
+    use super::*;
+    use std::os::unix::fs::{PermissionsExt, symlink};
+
+    #[test]
+    fn cleanup_accepts_only_a_missing_valid_session() {
+        let base = std::env::temp_dir().join(format!(
+            "clroom-projection-cleanup-test-{}-{}",
+            std::process::id(),
+            PROJECTION_SEQUENCE.fetch_add(1, Ordering::Relaxed)
+        ));
+        let storage = base.join(STORAGE_DIR);
+        let active = storage.join(ACTIVE_DIR);
+        let quarantine = storage.join(QUARANTINE_DIR);
+        fs::create_dir_all(&quarantine).unwrap();
+        fs::create_dir_all(&active).unwrap();
+        for directory in [&storage, &active, &quarantine] {
+            fs::set_permissions(directory, fs::Permissions::from_mode(0o700)).unwrap();
+        }
+
+        let valid_missing = active.join(format!(
+            "{SESSION_PREFIX}{}-0-0123456789abcdef0123456789abcdef",
+            std::process::id()
+        ));
+        assert_eq!(quarantine_and_delete(&valid_missing, &quarantine), Ok(()));
+
+        let malformed_missing = active.join("session-not-a-generated-name");
+        assert_eq!(
+            quarantine_and_delete(&malformed_missing, &quarantine),
+            Err(ProjectionError::Unavailable)
+        );
+
+        let missing_parent = active.join("missing-parent").join(format!(
+            "{SESSION_PREFIX}{}-2-0123456789abcdef0123456789abcdef",
+            std::process::id()
+        ));
+        assert_eq!(
+            quarantine_and_delete(&missing_parent, &quarantine),
+            Err(ProjectionError::Unavailable)
+        );
+
+        let symlink_parent_target = base.join("symlink-parent-target");
+        fs::create_dir(&symlink_parent_target).unwrap();
+        let symlink_parent = active.join("symlink-parent");
+        symlink(&symlink_parent_target, &symlink_parent).unwrap();
+        let symlinked_parent = symlink_parent.join(format!(
+            "{SESSION_PREFIX}{}-3-0123456789abcdef0123456789abcdef",
+            std::process::id()
+        ));
+        assert_eq!(
+            quarantine_and_delete(&symlinked_parent, &quarantine),
+            Err(ProjectionError::Unavailable)
+        );
+
+        let unsafe_target = base.join("unsafe-target");
+        fs::create_dir(&unsafe_target).unwrap();
+        let unsafe_link = active.join("session-1-0-0123456789abcdef0123456789abcdef");
+        symlink(&unsafe_target, &unsafe_link).unwrap();
+        assert_eq!(
+            quarantine_and_delete(&unsafe_link, &quarantine),
+            Err(ProjectionError::Unavailable)
+        );
+
+        let non_directory = active.join("session-1-1-0123456789abcdef0123456789abcdef");
+        fs::write(&non_directory, b"unsafe").unwrap();
+        assert_eq!(
+            quarantine_and_delete(&non_directory, &quarantine),
+            Err(ProjectionError::Unavailable)
+        );
+
+        fs::remove_dir_all(base).unwrap();
+    }
 }
