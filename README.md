@@ -103,7 +103,7 @@ summary of the active boundary:
 - developer instructions and notifications are cleared by default.
 
 ```text
-╓──○──╖ ╭─ CLEAN ROOM ─ v0.1.0-alpha.4 ─╮
+╓──○──╖ ╭─ CLEAN ROOM ─ v0.1.0-alpha.4.1 ─╮
 ║░░░░░║⠒│                               │
 ║░░░░░║⠒│     Global AGENTS.md  off     │
 ║░░░░░║⠒│     Global skills    3 on     │
@@ -132,8 +132,8 @@ You need macOS on Apple Silicon and at least one already working provider:
 Codex CLI `0.147.0+` or Claude Code CLI `2.1.223+`.
 
 ```sh
-VERSION=v0.1.0-alpha.4
-ASSET=clean-room-launcher-v0.1.0-alpha.4-aarch64-apple-darwin.tar.gz
+VERSION=v0.1.0-alpha.4.1
+ASSET=clean-room-launcher-v0.1.0-alpha.4.1-aarch64-apple-darwin.tar.gz
 
 curl -fLO "https://github.com/ewgenij87snwork/clean-room-launcher/releases/download/$VERSION/$ASSET"
 curl -fLO "https://github.com/ewgenij87snwork/clean-room-launcher/releases/download/$VERSION/SHA256SUMS"
@@ -141,7 +141,7 @@ shasum -a 256 -c SHA256SUMS
 tar -xzf "$ASSET"
 
 mkdir -p "$HOME/.local/bin"
-install -m 0755 "clean-room-launcher-v0.1.0-alpha.4-aarch64-apple-darwin/bin/clroom" "$HOME/.local/bin/clroom"
+install -m 0755 "clean-room-launcher-v0.1.0-alpha.4.1-aarch64-apple-darwin/bin/clroom" "$HOME/.local/bin/clroom"
 export PATH="$HOME/.local/bin:$PATH"
 clroom --help
 ```
@@ -158,7 +158,7 @@ Rust users can build the same alpha from the public tag:
 
 ```sh
 cargo install --git https://github.com/ewgenij87snwork/clean-room-launcher \
-  --tag v0.1.0-alpha.4 --locked
+  --tag v0.1.0-alpha.4.1 --locked
 ```
 
 No crates.io package is published for this alpha.
@@ -391,14 +391,14 @@ Removing Clean Room Launcher does not modify either provider or its authenticati
 
 ## Project status
 
-`v0.1.0-alpha.4` is a public, unsigned, and unnotarized prerelease for macOS
+`v0.1.0-alpha.4.1` is a public, unsigned, and unnotarized prerelease for macOS
 on Apple Silicon.
 
 It supports Codex CLI `0.147.0+` and Claude Code CLI `2.1.223+` through a
 focused clean-room boundary. It is not a stable-support promise.
 
 See the
-[GitHub prerelease](https://github.com/ewgenij87snwork/clean-room-launcher/releases/tag/v0.1.0-alpha.4)
+[GitHub prerelease](https://github.com/ewgenij87snwork/clean-room-launcher/releases/tag/v0.1.0-alpha.4.1)
 for the archive and `SHA256SUMS`.
 
 ## Help improve Clean Room Launcher

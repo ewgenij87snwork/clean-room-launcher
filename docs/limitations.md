@@ -1,6 +1,6 @@
 # Limitations
 
-- `v0.1.0-alpha.4` is an unsigned, unnotarized prerelease, not a stable release.
+- `v0.1.0-alpha.4.1` is an unsigned, unnotarized prerelease, not a stable release.
 - Only macOS on Apple Silicon with Codex CLI `0.147.0+` or Claude Code CLI
   `2.1.223+` is supported.
 - The boundary is a narrow macOS filesystem denylist, not a VM, container,

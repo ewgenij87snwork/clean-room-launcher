@@ -7,6 +7,27 @@ Semantic Versioning after the first public release.
 
 ## [Unreleased]
 
+## [0.1.0-alpha.4.1] - 2026-08-24
+
+### Changed
+
+- Revalidated provider executable identity and version immediately before each
+  launch, with a closed allowlisted parent environment and truthful launch
+  status when the clean boundary cannot be established.
+- Hardened path, symlink, and selected-skill boundary checks for the qualified
+  macOS provider paths.
+
+### Fixed
+
+- Hardened Claude session projection ownership, stale cleanup, process exit,
+  and signal handling; concurrent cleanup is idempotent only for a missing
+  residue and remains fail-closed for other errors.
+
+### Security
+
+- This patch release adds no new operating-system or provider qualification:
+  the supported claim remains macOS on Apple Silicon with Codex and Claude.
+
 ## [0.1.0-alpha.4] - 2026-08-23
 
 ### Added

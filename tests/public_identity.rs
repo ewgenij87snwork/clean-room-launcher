@@ -58,7 +58,7 @@ fn clroom_is_the_only_public_identity_and_preserves_the_native_codex_process() {
     assert!(help.status.success());
     let help_stdout = String::from_utf8(help.stdout).unwrap();
     assert!(help_stdout.starts_with(
-        "\n\nClean Room Launcher v0.1.0-alpha.4\nLaunch Codex or Claude Code without\nunrelated global instructions and skills.\n"
+        "\n\nClean Room Launcher v0.1.0-alpha.4.1\nLaunch Codex or Claude Code without\nunrelated global instructions and skills.\n"
     ));
     assert!(help_stdout.contains("\nUsage\n  clroom codex [CODEX_ARGS...]"));
 
