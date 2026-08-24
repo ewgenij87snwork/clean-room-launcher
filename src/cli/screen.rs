@@ -234,15 +234,10 @@ pub fn render_isolated_preview_for(
     context: RenderContext,
 ) -> Vec<String> {
     let styled = context.interactive && !context.plain;
-    let panel_width = 33;
+    let panel_width: usize = 33;
     let content_width = panel_width - 4;
     let title = "CLEAN ROOM";
     let version = concat!("v", env!("CARGO_PKG_VERSION"));
-    let title_border = "─".repeat(panel_width - title.chars().count() - 5);
-    let version_border = format!(
-        "{} {version} ─",
-        "─".repeat(panel_width - version.chars().count() - 5)
-    );
     // Visual model: a wall-mounted boundary status plaque. The seven-cell mounting
     // rail stays fixed at the left; one-cell standoff markers connect it to the
     // right plaque. Plaque height follows `rows` automatically. If row text grows,
@@ -254,10 +249,10 @@ pub fn render_isolated_preview_for(
     let mut lines = vec![String::new(), String::new(), String::new()];
     lines.push(if styled {
         format!(
-            "\u{1b}[2m{mounting_rail_top}\u{1b}[0m \u{1b}[2m╭─ \u{1b}[0m\u{1b}[1;36m{title}\u{1b}[0m\u{1b}[2m {title_border}╮\u{1b}[0m"
+            "\u{1b}[2m{mounting_rail_top}\u{1b}[0m \u{1b}[2m╭─ \u{1b}[0m\u{1b}[1;36m{title}\u{1b}[0m\u{1b}[2m ─ {version} ─╮\u{1b}[0m"
         )
     } else {
-        format!("{mounting_rail_top} ╭─ {title} {title_border}╮")
+        format!("{mounting_rail_top} ╭─ {title} ─ {version} ─╮")
     });
     let skill_state = if selected_global_skills == 0 {
         "off".to_owned()
@@ -306,10 +301,13 @@ pub fn render_isolated_preview_for(
         });
     }
     let project_skills = count_project_skills(project);
+    // The version has one stable anchor: the main plaque's top-right edge.
+    // Project-skill state may add a satellite below, but it must never move the
+    // version or disturb the paired supports in the main plaque's bottom edge.
     let main_bottom_border = if project_skills > 0 {
-        "───────╥───────────────╥───────"
+        "───────────╥───────╥───────────".to_owned()
     } else {
-        &version_border
+        "─".repeat(panel_width - 2)
     };
     lines.push(if styled {
         format!("\u{1b}[2m{mounting_rail_bottom} ╰{main_bottom_border}╯\u{1b}[0m")
@@ -325,9 +323,9 @@ pub fn render_isolated_preview_for(
         // main plaque through paired mixed-weight tee standoffs. Keep both
         // borders synchronized when panel geometry changes.
         lines.push(if styled {
-            format!("{card_indent}\u{1b}[2m╭───────╨───────────────╨───────╮\u{1b}[0m")
+            format!("{card_indent}\u{1b}[2m╭───────────╨───────╨───────────╮\u{1b}[0m")
         } else {
-            format!("{card_indent}╭───────╨───────────────╨───────╮")
+            format!("{card_indent}╭───────────╨───────╨───────────╮")
         });
         lines.push(if styled {
             format!(
@@ -337,9 +335,121 @@ pub fn render_isolated_preview_for(
             format!("{card_indent}│ {plain}{padding} │")
         });
         lines.push(if styled {
-            format!("{card_indent}\u{1b}[2m╰{version_border}╯\u{1b}[0m")
+            format!("{card_indent}\u{1b}[2m╰───────────────────────────────╯\u{1b}[0m")
         } else {
-            format!("{card_indent}╰{version_border}╯")
+            format!("{card_indent}╰───────────────────────────────╯")
+        });
+    }
+    lines.push(String::new());
+    lines
+}
+
+pub fn render_claude_preview(project: &Path, selected_global_skills: usize) -> Vec<String> {
+    let width = std::env::var("COLUMNS")
+        .ok()
+        .and_then(|value| value.parse::<usize>().ok())
+        .filter(|width| *width >= 20)
+        .unwrap_or(80);
+    let interactive = std::io::stderr().is_terminal();
+    let plain = !interactive
+        || std::env::var_os("NO_COLOR").is_some()
+        || std::env::var("TERM").is_ok_and(|term| term.eq_ignore_ascii_case("dumb"));
+    render_claude_preview_for(
+        project,
+        selected_global_skills,
+        RenderContext {
+            width,
+            interactive,
+            plain,
+        },
+    )
+}
+
+pub fn render_claude_preview_for(
+    project: &Path,
+    selected_global_skills: usize,
+    context: RenderContext,
+) -> Vec<String> {
+    let styled = context.interactive && !context.plain;
+    let panel_width: usize = 33;
+    let content_width = panel_width - 4;
+    let title = "CLEAN ROOM";
+    let version = concat!("v", env!("CARGO_PKG_VERSION"));
+    let mounting_rail_top = "╓──○──╖";
+    let mounting_rail_bottom = "╙──○──╜";
+    let mounting_rail_fill = "║░░░░░║";
+    let standoff_marker = "⠒";
+    let mut lines = vec![String::new(), String::new(), String::new()];
+    lines.push(if styled {
+        format!(
+            "\u{1b}[2m{mounting_rail_top}\u{1b}[0m \u{1b}[2m╭─ \u{1b}[0m\u{1b}[1;36m{title}\u{1b}[0m\u{1b}[2m ─ {version} ─╮\u{1b}[0m"
+        )
+    } else {
+        format!("{mounting_rail_top} ╭─ {title} ─ {version} ─╮")
+    });
+
+    let skill_state = if selected_global_skills == 0 {
+        "off".to_owned()
+    } else {
+        format!("{selected_global_skills} on")
+    };
+    let status_row = |label: &str, state: &str| {
+        let plain = format!("    {label:<16}  {state:>4}");
+        let decorated = format!("    \u{1b}[1m{label:<16}\u{1b}[0m  {state:>4}");
+        (plain, decorated)
+    };
+    let rows = vec![
+        (String::new(), String::new()),
+        status_row("Global CLAUDE.md", "off"),
+        status_row("Global skills", &skill_state),
+        status_row("User settings", "off"),
+        status_row("Auto memory", "off"),
+        (String::new(), String::new()),
+    ];
+    for (plain, decorated) in rows {
+        let padding = " ".repeat(content_width.saturating_sub(plain.chars().count()));
+        lines.push(if styled {
+            format!(
+                "\u{1b}[2m{mounting_rail_fill}{standoff_marker}│\u{1b}[0m {}{padding} \u{1b}[2m│\u{1b}[0m",
+                decorated
+            )
+        } else {
+            format!("{mounting_rail_fill}{standoff_marker}│ {plain}{padding} │")
+        });
+    }
+
+    let project_skills = count_claude_project_skills(project);
+    let main_bottom_border = if project_skills > 0 {
+        "───────────╥───────╥───────────".to_owned()
+    } else {
+        "─".repeat(panel_width - 2)
+    };
+    lines.push(if styled {
+        format!("\u{1b}[2m{mounting_rail_bottom} ╰{main_bottom_border}╯\u{1b}[0m")
+    } else {
+        format!("{mounting_rail_bottom} ╰{main_bottom_border}╯")
+    });
+    if project_skills > 0 {
+        let card_indent = " ".repeat(mounting_rail_top.chars().count() + 1);
+        let project_skill_state = format!("{project_skills} on");
+        let plain = format!("    Project skills{project_skill_state:>7}");
+        let padding = " ".repeat(content_width.saturating_sub(plain.chars().count()));
+        lines.push(if styled {
+            format!("{card_indent}\u{1b}[2m╭───────────╨───────╨───────────╮\u{1b}[0m")
+        } else {
+            format!("{card_indent}╭───────────╨───────╨───────────╮")
+        });
+        lines.push(if styled {
+            format!(
+                "{card_indent}\u{1b}[2m│\u{1b}[0m     \u{1b}[1mProject skills\u{1b}[0m{project_skill_state:>7}{padding} \u{1b}[2m│\u{1b}[0m"
+            )
+        } else {
+            format!("{card_indent}│ {plain}{padding} │")
+        });
+        lines.push(if styled {
+            format!("{card_indent}\u{1b}[2m╰───────────────────────────────╯\u{1b}[0m")
+        } else {
+            format!("{card_indent}╰───────────────────────────────╯")
         });
     }
     lines.push(String::new());
@@ -347,10 +457,18 @@ pub fn render_isolated_preview_for(
 }
 
 fn count_project_skills(project: &Path) -> usize {
+    count_project_skills_in(project, ".agents/skills")
+}
+
+fn count_claude_project_skills(project: &Path) -> usize {
+    count_project_skills_in(project, ".claude/skills")
+}
+
+fn count_project_skills_in(project: &Path, relative_root: &str) -> usize {
     let Ok(project) = fs::canonicalize(project) else {
         return 0;
     };
-    let Ok(entries) = fs::read_dir(project.join(".agents/skills")) else {
+    let Ok(entries) = fs::read_dir(project.join(relative_root)) else {
         return 0;
     };
     entries

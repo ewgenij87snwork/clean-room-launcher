@@ -3,6 +3,11 @@ set -euo pipefail
 root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)
 out_dir=${1:-"$root/target/artifacts"}
 target=${TASKSEAL_TARGET:-}
+qualification=${CLROOM_ARTIFACT_QUALIFICATION:-NOT_QUALIFIED}
+case "$qualification" in
+  QUALIFIED|NOT_QUALIFIED) ;;
+  *) echo "invalid artifact qualification" >&2; exit 2 ;;
+esac
 version=$(sed -n 's/^version = "\([^"]*\)"/\1/p' "$root/Cargo.toml" | head -1)
 commit=${TASKSEAL_SOURCE_COMMIT:-}
 if [[ -z "$commit" ]] && git -C "$root" rev-parse --is-inside-work-tree >/dev/null 2>&1; then commit=$(git -C "$root" rev-parse HEAD); fi
@@ -45,7 +50,7 @@ cargo_lock_sha=$(shasum -a 256 "$root/Cargo.lock" | awk '{print $1}')
 rustc_version=$(rustc --version)
 cargo_version=$(cargo --version)
 python_version=$(python3 --version)
-printf 'version=%s\nsource_commit=%s\nrust_toolchain=%s\ntarget=%s\nrustc=%s\ncargo=%s\npython=%s\npackaging_script_sha256=%s\nnotice_generator_sha256=%s\nlicense_policy_sha256=%s\nnotice_policy_sha256=%s\ncargo_lock_sha256=%s\narchive_profile=normalized-local-toolchain\nqualification=NOT_QUALIFIED\nsigning=unsigned-preview-only\ndependencies=cargo-lock\n' "$version" "$commit" "$toolchain" "$target_label" "$rustc_version" "$cargo_version" "$python_version" "$script_sha" "$notice_generator_sha" "$license_policy_sha" "$notice_policy_sha" "$cargo_lock_sha" > "$stage/VERSION"
+printf 'version=%s\nsource_commit=%s\nrust_toolchain=%s\ntarget=%s\nrustc=%s\ncargo=%s\npython=%s\npackaging_script_sha256=%s\nnotice_generator_sha256=%s\nlicense_policy_sha256=%s\nnotice_policy_sha256=%s\ncargo_lock_sha256=%s\narchive_profile=normalized-local-toolchain\nqualification=%s\nsigning=unsigned-preview-only\ndependencies=cargo-lock\n' "$version" "$commit" "$toolchain" "$target_label" "$rustc_version" "$cargo_version" "$python_version" "$script_sha" "$notice_generator_sha" "$license_policy_sha" "$notice_policy_sha" "$cargo_lock_sha" "$qualification" > "$stage/VERSION"
 install -m 0644 "$root/CHANGELOG.md" "$stage/share/doc/clean-room-launcher/CHANGELOG.md"
 archive="$out_dir/clean-room-launcher-v$version-$target_label.tar.gz"
 python3 - "$stage" "$archive" <<'PY'
@@ -72,4 +77,4 @@ with open(archive, "wb") as raw:
 print(hashlib.sha256(open(archive, "rb").read()).hexdigest())
 PY
 echo "ARTIFACT=$archive"
-echo "QUALIFICATION=NOT_QUALIFIED"
+echo "QUALIFICATION=$qualification"

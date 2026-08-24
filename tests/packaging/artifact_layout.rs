@@ -3,7 +3,8 @@ fn root() -> std::path::PathBuf { Path::new(env!("CARGO_MANIFEST_DIR")).to_path_
 #[test]
 fn build_script_declares_safe_deterministic_complete_layout() {
     let script = fs::read_to_string(root().join("packaging/build-artifacts.sh")).unwrap();
-    for needle in ["cargo build --locked", "source_commit=", "rust_toolchain=", "rustc=", "cargo=", "python=", "qualification=NOT_QUALIFIED", "signing=unsigned-preview-only", "mtime=0", "info.uid = info.gid = 0", "bin/clroom", "clean-room-launcher-v", "LICENSE", "NOTICE", "gzip.GzipFile"] { assert!(script.contains(needle), "missing layout control: {}", needle); }
+    for needle in ["cargo build --locked", "source_commit=", "rust_toolchain=", "rustc=", "cargo=", "python=", "CLROOM_ARTIFACT_QUALIFICATION", "qualification=%s", "signing=unsigned-preview-only", "mtime=0", "info.uid = info.gid = 0", "bin/clroom", "clean-room-launcher-v", "LICENSE", "NOTICE", "gzip.GzipFile"] { assert!(script.contains(needle), "missing layout control: {}", needle); }
+    assert!(script.contains("QUALIFIED|NOT_QUALIFIED"));
 }
 #[test]
 fn archive_fixture_names_are_path_safe_and_complete() {

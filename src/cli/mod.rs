@@ -17,6 +17,10 @@ use std::io::{IsTerminal, Write};
 use std::path::PathBuf;
 use std::process::ExitCode;
 
+use taskseal::adapters::claude::isolation::{
+    IsolationError as ClaudeIsolationError, plan as plan_claude,
+};
+use taskseal::adapters::claude::projection::{ProjectionError, project};
 use taskseal::adapters::codex::isolation::{IsolationError, IsolationInputs, plan_with_skills};
 
 pub fn run(invoked_as: &str, args: impl IntoIterator<Item = String>) -> ExitCode {
@@ -33,6 +37,9 @@ pub fn run(invoked_as: &str, args: impl IntoIterator<Item = String>) -> ExitCode
     }
     if first == "codex" {
         return run_codex(&mut source);
+    }
+    if first == "claude" {
+        return run_claude(&mut source);
     }
     if let Some(exit) = external_prefix(&first) {
         return exit;
@@ -91,6 +98,33 @@ fn run_codex(source: &mut impl Iterator<Item = String>) -> ExitCode {
     }
 }
 
+fn run_claude(source: &mut impl Iterator<Item = String>) -> ExitCode {
+    let first = match next_argument(source) {
+        Ok(argument) => argument,
+        Err(exit) => return exit,
+    };
+    if first
+        .as_deref()
+        .is_some_and(|argument| matches!(argument, "auth" | "login" | "logout"))
+    {
+        return external_refusal(parser::Command::Provider, false);
+    }
+    let mut args = first.into_iter().collect::<Vec<_>>();
+    while let Some(argument) = match next_argument(source) {
+        Ok(argument) => argument,
+        Err(exit) => return exit,
+    } {
+        args.push(argument);
+    }
+    match launch_isolated_claude(&args) {
+        Ok(exit) => exit,
+        Err(message) => {
+            eprintln!("{message}");
+            ExitCode::from(2)
+        }
+    }
+}
+
 fn launch_isolated_codex(args: &[String]) -> Result<ExitCode, String> {
     let (selection_terms, provider_args) = select_global_skills(args)?;
     let home = std::env::var_os("HOME").map(PathBuf::from).ok_or_else(|| {
@@ -122,6 +156,37 @@ fn launch_isolated_codex(args: &[String]) -> Result<ExitCode, String> {
         );
     }
     process::launch_isolated_codex(&plan, &executable, &provider_args)
+}
+
+fn launch_isolated_claude(args: &[String]) -> Result<ExitCode, String> {
+    let (selection_terms, provider_args) = select_global_skills(args)?;
+    let home = std::env::var_os("HOME").map(PathBuf::from).ok_or_else(|| {
+        "CLROOM_CLAUDE_ISOLATION_INVALID: HOME is unavailable; continue locally".to_owned()
+    })?;
+    let selectors = skill_sets::expand(&selection_terms, &home)?;
+    let mut projection = project(&home, &selectors).map_err(projection_error_message)?;
+    let executable = process::resolve_claude_executable()?;
+    let current_project = std::env::current_dir().map_err(|_| {
+        "CLROOM_CLAUDE_ISOLATION_INVALID: current project is unavailable; continue locally"
+            .to_owned()
+    })?;
+    let isolation = plan_claude(
+        &current_project,
+        &executable,
+        &home,
+        projection.storage_root(),
+        &projection.add_dir,
+        projection.allowed_source_paths(),
+    )
+    .map_err(claude_isolation_error_message)?;
+    if std::io::stderr().is_terminal() {
+        eprintln!(
+            "{}",
+            screen::render_claude_preview(&current_project, projection.selected_global_skills,)
+                .join("\n")
+        );
+    }
+    process::launch_claude(&isolation, &mut projection, &executable, &provider_args)
 }
 
 fn select_global_skills(args: &[String]) -> Result<(Vec<String>, Vec<String>), String> {
@@ -156,6 +221,28 @@ fn isolation_error_message(error: IsolationError) -> String {
         ),
         _ => "CLROOM_ISOLATION_INVALID: current project or context boundary is invalid; continue locally".to_owned(),
     }
+}
+
+fn projection_error_message(error: ProjectionError) -> String {
+    match error {
+        ProjectionError::InvalidSelector(selector) => format!(
+            "CLROOM_SKILL_SELECTOR_INVALID: invalid skill selector '{selector}'; use --skill-set=name[,namespace:name,@set]"
+        ),
+        ProjectionError::UnknownSelector(selector) => format!(
+            "CLROOM_SKILL_SELECTOR_UNKNOWN: unknown skill selector '{selector}'; continue locally"
+        ),
+        ProjectionError::NameCollision(name) => format!(
+            "CLROOM_SKILL_SELECTOR_AMBIGUOUS: selected Claude skills collide at native name '{name}'; choose one source"
+        ),
+        ProjectionError::Unavailable => {
+            "CLROOM_CLAUDE_ISOLATION_INVALID: session-only skill projection is unavailable; continue locally".to_owned()
+        }
+    }
+}
+
+fn claude_isolation_error_message(_: ClaudeIsolationError) -> String {
+    "CLROOM_CLAUDE_ISOLATION_INVALID: current project or context boundary is invalid; continue locally"
+        .to_owned()
 }
 
 fn next_argument(source: &mut impl Iterator<Item = String>) -> Result<Option<String>, ExitCode> {

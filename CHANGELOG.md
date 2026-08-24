@@ -7,6 +7,35 @@ Semantic Versioning after the first public release.
 
 ## [Unreleased]
 
+## [0.1.0-alpha.4] - 2026-08-23
+
+### Added
+
+- A `clroom claude` launch path with the same explicit one-launch skill
+  selection used by Codex.
+- Private, session-scoped Claude skill projections with normal-exit cleanup,
+  proven-dead crash reaping, and parallel-session isolation.
+- A Claude-specific launch plaque covering global instructions, selected global
+  skills, user settings, auto memory, and project-local skills.
+
+### Changed
+
+- The project-skills card supports are centered beneath both provider plaques.
+- Help, install guidance, provider support, and limitations now describe both
+  qualified macOS provider paths.
+
+### Fixed
+
+- Abrupt terminal closure no longer creates indefinitely accumulating Claude
+  projections: the next launch removes only residues whose owner is proven dead.
+
+### Security
+
+- Claude projections and owner markers use private modes, selected source skills
+  remain read-only, and live, unknown, corrupt, or legacy state is never reaped.
+- Linux and Windows remain explicitly `NOT_QUALIFIED`; this release makes no
+  cross-platform isolation claim beyond macOS on Apple Silicon.
+
 ## [0.1.0-alpha.3] - 2026-08-22
 
 ### Added

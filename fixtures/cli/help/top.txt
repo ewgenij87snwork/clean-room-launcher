@@ -1,7 +1,7 @@
 
 
-Clean Room Launcher v0.1.0-alpha.3
-Launch Codex without
+Clean Room Launcher v0.1.0-alpha.4
+Launch Codex or Claude Code without
 unrelated global instructions and skills.
 
 Launch example:
@@ -9,6 +9,7 @@ clroom codex --skill-set=any-my-skill,@any-my-skill-set --approve-for-me
 
 Usage
   clroom codex [CODEX_ARGS...] Launch Codex
+  clroom claude [CLAUDE_ARGS...] Launch Claude Code
   clroom doctor --root .     Check installation
 
 Skill sets

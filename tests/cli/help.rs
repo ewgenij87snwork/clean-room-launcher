@@ -69,6 +69,7 @@ fn top_help_shows_the_single_skill_set_option_and_resolved_file() {
         "Open file and create skill groups and reuse them by name, such as\n  @any-my-skill-set."
     ));
     assert!(stdout.contains("clroom codex [CODEX_ARGS...]"));
+    assert!(stdout.contains("clroom claude [CLAUDE_ARGS...]"));
     assert!(!stdout.contains("--skills="));
     assert!(output.stderr.is_empty());
 }
@@ -89,10 +90,10 @@ fn tty_help_uses_hierarchy_without_changing_redirected_output() {
     assert_eq!(styled.status.code(), Some(0));
     let styled = String::from_utf8(styled.stdout).unwrap();
     assert!(styled.starts_with(
-        "\n\n\u{1b}[1;36mClean Room Launcher\u{1b}[0m \u{1b}[2mv0.1.0-alpha.3\u{1b}[0m\n"
+        "\n\n\u{1b}[1;36mClean Room Launcher\u{1b}[0m \u{1b}[2mv0.1.0-alpha.4\u{1b}[0m\n"
     ));
     assert!(styled.contains(
-        "\u{1b}[2mLaunch Codex without\u{1b}[0m\n\u{1b}[2munrelated global instructions and skills.\u{1b}[0m"
+        "\u{1b}[2mLaunch Codex or Claude Code without\u{1b}[0m\n\u{1b}[2munrelated global instructions and skills.\u{1b}[0m"
     ));
     assert!(styled.contains("\u{1b}[2mLaunch example:\u{1b}[0m\n\u{1b}[1mclroom codex "));
     assert!(styled.contains("\u{1b}[1mclroom codex "));
@@ -152,7 +153,11 @@ fn skill_set_help_topic_explains_selectors_and_the_editable_yaml_file() {
         let output = run(&["help", topic]);
         assert_eq!(output.status.code(), Some(0));
         let stdout = String::from_utf8(output.stdout).unwrap();
-        assert!(stdout.contains("clroom codex --skill-set=<SKILL_OR_SET>[,...] [CODEX_ARGS...]"));
+        assert!(
+            stdout.contains(
+                "clroom <codex|claude> --skill-set=<SKILL_OR_SET>[,...] [PROVIDER_ARGS...]"
+            )
+        );
         assert!(stdout.contains("/tmp/clroom-help-config/clroom/skill-sets.yaml"));
         assert!(stdout.contains("any-my-skill-set:"));
         assert!(stdout.contains("  - any-my-skill"));

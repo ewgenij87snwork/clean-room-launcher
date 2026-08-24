@@ -31,7 +31,8 @@ try:
         clroom = tar.extractfile(root + "/bin/clroom").read()
         if PRIVATE_HOME.search(clroom): fail("binary contains a private HOME path")
         version = tar.extractfile(root + "/VERSION").read().decode("utf-8")
-        if "qualification=NOT_QUALIFIED\n" not in version or "source_commit=" not in version: fail("unbound qualification metadata")
+        qualification = re.findall(r"^qualification=(QUALIFIED|NOT_QUALIFIED)$", version, re.MULTILINE)
+        if len(qualification) != 1 or "source_commit=" not in version: fail("unbound qualification metadata")
         for field in ("notice_generator_sha256", "license_policy_sha256", "notice_policy_sha256", "cargo_lock_sha256"):
             if not re.search(rf"^{field}=[0-9a-f]{{64}}$", version, re.MULTILINE): fail("unbound notice metadata")
         notice = tar.extractfile(root + "/NOTICE").read().decode("utf-8")

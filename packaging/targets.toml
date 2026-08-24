@@ -1,9 +1,9 @@
-# TaskSeal v0.1 P07 target matrix.
-# P06 currently has no QUALIFIED receipt.  Therefore this alpha scaffold is
-# deliberately not an advertised release lane and no RC target is claimed.
+# TaskSeal v0.1 P08 target matrix.
+# Exact-subject macOS acceptance qualifies the single advertised alpha lane.
+# Unsupported and missing-runner fixtures remain excluded from release claims.
 schema_version = "taskseal.packaging-targets.v1"
-advertised_targets = []
-qualified_targets = []
+advertised_targets = ["alpha-macos-aarch64"]
+qualified_targets = ["alpha-macos-aarch64"]
 claims_policy = "advertised targets exactly equal qualified build/test lanes"
 
 # Matrix fixtures are data, not release claims. Unsupported and missing-runner
@@ -18,7 +18,7 @@ target_entry_policy = "CI selects only names listed in qualified_targets and ver
 name = "alpha-macos-aarch64"
 rust_target = "aarch64-apple-darwin"
 runner = "macos-14"
-qualification_status = "NOT_QUALIFIED"
+qualification_status = "QUALIFIED"
 artifact_name = "taskseal-v0.1.0-alpha-macos-aarch64"
 required_checks = "fmt, clippy, test, schema, target-matrix"
 signing_policy = "unsigned-preview-only"

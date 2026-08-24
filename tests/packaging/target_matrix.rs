@@ -58,7 +58,12 @@ fn workflow_is_bound_to_qualified(source: &str) -> bool {
         && source.contains("rust_target")
         && source.contains("runs-on: ${{ matrix.runner }}")
         && source.contains("matrix:")
+        && source.contains("name: alpha-macos-aarch64")
+        && source.contains("runner: macos-14")
+        && source.contains("rust_target: aarch64-apple-darwin")
         && source.contains("cargo test")
+        && !source.contains("test -z \"$qualified\"")
+        && !source.contains("for target in $qualified")
         && !source.contains("continue-on-error")
         && !source.contains("if: always()")
         && !source.contains("cargo fmt --all")
@@ -183,7 +188,10 @@ fn receipt_topology_is_durable(root: &Path, receipt: &str) -> Result<(), String>
 fn matrix_advertised_targets_exactly_equal_qualified_lanes() {
     let matrix = read("packaging/targets.toml");
     assert!(matrix_is_honest(&matrix));
-    assert!(list_value(&matrix, "advertised_targets").is_empty());
+    assert_eq!(
+        list_value(&matrix, "advertised_targets"),
+        ["alpha-macos-aarch64"]
+    );
     for target in target_blocks(&matrix) {
         for field in ["name", "rust_target", "runner", "qualification_status", "artifact_name", "required_checks", "signing_policy"] {
             assert!(target.contains_key(field), "target is missing {}", field);
@@ -197,9 +205,16 @@ fn matrix_advertised_targets_exactly_equal_qualified_lanes() {
 #[test]
 fn matrix_mutations_refuse_false_claims_and_mismatched_lists() {
     let matrix = read("packaging/targets.toml");
-    let advertised_false = matrix.replace("advertised_targets = []", "advertised_targets = [\"alpha-macos-aarch64\"]");
-    assert!(!matrix_is_honest(&advertised_false), "non-empty NOT_QUALIFIED claim must fail");
-    let lists_mismatch = matrix.replace("qualified_targets = []", "qualified_targets = [\"alpha-macos-aarch64\"]");
+    let advertised_false = matrix.replacen(
+        "qualification_status = \"QUALIFIED\"",
+        "qualification_status = \"NOT_QUALIFIED\"",
+        1,
+    );
+    assert!(!matrix_is_honest(&advertised_false), "a NOT_QUALIFIED advertised target must fail");
+    let lists_mismatch = matrix.replace(
+        "qualified_targets = [\"alpha-macos-aarch64\"]",
+        "qualified_targets = []",
+    );
     assert!(!matrix_is_honest(&lists_mismatch), "advertised/qualified mismatch must fail");
 }
 

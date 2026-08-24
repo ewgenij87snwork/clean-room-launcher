@@ -33,6 +33,28 @@ impl Drop for TempProject {
     }
 }
 
+fn assert_project_supports_centered(output: &str) {
+    let support_columns = |line: &str, support: char| {
+        line.chars()
+            .enumerate()
+            .filter_map(|(column, glyph)| (glyph == support).then_some(column))
+            .collect::<Vec<_>>()
+    };
+    let main_line = output.lines().find(|line| line.contains('╥')).unwrap();
+    let project_line = output.lines().find(|line| line.contains('╨')).unwrap();
+    let main_supports = support_columns(main_line, '╥');
+    let project_supports = support_columns(project_line, '╨');
+
+    assert_eq!(main_supports, project_supports);
+    assert_eq!(main_supports.len(), 2);
+    let plaque_left = main_line.chars().position(|glyph| glyph == '╰').unwrap();
+    let plaque_right = main_line.chars().position(|glyph| glyph == '╯').unwrap();
+    assert_eq!(
+        main_supports[0] + main_supports[1],
+        plaque_left + plaque_right
+    );
+}
+
 #[test]
 fn isolated_preview_renders_the_accepted_plain_launch_receipt() {
     // Break caught: the approved receipt geometry, spacing, or boundary claims drift.
@@ -51,7 +73,7 @@ fn isolated_preview_renders_the_accepted_plain_launch_receipt() {
     assert_eq!(
         output,
         "\n\n\n\
-╓──○──╖ ╭─ CLEAN ROOM ──────────────────╮\n\
+╓──○──╖ ╭─ CLEAN ROOM ─ v0.1.0-alpha.4 ─╮\n\
 ║░░░░░║⠒│                               │\n\
 ║░░░░░║⠒│     Global AGENTS.md  off     │\n\
 ║░░░░░║⠒│     Global skills     off     │\n\
@@ -60,7 +82,7 @@ fn isolated_preview_renders_the_accepted_plain_launch_receipt() {
 ║░░░░░║⠒│     Dev prompt        off     │\n\
 ║░░░░░║⠒│     Notifications     off     │\n\
 ║░░░░░║⠒│                               │\n\
-╙──○──╜ ╰────────────── v0.1.0-alpha.3 ─╯\n"
+╙──○──╜ ╰───────────────────────────────╯\n"
     );
 }
 
@@ -80,8 +102,10 @@ fn isolated_preview_styles_only_the_visual_hierarchy() {
     .join("\n");
 
     assert!(output.starts_with("\n\n\n\u{1b}[2m╓──○──╖\u{1b}[0m "));
-    assert!(output.contains("\u{1b}[1;36mCLEAN ROOM\u{1b}[0m"));
-    assert!(output.contains("\u{1b}[2m╙──○──╜ ╰────────────── v0.1.0-alpha.3 ─╯\u{1b}[0m"));
+    assert!(
+        output.contains("\u{1b}[1;36mCLEAN ROOM\u{1b}[0m\u{1b}[2m ─ v0.1.0-alpha.4 ─╮\u{1b}[0m")
+    );
+    assert!(output.contains("\u{1b}[2m╙──○──╜ ╰───────────────────────────────╯\u{1b}[0m"));
     assert!(
         output.contains("\u{1b}[2m║░░░░░║⠒│\u{1b}[0m     \u{1b}[1mGlobal AGENTS.md\u{1b}[0m  off")
     );
@@ -109,9 +133,78 @@ fn isolated_preview_reports_the_number_of_selected_global_skills() {
 }
 
 #[test]
-fn isolated_preview_adds_an_untitled_card_for_valid_project_skills_only() {
-    // Break caught: project-local skills remain available but the launch receipt
-    // either hides that value or counts arbitrary directories as skills.
+fn claude_preview_reports_only_proven_claude_boundaries() {
+    // Break caught: Claude inherits Codex-only claims or counts `.agents/skills`
+    // instead of the project skills Claude actually discovers.
+    let project = TempProject::new("claude-project-skills-card");
+    for name in ["lab", "ship"] {
+        let skill = project.path().join(".claude/skills").join(name);
+        fs::create_dir_all(&skill).unwrap();
+        fs::write(skill.join("SKILL.md"), format!("# {name}\n")).unwrap();
+    }
+    let ignored = project.path().join(".agents/skills/ignored");
+    fs::create_dir_all(&ignored).unwrap();
+    fs::write(ignored.join("SKILL.md"), "# ignored\n").unwrap();
+
+    let output = screen::render_claude_preview_for(
+        project.path(),
+        2,
+        screen::RenderContext {
+            width: 100,
+            interactive: true,
+            plain: true,
+        },
+    )
+    .join("\n");
+
+    assert!(output.contains("Global CLAUDE.md"));
+    assert!(output.contains("Global skills"));
+    assert!(output.contains("2 on"));
+    assert!(output.contains("User settings"));
+    assert!(output.contains("Auto memory"));
+    assert!(output.contains("Project skills   2 on"));
+    assert_project_supports_centered(&output);
+    assert_eq!(output.matches("v0.1.0-alpha.4").count(), 1);
+    for codex_only in [
+        "Global AGENTS.md",
+        "Apps",
+        "Hooks/plugins",
+        "Dev prompt",
+        "Notifications",
+    ] {
+        assert!(
+            !output.contains(codex_only),
+            "unexpected Claude claim: {codex_only}"
+        );
+    }
+}
+
+#[test]
+fn claude_preview_omits_project_card_when_no_claude_project_skill_exists() {
+    let project = TempProject::new("claude-no-project-skills-card");
+    let ignored = project.path().join(".agents/skills/ignored");
+    fs::create_dir_all(&ignored).unwrap();
+    fs::write(ignored.join("SKILL.md"), "# ignored\n").unwrap();
+
+    let output = screen::render_claude_preview_for(
+        project.path(),
+        0,
+        screen::RenderContext {
+            width: 100,
+            interactive: true,
+            plain: true,
+        },
+    )
+    .join("\n");
+
+    assert!(output.contains("Global skills      off"));
+    assert!(!output.contains("Project skills"));
+}
+
+#[test]
+fn isolated_preview_keeps_the_version_top_right_and_project_supports_symmetric() {
+    // Break caught: adding the project-skills card moves the package version away
+    // from the stable top-right anchor or displaces either attachment support.
     let project = TempProject::new("project-skills-card");
     for name in ["planning", "review"] {
         let skill = project.path().join(".agents/skills").join(name);
@@ -132,17 +225,21 @@ fn isolated_preview_adds_an_untitled_card_for_valid_project_skills_only() {
     )
     .join("\n");
 
+    assert!(output.contains("╓──○──╖ ╭─ CLEAN ROOM ─ v0.1.0-alpha.4 ─╮"));
     let expected_attachment = [
-        "╙──○──╜ ╰───────╥───────────────╥───────╯",
-        "        ╭───────╨───────────────╨───────╮",
+        "╙──○──╜ ╰───────────╥───────╥───────────╯",
+        "        ╭───────────╨───────╨───────────╮",
         "        │     Project skills   2 on     │",
-        "        ╰────────────── v0.1.0-alpha.3 ─╯",
+        "        ╰───────────────────────────────╯",
     ]
     .join("\n");
     assert!(
         output.contains(&expected_attachment),
         "unexpected project-skills plaque:\n{output}"
     );
+
+    assert_project_supports_centered(&output);
+    assert_eq!(output.matches("v0.1.0-alpha.4").count(), 1);
     assert!(!output.contains("╭─ Project"));
 }
 

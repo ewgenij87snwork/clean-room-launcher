@@ -1,5 +1,7 @@
 #[path = "cli/argv_passthrough.rs"]
 mod argv_passthrough;
+#[path = "cli/claude_launch.rs"]
+mod claude_launch;
 #[allow(clippy::duplicate_mod)] // Real cli::run is imported to test lazy argv consumption.
 #[path = "../src/cli/mod.rs"]
 mod cli_entry;

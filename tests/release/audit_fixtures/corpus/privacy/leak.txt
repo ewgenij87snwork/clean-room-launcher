@@ -1,5 +1,0 @@
-Synthetic Task 7 fixture; never a real credential.
-private_path=/Users/example/private/taskseal/context.txt
-private_key=-----BEGIN PRIVATE KEY-----
-QUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFB
------END PRIVATE KEY-----
