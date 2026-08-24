@@ -90,7 +90,7 @@ fn tty_help_uses_hierarchy_without_changing_redirected_output() {
     assert_eq!(styled.status.code(), Some(0));
     let styled = String::from_utf8(styled.stdout).unwrap();
     assert!(styled.starts_with(
-        "\n\n\u{1b}[1;36mClean Room Launcher\u{1b}[0m \u{1b}[2mv0.1.0-alpha.4.1\u{1b}[0m\n"
+        "\n\n\u{1b}[1;36mClean Room Launcher\u{1b}[0m \u{1b}[2mv0.1.0-alpha.4.2\u{1b}[0m\n"
     ));
     assert!(styled.contains(
         "\u{1b}[2mLaunch Codex or Claude Code without\u{1b}[0m\n\u{1b}[2munrelated global instructions and skills.\u{1b}[0m"

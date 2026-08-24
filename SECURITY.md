@@ -4,7 +4,8 @@
 
 | Version | Status |
 | --- | --- |
-| `0.1.0-alpha.4.1` | Best-effort security fixes during the alpha |
+| `0.1.0-alpha.4.2` | Best-effort security fixes during the alpha |
+| `0.1.0-alpha.4.1` | Superseded by `0.1.0-alpha.4.2` |
 | `0.1.0-alpha.4` | Superseded by `0.1.0-alpha.4.1` |
 | `0.1.0-alpha.3` | Superseded by `0.1.0-alpha.4` |
 | `0.1.0-alpha.2` | Superseded by `0.1.0-alpha.3` |

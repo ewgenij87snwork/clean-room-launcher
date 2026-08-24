@@ -7,6 +7,14 @@ Semantic Versioning after the first public release.
 
 ## [Unreleased]
 
+## [0.1.0-alpha.4.2] - 2026-08-24
+
+### Fixed
+
+- Tag CI exposed a concurrent reaper/owner cleanup race; cleanup is idempotent
+  only for an absent generated session leaf beneath the exact validated private
+  layout, while unsafe ancestors and leaves remain fail-closed.
+
 ## [0.1.0-alpha.4.1] - 2026-08-24
 
 ### Changed
