@@ -60,7 +60,7 @@ fn production_pipeline_loads_baseline_protected_categories_without_caller_flag()
 }
 
 #[test]
-fn committed_acceptance_evidence_is_derived_from_production_pipeline() {
+fn acceptance_evidence_matches_pipeline_or_is_publicly_excluded() {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("fixtures/catalog/native-projection");
     let sources = enumerate_sources(
         &SkillSourceConfig::new(vec![(root.clone(), SkillSourceAuthority::Project)]),
@@ -84,14 +84,19 @@ fn committed_acceptance_evidence_is_derived_from_production_pipeline() {
         },
     )
     .unwrap();
-    let evidence: serde_json::Value = serde_json::from_slice(
-        &std::fs::read(
-            PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-                .join("reports/gates/p04/acceptance-evidence.json"),
+    let project_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    let evidence_path = project_root.join("reports/gates/p04/acceptance-evidence.json");
+    if !evidence_path.is_file() {
+        let inventory = std::fs::read_to_string(
+            project_root.join("qualification/public-release-inventory-v1.json"),
         )
-        .unwrap(),
-    )
-    .unwrap();
+        .unwrap();
+        assert!(inventory.contains("IMMUTABLE_INTERNAL_EVIDENCE_EXCLUDED_FROM_PUBLIC_SOURCE"));
+        assert!(inventory.contains("\"reports/gates\""));
+        return;
+    }
+    let evidence: serde_json::Value =
+        serde_json::from_slice(&std::fs::read(evidence_path).unwrap()).unwrap();
     let manifest = validated.manifest();
     assert_eq!(evidence["census"]["total"], manifest.counts.total);
     assert_eq!(
