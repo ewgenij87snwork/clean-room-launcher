@@ -12,12 +12,16 @@ fn guard(root: &Path) -> Output {
 #[test]
 fn clean_public_inventory_passes() {
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/public-boundary/clean");
-    let output = guard(&root);
-    assert!(
-        output.status.success(),
-        "{}",
-        String::from_utf8_lossy(&output.stderr)
-    );
+    if root.exists() {
+        let output = guard(&root);
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+    } else {
+        assert_negative_fixtures_are_excluded();
+    }
 
     let repository = Path::new(env!("CARGO_MANIFEST_DIR"));
     let output = guard(repository);
@@ -36,17 +40,20 @@ fn poisoned_public_inventory_fails_with_a_stable_reason() {
         ("credential", "CREDENTIAL_TOKEN"),
         ("transcript", "TRANSCRIPT_FRAGMENT"),
     ];
-    for (fixture, reason) in fixtures {
-        let root = Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("tests/fixtures/public-boundary")
-            .join(fixture);
-        let output = guard(&root);
-        assert!(!output.status.success(), "{fixture} unexpectedly passed");
-        assert_eq!(
-            String::from_utf8_lossy(&output.stderr).trim(),
-            reason,
-            "{fixture}"
-        );
+    let fixtures_root = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/public-boundary");
+    if fixtures_root.exists() {
+        for (fixture, reason) in fixtures {
+            let root = fixtures_root.join(fixture);
+            let output = guard(&root);
+            assert!(!output.status.success(), "{fixture} unexpectedly passed");
+            assert_eq!(
+                String::from_utf8_lossy(&output.stderr).trim(),
+                reason,
+                "{fixture}"
+            );
+        }
+    } else {
+        assert_negative_fixtures_are_excluded();
     }
 
     let symlink_root = std::env::temp_dir().join(format!(
@@ -66,6 +73,18 @@ fn poisoned_public_inventory_fails_with_a_stable_reason() {
         String::from_utf8_lossy(&output.stderr).trim(),
         "SYMLINK_ESCAPE"
     );
+}
+
+fn assert_negative_fixtures_are_excluded() {
+    let inventory: serde_json::Value = serde_json::from_slice(
+        &std::fs::read("qualification/public-release-inventory-v1.json")
+            .expect("public release inventory exists"),
+    )
+    .expect("public release inventory parses");
+    let excluded = inventory["negative_fixture_paths"]
+        .as_array()
+        .expect("negative fixture paths are listed");
+    assert!(excluded.iter().any(|path| path == "tests/fixtures"));
 }
 
 #[test]
