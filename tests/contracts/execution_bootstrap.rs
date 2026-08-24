@@ -4,6 +4,11 @@ use std::process::Command;
 
 #[test]
 fn checked_in_authority_schema_accepts_only_the_exact_private_receipt() {
+    if !Path::new("AGENTS.md").exists() {
+        assert_private_execution_surface_is_excluded();
+        return;
+    }
+
     let authority =
         fs::read(".taskseal-dev/execution-authority.json").expect("private authority exists");
     let schema =
@@ -52,6 +57,11 @@ fn checked_in_authority_schema_accepts_only_the_exact_private_receipt() {
 
 #[test]
 fn root_instructions_match_the_sealed_template() {
+    if !Path::new("AGENTS.md").exists() {
+        assert_private_execution_surface_is_excluded();
+        return;
+    }
+
     let local = fs::read("AGENTS.md").expect("root AGENTS exists");
     let authority: serde_json::Value = serde_json::from_slice(
         &fs::read(".taskseal-dev/execution-authority.json").expect("private authority exists"),
@@ -79,6 +89,23 @@ fn root_instructions_match_the_sealed_template() {
             .permissions()
             .readonly()
     );
+}
+
+fn assert_private_execution_surface_is_excluded() {
+    let inventory: serde_json::Value = serde_json::from_slice(
+        &fs::read("qualification/public-release-inventory-v1.json")
+            .expect("public release inventory exists"),
+    )
+    .expect("public release inventory parses");
+    let excluded = inventory["excluded_internal_paths"]
+        .as_array()
+        .expect("excluded internal paths are listed");
+    assert!(excluded.iter().any(|path| path == ".taskseal-dev"));
+    let public = inventory["public_paths"]
+        .as_array()
+        .expect("public paths are listed");
+    assert!(!public.iter().any(|path| path == "AGENTS.md"));
+    assert!(!Path::new("AGENTS.md").exists());
 }
 
 fn authority_without(bytes: &[u8], key: &str) -> Vec<u8> {
