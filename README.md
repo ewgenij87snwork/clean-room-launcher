@@ -411,6 +411,14 @@ Report bugs or request features in
 [GitHub Issues](https://github.com/ewgenij87snwork/clean-room-launcher/issues).
 For vulnerability reports, follow the private-reporting instructions below.
 
+## Support CLROOM
+
+If CLROOM belongs in your workflow, you can support continued development and testing:
+
+- [Patreon](https://www.patreon.com/CLROOM)
+- [Direct support](https://send.monobank.ua/jar/9UUyaEo717)
+
+
 ## Security
 
 Please do not put credentials, private instructions, prompts, transcripts,
