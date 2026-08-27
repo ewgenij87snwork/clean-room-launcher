@@ -1,4 +1,4 @@
-# Clean Room Launcher
+# Clean Room Launcher (CLROOM)
 
 [![Animated Clean Room Launcher demo: unrelated global inputs stay outside while project context, CLI arguments, and selected global skills reach Codex or Claude Code.](docs/assets/clean-room-launcher-hero.gif)](https://youtu.be/YAEUJM-_VeE)
 
