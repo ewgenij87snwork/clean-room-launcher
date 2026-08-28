@@ -1,4 +1,8 @@
-# Demo
+---
+layout: page
+title: Demo
+permalink: /demo.html
+---
 
 From any project on macOS/Apple Silicon:
 

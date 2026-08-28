@@ -1,4 +1,8 @@
-# Upgrade, roll back and remove
+---
+layout: page
+title: Upgrade, roll back and remove
+permalink: /upgrade-rollback.html
+---
 
 The archive install is one executable. It does not install a daemon, service,
 account or system-wide configuration.

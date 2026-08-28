@@ -1,4 +1,8 @@
-# Threat model
+---
+layout: page
+title: Threat model
+permalink: /threat-model.html
+---
 
 ## Scope and protected assets
 

@@ -1,4 +1,8 @@
-# Install v0.1.0-alpha.4.2
+---
+layout: page
+title: Install v0.1.0-alpha.4.2
+permalink: /install.html
+---
 
 Prerequisites:
 

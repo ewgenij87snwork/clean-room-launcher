@@ -1,4 +1,8 @@
-# Provider support in v0.1.0-alpha.4.2
+---
+layout: page
+title: Provider support in v0.1.0-alpha.4.2
+permalink: /providers.html
+---
 
 The alpha has two supported paths:
 

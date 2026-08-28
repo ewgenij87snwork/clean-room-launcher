@@ -1,4 +1,8 @@
-# Limitations
+---
+layout: page
+title: Limitations
+permalink: /limitations.html
+---
 
 - `v0.1.0-alpha.4.2` is an unsigned, unnotarized prerelease, not a stable release.
 - Only macOS on Apple Silicon with Codex CLI `0.147.0+` or Claude Code CLI
