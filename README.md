@@ -1,4 +1,4 @@
-# <img src="docs/assets/brand/clroom-logo.png" width="40" align="middle" alt=""> Clean Room Launcher (CLROOM)
+# <img src="docs/assets/brand/clroom-logo.png" width="40" alt="" align="middle"> Clean Room Launcher (CLROOM)
 
 [![Animated Clean Room Launcher demo: unrelated global inputs stay outside while project context, CLI arguments, and selected global skills reach Codex or Claude Code.](docs/assets/clean-room-launcher-hero.gif)](https://youtu.be/YAEUJM-_VeE)
 
