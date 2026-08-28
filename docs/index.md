@@ -4,8 +4,6 @@ description: Verified documentation for CLROOM with Codex and Claude Code, inclu
 permalink: /
 ---
 
-# Clean Room Launcher (CLROOM)
-
 Clean Room Launcher (CLROOM) launches the installed Codex or Claude Code CLI with a session-specific clean/selective setup on supported macOS systems. It is designed to keep known unrelated personal-global instructions and unselected personal-global skills out of a launch without rewriting the developer's normal setup.
 
 ## Start here
