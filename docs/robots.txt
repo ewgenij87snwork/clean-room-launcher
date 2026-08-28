@@ -1,0 +1,20 @@
+---
+layout: null
+permalink: /robots.txt
+---
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: Claude-SearchBot
+Allow: /
+
+User-agent: Claude-User
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: *
+Allow: /
+
+Sitemap: https://ewgenij87snwork.github.io/clean-room-launcher/sitemap.xml

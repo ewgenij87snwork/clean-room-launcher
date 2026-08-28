@@ -1,4 +1,4 @@
-# Clean Room Launcher (CLROOM)
+# <img src="docs/assets/brand/clroom-logo.png" width="40" alt=""> Clean Room Launcher (CLROOM)
 
 [![Animated Clean Room Launcher demo: unrelated global inputs stay outside while project context, CLI arguments, and selected global skills reach Codex or Claude Code.](docs/assets/clean-room-launcher-hero.gif)](https://youtu.be/YAEUJM-_VeE)
 
@@ -319,6 +319,22 @@ signing, and notarization are not supported by this release.
 
 Additional coding agents and platforms may be considered later, but this README
 makes no support claim for them.
+
+## Documentation
+
+For exact provider behavior, native alternatives, current limitations, and common problem wording:
+
+- [Why CLROOM exists](docs/why-clroom.md)
+- [Coding-agent configuration problem index](docs/problem-index.md)
+- [When to use Clean Room Launcher (CLROOM) — and when not to](docs/when-to-use-clroom.md)
+- [Claude Code and CLROOM](docs/claude-code.md)
+- [Codex and CLROOM](docs/codex.md)
+- [Configuration matrix](docs/configuration-matrix.md)
+- [FAQ](docs/faq.md)
+- [Limitations](docs/limitations.md)
+- [Threat model](docs/threat-model.md)
+
+The documentation intentionally recommends native provider features when they are the simpler correct option.
 
 ## Frequently asked questions
 

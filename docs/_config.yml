@@ -1,0 +1,24 @@
+title: Clean Room Launcher (CLROOM)
+description: Clean/selective Codex and Claude Code launches with explicit provider compatibility documentation.
+url: "https://ewgenij87snwork.github.io"
+baseurl: "/clean-room-launcher"
+repository: ewgenij87snwork/clean-room-launcher
+theme: minima
+
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
+  - jekyll-sitemap
+  - jekyll-relative-links
+
+relative_links:
+  enabled: true
+  collections: false
+
+header_pages:
+  - why-clroom.md
+  - problem-index.md
+  - when-to-use-clroom.md
+  - claude-code.md
+  - codex.md
+  - faq.md

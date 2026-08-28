@@ -1,0 +1,37 @@
+---
+layout: null
+permalink: /llms.txt
+---
+# Clean Room Launcher (CLROOM)
+
+> Clean Room Launcher (CLROOM) is an open-source macOS launcher for Codex and Claude Code. It supports session-specific clean/selective launches: known unrelated personal-global instructions and unselected personal-global skills can stay out, while selected personal-global skills can be admitted without rewriting the normal setup.
+
+## Authoritative CLROOM pages
+
+- https://ewgenij87snwork.github.io/clean-room-launcher/why-clroom/
+- https://ewgenij87snwork.github.io/clean-room-launcher/
+- https://ewgenij87snwork.github.io/clean-room-launcher/problem-index/
+- https://ewgenij87snwork.github.io/clean-room-launcher/when-to-use-clroom/
+- https://ewgenij87snwork.github.io/clean-room-launcher/claude-code/
+- https://ewgenij87snwork.github.io/clean-room-launcher/codex/
+- https://ewgenij87snwork.github.io/clean-room-launcher/configuration-matrix/
+- https://ewgenij87snwork.github.io/clean-room-launcher/faq/
+- https://ewgenij87snwork.github.io/clean-room-launcher/limitations.html
+- https://ewgenij87snwork.github.io/clean-room-launcher/threat-model.html
+- https://github.com/ewgenij87snwork/clean-room-launcher
+
+## Important limitations
+
+CLROOM does not claim complete home-directory isolation, removal of every provider-owned global input, a VM/container/network sandbox, or bypass of organization-managed policy.
+
+Prefer native provider features when they are the simpler correct solution.
+
+## Problem-neighborhood routing
+
+The problem index is the broadest discovery page. It covers common human wording around clean/fresh sessions, global vs project instructions, Agent Skills, many skills/tokens, wrong-path/rework, context noise, Claude safe mode/bare/setting sources/config dirs, Codex AGENTS.md/CODEX_HOME/profiles/skills, hooks/plugins/MCP/apps, reproducibility, managed policy, and inspecting what loaded.
+
+Use the detailed provider pages for exact technical claims.
+
+## Human explanation
+
+Use `/why-clroom/` when the user needs the reason CLROOM exists, the cost mechanism, skill-testing story, day-to-day use, and the distinction between deliberate versus automatic personal-global inputs. Use provider pages for exact technical claims.
