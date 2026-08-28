@@ -20,23 +20,29 @@ def body(relative: str) -> str:
 
 def main() -> int:
     security = body("SECURITY.md")
-    for needle in (
-        "Reporting status: `NOT_YET_AVAILABLE`",
-        "private vulnerability report",
-        "Do not open a public issue",
-        "does not offer a bounty",
+    security_contract = " ".join(security.split())
+    for pattern in (
+        r"Security\s*→\s*Report a vulnerability",
+        r"private reporting button is unavailable,? do not put exploit details, credentials, private paths, prompts or user context in a public issue",
+        r"Open a minimal public issue asking the maintainer to enable a private channel",
+        r"does not offer a bounty",
     ):
-        if needle not in security:
-            raise SystemExit("P08_PUBLIC_SURFACE_REFUSED:SECURITY:" + needle)
+        if not re.search(pattern, security_contract, re.IGNORECASE):
+            raise SystemExit("P08_PUBLIC_SURFACE_REFUSED:SECURITY:" + pattern)
 
     codeowners = body(".github/CODEOWNERS")
-    if "Status: NOT_YET_ENFORCEABLE" not in codeowners:
+    if "Status: OWNER_MAPPING_PRESENT" not in codeowners:
         raise SystemExit("P08_PUBLIC_SURFACE_REFUSED:CODEOWNERS_STATUS")
-    for protected in ("SECURITY.md", ".github/workflows/", ".github/CODEOWNERS", "scripts/gates/", "packaging/"):
+    if "Review enforcement: NOT_ENABLED" not in codeowners:
+        raise SystemExit("P08_PUBLIC_SURFACE_REFUSED:CODEOWNERS_ENFORCEMENT_STATUS")
+    if "@ewgenij87snwork" not in codeowners:
+        raise SystemExit("P08_PUBLIC_SURFACE_REFUSED:CODEOWNERS_OWNER")
+    active_codeowners = [line for line in codeowners.splitlines() if line.strip() and not line.lstrip().startswith("#")]
+    if not active_codeowners:
+        raise SystemExit("P08_PUBLIC_SURFACE_REFUSED:CODEOWNERS_MAPPING")
+    for protected in ("SECURITY.md", ".github/workflows/", ".github/CODEOWNERS", "scripts/gates/", "scripts/release/", "packaging/", "qualification/", "reports/gates/", "reports/release/"):
         if protected not in codeowners:
             raise SystemExit("P08_PUBLIC_SURFACE_REFUSED:PROTECTED_PATH:" + protected)
-    if any(line.strip() and not line.lstrip().startswith("#") for line in codeowners.splitlines()):
-        raise SystemExit("P08_PUBLIC_SURFACE_REFUSED:UNVERIFIED_OWNER_MAPPING")
 
     threat = body("docs/threat-model.md")
     for pattern in (
@@ -55,13 +61,22 @@ def main() -> int:
         if not re.search(pattern, threat, re.IGNORECASE):
             raise SystemExit("P08_PUBLIC_SURFACE_REFUSED:THREAT_MODEL:" + pattern)
 
-    limitations = body("docs/limitations.md")
-    for needle in ("NOT_QUALIFIED", "DEFERRED_NOT_ADVERTISED", "croom", "not implemented", "not reserved"):
-        if needle not in limitations:
-            raise SystemExit("P08_PUBLIC_SURFACE_REFUSED:LIMITATIONS:" + needle)
+    limitations = " ".join(body("docs/limitations.md").split())
+    for pattern in (
+        r"prerelease,? not a stable release",
+        r"unsigned,? unnotarized",
+        r"Only macOS on Apple Silicon",
+        r"Linux and Windows are `NOT_QUALIFIED`",
+        r"not a VM, container, network sandbox or complete home-directory isolation",
+        r"Explicit overrides can re-enable .* reduce the clean defaults",
+        r"No bounty program exists",
+    ):
+        if not re.search(pattern, limitations, re.IGNORECASE):
+            raise SystemExit("P08_PUBLIC_SURFACE_REFUSED:LIMITATIONS:" + pattern)
 
-    namespace = json.loads(body("reports/release/namespace-ownership.json"))
-    if namespace != {
+    # This is a dated historical evidence snapshot, not a current ownership claim.
+    historical_namespace_snapshot = json.loads(body("reports/release/namespace-ownership.json"))
+    if historical_namespace_snapshot != {
         "schema_version": "taskseal.release-namespace-ownership.v1",
         "recorded_at": "2026-08-16T10:51:17Z",
         "public_product_name": "Clean Room Launcher",
@@ -82,7 +97,7 @@ def main() -> int:
         raise SystemExit("P08_PUBLIC_SURFACE_REFUSED:NAMESPACE_RECORD")
 
     audit = body("scripts/release/audit-release.sh")
-    for needle in ("PROTECTED_PATH_OWNERSHIP_UNVERIFIED", "NOT_YET_ENFORCEABLE", "NOT_YET_AVAILABLE"):
+    for needle in ("private reporting button is unavailable", "enable a private channel", "PROTECTED_PATH_REVIEW_NOT_ENFORCED", "PROTECTED_PATH_REVIEW_STATUS_MISSING"):
         if needle not in audit:
             raise SystemExit("P08_PUBLIC_SURFACE_REFUSED:AUDIT_BOUNDARY:" + needle)
 

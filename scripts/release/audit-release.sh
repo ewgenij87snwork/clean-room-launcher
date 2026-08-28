@@ -344,15 +344,18 @@ def claim_blockers(claim_root, add):
         add("claims", "UNSUPPORTED_RELEASE_CLAIM", "unsupported maturity, safety or SLSA-level wording")
 
     security = next((body for path, body in bodies if path.name == "SECURITY.md"), "")
-    if not (
-        re.search(r"private\s+vulnerability\s+report", security, re.IGNORECASE)
-        and re.search(r"do\s+not\s+open\s+a\s+public\s+issue", security, re.IGNORECASE)
+    security_contract = " ".join(security.split())
+    if not all(
+        re.search(pattern, security_contract, re.IGNORECASE)
+        for pattern in (
+            r"Security\s*→\s*Report a vulnerability",
+            r"private reporting button is unavailable,? do not put exploit details, credentials, private paths, prompts or user context in a public issue",
+            r"minimal public issue asking the maintainer to enable a private channel",
+        )
     ):
         add("claims", "SECURITY_REPORTING_ROUTE_MISSING", "private reporting route is absent or public disclosure is allowed")
     if not re.search(r"(?:no\s+bounty|does\s+not\s+offer\s+(?:a\s+)?bounty)", security, re.IGNORECASE):
         add("claims", "BOUNTY_STATUS_MISSING", "current no-bounty status is not explicit")
-    if "NOT_YET_AVAILABLE" in security:
-        add("claims", "SECURITY_REPORTING_ROUTE_UNVERIFIED", "security policy honestly records that no verified private reporting route exists")
 
     threat_terms = {
         "protected assets": r"protected\s+assets?",
@@ -372,12 +375,15 @@ def claim_blockers(claim_root, add):
         add("claims", "THREAT_MODEL_INCOMPLETE", f"missing {len(missing)} required threat-model classes")
 
     codeowners = next((body for path, body in bodies if path.name == "CODEOWNERS"), "")
-    if not codeowners:
+    active_codeowners = [line for line in codeowners.splitlines() if line.strip() and not line.lstrip().startswith("#")]
+    if not codeowners or not active_codeowners:
         add("claims", "PROTECTED_PATH_OWNERSHIP_MISSING", "CODEOWNERS evidence is absent")
-    elif "NOT_YET_ENFORCEABLE" in codeowners:
-        add("claims", "PROTECTED_PATH_OWNERSHIP_UNVERIFIED", "CODEOWNERS contract has no verified repository-owner mapping")
-    elif not any(line.strip() and not line.lstrip().startswith("#") for line in codeowners.splitlines()):
-        add("claims", "PROTECTED_PATH_OWNERSHIP_MISSING", "CODEOWNERS has no active protected-path mapping")
+    elif "@ewgenij87snwork" not in codeowners:
+        add("claims", "PROTECTED_PATH_OWNERSHIP_UNVERIFIED", "CODEOWNERS active mapping does not identify the repository owner")
+    elif "Review enforcement: NOT_ENABLED" in codeowners:
+        add("claims", "PROTECTED_PATH_REVIEW_NOT_ENFORCED", "CODEOWNERS owner mapping is present but GitHub review enforcement is not enabled")
+    else:
+        add("claims", "PROTECTED_PATH_REVIEW_STATUS_MISSING", "CODEOWNERS does not state whether review enforcement is enabled")
     if TELEMETRY_OR_BACKEND.search(joined):
         add("claims", "TELEMETRY_OR_BACKEND_PRESENT", "analytics, telemetry, backend or network client marker detected")
     if CYRILLIC.search(joined):
