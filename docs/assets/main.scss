@@ -4,10 +4,11 @@
 
 .site-header .wrapper { max-width: calc(1200px - (30px * 2)); }
 .page-content > .wrapper { max-width: calc(820px - (30px * 2)); }
-.clroom-header-wrap { display:flex; align-items:center; justify-content:space-between; gap:2rem; }
+.site-header { min-height:0; }
+.clroom-header-wrap { min-height:64px; display:flex; align-items:center; justify-content:space-between; gap:2rem; }
 .clroom-site-title { display:inline-flex; align-items:center; gap:.62rem; flex:0 0 auto; float:none; line-height:1.2; font-size:20px; letter-spacing:-.2px; }
 .clroom-site-logo { display:block; flex:0 0 auto; }
-.site-nav { flex:0 0 auto; float:none; }
+.site-nav { flex:0 0 auto; float:none; line-height:1.2; }
 .site-nav .trigger { display:flex; align-items:center; }
 .site-nav .page-link:not(:last-child) { margin-right:18px; }
 @media screen and (min-width: 1101px) {
@@ -15,14 +16,28 @@
   .site-nav .trigger { white-space:nowrap; }
 }
 @media screen and (min-width: 601px) and (max-width: 1100px) {
-  .clroom-header-wrap { display:block; }
+  .clroom-header-wrap { min-height:0; display:block; padding-top:1rem; padding-bottom:1rem; }
   .clroom-site-title { font-size:19px; }
   .site-nav { margin-top:.65rem; line-height:1.5; }
   .site-nav .trigger { justify-content:flex-start; flex-wrap:wrap; gap:.25rem 1.1rem; }
   .site-nav .page-link:not(:last-child) { margin-right:0; }
 }
 @media screen and (max-width: 600px) {
+  .clroom-header-wrap { min-height:56px; }
   .clroom-site-title span { font-size: 1rem; }
   .clroom-site-logo { width:28px; height:28px; }
   .site-nav .page-link:not(:last-child) { margin-right:0; }
+}
+
+.clroom-footer { padding:20px 0; }
+.clroom-footer-wrap { max-width: calc(1200px - (30px * 2)); }
+.clroom-footer-main { display:flex; align-items:center; justify-content:space-between; gap:1.5rem; }
+.clroom-footer-brand { display:inline-flex; align-items:center; gap:.55rem; color:#424242; font-size:16px; }
+.clroom-footer-brand:visited { color:#424242; }
+.clroom-footer-logo { display:block; flex:0 0 auto; }
+.clroom-footer-nav { display:flex; flex-wrap:wrap; gap:.35rem 1.1rem; justify-content:flex-end; font-size:14px; }
+.clroom-footer-meta { margin:10px 0 0; color:#828282; font-size:13px; }
+@media screen and (max-width: 600px) {
+  .clroom-footer-main { align-items:flex-start; flex-direction:column; gap:.8rem; }
+  .clroom-footer-nav { justify-content:flex-start; }
 }

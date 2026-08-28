@@ -1,5 +1,6 @@
 ---
 layout: home
+title: Clean Room Launcher (CLROOM)
 description: Verified documentation for CLROOM with Codex and Claude Code, including clean selective launches, global instructions, Agent Skills, native alternatives, and current limitations.
 permalink: /
 ---
