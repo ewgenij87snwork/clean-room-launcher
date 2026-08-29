@@ -3,6 +3,27 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   {%- seo -%}
+  {%- if page.url == '/' -%}
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "@id": "{{ site.url }}{{ site.baseurl }}/#clroom",
+  "name": "Clean Room Launcher (CLROOM)",
+  "alternateName": ["CLROOM", "Clean Room Launcher"],
+  "description": "Open-source developer tool for launching Codex and Claude Code with a clean/selective session setup on macOS.",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "macOS",
+  "url": "{{ site.url }}{{ site.baseurl }}/",
+  "sameAs": [
+    "https://github.com/ewgenij87snwork/clean-room-launcher"
+  ],
+  "isAccessibleForFree": true,
+  "license": "https://www.mozilla.org/MPL/2.0/",
+  "keywords": "Codex, Claude Code, coding agents, Agent Skills, context management"
+}
+</script>
+  {%- endif -%}
   <link rel="stylesheet" href="{{ '/assets/main.css' | relative_url }}">
   {%- feed_meta -%}
   <link rel="icon" href="{{ '/assets/brand/favicon.ico' | relative_url }}" sizes="any">
