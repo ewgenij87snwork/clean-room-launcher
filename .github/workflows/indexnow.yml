@@ -39,7 +39,21 @@ jobs:
       - name: Notify IndexNow
         run: |
           bootstrap_args=()
+          key_added=false
           if git diff --name-status "$GITHUB_EVENT_BEFORE" "$GITHUB_SHA" -- "docs/NDUteiLX5uhpX0oG3CF-GEK1uoInbc5y.txt" | grep -q '^A'; then
+            key_added=true
+          fi
+          notified=false
+          prior_runs=$(gh run list --workflow indexnow.yml --branch "$GITHUB_REF_NAME" --limit 20 --json databaseId,headSha,conclusion --jq '.[] | [.databaseId, .headSha, (.conclusion // "")] | @tsv')
+          while IFS=$'\t' read -r run_id run_sha conclusion; do
+            [ -z "$run_id" ] && continue
+            [ "$run_sha" = "$GITHUB_SHA" ] && continue
+            if [ "$conclusion" = success ] && gh run view "$run_id" --log 2>/dev/null | grep -Eq 'INDEXNOW_HTTP=(200|202)'; then
+              notified=true
+              break
+            fi
+          done <<<"$prior_runs"
+          if [ "$key_added" = true ] || [ "$notified" != true ]; then
             bootstrap_args+=(--bootstrap)
           fi
           python3 scripts/indexnow_changed_urls.py \
