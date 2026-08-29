@@ -63,4 +63,5 @@ jobs:
             --key-file "docs/NDUteiLX5uhpX0oG3CF-GEK1uoInbc5y.txt" \
             "${bootstrap_args[@]}"
         env:
+          GH_TOKEN: ${{ github.token }}
           GITHUB_EVENT_BEFORE: ${{ github.event.before }}
