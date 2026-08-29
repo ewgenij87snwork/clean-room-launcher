@@ -1,0 +1,51 @@
+name: IndexNow
+
+on:
+  push:
+    branches: [feat/clroom-public-alpha-v1]
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Wait for same-SHA CI and Pages deployment
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 60); do
+            : "$attempt"
+            ci=$(gh run list --workflow CI --commit "$GITHUB_SHA" --json status,conclusion --limit 1)
+            pages=$(gh run list --workflow "pages build and deployment" --commit "$GITHUB_SHA" --json status,conclusion --limit 1)
+            ci_status=$(python3 -c 'import json,sys; d=json.load(sys.stdin); print(d[0].get("status", "") if d else "")' <<<"$ci")
+            ci_conclusion=$(python3 -c 'import json,sys; d=json.load(sys.stdin); print(d[0].get("conclusion", "") if d else "")' <<<"$ci")
+            pages_status=$(python3 -c 'import json,sys; d=json.load(sys.stdin); print(d[0].get("status", "") if d else "")' <<<"$pages")
+            pages_conclusion=$(python3 -c 'import json,sys; d=json.load(sys.stdin); print(d[0].get("conclusion", "") if d else "")' <<<"$pages")
+            if [ "$ci_status" = completed ] && [ "$ci_conclusion" != success ]; then echo "CI failed: $ci_conclusion"; exit 1; fi
+            if [ "$pages_status" = completed ] && [ "$pages_conclusion" != success ]; then echo "Pages failed: $pages_conclusion"; exit 1; fi
+            if [ "$ci_status" = completed ] && [ "$ci_conclusion" = success ] && [ "$pages_status" = completed ] && [ "$pages_conclusion" = success ]; then exit 0; fi
+            sleep 10
+          done
+          echo "Timed out waiting for same-SHA CI and Pages deployment"
+          exit 1
+      - name: Notify IndexNow
+        run: |
+          bootstrap_args=()
+          if git diff --name-status "$GITHUB_EVENT_BEFORE" "$GITHUB_SHA" -- "docs/NDUteiLX5uhpX0oG3CF-GEK1uoInbc5y.txt" | grep -q '^A'; then
+            bootstrap_args+=(--bootstrap)
+          fi
+          python3 scripts/indexnow_changed_urls.py \
+            --root . \
+            --before "$GITHUB_EVENT_BEFORE" \
+            --after "$GITHUB_SHA" \
+            --key-file "docs/NDUteiLX5uhpX0oG3CF-GEK1uoInbc5y.txt" \
+            "${bootstrap_args[@]}"
+        env:
+          GITHUB_EVENT_BEFORE: ${{ github.event.before }}
