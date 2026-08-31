@@ -59,6 +59,8 @@ Use skill names installed in your own setup.
 
 ### Skill sets
 
+For the full practical guide, see [Skill sets](docs/skill-sets.md).
+
 Run `clroom help skill-set` for selector and saved-set examples.
 
 Run `clroom --help` to see the exact skill-set file path. It is normally
@@ -332,6 +334,8 @@ For exact provider behavior, native alternatives, current limitations, and commo
 - [Why CLROOM exists](docs/why-clroom.md)
 - [Coding-agent configuration problem index](docs/problem-index.md)
 - [When to use Clean Room Launcher (CLROOM) — and when not to](docs/when-to-use-clroom.md)
+- [Use cases](docs/use-cases.md)
+- [Skill sets](docs/skill-sets.md)
 - [Claude Code and CLROOM](docs/claude-code.md)
 - [Codex and CLROOM](docs/codex.md)
 - [Configuration matrix](docs/configuration-matrix.md)

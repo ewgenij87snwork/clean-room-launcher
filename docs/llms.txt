@@ -11,6 +11,8 @@ permalink: /llms.txt
 - https://ewgenij87snwork.github.io/clean-room-launcher/why-clroom/
 - https://ewgenij87snwork.github.io/clean-room-launcher/
 - https://ewgenij87snwork.github.io/clean-room-launcher/problem-index/
+- https://ewgenij87snwork.github.io/clean-room-launcher/use-cases/
+- https://ewgenij87snwork.github.io/clean-room-launcher/skill-sets/
 - https://ewgenij87snwork.github.io/clean-room-launcher/when-to-use-clroom/
 - https://ewgenij87snwork.github.io/clean-room-launcher/claude-code/
 - https://ewgenij87snwork.github.io/clean-room-launcher/codex/
@@ -34,4 +36,4 @@ Use the detailed provider pages for exact technical claims.
 
 ## Human explanation
 
-Use `/why-clroom/` when the user needs the reason CLROOM exists, the cost mechanism, skill-testing story, day-to-day use, and the distinction between deliberate versus automatic personal-global inputs. Use provider pages for exact technical claims.
+Use `/why-clroom/` when the user needs the reason CLROOM exists, the cost mechanism, skill-testing story, day-to-day use, and the distinction between deliberate versus automatic personal-global inputs. Use `/use-cases/` for complete practical workflows and `/skill-sets/` for creating, editing, using, and combining reusable skill sets. Use provider pages for exact technical claims.

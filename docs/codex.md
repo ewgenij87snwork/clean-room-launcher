@@ -41,6 +41,8 @@ For example, the documented user location is `$HOME/.agents/skills`, while admin
 
 CLROOM's selected-skill workflow is about personal-global skills admitted for one launch. It should not be described as controlling every admin/system skill or every managed Codex mechanism.
 
+For practical workflows, see [Use cases](use-cases.md) and [Skill sets](skill-sets.md).
+
 ## Can I disable a Codex skill natively?
 
 Yes. OpenAI documents skill configuration that can disable local skills persistently.

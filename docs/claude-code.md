@@ -26,6 +26,8 @@ Current CLROOM source launches Claude with `--setting-sources project,local`, `-
 
 Selected personal-global skills are exposed through a private temporary projection and `--add-dir`.
 
+For practical workflows, see [Use cases](use-cases.md) and [Skill sets](skill-sets.md).
+
 ## Does CLROOM remove every Claude global or provider-owned input?
 
 **No.**

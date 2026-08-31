@@ -18,6 +18,8 @@ relative_links:
 header_pages:
   - why-clroom.md
   - problem-index.md
+  - use-cases.md
+  - skill-sets.md
   - when-to-use-clroom.md
   - claude-code.md
   - codex.md

@@ -22,6 +22,8 @@ CLROOM is useful when:
 - you are testing whether a skill actually changed the result, rather than another installed skill or personal-global instruction changing it;
 - you want reusable named skill sets for different kinds of work.
 
+For a complete skill-author testing workflow, see [Use cases](use-cases.md). To create, edit, or combine reusable groups, see [Skill sets](skill-sets.md).
+
 The normal setup remains on disk. CLROOM changes the launch, not the developer's permanent configuration.
 
 ## Use Claude Code `--safe-mode` first when you want broad customization disabled

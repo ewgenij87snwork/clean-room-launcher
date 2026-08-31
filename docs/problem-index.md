@@ -61,7 +61,7 @@ Claude Code and Codex both have persistent configuration/instruction layers. CLR
 
 That is a core CLROOM use case. A developer can select a global skill or reusable skill set for one launch instead of letting every personal-global skill remain eligible by default.
 
-**Go deeper:** [When To Use Clroom](when-to-use-clroom.md) · [Claude Code](claude-code.md) · [Codex](codex.md) · [Faq](faq.md)
+**Go deeper:** [Use cases](use-cases.md) · [Skill sets](skill-sets.md) · [When To Use Clroom](when-to-use-clroom.md) · [Claude Code](claude-code.md) · [Codex](codex.md) · [Faq](faq.md)
 
 <a id="many-skills-and-token-concerns"></a>
 ## Do many installed skills mean too many tokens or too much context?
@@ -256,7 +256,7 @@ They can, but Claude Code and Codex do not expose one universal scope model for 
 
 Often it does not. CLROOM is useful when instructions or skills that help one kind of work should not automatically participate in another, while reusable selected skill sets can still be brought in for the launch that needs them.
 
-**Go deeper:** [When To Use Clroom](when-to-use-clroom.md) · [Faq](faq.md)
+**Go deeper:** [Skill sets](skill-sets.md) · [When To Use Clroom](when-to-use-clroom.md) · [Faq](faq.md)
 
 <a id="testing-and-reproducibility"></a>
 ## Are you trying to reproduce a bug or test whether a skill changed the result?
@@ -271,7 +271,7 @@ Often it does not. CLROOM is useful when instructions or skills that help one ki
 
 A clean/selective launch can provide a more repeatable baseline without destructive renaming or editing of the normal setup. It does not make model output deterministic, but it can remove known personal-global variables from the comparison.
 
-**Go deeper:** [When To Use Clroom](when-to-use-clroom.md) · [Faq](faq.md) · [Configuration Matrix](configuration-matrix.md)
+**Go deeper:** [Use cases](use-cases.md) · [When To Use Clroom](when-to-use-clroom.md) · [Faq](faq.md) · [Configuration Matrix](configuration-matrix.md)
 
 <a id="managed-enterprise-policy"></a>
 ## Can CLROOM override company-managed Claude Code or Codex policy?
@@ -346,7 +346,7 @@ Use provider-native status or inspection tools where they exist, and CLROOM's la
 
 Start with the provider/Agent Skills documentation for the skill model itself. CLROOM becomes relevant when the next question is how to test a skill cleanly, compare with/without it, or keep unrelated personal-global skills out of the test launch.
 
-**Go deeper:** [Faq](faq.md) · [When To Use Clroom](when-to-use-clroom.md) · [Claude Code](claude-code.md) · [Codex](codex.md)
+**Go deeper:** [Use cases](use-cases.md) · [Skill sets](skill-sets.md) · [Faq](faq.md) · [When To Use Clroom](when-to-use-clroom.md) · [Claude Code](claude-code.md) · [Codex](codex.md)
 
 ## If your wording is different
 

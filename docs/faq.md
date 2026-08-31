@@ -29,7 +29,7 @@ No. Do not assume every installed skill body is fully loaded into the model cont
 
 ## Can I test one Agent Skill without my other personal-global skills?
 
-That is one of CLROOM's core use cases. Select the global skill or named skill set for the launch while unselected personal-global skill contents stay outside CLROOM's known clean-launch path.
+That is one of CLROOM's core use cases. Select the global skill or named skill set for the launch while unselected personal-global skill contents stay outside CLROOM's known clean-launch path. See [Use cases](use-cases.md) for the complete skill-author testing workflow.
 
 ## How can I tell whether a new skill actually improved the result?
 
@@ -81,7 +81,11 @@ Treat them separately by provider. They do not all share one universal scope mod
 
 ## Can I keep different skill sets for planning, review, development, and fixes?
 
-Yes. CLROOM supports reusable named skill sets so a chosen group of personal-global skills can be admitted for a launch.
+Yes. CLROOM supports reusable named skill sets so a chosen group of personal-global skills can be admitted for a launch. See [Skill sets](skill-sets.md) for practical examples.
+
+## How do I create or edit a CLROOM skill set?
+
+Run `clroom --help` to see the exact file path; it is normally `~/.config/clroom/skill-sets.yaml`. Create or edit that YAML directly, then use the group as `@set-name`. See [Skill sets](skill-sets.md) for examples of one set, multiple sets, and direct skills combined with sets.
 
 ## Is CLROOM useful across several projects or workflows?
 

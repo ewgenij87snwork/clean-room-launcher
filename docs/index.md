@@ -11,6 +11,8 @@ Clean Room Launcher (CLROOM) is an open-source developer tool for launching the 
 
 - [Why CLROOM exists — the 2-minute explanation](why-clroom.md)
 - [Problem index: find your symptom or half-remembered term](problem-index.md)
+- [Use cases: practical CLROOM workflows](use-cases.md)
+- [Skill sets: create, use, combine, and edit reusable groups](skill-sets.md)
 - [When to use CLROOM — and when not to](when-to-use-clroom.md)
 - [Claude Code and CLROOM](claude-code.md)
 - [Codex and CLROOM](codex.md)
