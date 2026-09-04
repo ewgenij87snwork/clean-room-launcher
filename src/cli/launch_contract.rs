@@ -91,7 +91,18 @@ impl LaunchContract {
                 }
             })
             .collect::<Vec<_>>();
-        argv.extend_from_slice(user_args);
+        if user_args.first().is_some_and(|argument| argument == "exec")
+            && !user_args
+                .iter()
+                .skip(1)
+                .any(|argument| argument == "--ignore-user-config")
+        {
+            argv.push("exec".to_owned());
+            argv.push("--ignore-user-config".to_owned());
+            argv.extend_from_slice(&user_args[1..]);
+        } else {
+            argv.extend_from_slice(user_args);
+        }
         let (boundary, boundary_controls, model_choice) = analyze(Provider::Codex, user_args);
         Self {
             provider: Provider::Codex,

@@ -394,6 +394,13 @@ fn launch_contract_reports_boundary_expansion_unknown_syntax_and_model_neutralit
     assert!(codex_env.argv.iter().any(|argument| {
         argument == "shell_environment_policy.include_only=[\"PATH\",\"HOME\",\"TMPDIR\",\"TERM\",\"COLORTERM\",\"LANG\",\"LC_ALL\",\"LC_CTYPE\",\"TZ\",\"RUNNER_REQUESTED\"]"
     }));
+    let codex_exec = LaunchContract::codex(&["exec".to_owned(), "--help".to_owned()]);
+    assert!(
+        codex_exec
+            .argv
+            .windows(2)
+            .any(|pair| pair == ["exec", "--ignore-user-config"])
+    );
     let rendered = screen::render_launch_contract(
         managed.boundary_label(),
         managed.managed_label(),

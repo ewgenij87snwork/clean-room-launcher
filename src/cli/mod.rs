@@ -151,8 +151,11 @@ fn launch_isolated_codex(
     let project = std::env::current_dir().map_err(|_| {
         "CLROOM_ISOLATION_INVALID: current project is unavailable; continue locally".to_owned()
     })?;
-    let mut contract =
-        launch_contract::LaunchContract::codex_with_pass_env(provider_args, pass_env);
+    let mut contract = if pass_env.is_empty() {
+        launch_contract::LaunchContract::codex(provider_args)
+    } else {
+        launch_contract::LaunchContract::codex_with_pass_env(provider_args, pass_env)
+    };
     let executable = match process::resolve_codex_executable() {
         Ok(executable) => executable,
         Err(error) => {
