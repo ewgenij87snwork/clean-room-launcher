@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::{collections::BTreeSet, path::Path};
 
 use taskseal::adapters::claude::managed::Presence;
 
@@ -19,6 +19,18 @@ const CODEX_CLEAN_DEFAULTS: &[&str] = &[
     "shell_environment_policy.include_only=[\"PATH\",\"HOME\",\"TMPDIR\",\"TERM\",\"COLORTERM\",\"LANG\",\"LC_ALL\",\"LC_CTYPE\",\"TZ\"]",
     "-c",
     "shell_environment_policy.ignore_default_excludes=false",
+];
+
+const CODEX_INCLUDE_ONLY_DEFAULTS: &[&str] = &[
+    "PATH",
+    "HOME",
+    "TMPDIR",
+    "TERM",
+    "COLORTERM",
+    "LANG",
+    "LC_ALL",
+    "LC_CTYPE",
+    "TZ",
 ];
 
 const CLAUDE_CLEAN_DEFAULTS: &[&str] = &[
@@ -56,9 +68,28 @@ pub struct LaunchContract {
 
 impl LaunchContract {
     pub fn codex(user_args: &[String]) -> Self {
+        Self::codex_with_pass_env(user_args, &[])
+    }
+
+    pub fn codex_with_pass_env(user_args: &[String], pass_env: &[String]) -> Self {
+        let requested = pass_env.iter().map(String::as_str).collect::<BTreeSet<_>>();
+        let include_only = CODEX_INCLUDE_ONLY_DEFAULTS
+            .iter()
+            .copied()
+            .chain(requested)
+            .map(|name| format!("\"{name}\""))
+            .collect::<Vec<_>>()
+            .join(",");
+        let include_only = format!("shell_environment_policy.include_only=[{include_only}]");
         let mut argv = CODEX_CLEAN_DEFAULTS
             .iter()
-            .map(|argument| (*argument).to_owned())
+            .map(|argument| {
+                if argument.starts_with("shell_environment_policy.include_only=") {
+                    include_only.clone()
+                } else {
+                    (*argument).to_owned()
+                }
+            })
             .collect::<Vec<_>>();
         argv.extend_from_slice(user_args);
         let (boundary, boundary_controls, model_choice) = analyze(Provider::Codex, user_args);
