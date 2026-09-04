@@ -91,19 +91,9 @@ impl LaunchContract {
                 }
             })
             .collect::<Vec<_>>();
-        if user_args.first().is_some_and(|argument| argument == "exec")
-            && !user_args
-                .iter()
-                .skip(1)
-                .any(|argument| argument == "--ignore-user-config")
-        {
-            argv.push("exec".to_owned());
-            argv.push("--ignore-user-config".to_owned());
-            argv.extend_from_slice(&user_args[1..]);
-        } else {
-            argv.extend_from_slice(user_args);
-        }
-        let (boundary, boundary_controls, model_choice) = analyze(Provider::Codex, user_args);
+        argv.extend_from_slice(user_args);
+        let (boundary, boundary_controls, model_choice) =
+            analyze(Provider::Codex, user_args, !pass_env.is_empty());
         Self {
             provider: Provider::Codex,
             argv,
@@ -122,7 +112,8 @@ impl LaunchContract {
         argv.push("--add-dir".to_owned());
         argv.push(add_dir.as_os_str().to_string_lossy().into_owned());
         argv.extend_from_slice(user_args);
-        let (mut boundary, boundary_controls, model_choice) = analyze(Provider::Claude, user_args);
+        let (mut boundary, boundary_controls, model_choice) =
+            analyze(Provider::Claude, user_args, false);
         if boundary == BoundaryState::Clean && managed != Presence::Absent {
             boundary = BoundaryState::Unknown;
         }
@@ -155,8 +146,15 @@ impl LaunchContract {
     }
 }
 
-fn analyze(provider: Provider, args: &[String]) -> (BoundaryState, Vec<&'static str>, bool) {
+fn analyze(
+    provider: Provider,
+    args: &[String],
+    environment_expanded: bool,
+) -> (BoundaryState, Vec<&'static str>, bool) {
     let mut controls = Vec::new();
+    if environment_expanded {
+        controls.push("environment");
+    }
     let mut unknown = false;
     let mut model_choice = false;
     let mut index = 0;

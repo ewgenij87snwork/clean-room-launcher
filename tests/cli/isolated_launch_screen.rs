@@ -394,13 +394,23 @@ fn launch_contract_reports_boundary_expansion_unknown_syntax_and_model_neutralit
     assert!(codex_env.argv.iter().any(|argument| {
         argument == "shell_environment_policy.include_only=[\"PATH\",\"HOME\",\"TMPDIR\",\"TERM\",\"COLORTERM\",\"LANG\",\"LC_ALL\",\"LC_CTYPE\",\"TZ\",\"RUNNER_REQUESTED\"]"
     }));
-    let codex_exec = LaunchContract::codex(&["exec".to_owned(), "--help".to_owned()]);
-    assert!(
-        codex_exec
-            .argv
-            .windows(2)
-            .any(|pair| pair == ["exec", "--ignore-user-config"])
+    let clean_codex = LaunchContract::codex(&["--help".to_owned()]);
+    assert_eq!(clean_codex.boundary, BoundaryState::Clean);
+    let expanded_codex = LaunchContract::codex_with_pass_env(
+        &["--help".to_owned()],
+        &["RUNNER_REQUESTED".to_owned()],
     );
+    assert_eq!(expanded_codex.boundary, BoundaryState::Expanded);
+    assert_eq!(expanded_codex.boundary_controls, vec!["environment"]);
+    assert_eq!(expanded_codex.boundary_label(), "boundary expanded");
+    let expanded_rendered = screen::render_launch_contract(
+        expanded_codex.boundary_label(),
+        expanded_codex.managed_label(),
+        &expanded_codex.boundary_controls,
+        expanded_codex.user_or_provider_model_choice,
+    )
+    .join("\n");
+    assert!(expanded_rendered.contains("environment"));
     let rendered = screen::render_launch_contract(
         managed.boundary_label(),
         managed.managed_label(),
