@@ -46,6 +46,48 @@ fn main() {{
     (executable, capture)
 }
 
+fn fake_codex_with_env_capture() -> (PathBuf, PathBuf, PathBuf) {
+    let dir = std::env::temp_dir().join(format!(
+        "clroom-codex-env-launch-{}-{}",
+        std::process::id(),
+        SCRATCH_SEQUENCE.fetch_add(1, Ordering::Relaxed)
+    ));
+    let _ = fs::remove_dir_all(&dir);
+    fs::create_dir_all(&dir).unwrap();
+    let executable = dir.join("codex");
+    let capture = dir.join("capture");
+    let env_capture = dir.join("env-capture");
+    let source = dir.join("fake-provider.rs");
+    fs::write(
+        &source,
+        format!(
+            r#"use std::{{env, fs}};
+fn main() {{
+    if env::args().nth(1).as_deref() == Some("--version") {{ println!("0.147.0"); return; }}
+    let args = env::args().skip(1).collect::<Vec<_>>();
+    fs::write({:?}, format!("{{}}\0", args.join("\0"))).unwrap();
+    let status = ["RUNNER_REQUESTED", "RUNNER_UNREQUESTED"]
+        .iter()
+        .map(|name| format!("{{name}}={{}}", if env::var_os(name).is_some() {{ "present" }} else {{ "absent" }}))
+        .collect::<Vec<_>>()
+        .join("\n");
+    fs::write({:?}, format!("{{status}}\n")).unwrap();
+    if args.iter().any(|argument| argument == "--exit-42") {{ std::process::exit(42); }}
+}}
+"#,
+            capture, env_capture
+        ),
+    )
+    .unwrap();
+    let output = Command::new("rustc")
+        .args([source, PathBuf::from("-o"), executable.clone()])
+        .output()
+        .expect("rustc must start");
+    assert!(output.status.success(), "fake provider must compile");
+    fs::set_permissions(&executable, fs::Permissions::from_mode(0o700)).unwrap();
+    (executable, capture, env_capture)
+}
+
 #[test]
 fn direct_codex_command_launches_literal_local_child_and_returns_status() {
     let (codex, capture) = fake_codex();
@@ -110,4 +152,43 @@ fn codex_unavailable_is_local_status_not_login_flow() {
         String::from_utf8(output.stderr).unwrap(),
         "LOCAL_CODEX_UNAVAILABLE: executable 'codex' not found; continue locally\n"
     );
+}
+
+#[test]
+fn codex_pass_env_is_exact_and_denies_unrequested_names() {
+    let (codex, capture, env_capture) = fake_codex_with_env_capture();
+    let output = Command::new(env!("CARGO_BIN_EXE_clroom"))
+        .args(["codex", "--pass-env=RUNNER_REQUESTED", "--exit-42"])
+        .env("PATH", codex.parent().unwrap())
+        .env("RUNNER_REQUESTED", "synthetic-value-must-not-print")
+        .env("RUNNER_UNREQUESTED", "synthetic-value-must-not-print")
+        .output()
+        .expect("clroom must run");
+    assert_eq!(output.status.code(), Some(42));
+    assert!(!String::from_utf8_lossy(&output.stdout).contains("synthetic-value-must-not-print"));
+    assert!(!String::from_utf8_lossy(&output.stderr).contains("synthetic-value-must-not-print"));
+    assert_eq!(
+        fs::read_to_string(env_capture).unwrap(),
+        "RUNNER_REQUESTED=present\nRUNNER_UNREQUESTED=absent\n"
+    );
+    let argv = fs::read_to_string(capture).unwrap();
+    assert!(argv.contains("RUNNER_REQUESTED"));
+    assert!(!argv.contains("RUNNER_UNREQUESTED"));
+}
+
+#[test]
+fn codex_pass_env_rejects_wildcards_before_child_birth() {
+    let (codex, capture, _env_capture) = fake_codex_with_env_capture();
+    let output = Command::new(env!("CARGO_BIN_EXE_clroom"))
+        .args(["codex", "--pass-env=RUNNER_*"])
+        .env("PATH", codex.parent().unwrap())
+        .env("RUNNER_SECRET", "synthetic-value-must-not-print")
+        .output()
+        .expect("clroom must run");
+    assert_eq!(output.status.code(), Some(2));
+    assert_eq!(
+        String::from_utf8(output.stderr).unwrap(),
+        "CLROOM_ENV_SELECTOR_INVALID: invalid environment name; use --pass-env=NAME\n"
+    );
+    assert!(!capture.exists());
 }

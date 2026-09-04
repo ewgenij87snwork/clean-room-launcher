@@ -24,7 +24,10 @@ enum ProviderEnvironment {
     Claude,
 }
 
-fn parent_environment(provider: ProviderEnvironment) -> Vec<(OsString, OsString)> {
+fn parent_environment(
+    provider: ProviderEnvironment,
+    requested_names: &[String],
+) -> Vec<(OsString, OsString)> {
     env::vars_os()
         .filter(|(name, _)| {
             let Some(name) = name.to_str() else {
@@ -71,12 +74,19 @@ fn parent_environment(provider: ProviderEnvironment) -> Vec<(OsString, OsString)
                             | "ANTHROPIC_VERTEX_PROJECT_ID"
                     ),
                 }
+                || requested_names.iter().any(|requested| requested == name)
         })
         .collect()
 }
 
-fn apply_parent_environment(command: &mut Command, provider: ProviderEnvironment) {
-    command.env_clear().envs(parent_environment(provider));
+fn apply_parent_environment(
+    command: &mut Command,
+    provider: ProviderEnvironment,
+    requested_names: &[String],
+) {
+    command
+        .env_clear()
+        .envs(parent_environment(provider, requested_names));
 }
 
 #[cfg(unix)]
@@ -169,6 +179,7 @@ pub fn launch_isolated_codex(
     _executable: &Path,
     contract: &LaunchContract,
     identity: &ProviderIdentity,
+    requested_names: &[String],
 ) -> Result<ExitCode, String> {
     let sandbox = Path::new("/usr/bin/sandbox-exec");
     if !fs::metadata(sandbox).is_ok_and(|metadata| metadata.is_file()) {
@@ -178,7 +189,7 @@ pub fn launch_isolated_codex(
         );
     }
     let mut command = Command::new(sandbox);
-    apply_parent_environment(&mut command, ProviderEnvironment::Codex);
+    apply_parent_environment(&mut command, ProviderEnvironment::Codex, requested_names);
     command
         .arg("-p")
         .arg(&plan.profile)
@@ -216,7 +227,7 @@ pub fn launch_claude(
     {
         let session_name = projection.session_name().ok_or_else(claude_launch_error)?;
         let mut command = Command::new("/bin/sh");
-        apply_parent_environment(&mut command, ProviderEnvironment::Claude);
+        apply_parent_environment(&mut command, ProviderEnvironment::Claude, &[]);
         command
             .arg("-c")
             .arg(CLAUDE_GATE_SCRIPT)
@@ -264,7 +275,7 @@ pub fn launch_claude(
     #[cfg(not(unix))]
     {
         let mut command = Command::new(sandbox);
-        apply_parent_environment(&mut command, ProviderEnvironment::Claude);
+        apply_parent_environment(&mut command, ProviderEnvironment::Claude, &[]);
         let status = command
             .arg("-p")
             .arg(&plan.profile)
