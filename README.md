@@ -4,11 +4,8 @@
 
 <h1 align="center">Clean Room Launcher (CLROOM)</h1>
 
-[![Animated Clean Room Launcher demo: unrelated global inputs stay outside while project context, CLI arguments, and selected global skills reach Codex or Claude Code.](docs/assets/clean-room-launcher-hero.gif)](https://youtu.be/YAEUJM-_VeE)
-
 <p align="center">
-  <a href="https://ewgenij87snwork.github.io/clean-room-launcher/">Documentation →</a> ·
-  <a href="https://youtu.be/YAEUJM-_VeE">Watch the demo in HD on YouTube →</a>
+  <a href="https://ewgenij87snwork.github.io/clean-room-launcher/">Documentation →</a>
 </p>
 
 <p align="center">
