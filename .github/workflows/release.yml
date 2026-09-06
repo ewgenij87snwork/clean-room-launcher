@@ -1,0 +1,210 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: Validate release identity
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.release.outputs.version }}
+      prerelease: ${{ steps.release.outputs.prerelease }}
+      artifact_name: ${{ steps.release.outputs.artifact_name }}
+    steps:
+      - name: Check out exact tag
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+      - name: Bind tag, version, changelog, and main
+        id: release
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="$GITHUB_REF_NAME"
+          version="${tag#v}"
+          python3 - "$tag" "$version" <<'PY'
+          import re, sys
+          tag, version = sys.argv[1:]
+          if tag != "v" + version:
+              raise SystemExit("release tag must start with v")
+          if not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+(?:-rc\.[0-9]+)?", version):
+              raise SystemExit("release tag must be vMAJOR.MINOR.PATCH or vMAJOR.MINOR.PATCH-rc.N")
+          PY
+          manifest_version=$(python3 - <<'PY'
+          import tomllib
+          with open("Cargo.toml", "rb") as handle:
+              print(tomllib.load(handle)["package"]["version"])
+          PY
+          )
+          test "$manifest_version" = "$version" || {
+            echo "Cargo.toml version $manifest_version does not match tag $tag" >&2
+            exit 1
+          }
+          grep -Eq "^## \[$(printf '%s' "$version" | sed 's/[.[\*^$()+?{|]/\\&/g')\] - [0-9]{4}-[0-9]{2}-[0-9]{2}$" CHANGELOG.md || {
+            echo "CHANGELOG.md has no dated entry for $version" >&2
+            exit 1
+          }
+          git fetch --no-tags --depth=1 origin main
+          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" || {
+            echo "release tag must point to the exact accepted main tip" >&2
+            exit 1
+          }
+          prerelease=false
+          case "$version" in
+            *-rc.*) prerelease=true ;;
+          esac
+          artifact_name="clean-room-launcher-v${version}-aarch64-apple-darwin.tar.gz"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "prerelease=$prerelease" >> "$GITHUB_OUTPUT"
+          echo "artifact_name=$artifact_name" >> "$GITHUB_OUTPUT"
+
+  build-macos:
+    name: Build and verify macOS artifact
+    needs: prepare
+    runs-on: macos-14
+    steps:
+      - name: Check out exact tag
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+      - name: Install qualified Rust target
+        run: rustup target add aarch64-apple-darwin
+      - name: Re-run exact release tests
+        run: |
+          set -euo pipefail
+          cargo test --locked --all-targets --target aarch64-apple-darwin
+          git diff --check
+      - name: Build deterministic archive
+        env:
+          TASKSEAL_TARGET: aarch64-apple-darwin
+          TASKSEAL_SOURCE_COMMIT: ${{ github.sha }}
+          CLROOM_ARTIFACT_QUALIFICATION: NOT_QUALIFIED
+        run: |
+          set -euo pipefail
+          rm -rf target/release-artifacts
+          mkdir -p target/release-artifacts
+          ./packaging/build-artifacts.sh target/release-artifacts
+          artifact="target/release-artifacts/${{ needs.prepare.outputs.artifact_name }}"
+          test -f "$artifact"
+          python3 packaging/verify-artifact.py "$artifact"
+          (
+            cd target/release-artifacts
+            shasum -a 256 "${{ needs.prepare.outputs.artifact_name }}" > SHA256SUMS
+          )
+          python3 packaging/generate-release-sbom.py \
+            --artifact "$artifact" \
+            --output target/release-artifacts/sbom.cdx.json
+      - name: Upload verified release bundle
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: release-macos-aarch64
+          path: |
+            target/release-artifacts/${{ needs.prepare.outputs.artifact_name }}
+            target/release-artifacts/SHA256SUMS
+            target/release-artifacts/sbom.cdx.json
+          if-no-files-found: error
+          retention-days: 7
+
+  draft-release:
+    name: Attest and create draft release
+    needs: [prepare, build-macos]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - name: Check out exact tag
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+      - name: Download verified release bundle
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: release-macos-aarch64
+          path: release-artifacts
+      - name: Reconcile release bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f "release-artifacts/${{ needs.prepare.outputs.artifact_name }}"
+          test -f release-artifacts/SHA256SUMS
+          test -f release-artifacts/sbom.cdx.json
+          test "$(find release-artifacts -maxdepth 1 -type f | wc -l | tr -d ' ')" = 3
+          (
+            cd release-artifacts
+            shasum -a 256 -c SHA256SUMS
+          )
+      - name: Attest exact binary archive
+        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3
+        with:
+          subject-path: release-artifacts/${{ needs.prepare.outputs.artifact_name }}
+      - name: Prepare release notes
+        env:
+          VERSION: ${{ needs.prepare.outputs.version }}
+          ARTIFACT: ${{ needs.prepare.outputs.artifact_name }}
+        run: |
+          python3 - <<'PY'
+          import os, re
+          from pathlib import Path
+          version = os.environ["VERSION"]
+          artifact = os.environ["ARTIFACT"]
+          lines = Path("CHANGELOG.md").read_text(encoding="utf-8").splitlines()
+          start = None
+          body = []
+          for index, line in enumerate(lines):
+              if line.startswith(f"## [{version}] - "):
+                  start = index + 1
+                  continue
+              if start is not None and line.startswith("## ["):
+                  break
+              if start is not None:
+                  body.append(line)
+          if start is None:
+              raise SystemExit("missing changelog release section")
+          text = "\n".join(body).strip()
+          footer = f"""
+
+          ## Download and verification
+
+          - `{artifact}` — macOS Apple Silicon archive
+          - `SHA256SUMS` — SHA-256 digest for the archive
+          - `sbom.cdx.json` — CycloneDX SBOM bound to the archive digest
+          - GitHub build provenance attestation is generated for the exact archive bytes
+
+          The distributed archive is currently unsigned at the Apple platform-signing layer. Verify the checksum and GitHub attestation before use.
+          """.strip()
+          Path("release-notes.md").write_text(text + "\n\n" + footer + "\n", encoding="utf-8")
+          PY
+      - name: Create or refresh draft GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.prepare.outputs.version }}
+          PRERELEASE: ${{ needs.prepare.outputs.prerelease }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="$GITHUB_REF_NAME"
+          title="Clean Room Launcher $VERSION"
+          if gh release view "$tag" --json isDraft >/tmp/clroom-release.json 2>/dev/null; then
+            test "$(jq -r .isDraft /tmp/clroom-release.json)" = true || {
+              echo "refusing to modify an already-published release" >&2
+              exit 1
+            }
+            gh release edit "$tag" --title "$title" --notes-file release-notes.md
+          else
+            args=(release create "$tag" --draft --verify-tag --title "$title" --notes-file release-notes.md)
+            if [ "$PRERELEASE" = true ]; then args+=(--prerelease); fi
+            gh "${args[@]}"
+          fi
+          gh release upload "$tag" release-artifacts/* --clobber
