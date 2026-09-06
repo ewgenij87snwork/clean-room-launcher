@@ -80,6 +80,9 @@ pub fn project(home: &Path, selectors: &[String]) -> Result<Projection, Projecti
     reject_native_name_collisions(&selected)?;
     let (storage_root, root) = create_root()?;
     let add_dir = root.join("view");
+    fs::create_dir_all(add_dir.join(".claude/skills"))
+        .map_err(|_| ProjectionError::Unavailable)?;
+    let add_dir = fs::canonicalize(&add_dir).map_err(|_| ProjectionError::Unavailable)?;
     let allowed_source_paths = selected
         .iter()
         .map(|skill| skill.canonical_path.clone())
@@ -93,7 +96,6 @@ pub fn project(home: &Path, selectors: &[String]) -> Result<Projection, Projecti
         allowed_source_paths,
     };
     let skills_dir = projection.add_dir.join(".claude/skills");
-    fs::create_dir_all(&skills_dir).map_err(|_| ProjectionError::Unavailable)?;
 
     for skill in &selected {
         link_skill(&skill.canonical_path, &skills_dir.join(&skill.name))?;

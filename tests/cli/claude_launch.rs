@@ -261,6 +261,31 @@ fn claude_projection_exposes_only_selected_skills_as_live_native_links() {
 }
 
 #[test]
+fn claude_projection_provider_view_is_canonical_and_inside_storage() {
+    let (_root, _project, home, _bin, _capture) = fixture();
+    let projection =
+        taskseal::adapters::claude::projection::project(&home, &["arrow".to_owned()]).unwrap();
+
+    assert_eq!(
+        projection.add_dir,
+        fs::canonicalize(&projection.add_dir).unwrap(),
+        "provider-facing view must use canonical spelling"
+    );
+    assert!(
+        projection
+            .add_dir
+            .starts_with(fs::canonicalize(projection.storage_root()).unwrap()),
+        "provider-facing view must remain inside canonical projection storage"
+    );
+    assert!(
+        projection
+            .add_dir
+            .join(".claude/skills/arrow/SKILL.md")
+            .is_file()
+    );
+}
+
+#[test]
 fn claude_projection_accepts_a_complete_plugin_namespace_from_claude_cache() {
     let root = Scratch::new();
     let home = root.join("home");
@@ -586,6 +611,11 @@ fn claude_projection_survives_launcher_death_until_provider_exits() {
     let residue = ProjectionResidue(vec![live_session.clone()]);
 
     assert!(live_projection.exists());
+    assert_eq!(
+        live_projection,
+        fs::canonicalize(&live_projection).unwrap(),
+        "provider-captured projection view must use canonical spelling"
+    );
     assert_ne!(launcher.id(), provider_pid);
     let session_name = live_session.file_name().unwrap().to_string_lossy();
     let marker = live_session.join(".clroom-projection-owner-v2");
