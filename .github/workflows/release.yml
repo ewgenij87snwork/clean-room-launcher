@@ -22,9 +22,10 @@ jobs:
       artifact_name: ${{ steps.release.outputs.artifact_name }}
     steps:
       - name: Check out exact tag
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          persist-credentials: false
       - name: Bind tag, version, changelog, and main
         id: release
         shell: bash
@@ -75,9 +76,10 @@ jobs:
     runs-on: macos-14
     steps:
       - name: Check out exact tag
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          persist-credentials: false
       - name: Install qualified Rust target
         run: rustup target add aarch64-apple-darwin
       - name: Re-run exact release tests
@@ -85,7 +87,7 @@ jobs:
           set -euo pipefail
           cargo test --locked --all-targets --target aarch64-apple-darwin
           git diff --check
-      - name: Build deterministic archive
+      - name: Build deterministic release bundle
         env:
           TASKSEAL_TARGET: aarch64-apple-darwin
           TASKSEAL_SOURCE_COMMIT: ${{ github.sha }}
@@ -94,19 +96,30 @@ jobs:
           set -euo pipefail
           rm -rf target/release-artifacts
           mkdir -p target/release-artifacts
+          cargo metadata \
+            --locked \
+            --offline \
+            --filter-platform aarch64-apple-darwin \
+            --format-version 1 \
+            > target/release-artifacts/cargo-metadata.json
           ./packaging/build-artifacts.sh target/release-artifacts
           artifact="target/release-artifacts/${{ needs.prepare.outputs.artifact_name }}"
           test -f "$artifact"
           python3 packaging/verify-artifact.py "$artifact"
-          (
-            cd target/release-artifacts
-            shasum -a 256 "${{ needs.prepare.outputs.artifact_name }}" > SHA256SUMS
-          )
           python3 packaging/generate-release-sbom.py \
             --artifact "$artifact" \
+            --metadata target/release-artifacts/cargo-metadata.json \
             --output target/release-artifacts/sbom.cdx.json
+          (
+            cd target/release-artifacts
+            shasum -a 256 \
+              "${{ needs.prepare.outputs.artifact_name }}" \
+              sbom.cdx.json \
+              > SHA256SUMS
+            shasum -a 256 -c SHA256SUMS
+          )
       - name: Upload verified release bundle
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: release-macos-aarch64
           path: |
@@ -116,21 +129,56 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
-  draft-release:
-    name: Attest and create draft release
+  attest:
+    name: Attest release archive and SBOM
     needs: [prepare, build-macos]
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
       id-token: write
       attestations: write
+      artifact-metadata: write
+    steps:
+      - name: Download verified release bundle
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: release-macos-aarch64
+          path: release-artifacts
+      - name: Reconcile attestation subjects
+        run: |
+          set -euo pipefail
+          test -f "release-artifacts/${{ needs.prepare.outputs.artifact_name }}"
+          test -f release-artifacts/SHA256SUMS
+          test -f release-artifacts/sbom.cdx.json
+          test "$(find release-artifacts -maxdepth 1 -type f | wc -l | tr -d ' ')" = 3
+          (
+            cd release-artifacts
+            shasum -a 256 -c SHA256SUMS
+          )
+      - name: Attest build provenance
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: release-artifacts/${{ needs.prepare.outputs.artifact_name }}
+      - name: Attest CycloneDX SBOM
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: release-artifacts/${{ needs.prepare.outputs.artifact_name }}
+          sbom-path: release-artifacts/sbom.cdx.json
+
+  draft-release:
+    name: Create guarded draft release
+    needs: [prepare, build-macos, attest]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Check out exact tag
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          persist-credentials: false
       - name: Download verified release bundle
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: release-macos-aarch64
           path: release-artifacts
@@ -146,10 +194,6 @@ jobs:
             cd release-artifacts
             shasum -a 256 -c SHA256SUMS
           )
-      - name: Attest exact binary archive
-        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3
-        with:
-          subject-path: release-artifacts/${{ needs.prepare.outputs.artifact_name }}
       - name: Prepare release notes
         env:
           VERSION: ${{ needs.prepare.outputs.version }}
@@ -180,11 +224,11 @@ jobs:
           ## Download and verification
 
           - `{artifact}` — macOS Apple Silicon archive
-          - `SHA256SUMS` — SHA-256 digest for the archive
+          - `SHA256SUMS` — SHA-256 digests for the archive and SBOM
           - `sbom.cdx.json` — CycloneDX SBOM bound to the archive digest
-          - GitHub build provenance attestation is generated for the exact archive bytes
+          - GitHub build-provenance and SBOM attestations are generated for the exact archive bytes
 
-          The distributed archive is currently unsigned at the Apple platform-signing layer. Verify the checksum and GitHub attestation before use.
+          The distributed archive is currently unsigned at the Apple platform-signing layer. Verify the checksums and GitHub attestations before use.
           """.strip()
           Path("release-notes.md").write_text(text + "\n\n" + footer + "\n", encoding="utf-8")
           PY
