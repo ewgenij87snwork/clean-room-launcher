@@ -1,18 +1,15 @@
 #!/usr/bin/env python3
-"""Generate a minimal deterministic CycloneDX SBOM for one CLROOM release archive."""
+"""Generate a deterministic CycloneDX SBOM for one CLROOM release archive."""
 
 from __future__ import annotations
 
 import argparse
 import hashlib
 import json
-import os
 from pathlib import Path
-import subprocess
 import sys
 import uuid
 
-ROOT = Path(__file__).resolve().parents[1]
 PRIVATE_MARKERS = ("/Users/", "/home/", "ghp_", "sk-", "AKIA")
 
 
@@ -21,8 +18,12 @@ def fail(message: str) -> "NoReturn":
     raise SystemExit(1)
 
 
+def regular(path: Path) -> bool:
+    return path.is_file() and not path.is_symlink()
+
+
 def sha256(path: Path) -> str:
-    if not path.is_file() or path.is_symlink():
+    if not regular(path):
         fail("artifact must be a regular file")
     digest = hashlib.sha256()
     with path.open("rb") as handle:
@@ -31,26 +32,15 @@ def sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def cargo_metadata() -> dict:
-    env = dict(os.environ)
-    env["CARGO_NET_OFFLINE"] = "true"
-    result = subprocess.run(
-        ["cargo", "metadata", "--locked", "--offline", "--format-version", "1"],
-        cwd=ROOT,
-        env=env,
-        text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        check=False,
-    )
-    if result.returncode != 0:
-        fail("cargo metadata failed")
+def load_json(path: Path) -> dict:
+    if not regular(path):
+        fail("metadata must be a regular file")
     try:
-        value = json.loads(result.stdout)
-    except json.JSONDecodeError:
-        fail("cargo metadata was not valid JSON")
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError):
+        fail("metadata was not valid JSON")
     if not isinstance(value, dict):
-        fail("cargo metadata shape")
+        fail("metadata shape")
     return value
 
 
@@ -79,34 +69,71 @@ def component(package: dict, *, application: bool = False, artifact_sha: str | N
     return item
 
 
+def reachable_package_ids(resolve: dict, root_id: str) -> set[str]:
+    nodes = resolve.get("nodes")
+    if not isinstance(nodes, list):
+        fail("metadata resolve nodes")
+    dependencies: dict[str, list[str]] = {}
+    for node in nodes:
+        if not isinstance(node, dict) or not isinstance(node.get("id"), str):
+            fail("metadata resolve node")
+        values = node.get("dependencies")
+        if not isinstance(values, list) or not all(isinstance(value, str) for value in values):
+            fail("metadata resolve dependencies")
+        dependencies[node["id"]] = values
+    if root_id not in dependencies:
+        fail("metadata root node")
+    seen: set[str] = set()
+    pending = [root_id]
+    while pending:
+        package_id = pending.pop()
+        if package_id in seen:
+            continue
+        seen.add(package_id)
+        pending.extend(dependencies.get(package_id, []))
+    return seen
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--artifact", required=True)
+    parser.add_argument("--metadata", required=True)
     parser.add_argument("--output", required=True)
     args = parser.parse_args()
 
     artifact = Path(args.artifact).resolve()
+    metadata_path = Path(args.metadata).resolve()
     output = Path(args.output).resolve()
     artifact_sha = sha256(artifact)
-    metadata = cargo_metadata()
+    metadata = load_json(metadata_path)
 
     packages = metadata.get("packages")
     resolve = metadata.get("resolve")
     if not isinstance(packages, list) or not isinstance(resolve, dict):
-        fail("cargo metadata packages/resolve")
+        fail("metadata packages/resolve")
     root_id = resolve.get("root")
     if not isinstance(root_id, str) or not root_id:
-        fail("cargo metadata root")
+        fail("metadata root")
 
-    by_id = {package.get("id"): package for package in packages if isinstance(package, dict)}
+    by_id = {
+        package.get("id"): package
+        for package in packages
+        if isinstance(package, dict) and isinstance(package.get("id"), str)
+    }
     root_package = by_id.get(root_id)
     if not isinstance(root_package, dict) or root_package.get("name") != "clean-room-launcher":
         fail("unexpected root package")
+    version = root_package.get("version")
+    if not isinstance(version, str) or not artifact.name.startswith(f"clean-room-launcher-v{version}-"):
+        fail("artifact/version mismatch")
 
+    reachable = reachable_package_ids(resolve, root_id)
+    if not reachable.issubset(by_id):
+        fail("metadata dependency package missing")
     dependencies = [
-        component(package)
-        for package_id, package in by_id.items()
-        if package_id != root_id and isinstance(package, dict)
+        component(by_id[package_id])
+        for package_id in reachable
+        if package_id != root_id
     ]
     dependencies.sort(key=lambda item: (item["name"], item["version"], item["bom-ref"]))
 
