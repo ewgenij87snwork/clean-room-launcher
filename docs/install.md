@@ -42,7 +42,7 @@ Run only the provider command or commands you intend to use:
 ```sh
 clroom --help
 cd your-project
-clroom codex features list  # if Codex is installed
+clroom codex exec features list  # if Codex is installed
 clroom claude --version     # if Claude Code is installed
 ```
 

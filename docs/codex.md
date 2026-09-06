@@ -7,6 +7,10 @@ nav_title: Codex
 ---
 CLROOM does not replace Codex. It launches the installed `codex` CLI.
 
+The qualified clean launch is `clroom codex exec ...`. CLROOM refuses
+interactive Codex paths until Codex exposes an independently qualified
+clean-user-config suppression capability for them.
+
 ## Codex can combine global instructions with project instructions
 
 OpenAI documents a global instruction layer under `CODEX_HOME` and a project instruction chain discovered from the repository root toward the current working directory.

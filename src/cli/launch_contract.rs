@@ -47,6 +47,65 @@ pub enum Provider {
     Claude,
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum CodexInvocation {
+    Exec(usize),
+    Diagnostic,
+    Interactive,
+}
+
+pub(crate) fn classify_codex_invocation(args: &[String]) -> CodexInvocation {
+    let mut index = 0;
+    while index < args.len() {
+        let argument = args[index].as_str();
+        if argument == "--" {
+            return CodexInvocation::Interactive;
+        }
+        if argument == "exec" || argument == "e" {
+            return CodexInvocation::Exec(index);
+        }
+        if matches!(argument, "--help" | "-h" | "--version" | "-V") {
+            return CodexInvocation::Diagnostic;
+        }
+        if codex_global_option_takes_value(argument) {
+            index += 2;
+            continue;
+        }
+        if argument.starts_with('-') {
+            index += 1;
+            continue;
+        }
+        return CodexInvocation::Interactive;
+    }
+    CodexInvocation::Interactive
+}
+
+fn codex_global_option_takes_value(argument: &str) -> bool {
+    [
+        "-c",
+        "--config",
+        "--enable",
+        "--disable",
+        "--remote",
+        "--remote-auth-token-env",
+        "-i",
+        "--image",
+        "-m",
+        "--model",
+        "--local-provider",
+        "-p",
+        "--profile",
+        "-s",
+        "--sandbox",
+        "-C",
+        "--cd",
+        "--add-dir",
+        "-a",
+        "--ask-for-approval",
+    ]
+    .contains(&argument)
+}
+
 #[allow(dead_code)]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum BoundaryState {
@@ -92,6 +151,10 @@ impl LaunchContract {
             })
             .collect::<Vec<_>>();
         argv.extend_from_slice(user_args);
+        if let CodexInvocation::Exec(index) = classify_codex_invocation(user_args) {
+            let insert_at = CODEX_CLEAN_DEFAULTS.len() + index + 1;
+            argv.insert(insert_at, "--ignore-user-config".to_owned());
+        }
         let (boundary, boundary_controls, model_choice) =
             analyze(Provider::Codex, user_args, !pass_env.is_empty());
         Self {
@@ -308,5 +371,48 @@ mod tests {
             Presence::Absent,
         );
         assert_eq!(claude.boundary, BoundaryState::Unknown);
+    }
+
+    #[test]
+    fn codex_exec_gets_native_clean_user_config_suppression_after_subcommand() {
+        let contract = LaunchContract::codex(&[
+            "--profile".to_owned(),
+            "safe".to_owned(),
+            "exec".to_owned(),
+            "prompt".to_owned(),
+        ]);
+        let position = contract
+            .argv
+            .iter()
+            .position(|argument| argument == "--ignore-user-config")
+            .unwrap();
+        assert_eq!(contract.argv[position - 1], "exec");
+    }
+
+    #[test]
+    fn codex_invocation_classification_is_fail_closed_for_interactive_paths() {
+        use super::{CodexInvocation, classify_codex_invocation};
+
+        assert_eq!(
+            classify_codex_invocation(&["exec".to_owned(), "prompt".to_owned()]),
+            CodexInvocation::Exec(0)
+        );
+        assert_eq!(
+            classify_codex_invocation(&[
+                "--profile".to_owned(),
+                "safe".to_owned(),
+                "exec".to_owned(),
+                "prompt".to_owned(),
+            ]),
+            CodexInvocation::Exec(2)
+        );
+        assert_eq!(
+            classify_codex_invocation(&["resume".to_owned(), "thread".to_owned()]),
+            CodexInvocation::Interactive
+        );
+        assert_eq!(
+            classify_codex_invocation(&["--help".to_owned()]),
+            CodexInvocation::Diagnostic
+        );
     }
 }

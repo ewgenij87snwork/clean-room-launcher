@@ -28,7 +28,7 @@ With Clean Room Launcher (CLROOM), you can launch the installed Codex or Claude 
 For example:
 
 ```sh
-clroom codex --skill-set=@my-skills
+clroom codex exec --skill-set=@my-skills
 ```
 
 or:

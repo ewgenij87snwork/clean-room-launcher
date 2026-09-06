@@ -50,9 +50,9 @@ clroom help skill-set
 Reference a saved group with `@set-name`:
 
 ```sh
-clroom codex --skill-set=@review
+clroom codex exec --skill-set=@review
 
-clroom codex --skill-set=@bugfix
+clroom codex exec --skill-set=@bugfix
 
 clroom claude --skill-set=@brainstorming
 ```
@@ -64,13 +64,13 @@ The same user-created set mechanism is available through both CLROOM launchers. 
 Use more than one saved set in the same launch:
 
 ```sh
-clroom codex --skill-set=@review,@bugfix
+clroom codex exec --skill-set=@review,@bugfix
 ```
 
 Or combine a direct global skill with a saved set:
 
 ```sh
-clroom codex --skill-set=my-skill,@review
+clroom codex exec --skill-set=my-skill,@review
 ```
 
 Selectors are comma-separated. Repeated and overlapping selectors are deduplicated, and the selection applies only to this launch.

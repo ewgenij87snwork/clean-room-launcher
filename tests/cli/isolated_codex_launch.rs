@@ -104,11 +104,30 @@ fn command(project: &Path, home: &Path, codex_home: &Path, bin: &Path, _capture:
 }
 
 fn expected_argv(user_args: &[&str]) -> Vec<u8> {
-    CODEX_CLEAN_DEFAULTS
+    let mut arguments = CODEX_CLEAN_DEFAULTS
         .iter()
         .chain(user_args)
+        .map(|argument| (*argument).to_owned())
+        .collect::<Vec<_>>();
+    if let Some(index) = user_args
+        .iter()
+        .position(|argument| matches!(*argument, "exec" | "e"))
+    {
+        arguments.insert(
+            CODEX_CLEAN_DEFAULTS.len() + index + 1,
+            "--ignore-user-config".to_owned(),
+        );
+    }
+    arguments
+        .iter()
         .flat_map(|argument| argument.as_bytes().iter().copied().chain([0]))
         .collect()
+}
+
+fn expected_exec_argv(user_args: &[&str]) -> Vec<u8> {
+    let mut arguments = vec!["exec"];
+    arguments.extend_from_slice(user_args);
+    expected_argv(&arguments)
 }
 
 #[cfg(target_os = "macos")]
@@ -220,17 +239,17 @@ fn codex_handoff_preserves_literal_argv_exit_and_stdio_inside_the_isolated_bound
     let (_root, project, home, codex_home, bin) = isolated_fixture();
     let capture = project.join(".clroom-capture");
     let output = command(&project, &home, &codex_home, &bin, &capture)
-        .args(["codex", "--exit-42", "literal value"])
+        .args(["codex", "exec", "--exit-42", "literal value"])
         .output()
         .unwrap();
     assert_eq!(output.status.code(), Some(42));
     assert_eq!(
         fs::read(&capture).unwrap(),
-        expected_argv(&["--exit-42", "literal value"])
+        expected_exec_argv(&["--exit-42", "literal value"])
     );
 
     let mut child = command(&project, &home, &codex_home, &bin, &capture)
-        .args(["codex", "--stdio"])
+        .args(["codex", "exec", "--stdio"])
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -246,7 +265,25 @@ fn codex_handoff_preserves_literal_argv_exit_and_stdio_inside_the_isolated_bound
     assert_eq!(output.status, std::process::ExitStatus::from_raw(0));
     assert_eq!(output.stdout, b"stdout:native streams\n");
     assert_eq!(output.stderr, b"stderr:native streams\n");
-    assert_eq!(fs::read(&capture).unwrap(), expected_argv(&["--stdio"]));
+    assert_eq!(
+        fs::read(&capture).unwrap(),
+        expected_exec_argv(&["--stdio"])
+    );
+}
+
+#[test]
+fn codex_handoff_refuses_interactive_provider_paths_before_child_birth() {
+    let (_root, project, home, codex_home, bin) = isolated_fixture();
+    let capture = project.join(".clroom-capture");
+    let output = command(&project, &home, &codex_home, &bin, &capture)
+        .args(["codex", "resume", "--last"])
+        .output()
+        .unwrap();
+    assert_eq!(output.status.code(), Some(2));
+    assert!(
+        String::from_utf8_lossy(&output.stderr).contains("CLROOM_CODEX_INTERACTIVE_UNSUPPORTED")
+    );
+    assert!(!capture.exists());
 }
 
 #[test]
@@ -269,13 +306,13 @@ fn codex_handoff_keeps_explicit_user_overrides_after_clean_defaults() {
     ];
 
     let output = command(&project, &home, &codex_home, &bin, &capture)
-        .arg("codex")
+        .args(["codex", "exec"])
         .args(user_args)
         .output()
         .unwrap();
 
     assert_eq!(output.status.code(), Some(42));
-    assert_eq!(fs::read(&capture).unwrap(), expected_argv(&user_args));
+    assert_eq!(fs::read(&capture).unwrap(), expected_exec_argv(&user_args));
 }
 
 #[test]
@@ -304,6 +341,7 @@ fn codex_handoff_admits_one_exact_skill_and_a_complete_namespace_for_this_run() 
     let output = command(&project, &home, &codex_home, &bin, &capture)
         .args([
             "codex",
+            "exec",
             "--skill-set=arrow,superpowers",
             "--exit-42",
             "literal value",
@@ -330,7 +368,7 @@ fn codex_handoff_admits_one_exact_skill_and_a_complete_namespace_for_this_run() 
     assert_eq!(output.status.code(), Some(42));
     assert_eq!(
         fs::read(&capture).unwrap(),
-        expected_argv(&["--exit-42", "literal value"])
+        expected_exec_argv(&["--exit-42", "literal value"])
     );
 }
 
@@ -358,6 +396,7 @@ fn codex_handoff_admits_one_namespaced_skill_without_its_siblings() {
     let output = command(&project, &home, &codex_home, &bin, &capture)
         .args([
             "codex",
+            "exec",
             "--skill-set=arrow,superpowers:systematic-debugging",
             "features",
             "list",
@@ -384,7 +423,7 @@ fn codex_handoff_admits_one_namespaced_skill_without_its_siblings() {
     assert_eq!(output.status.code(), Some(42));
     assert_eq!(
         fs::read(&capture).unwrap(),
-        expected_argv(&["features", "list"])
+        expected_exec_argv(&["features", "list"])
     );
 }
 
@@ -468,6 +507,7 @@ fn codex_handoff_prefers_codex_local_duplicates_and_denies_agents_bodies() {
     let output = command(&project, &home, &codex_home, &bin, &capture)
         .args([
             "codex",
+            "exec",
             "--skill-set=arrow,superpowers:systematic-debugging",
             "--version",
         ])
@@ -497,7 +537,10 @@ fn codex_handoff_prefers_codex_local_duplicates_and_denies_agents_bodies() {
         "stderr={}",
         String::from_utf8_lossy(&output.stderr)
     );
-    assert_eq!(fs::read(&capture).unwrap(), expected_argv(&["--version"]));
+    assert_eq!(
+        fs::read(&capture).unwrap(),
+        expected_exec_argv(&["--version"])
+    );
 }
 
 #[test]
@@ -532,6 +575,7 @@ fn codex_handoff_expands_multiple_named_sets_and_direct_skills_without_rewriting
     let output = command(&project, &home, &codex_home, &bin, &capture)
         .args([
             "codex",
+            "exec",
             "--skill-set=@review,@debugging,@documentation,arrow",
             "features",
             "list",
@@ -559,7 +603,7 @@ fn codex_handoff_expands_multiple_named_sets_and_direct_skills_without_rewriting
     assert_eq!(output.status.code(), Some(42));
     assert_eq!(
         fs::read(&capture).unwrap(),
-        expected_argv(&["features", "list"])
+        expected_exec_argv(&["features", "list"])
     );
     assert_eq!(fs::read(&config).unwrap(), yaml);
 }
@@ -666,13 +710,13 @@ fn codex_handoff_forwards_the_unreleased_old_skills_spelling_to_codex() {
     let user_args = ["--skills=provider-native", "--version"];
 
     let output = command(&project, &home, &codex_home, &bin, &capture)
-        .arg("codex")
+        .args(["codex", "exec"])
         .args(user_args)
         .output()
         .unwrap();
 
     assert_eq!(output.status.code(), Some(42));
-    assert_eq!(fs::read(&capture).unwrap(), expected_argv(&user_args));
+    assert_eq!(fs::read(&capture).unwrap(), expected_exec_argv(&user_args));
 }
 
 #[test]

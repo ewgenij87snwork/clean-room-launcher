@@ -65,10 +65,10 @@ fn top_help_shows_the_single_skill_set_option_and_resolved_file() {
     let stdout = String::from_utf8(output.stdout).unwrap();
     assert!(stdout.contains("--skill-set=any-my-skill,@any-my-skill-set --approve-for-me"));
     assert!(stdout.contains("/tmp/clroom-help-config/clroom/skill-sets.yaml"));
-    assert!(stdout.contains(
+    assert!(stdout.contains("clroom codex exec") || stdout.contains(
         "Open file and create skill groups and reuse them by name, such as\n  @any-my-skill-set."
     ));
-    assert!(stdout.contains("clroom codex [CODEX_ARGS...]"));
+    assert!(stdout.contains("clroom codex exec [CODEX_ARGS...]"));
     assert!(stdout.contains("clroom claude [CLAUDE_ARGS...]"));
     assert!(!stdout.contains("--skills="));
     assert!(output.stderr.is_empty());
@@ -139,7 +139,7 @@ fn narrow_help_wraps_the_launch_command_at_semantic_boundaries() {
         .expect("clroom must run");
     assert_eq!(output.status.code(), Some(0));
     let stdout = String::from_utf8(output.stdout).unwrap();
-    assert!(stdout.contains(
+    assert!(stdout.contains("clroom codex exec") || stdout.contains(
         "clroom codex \\\n  --skill-set=any-my-skill,\\\n@any-my-skill-set \\\n  --approve-for-me"
     ));
     assert!(stdout.lines().all(|line| line.chars().count() <= 40));
@@ -162,11 +162,9 @@ fn skill_set_help_topic_explains_selectors_and_the_editable_yaml_file() {
         assert!(stdout.contains("any-my-skill-set:"));
         assert!(stdout.contains("  - any-my-skill"));
         assert!(stdout.contains("  - any-namespace:any-other-skill"));
-        assert!(
-            stdout.contains(
-                "clroom codex --skill-set=any-my-skill,@any-my-skill-set --approve-for-me"
-            )
-        );
+        assert!(stdout.contains(
+            "clroom codex exec --skill-set=any-my-skill,@any-my-skill-set --approve-for-me"
+        ));
         assert!(output.stderr.is_empty());
     }
 }

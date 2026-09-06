@@ -14,13 +14,16 @@ The alpha has two supported paths:
 Use it as:
 
 ```sh
-clroom codex [ordinary Codex arguments]
+clroom codex exec [ordinary Codex arguments]
 clroom claude [ordinary Claude Code arguments]
 ```
 
 Clean Room Launcher resolves `codex` from `PATH`, builds the macOS isolation
 profile, prints the boundary summary, then replaces itself with
-`sandbox-exec … codex`. Terminal streams, signals and exit status remain native.
+`codex exec --ignore-user-config` inside `sandbox-exec`. Terminal streams,
+signals and exit status remain native. Interactive `clroom codex` paths are
+currently refused because no independently qualified clean-user-config
+capability exists for them.
 
 For Claude, the launcher creates one private session-scoped skill projection,
 binds it to the real Claude consumer process, and removes it on normal exit or
