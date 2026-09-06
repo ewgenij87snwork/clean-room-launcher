@@ -17,7 +17,6 @@ developer instructions and notifications disabled by default.
 Use ordinary Codex commands unchanged:
 
 ```sh
-clroom codex exec features list
 clroom codex exec "summarize this repository"
 ```
 

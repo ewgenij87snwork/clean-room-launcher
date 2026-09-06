@@ -55,55 +55,11 @@ pub(crate) enum CodexInvocation {
 }
 
 pub(crate) fn classify_codex_invocation(args: &[String]) -> CodexInvocation {
-    let mut index = 0;
-    while index < args.len() {
-        let argument = args[index].as_str();
-        if argument == "--" {
-            return CodexInvocation::Interactive;
-        }
-        if argument == "exec" || argument == "e" {
-            return CodexInvocation::Exec(index);
-        }
-        if matches!(argument, "--help" | "-h" | "--version" | "-V") {
-            return CodexInvocation::Diagnostic;
-        }
-        if codex_global_option_takes_value(argument) {
-            index += 2;
-            continue;
-        }
-        if argument.starts_with('-') {
-            index += 1;
-            continue;
-        }
-        return CodexInvocation::Interactive;
+    match args.first().map(String::as_str) {
+        Some("exec" | "e") => CodexInvocation::Exec(0),
+        Some("--help" | "-h" | "--version" | "-V") => CodexInvocation::Diagnostic,
+        _ => CodexInvocation::Interactive,
     }
-    CodexInvocation::Interactive
-}
-
-fn codex_global_option_takes_value(argument: &str) -> bool {
-    [
-        "-c",
-        "--config",
-        "--enable",
-        "--disable",
-        "--remote",
-        "--remote-auth-token-env",
-        "-i",
-        "--image",
-        "-m",
-        "--model",
-        "--local-provider",
-        "-p",
-        "--profile",
-        "-s",
-        "--sandbox",
-        "-C",
-        "--cd",
-        "--add-dir",
-        "-a",
-        "--ask-for-approval",
-    ]
-    .contains(&argument)
 }
 
 #[allow(dead_code)]
@@ -375,12 +331,7 @@ mod tests {
 
     #[test]
     fn codex_exec_gets_native_clean_user_config_suppression_after_subcommand() {
-        let contract = LaunchContract::codex(&[
-            "--profile".to_owned(),
-            "safe".to_owned(),
-            "exec".to_owned(),
-            "prompt".to_owned(),
-        ]);
+        let contract = LaunchContract::codex(&["exec".to_owned(), "prompt".to_owned()]);
         let position = contract
             .argv
             .iter()
@@ -404,7 +355,7 @@ mod tests {
                 "exec".to_owned(),
                 "prompt".to_owned(),
             ]),
-            CodexInvocation::Exec(2)
+            CodexInvocation::Interactive
         );
         assert_eq!(
             classify_codex_invocation(&["resume".to_owned(), "thread".to_owned()]),
