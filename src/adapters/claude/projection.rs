@@ -80,14 +80,11 @@ pub fn project(home: &Path, selectors: &[String]) -> Result<Projection, Projecti
     reject_native_name_collisions(&selected)?;
     let (storage_root, root) = create_root()?;
     let add_dir = root.join("view");
-    fs::create_dir_all(add_dir.join(".claude/skills"))
-        .map_err(|_| ProjectionError::Unavailable)?;
-    let add_dir = fs::canonicalize(&add_dir).map_err(|_| ProjectionError::Unavailable)?;
     let allowed_source_paths = selected
         .iter()
         .map(|skill| skill.canonical_path.clone())
         .collect();
-    let projection = Projection {
+    let mut projection = Projection {
         root,
         storage_root,
         phase: ProjectionPhase::Creating,
@@ -95,6 +92,10 @@ pub fn project(home: &Path, selectors: &[String]) -> Result<Projection, Projecti
         selected_global_skills: selected.len(),
         allowed_source_paths,
     };
+    fs::create_dir_all(projection.add_dir.join(".claude/skills"))
+        .map_err(|_| ProjectionError::Unavailable)?;
+    projection.add_dir =
+        fs::canonicalize(&projection.add_dir).map_err(|_| ProjectionError::Unavailable)?;
     let skills_dir = projection.add_dir.join(".claude/skills");
 
     for skill in &selected {
