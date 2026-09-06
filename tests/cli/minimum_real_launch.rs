@@ -30,9 +30,9 @@ impl Drop for Scratch {
 
 #[cfg(target_os = "macos")]
 #[test]
-fn interactive_enter_launches_fake_codex_through_the_isolated_boundary() {
-    // Break caught: bare Enter returns a placeholder local success instead of
-    // entering the already-proven isolated Codex handoff.
+fn interactive_enter_refuses_without_clean_user_config_capability() {
+    // Break caught: bare Enter starts an interactive provider without a
+    // provider-native clean-user-config suppression capability.
     let root = Scratch::new();
     let project = root.0.join("project");
     let home = root.0.join("home");
@@ -100,21 +100,15 @@ fn interactive_enter_launches_fake_codex_through_the_isolated_boundary() {
         .output()
         .unwrap();
 
-    assert_eq!(
-        output.status.code(),
-        Some(42),
-        "Enter did not propagate the isolated fake-provider result:\n{}",
-        String::from_utf8_lossy(&output.stdout)
-    );
-    assert_eq!(fs::read_to_string(&capture).unwrap(), "isolated-enter");
-    let transcript = String::from_utf8(output.stdout).unwrap().replace('\r', "");
-    assert!(transcript.contains("CLEAN ROOM"));
-    assert!(transcript.contains("Global AGENTS.md"));
-    assert!(transcript.contains("Global skills"));
-    assert!(transcript.contains("Hooks/plugins"));
-    assert!(transcript.contains("Dev prompt"));
-    assert!(transcript.contains("Notifications"));
-    assert!(!transcript.contains("Launch succeeded"));
+    assert_eq!(output.status.code(), Some(2));
+    assert!(!capture.exists());
+    let transcript = format!(
+        "{}{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    )
+    .replace('\r', "");
+    assert!(transcript.contains("CLROOM_CODEX_INTERACTIVE_UNSUPPORTED"));
 }
 
 #[test]
@@ -227,11 +221,13 @@ fn interactive_enter_refuses_locally_when_codex_is_unavailable() {
         .unwrap();
 
     assert_eq!(output.status.code(), Some(2));
-    let transcript = String::from_utf8(output.stdout).unwrap().replace('\r', "");
-    assert!(
-        transcript
-            .contains("LOCAL_CODEX_UNAVAILABLE: executable 'codex' not found; continue locally")
-    );
+    let transcript = format!(
+        "{}{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    )
+    .replace('\r', "");
+    assert!(transcript.contains("CLROOM_CODEX_INTERACTIVE_UNSUPPORTED"));
     let lower = transcript.to_ascii_lowercase();
     assert!(!lower.contains("login"));
     assert!(!lower.contains("sign in"));

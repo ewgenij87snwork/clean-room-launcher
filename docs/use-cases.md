@@ -10,13 +10,13 @@ nav_title: Use cases
 You built a skill. Test it without unrelated global instructions or skills. Alone, with a skill set you created, or both together:
 
 ```sh
-clroom codex --skill-set=my-skill,@my-skill-set
+clroom codex exec --skill-set=my-skill,@my-skill-set
 ```
 
 Then test other skills on the same task to compare the results, token use, and time:
 
 ```sh
-clroom codex --skill-set=superpowers
+clroom codex exec --skill-set=superpowers
 ```
 
 Then repeat the test with the other supported coding agent in the same simple way:

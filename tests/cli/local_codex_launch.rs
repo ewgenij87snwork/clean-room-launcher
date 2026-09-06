@@ -93,7 +93,7 @@ fn direct_codex_command_launches_literal_local_child_and_returns_status() {
     let (codex, capture) = fake_codex();
     let path = codex.parent().unwrap();
     let output = Command::new(env!("CARGO_BIN_EXE_clroom"))
-        .args(["codex", "--exit-42", "safe-value"])
+        .args(["codex", "exec", "--exit-42", "safe-value"])
         .env("PATH", path)
         .env("CLROOM_INHERITED_MARKER", "inherited")
         .output()
@@ -101,7 +101,7 @@ fn direct_codex_command_launches_literal_local_child_and_returns_status() {
     assert_eq!(output.status.code(), Some(42));
     assert_eq!(
         fs::read_to_string(capture).unwrap(),
-        format!("{CODEX_CLEAN_DEFAULTS}--exit-42\0safe-value\0")
+        format!("{CODEX_CLEAN_DEFAULTS}exec\0--ignore-user-config\0--exit-42\0safe-value\0")
     );
 }
 
@@ -158,7 +158,7 @@ fn codex_unavailable_is_local_status_not_login_flow() {
 fn codex_pass_env_is_exact_and_denies_unrequested_names() {
     let (codex, capture, env_capture) = fake_codex_with_env_capture();
     let output = Command::new(env!("CARGO_BIN_EXE_clroom"))
-        .args(["codex", "--pass-env=RUNNER_REQUESTED", "--exit-42"])
+        .args(["codex", "--pass-env=RUNNER_REQUESTED", "exec", "--exit-42"])
         .env("PATH", codex.parent().unwrap())
         .env("RUNNER_REQUESTED", "synthetic-value-must-not-print")
         .env("RUNNER_UNREQUESTED", "synthetic-value-must-not-print")
@@ -172,6 +172,7 @@ fn codex_pass_env_is_exact_and_denies_unrequested_names() {
         "RUNNER_REQUESTED=present\nRUNNER_UNREQUESTED=absent\n"
     );
     let argv = fs::read_to_string(capture).unwrap();
+    assert!(argv.contains("--ignore-user-config"));
     assert!(argv.contains("RUNNER_REQUESTED"));
     assert!(!argv.contains("RUNNER_UNREQUESTED"));
 }

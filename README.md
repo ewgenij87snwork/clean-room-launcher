@@ -50,7 +50,7 @@ Project-local skills are available automatically.
 Global skills stay outside unless you add them for this launch.
 
 ```sh
-clroom codex --skill-set=my-skill,@my-skill-set --approve-for-me
+clroom codex exec --skill-set=my-skill,@my-skill-set --approve-for-me
 
 clroom claude --skill-set=my-skill,@my-skill-set
 ```
@@ -98,7 +98,7 @@ feature-planning:
 
 ## See the boundary as Codex starts
 
-Run `clroom codex --skill-set=my-skill,@my-skill-set` from the directory where
+Run `clroom codex exec --skill-set=my-skill,@my-skill-set` from the directory where
 you want to work.
 
 Before Codex takes over the terminal, Clean Room Launcher shows a compact
@@ -130,8 +130,9 @@ When project-local skills are present in `.agents/skills`, the separate card
 shows how many remain available; with none, the card is omitted. Project
 context and explicit Codex arguments remain available.
 
-Codex then starts immediately in the same terminal. There is no menu,
-confirmation step, second launch, or artificial delay.
+For the qualified clean-user-config path, Codex `exec` starts immediately in
+the same terminal. Interactive Codex commands are refused until Codex exposes
+an independently qualified equivalent suppression capability.
 
 ## Install in sixty seconds
 
@@ -174,12 +175,12 @@ No crates.io package is published for this alpha.
 
 ### Codex
 
-For a low-friction Codex launch with eligible approval requests handled by
+For a non-interactive Codex task with eligible approval requests handled by
 Codex Auto-review:
 
 ```sh
 cd your-project
-clroom codex --approve-for-me
+clroom codex exec --approve-for-me
 ```
 
 `--approve-for-me` is a Codex option. It keeps the Codex workspace sandbox and
@@ -187,18 +188,28 @@ routes eligible approval requests through its automatic reviewer. Availability
 and reviewer behavior are controlled by the installed Codex version and
 account.
 
-If you prefer to review approval requests yourself:
+For a non-interactive task where you prefer to review approval requests yourself:
 
 ```sh
-clroom codex
+clroom codex exec
 ```
 
-Ordinary Codex arguments pass through unchanged:
+Non-interactive `codex exec` arguments pass through unchanged:
+
+```sh
+clroom codex exec --enable apps --enable hooks --enable plugins
+```
+
+For provider diagnostics, use the top-level forms:
 
 ```sh
 clroom codex --help
-clroom codex --enable apps --enable hooks --enable plugins
+clroom codex --version
 ```
+
+Interactive `clroom codex` is currently refused fail-closed because its clean
+user-config suppression is not independently qualified. `codex exec` is not a
+substitute for the interactive TUI.
 
 ### Claude Code
 

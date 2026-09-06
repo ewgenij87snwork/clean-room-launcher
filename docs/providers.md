@@ -11,16 +11,27 @@ The alpha has two supported paths:
 | Codex CLI 0.147.0+ | macOS / Apple Silicon | Alpha |
 | Claude Code CLI 2.1.223+ | macOS / Apple Silicon | Alpha |
 
-Use it as:
+Use the qualified non-interactive Codex path as:
 
 ```sh
-clroom codex [ordinary Codex arguments]
+clroom codex exec [CODEX_EXEC_ARGS]
 clroom claude [ordinary Claude Code arguments]
+```
+
+For qualified provider diagnostics, use the top-level forms:
+
+```sh
+clroom codex --help
+clroom codex --version
 ```
 
 Clean Room Launcher resolves `codex` from `PATH`, builds the macOS isolation
 profile, prints the boundary summary, then replaces itself with
-`sandbox-exec … codex`. Terminal streams, signals and exit status remain native.
+`codex exec --ignore-user-config` inside `sandbox-exec`. Terminal streams,
+signals and exit status remain native. Interactive `clroom codex` paths are
+currently refused fail-closed because no independently qualified clean-user-
+config capability exists for them; `codex exec` is not an interactive TUI
+substitute.
 
 For Claude, the launcher creates one private session-scoped skill projection,
 binds it to the real Claude consumer process, and removes it on normal exit or
