@@ -84,7 +84,7 @@ pub fn project(home: &Path, selectors: &[String]) -> Result<Projection, Projecti
         .iter()
         .map(|skill| skill.canonical_path.clone())
         .collect();
-    let projection = Projection {
+    let mut projection = Projection {
         root,
         storage_root,
         phase: ProjectionPhase::Creating,
@@ -92,8 +92,11 @@ pub fn project(home: &Path, selectors: &[String]) -> Result<Projection, Projecti
         selected_global_skills: selected.len(),
         allowed_source_paths,
     };
+    fs::create_dir_all(projection.add_dir.join(".claude/skills"))
+        .map_err(|_| ProjectionError::Unavailable)?;
+    projection.add_dir =
+        fs::canonicalize(&projection.add_dir).map_err(|_| ProjectionError::Unavailable)?;
     let skills_dir = projection.add_dir.join(".claude/skills");
-    fs::create_dir_all(&skills_dir).map_err(|_| ProjectionError::Unavailable)?;
 
     for skill in &selected {
         link_skill(&skill.canonical_path, &skills_dir.join(&skill.name))?;
