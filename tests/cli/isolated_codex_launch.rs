@@ -74,6 +74,7 @@ fn isolated_fixture() -> (Scratch, PathBuf, PathBuf, PathBuf, PathBuf) {
         &fake,
         "#!/bin/sh\n\
          if [ \"$1\" = --version ]; then printf '0.147.0\\n'; exit 0; fi\n\
+         if [ \"$1\" = exec ] && [ \"$2\" = --ignore-user-config ] && [ \"$3\" = --help ]; then printf -- '--ignore-user-config\\n'; exit 0; fi\n\
          /bin/cat \"$PWD/canaries/PROJECT.md\" >/dev/null || exit 70\n\
          /bin/cat \"$CODEX_HOME/AGENTS.md\" >/dev/null 2>&1 && exit 71\n\
          /bin/cat \"$HOME/.agents/skills/ambient/SKILL.md\" >/dev/null 2>&1 && exit 72\n\
@@ -327,6 +328,7 @@ fn codex_handoff_admits_one_exact_skill_and_a_complete_namespace_for_this_run() 
         &fake,
         "#!/bin/sh\n\
          if [ \"$1\" = --version ]; then printf '0.147.0\\n'; exit 0; fi\n\
+         if [ \"$1\" = exec ] && [ \"$2\" = --ignore-user-config ] && [ \"$3\" = --help ]; then printf -- '--ignore-user-config\\n'; exit 0; fi\n\
          /bin/cat \"$PWD/.agents/skills/project-only/SKILL.md\" >/dev/null || exit 73\n\
          /bin/cat \"$HOME/.agents/skills/arrow/SKILL.md\" >/dev/null || exit 74\n\
          /bin/cat \"$HOME/.agents/skills/systematic-debugging/SKILL.md\" >/dev/null || exit 75\n\
@@ -382,6 +384,7 @@ fn codex_handoff_admits_one_namespaced_skill_without_its_siblings() {
         &fake,
         "#!/bin/sh\n\
          if [ \"$1\" = --version ]; then printf '0.147.0\\n'; exit 0; fi\n\
+         if [ \"$1\" = exec ] && [ \"$2\" = --ignore-user-config ] && [ \"$3\" = --help ]; then printf -- '--ignore-user-config\\n'; exit 0; fi\n\
          /bin/cat \"$PWD/.agents/skills/project-only/SKILL.md\" >/dev/null || exit 73\n\
          /bin/cat \"$HOME/.agents/skills/arrow/SKILL.md\" >/dev/null || exit 74\n\
          /bin/cat \"$HOME/.agents/skills/systematic-debugging/SKILL.md\" >/dev/null || exit 75\n\
@@ -491,6 +494,7 @@ fn codex_handoff_prefers_codex_local_duplicates_and_denies_agents_bodies() {
         &fake,
         "#!/bin/sh\n\
          if [ \"$1\" = --version ]; then printf '0.147.0\\n'; exit 0; fi\n\
+         if [ \"$1\" = exec ] && [ \"$2\" = --ignore-user-config ] && [ \"$3\" = --help ]; then printf -- '--ignore-user-config\\n'; exit 0; fi\n\
          /bin/ls \"$HOME/.agents/skills\" >/dev/null || exit 73\n\
          /bin/ls \"$CODEX_HOME/skills\" >/dev/null || exit 74\n\
          /bin/cat \"$CODEX_HOME/skills/arrow/SKILL.md\" >/dev/null || exit 75\n\
@@ -555,6 +559,7 @@ fn codex_handoff_expands_multiple_named_sets_and_direct_skills_without_rewriting
         &fake,
         "#!/bin/sh\n\
          if [ \"$1\" = --version ]; then printf '0.147.0\\n'; exit 0; fi\n\
+         if [ \"$1\" = exec ] && [ \"$2\" = --ignore-user-config ] && [ \"$3\" = --help ]; then printf -- '--ignore-user-config\\n'; exit 0; fi\n\
          /bin/cat \"$PWD/.agents/skills/project-only/SKILL.md\" >/dev/null || exit 73\n\
          /bin/cat \"$HOME/.agents/skills/arrow/SKILL.md\" >/dev/null || exit 74\n\
          /bin/cat \"$HOME/.agents/skills/systematic-debugging/SKILL.md\" >/dev/null || exit 75\n\

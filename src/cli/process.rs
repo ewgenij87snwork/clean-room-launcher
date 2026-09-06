@@ -3,7 +3,7 @@ use std::{
     ffi::OsString,
     fs, io,
     path::{Path, PathBuf},
-    process::{Command, ExitCode},
+    process::{Command, ExitCode, Stdio},
 };
 
 use taskseal::adapters::claude::{
@@ -16,7 +16,7 @@ use taskseal::adapters::{
 };
 use taskseal::contracts::adapter::parse_declaration;
 
-use super::launch_contract::LaunchContract;
+use super::launch_contract::{CodexInvocation, LaunchContract, classify_codex_invocation};
 
 #[derive(Clone, Copy)]
 enum ProviderEnvironment {
@@ -141,14 +141,47 @@ pub fn resolve_claude_executable() -> Result<PathBuf, String> {
     resolve_executable("claude", local_claude_unavailable)
 }
 
-pub fn preflight_codex(executable: &Path) -> Result<ProviderIdentity, String> {
+pub fn preflight_codex(
+    executable: &Path,
+    provider_args: &[String],
+) -> Result<ProviderIdentity, String> {
     if !Path::new("/usr/bin/sandbox-exec").is_file() {
         return Err(
             "CLROOM_ISOLATION_UNAVAILABLE: macOS sandbox-exec is unavailable; continue locally"
                 .to_owned(),
         );
     }
-    resolve_launch_identity(executable, "codex", ">=0.147.0")
+    let identity = resolve_launch_identity(executable, "codex", ">=0.147.0")?;
+    if matches!(
+        classify_codex_invocation(provider_args),
+        CodexInvocation::Exec(_)
+    ) {
+        verify_codex_exec_clean_user_config(&identity)?;
+    }
+    Ok(identity)
+}
+
+fn verify_codex_exec_clean_user_config(identity: &ProviderIdentity) -> Result<(), String> {
+    let sandbox = Path::new("/usr/bin/sandbox-exec");
+    let profile = "(version 1)\n(allow default)\n(deny network*)\n(deny file-write*)\n";
+    let status = Command::new(sandbox)
+        .args(["-p", profile, "--"])
+        .arg(&identity.real_executable)
+        .args(["exec", "--ignore-user-config", "--help"])
+        .env_clear()
+        .env("HOME", "/")
+        .env("CODEX_HOME", "/")
+        .env("PATH", "/usr/bin:/bin")
+        .current_dir("/")
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .status()
+        .map_err(|_| codex_exec_unsupported())?;
+    if status.success() {
+        Ok(())
+    } else {
+        Err(codex_exec_unsupported())
+    }
 }
 
 pub fn preflight_claude(executable: &Path) -> Result<ProviderIdentity, String> {
@@ -327,6 +360,10 @@ fn isolated_launch_error(_: io::Error) -> String {
 
 fn local_codex_unavailable() -> String {
     "LOCAL_CODEX_UNAVAILABLE: executable 'codex' not found; continue locally".to_owned()
+}
+
+fn codex_exec_unsupported() -> String {
+    "CLROOM_CODEX_EXEC_UNSUPPORTED: installed Codex does not expose a qualified 'exec --ignore-user-config' path; continue locally".to_owned()
 }
 
 fn local_claude_unavailable() -> String {
