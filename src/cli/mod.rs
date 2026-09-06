@@ -90,7 +90,14 @@ fn run_codex(source: &mut impl Iterator<Item = String>) -> ExitCode {
     } {
         args.push(argument);
     }
-    match launch_isolated_codex(&args) {
+    let (selection_terms, provider_args, pass_env) = match select_codex_options(&args) {
+        Ok(options) => options,
+        Err(message) => {
+            eprintln!("{message}");
+            return ExitCode::from(2);
+        }
+    };
+    match launch_isolated_codex(&selection_terms, &provider_args, &pass_env) {
         Ok(exit) => exit,
         Err(message) => {
             eprintln!("{message}");
@@ -126,8 +133,11 @@ fn run_claude(source: &mut impl Iterator<Item = String>) -> ExitCode {
     }
 }
 
-fn launch_isolated_codex(args: &[String]) -> Result<ExitCode, String> {
-    let (selection_terms, provider_args) = select_global_skills(args)?;
+fn launch_isolated_codex(
+    selection_terms: &[String],
+    provider_args: &[String],
+    pass_env: &[String],
+) -> Result<ExitCode, String> {
     let home = std::env::var_os("HOME").map(PathBuf::from).ok_or_else(|| {
         "CLROOM_ISOLATION_INVALID: HOME is unavailable; continue locally".to_owned()
     })?;
@@ -141,7 +151,11 @@ fn launch_isolated_codex(args: &[String]) -> Result<ExitCode, String> {
     let project = std::env::current_dir().map_err(|_| {
         "CLROOM_ISOLATION_INVALID: current project is unavailable; continue locally".to_owned()
     })?;
-    let mut contract = launch_contract::LaunchContract::codex(&provider_args);
+    let mut contract = if pass_env.is_empty() {
+        launch_contract::LaunchContract::codex(provider_args)
+    } else {
+        launch_contract::LaunchContract::codex_with_pass_env(provider_args, pass_env)
+    };
     let executable = match process::resolve_codex_executable() {
         Ok(executable) => executable,
         Err(error) => {
@@ -214,7 +228,7 @@ fn launch_isolated_codex(args: &[String]) -> Result<ExitCode, String> {
             .join("\n")
         );
     }
-    process::launch_isolated_codex(&plan, &executable, &contract, &identity)
+    process::launch_isolated_codex(&plan, &executable, &contract, &identity, pass_env)
 }
 
 fn launch_isolated_claude(args: &[String]) -> Result<ExitCode, String> {
@@ -336,6 +350,47 @@ fn select_global_skills(args: &[String]) -> Result<(Vec<String>, Vec<String>), S
         }
     }
     Ok((selectors.unwrap_or_default(), provider_args))
+}
+
+fn select_codex_options(
+    args: &[String],
+) -> Result<(Vec<String>, Vec<String>, Vec<String>), String> {
+    let mut pass_env = Vec::new();
+    let mut provider_selection_args = Vec::with_capacity(args.len());
+    let mut launcher_options = true;
+    for argument in args {
+        if launcher_options && argument == "--" {
+            launcher_options = false;
+            provider_selection_args.push(argument.clone());
+        } else if launcher_options && argument == "--pass-env" {
+            return Err(
+                "CLROOM_ENV_SELECTOR_INVALID: invalid environment name; use --pass-env=NAME"
+                    .to_owned(),
+            );
+        } else if launcher_options && let Some(name) = argument.strip_prefix("--pass-env=") {
+            if !valid_pass_env_name(name) {
+                return Err(
+                    "CLROOM_ENV_SELECTOR_INVALID: invalid environment name; use --pass-env=NAME"
+                        .to_owned(),
+                );
+            }
+            if !pass_env.iter().any(|selected| selected == name) {
+                pass_env.push(name.to_owned());
+            }
+        } else {
+            provider_selection_args.push(argument.clone());
+        }
+    }
+    let (selectors, provider_args) = select_global_skills(&provider_selection_args)?;
+    Ok((selectors, provider_args, pass_env))
+}
+
+fn valid_pass_env_name(name: &str) -> bool {
+    !name.is_empty()
+        && name.len() <= 128
+        && name.bytes().enumerate().all(|(index, byte)| {
+            (byte.is_ascii_uppercase() || byte == b'_') || (index > 0 && byte.is_ascii_digit())
+        })
 }
 
 fn isolation_error_message(error: IsolationError) -> String {
@@ -474,7 +529,7 @@ fn run_local(invoked_as: &str, args: Vec<String>) -> ExitCode {
                 }
                 match screen::read_unqualified_action() {
                     Ok(screen::UnqualifiedAction::LaunchCodex) => {
-                        return match launch_isolated_codex(&[]) {
+                        return match launch_isolated_codex(&[], &[], &[]) {
                             Ok(exit) => exit,
                             Err(message) => {
                                 eprintln!("{message}");
