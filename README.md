@@ -175,7 +175,7 @@ No crates.io package is published for this alpha.
 
 ### Codex
 
-For a low-friction Codex launch with eligible approval requests handled by
+For a non-interactive Codex task with eligible approval requests handled by
 Codex Auto-review:
 
 ```sh
@@ -188,18 +188,28 @@ routes eligible approval requests through its automatic reviewer. Availability
 and reviewer behavior are controlled by the installed Codex version and
 account.
 
-If you prefer to review approval requests yourself:
+For a non-interactive task where you prefer to review approval requests yourself:
 
 ```sh
 clroom codex exec
 ```
 
-Ordinary Codex arguments pass through unchanged:
+Non-interactive `codex exec` arguments pass through unchanged:
 
 ```sh
-clroom codex exec --help
 clroom codex exec --enable apps --enable hooks --enable plugins
 ```
+
+For provider diagnostics, use the top-level forms:
+
+```sh
+clroom codex --help
+clroom codex --version
+```
+
+Interactive `clroom codex` is currently refused fail-closed because its clean
+user-config suppression is not independently qualified. `codex exec` is not a
+substitute for the interactive TUI.
 
 ### Claude Code
 

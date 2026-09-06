@@ -8,7 +8,7 @@ Launch example:
 clroom codex exec --skill-set=any-my-skill,@any-my-skill-set --approve-for-me
 
 Usage
-  clroom codex exec [CODEX_ARGS...] Launch Codex
+  clroom codex exec [CODEX_ARGS...] Non-interactive Codex exec
   clroom claude [CLAUDE_ARGS...] Launch Claude Code
   clroom doctor --root .     Check installation
 

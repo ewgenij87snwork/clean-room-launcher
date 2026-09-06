@@ -7,14 +7,14 @@ permalink: /demo.html
 From any project on macOS/Apple Silicon:
 
 ```sh
-clroom codex exec
+clroom codex exec "summarize this repository"
 ```
 
 Before Codex starts, the launcher prints a compact boundary status plaque. It
 shows global instructions and skills blocked, and apps, hooks, plugins,
 developer instructions and notifications disabled by default.
 
-Use ordinary Codex commands unchanged:
+Use non-interactive `codex exec` arguments unchanged:
 
 ```sh
 clroom codex exec "summarize this repository"

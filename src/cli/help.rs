@@ -39,9 +39,9 @@ const COMMANDS: &[CommandSpec] = &[
         command: Command::Provider,
         canonical: "codex",
         aliases: &[],
-        description: "Launch the installed Codex CLI through its qualified clean exec path",
+        description: "Non-interactive exec only",
         usage: "codex exec [CODEX_ARGS...]",
-        example: "codex exec --help",
+        example: "codex --help",
     },
     CommandSpec {
         command: Command::Provider,
@@ -213,7 +213,7 @@ fn render_top(invoked_as: &str, skill_sets_path: &str, width: usize, styled: boo
     lines.push(section("Usage", styled));
     lines.extend(usage(
         &format!("{invoked_as} codex exec [CODEX_ARGS...]"),
-        "Launch Codex",
+        "Non-interactive Codex exec",
         width,
         styled,
     ));
