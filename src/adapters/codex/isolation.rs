@@ -17,6 +17,22 @@ pub struct IsolationInputs {
     pub codex_home: PathBuf,
 }
 
+/// Qualified Codex skill sources. Filesystem residue outside these sources is
+/// intentionally not an inventory input.
+pub const CODEX_SKILL_SOURCE_MAP: &[(&str, &str)] = &[
+    (
+        "REPO",
+        "$CWD/.agents/skills and ancestors through $REPO_ROOT/.agents/skills",
+    ),
+    ("USER", "$HOME/.agents/skills and $CODEX_HOME/skills"),
+    ("ADMIN", "/etc/codex/skills"),
+    ("SYSTEM", "provider-bundled (not filesystem-inventoried)"),
+    (
+        "PLUGIN",
+        "$CODEX_HOME/plugins/cache only when named by installed_plugins.json",
+    ),
+];
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum IsolationError {
     UnsupportedPlatform,
@@ -90,7 +106,10 @@ pub fn plan_with_skills(
     let inventory = if selectors.is_empty() {
         Vec::new()
     } else {
-        discover_global_skills(&denied_roots)
+        let mut inventory =
+            discover_global_skills(&[codex_home.join("skills"), home.join(".agents/skills")]);
+        inventory.extend(discover_active_plugin_skills(&codex_home));
+        inventory
     };
     let selection = resolve_skill_selectors(selectors, &inventory)?;
     let mut denied_subpaths = denied_roots.iter().cloned().collect::<BTreeSet<_>>();
@@ -214,6 +233,84 @@ fn discover_global_skills(roots: &[PathBuf]) -> Vec<GlobalSkill> {
             ))
     });
     inventory
+}
+
+fn discover_active_plugin_skills(codex_home: &Path) -> Vec<GlobalSkill> {
+    let Some(cache_root) = canonical_nonsymlink_directory(&codex_home.join("plugins/cache")) else {
+        return Vec::new();
+    };
+    let registry = codex_home.join("plugins/installed_plugins.json");
+    let Ok(bytes) = fs::read(registry) else {
+        return Vec::new();
+    };
+    let Ok(value) = serde_json::from_slice::<serde_json::Value>(&bytes) else {
+        return Vec::new();
+    };
+    let Some(plugins) = value.get("plugins").and_then(serde_json::Value::as_object) else {
+        return Vec::new();
+    };
+    let mut inventory = Vec::new();
+    for installations in plugins.values().filter_map(serde_json::Value::as_array) {
+        for installation in installations {
+            let Some(path) = installation
+                .get("installPath")
+                .and_then(serde_json::Value::as_str)
+            else {
+                continue;
+            };
+            let path = PathBuf::from(path);
+            let Some(path) = canonical_nonsymlink_directory(&path) else {
+                continue;
+            };
+            if !path.starts_with(&cache_root) {
+                continue;
+            }
+            discover_plugin_skills(&path, &mut inventory);
+        }
+    }
+    inventory
+}
+
+fn discover_plugin_skills(plugin_root: &Path, inventory: &mut Vec<GlobalSkill>) {
+    let skills_root = plugin_root.join("skills");
+    let Ok(entries) = fs::read_dir(&skills_root) else {
+        return;
+    };
+    for entry in entries.flatten() {
+        let entry_path = entry.path();
+        let Some(name) = entry.file_name().to_str().map(str::to_owned) else {
+            continue;
+        };
+        if !valid_skill_name(&name)
+            || !fs::metadata(entry_path.join("SKILL.md")).is_ok_and(|metadata| metadata.is_file())
+        {
+            continue;
+        }
+        let Some(canonical_path) = canonical_nonsymlink_directory(&entry_path) else {
+            continue;
+        };
+        if !canonical_path.starts_with(plugin_root) {
+            continue;
+        }
+        let Some(namespace) = plugin_namespace(&canonical_path) else {
+            continue;
+        };
+        inventory.push(GlobalSkill {
+            name,
+            namespace: Some(namespace),
+            source_precedence: usize::MAX,
+            entry_path,
+            canonical_path,
+        });
+    }
+}
+
+fn canonical_nonsymlink_directory(path: &Path) -> Option<PathBuf> {
+    let metadata = fs::symlink_metadata(path).ok()?;
+    if metadata.file_type().is_symlink() || !metadata.is_dir() {
+        return None;
+    }
+    fs::canonicalize(path).ok()
 }
 
 fn plugin_namespace(skill_path: &Path) -> Option<String> {

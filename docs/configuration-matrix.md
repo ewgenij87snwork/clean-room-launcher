@@ -24,4 +24,19 @@ This table is deliberately conservative.
 | Both | complete home directory | **Not** claimed to be completely isolated | Explicit non-claim |
 | Both | provider authentication | Existing provider authentication remains provider-owned | Confirmed product direction |
 
+## Qualified skill source maps
+
+CLROOM inventories only provider-qualified local sources. For Codex this is
+the repository `.agents/skills` chain, personal `$HOME/.agents/skills` and
+`$CODEX_HOME/skills`, provider admin/system behavior, and an active cached
+package version named by the provider's `installed_plugins.json`. For Claude
+Code this is project/enterprise/personal skill locations and an active cached
+plugin version named by its `installed_plugins.json`.
+
+Provider-managed synced/remote state is not guessed from filesystem residue.
+Cached package directories without an active install record are stale and
+remain unavailable. Selecting a package skill admits only that skill
+directory and its supporting files; package hooks, MCP, agents, executables,
+settings, and notifications are not activated.
+
 For support limits and security scope, read [Limitations](limitations.md) and the [Threat model](threat-model.md).

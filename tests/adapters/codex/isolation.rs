@@ -196,6 +196,97 @@ fn selected_duplicate_logical_skill_prefers_codex_root_and_denies_agents_body() 
 }
 
 #[test]
+fn selected_codex_plugin_skill_requires_active_install_record_and_excludes_siblings() {
+    let root = TempRoot::new("active-plugin-skill");
+    let project = root.path().join("project");
+    let home = root.path().join("home");
+    let codex_home = root.path().join("codex-home");
+    let plugin = codex_home.join("plugins/cache/superpowers/6.3.0");
+    fs::create_dir_all(project.as_path()).unwrap();
+    fs::create_dir_all(plugin.join(".codex-plugin")).unwrap();
+    fs::create_dir_all(plugin.join("skills/brainstorming/references")).unwrap();
+    fs::write(
+        plugin.join(".codex-plugin/plugin.json"),
+        br#"{"name":"superpowers"}"#,
+    )
+    .unwrap();
+    fs::write(
+        plugin.join("skills/brainstorming/SKILL.md"),
+        b"brainstorming\n",
+    )
+    .unwrap();
+    fs::write(
+        plugin.join("skills/brainstorming/references/guide.md"),
+        b"guide\n",
+    )
+    .unwrap();
+    fs::create_dir_all(plugin.join("hooks")).unwrap();
+    fs::write(plugin.join("hooks/hooks.json"), b"{}\n").unwrap();
+    fs::create_dir_all(codex_home.join("plugins")).unwrap();
+    fs::write(
+        codex_home.join("plugins/installed_plugins.json"),
+        format!(
+            r#"{{"plugins":{{"superpowers":[{{"installPath":"{}"}}]}}}}"#,
+            plugin.display()
+        ),
+    )
+    .unwrap();
+
+    let isolation = plan_with_skills(
+        &project,
+        Path::new("/bin/sh"),
+        &IsolationInputs { home, codex_home },
+        &["superpowers:brainstorming".to_owned()],
+    )
+    .unwrap();
+
+    assert_eq!(isolation.selected_global_skills, 1);
+    assert!(
+        isolation
+            .profile
+            .contains(plugin.join("skills/brainstorming").to_str().unwrap())
+    );
+    assert!(
+        !isolation
+            .profile
+            .contains(plugin.join("hooks").to_str().unwrap())
+    );
+}
+
+#[test]
+fn stale_codex_plugin_cache_is_not_a_skill_source() {
+    let root = TempRoot::new("stale-plugin-cache");
+    let project = root.path().join("project");
+    let home = root.path().join("home");
+    let codex_home = root.path().join("codex-home");
+    let plugin = codex_home.join("plugins/cache/stale/1.0.0");
+    fs::create_dir_all(project.as_path()).unwrap();
+    fs::create_dir_all(plugin.join(".codex-plugin")).unwrap();
+    fs::create_dir_all(plugin.join("skills/ghost")).unwrap();
+    fs::write(plugin.join("skills/ghost/SKILL.md"), b"ghost\n").unwrap();
+    fs::write(
+        plugin.join(".codex-plugin/plugin.json"),
+        br#"{"name":"stale"}"#,
+    )
+    .unwrap();
+
+    let error = plan_with_skills(
+        &project,
+        Path::new("/bin/sh"),
+        &IsolationInputs { home, codex_home },
+        &["stale:ghost".to_owned()],
+    )
+    .unwrap_err();
+
+    assert_eq!(
+        error,
+        taskseal::adapters::codex::isolation::IsolationError::UnknownSkillSelector(
+            "stale:ghost".to_owned()
+        )
+    );
+}
+
+#[test]
 fn selected_skill_roots_are_listable_but_unselected_skill_bodies_stay_denied() {
     let root = TempRoot::new("skill-root-discovery");
     let project = root.path().join("project");
