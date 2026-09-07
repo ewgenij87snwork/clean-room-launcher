@@ -1,4 +1,4 @@
-use taskseal::adapters::codex::{
+use clroom::adapters::codex::{
     environment::{CodexAuthPolicy, CodexAuthState, evaluate_auth},
     identity::CodexTuple,
 };

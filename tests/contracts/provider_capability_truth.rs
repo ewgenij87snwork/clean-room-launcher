@@ -13,7 +13,7 @@ fn run_probe(extra_args: &[&str]) -> std::process::Output {
     let root = repository_root();
     let sequence = PROBE_SEQUENCE.fetch_add(1, Ordering::Relaxed);
     let temp_root = std::env::temp_dir().join(format!(
-        "taskseal-provider-test-{}-{sequence}",
+        "clroom-provider-test-{}-{sequence}",
         std::process::id()
     ));
     std::fs::create_dir(&temp_root).expect("create isolated probe temp root");
@@ -27,7 +27,7 @@ fn run_probe(extra_args: &[&str]) -> std::process::Output {
     let fake_provider = fake_bin.join(provider);
     let script = match provider {
         "codex" => {
-            "#!/bin/sh\ncase \"$1\" in\n  --version) printf 'codex 0.147.0\\n' ;;\n  debug)\n    if [ \"$3\" = 'TASKSEAL_START_PROBE' ]; then\n      printf '{\"skills\":[\"TASKSEAL_CANARY_TRIGGER\"]}\\n'\n    else\n      printf '{}\\n'\n    fi\n    ;;\n  *) exit 64 ;;\nesac\n"
+            "#!/bin/sh\ncase \"$1\" in\n  --version) printf 'codex 0.147.0\\n' ;;\n  debug)\n    if [ \"$3\" = 'CLROOM_START_PROBE' ]; then\n      printf '{\"skills\":[\"CLROOM_CANARY_TRIGGER\"]}\\n'\n    else\n      printf '{}\\n'\n    fi\n    ;;\n  *) exit 64 ;;\nesac\n"
         }
         "claude" => "#!/bin/sh\nprintf '2.1.223 (Claude Code)\\n'\n",
         _ => panic!("unsupported fake provider {provider}"),
@@ -75,7 +75,7 @@ fn provider_probe_requires_opaque_preauthentication_before_process_birth() {
     {
         let root = repository_root();
         let fake_root = std::env::temp_dir().join(format!(
-            "taskseal-provider-preauth-{}-{index}",
+            "clroom-provider-preauth-{}-{index}",
             std::process::id()
         ));
         let _ = std::fs::remove_dir_all(&fake_root);
@@ -84,7 +84,7 @@ fn provider_probe_requires_opaque_preauthentication_before_process_birth() {
         let fake = fake_root.join("codex");
         std::fs::write(
             &fake,
-            "#!/bin/sh\n: > \"$TASKSEAL_PROVIDER_CAPTURE\"\nprintf 'codex 0.147.0\\n'\n",
+            "#!/bin/sh\n: > \"$CLROOM_PROVIDER_CAPTURE\"\nprintf 'codex 0.147.0\\n'\n",
         )
         .unwrap();
         std::fs::set_permissions(&fake, std::fs::Permissions::from_mode(0o700)).unwrap();
@@ -102,7 +102,7 @@ fn provider_probe_requires_opaque_preauthentication_before_process_birth() {
                 "no-native-isolation",
             ])
             .env("PATH", probe_path)
-            .env("TASKSEAL_PROVIDER_CAPTURE", &capture);
+            .env("CLROOM_PROVIDER_CAPTURE", &capture);
         if let Some(state) = state {
             command.args(["--preauthenticated-session", state]);
         }
@@ -171,7 +171,7 @@ fn codex_fixture_produces_closed_capability_truth_without_a_clean_overclaim() {
         "{report}"
     );
     assert!(
-        !report.contains("TASKSEAL_CANARY_BODY_7E5B1E21"),
+        !report.contains("CLROOM_CANARY_BODY_7E5B1E21"),
         "body leaked: {report}"
     );
 }
@@ -218,7 +218,7 @@ fn wrong_version_and_poisoned_ambient_source_cannot_qualify() {
             "{fixture}: {report}"
         );
         assert!(
-            !report.contains("TASKSEAL_POISON_BODY_933BF642"),
+            !report.contains("CLROOM_POISON_BODY_933BF642"),
             "{fixture}: body leaked"
         );
     }

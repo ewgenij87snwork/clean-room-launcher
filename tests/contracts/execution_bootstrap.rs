@@ -10,7 +10,7 @@ fn checked_in_authority_schema_accepts_only_the_exact_private_receipt() {
     }
 
     let authority =
-        fs::read(".taskseal-dev/execution-authority.json").expect("private authority exists");
+        fs::read(".clroom-dev/execution-authority.json").expect("private authority exists");
     let schema =
         fs::read("schemas/contracts/execution-authority.schema.json").expect("schema exists");
     let command_output = |args: &[&str]| {
@@ -21,13 +21,13 @@ fn checked_in_authority_schema_accepts_only_the_exact_private_receipt() {
     let worktree = std::env::current_dir().unwrap();
     let branch = command_output(&["branch", "--show-current"]);
     let head = command_output(&["rev-parse", "HEAD"]);
-    let subject = taskseal::contracts::execution::ExecutionSubject {
+    let subject = clroom::contracts::execution::ExecutionSubject {
         worktree: worktree.to_str().unwrap(),
         branch: &branch,
         head: &head,
     };
     assert!(
-        taskseal::contracts::execution::validate_authority(&schema, &authority, &subject).is_ok()
+        clroom::contracts::execution::validate_authority(&schema, &authority, &subject).is_ok()
     );
 
     for poison in [
@@ -47,7 +47,7 @@ fn checked_in_authority_schema_accepts_only_the_exact_private_receipt() {
         ("unknown field", add_unknown_field(&authority)),
     ] {
         assert!(
-            taskseal::contracts::execution::validate_authority(&schema, &poison.1, &subject)
+            clroom::contracts::execution::validate_authority(&schema, &poison.1, &subject)
                 .is_err(),
             "accepted {} authority",
             poison.0
@@ -64,24 +64,24 @@ fn root_instructions_match_the_sealed_template() {
 
     let local = fs::read("AGENTS.md").expect("root AGENTS exists");
     let authority: serde_json::Value = serde_json::from_slice(
-        &fs::read(".taskseal-dev/execution-authority.json").expect("private authority exists"),
+        &fs::read(".clroom-dev/execution-authority.json").expect("private authority exists"),
     )
     .unwrap();
     let status = Path::new(authority["status_path"].as_str().unwrap());
     let sealed_path = status
         .parent()
         .unwrap()
-        .join("templates/taskseal-root-AGENTS.md");
+        .join("templates/clroom-root-AGENTS.md");
     let sealed = fs::read(sealed_path).expect("sealed root AGENTS exists");
     assert_eq!(local, sealed);
     assert!(
         fs::read_to_string(".gitignore")
             .unwrap()
             .lines()
-            .any(|line| line == ".taskseal-dev/")
+            .any(|line| line == ".clroom-dev/")
     );
     assert!(
-        !Path::new(".taskseal-dev/execution-authority.json")
+        !Path::new(".clroom-dev/execution-authority.json")
             .metadata()
             .unwrap()
             .permissions()
@@ -98,7 +98,7 @@ fn assert_private_execution_surface_is_excluded() {
     let excluded = inventory["excluded_internal_paths"]
         .as_array()
         .expect("excluded internal paths are listed");
-    assert!(excluded.iter().any(|path| path == ".taskseal-dev"));
+    assert!(excluded.iter().any(|path| path == ".clroom-dev"));
     let public = inventory["public_paths"]
         .as_array()
         .expect("public paths are listed");

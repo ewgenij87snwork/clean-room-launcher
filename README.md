@@ -434,7 +434,7 @@ It supports Codex CLI `0.147.0+` and Claude Code CLI `2.1.223+` through a
 focused clean-room boundary. Signing and notarization are not claimed.
 
 See the
-[GitHub prerelease](https://github.com/ewgenij87snwork/clean-room-launcher/releases/tag/v0.2.0)
+[GitHub release](https://github.com/ewgenij87snwork/clean-room-launcher/releases/tag/v0.2.0)
 for the archive and `SHA256SUMS`.
 
 ## Help improve Clean Room Launcher

@@ -8,21 +8,21 @@ set -eu
 
 root=$(cd "$2" && pwd -P)
 
-if find "$root" \( -name .git -o -name target -o -name .taskseal-dev -o -path "$root/reports/gates" -o -path "$root/scripts/gates" \) -prune -o -type l -print | grep -q .; then
+if find "$root" \( -name .git -o -name target -o -name .clroom-dev -o -path "$root/reports/gates" -o -path "$root/scripts/gates" \) -prune -o -type l -print | grep -q .; then
   echo "SYMLINK_ESCAPE" >&2
   exit 10
 fi
 
-inventory=$(mktemp "${TMPDIR:-/tmp}/taskseal-public-inventory.XXXXXX")
+inventory=$(mktemp "${TMPDIR:-/tmp}/clroom-public-inventory.XXXXXX")
 cleanup() {
   case "$inventory" in
-    "${TMPDIR:-/tmp}"/taskseal-public-inventory.*) rm -f -- "$inventory" ;;
+    "${TMPDIR:-/tmp}"/clroom-public-inventory.*) rm -f -- "$inventory" ;;
     *) echo "REFUSED_UNSAFE_TEMP_CLEANUP" >&2; exit 70 ;;
   esac
 }
 trap cleanup EXIT HUP INT TERM
 
-find "$root" \( -name .git -o -name target -o -name .taskseal-dev -o -path "$root/reports/gates" -o -path "$root/scripts/gates" \) -prune -o -type f -print |
+find "$root" \( -name .git -o -name target -o -name .clroom-dev -o -path "$root/reports/gates" -o -path "$root/scripts/gates" \) -prune -o -type f -print |
   LC_ALL=C sort > "$inventory"
 
 while IFS= read -r file; do

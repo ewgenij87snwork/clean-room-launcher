@@ -89,8 +89,8 @@ jobs:
           git diff --check
       - name: Build deterministic release bundle
         env:
-          TASKSEAL_TARGET: aarch64-apple-darwin
-          TASKSEAL_SOURCE_COMMIT: ${{ github.sha }}
+          CLROOM_TARGET: aarch64-apple-darwin
+          CLROOM_SOURCE_COMMIT: ${{ github.sha }}
           CLROOM_ARTIFACT_QUALIFICATION: NOT_QUALIFIED
         run: |
           set -euo pipefail

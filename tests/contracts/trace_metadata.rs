@@ -1,6 +1,6 @@
 use std::fs;
 use std::process::Command;
-use taskseal::contracts::trace::{load_control_map, validate_control_map};
+use clroom::contracts::trace::{load_control_map, validate_control_map};
 
 #[test]
 fn canonical_map_has_446_explicit_rows_and_reciprocal_fields() {
@@ -47,7 +47,7 @@ fn previous_445_row_map_refuses_in_rust_and_the_executable_gate() {
         .join("\n")
         + "\n";
     let fixture = std::env::temp_dir().join(format!(
-        "taskseal-trace-metadata-previous-445-{}.tsv",
+        "clroom-trace-metadata-previous-445-{}.tsv",
         std::process::id()
     ));
     fs::write(&fixture, previous).unwrap();

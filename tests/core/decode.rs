@@ -5,7 +5,7 @@ use std::path::PathBuf;
 
 fn records(name: &str, files: &[(&str, &[u8])]) -> Vec<SourceRecord> {
     let root =
-        std::env::temp_dir().join(format!("taskseal-p03-decode-{name}-{}", std::process::id()));
+        std::env::temp_dir().join(format!("clroom-p03-decode-{name}-{}", std::process::id()));
     let _ = fs::remove_dir_all(&root);
     fs::create_dir_all(&root).unwrap();
     for (path, bytes) in files {
@@ -45,7 +45,7 @@ fn decode_refuses_malformed_utf8_json_toml_and_unknown_fields() {
         (
             "unknown",
             "packet.task-packet.json",
-            br#"{"schema_version":"taskseal.task-packet.v2","unknown":true}"#.as_slice(),
+            br#"{"schema_version":"clroom.task-packet.v2","unknown":true}"#.as_slice(),
             "SCHEMA_INVALID",
         ),
     ] {
@@ -56,7 +56,7 @@ fn decode_refuses_malformed_utf8_json_toml_and_unknown_fields() {
 
 #[test]
 fn decode_refuses_unknown_versions_duplicate_ids_and_oversize_records() {
-    let unknown_version = br#"{"schema_version":"taskseal.l2.v999"}"#;
+    let unknown_version = br#"{"schema_version":"clroom.l2.v999"}"#;
     let error = decode(
         &records("version", &[("scope.l2.json", unknown_version)]),
         &ContractSet::standard(),

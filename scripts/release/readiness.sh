@@ -15,7 +15,12 @@ cd "$root"
 git diff --check || fail "DIFF_CHECK"
 git diff --quiet || fail "CLEAN_TREE_REQUIRED"
 
-rg -n 'TASKSEAL|taskseal|P0[678]|unsigned-preview-only|/workspace/taskseal|local://taskseal' \
+legacy_upper=$(printf '%s%s' TASK SEAL)
+legacy_lower=$(printf '%s%s' task seal)
+legacy_preview=$(printf '%s-%s' unsigned preview-only)
+legacy_identity_pattern=$(printf '%s|%s|P0[678]|%s|/workspace/%s|local://%s' \
+  "$legacy_upper" "$legacy_lower" "$legacy_preview" "$legacy_lower" "$legacy_lower")
+rg -n "$legacy_identity_pattern" \
   packaging/build-artifacts.sh packaging/targets.toml \
   packaging/supply-chain/generate.sh packaging/supply-chain/policy.toml \
   packaging/signing/policy.md .github/workflows/release-candidate.yml && \

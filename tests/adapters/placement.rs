@@ -3,7 +3,7 @@ use std::{
     fs,
     sync::atomic::{AtomicU64, Ordering},
 };
-use taskseal::{
+use clroom::{
     adapters::placement::{PlacementOutcome, place_context},
     contracts::adapter::AdapterDeclaration,
     core::{
@@ -15,9 +15,9 @@ use taskseal::{
 
 static NEXT: AtomicU64 = AtomicU64::new(0);
 
-fn project() -> (std::path::PathBuf, Dir, taskseal::core::manifest::Manifest) {
+fn project() -> (std::path::PathBuf, Dir, clroom::core::manifest::Manifest) {
     let path = std::env::temp_dir().join(format!(
-        "taskseal-p06-placement-{}-{}",
+        "clroom-macos-placement-{}-{}",
         std::process::id(),
         NEXT.fetch_add(1, Ordering::Relaxed)
     ));

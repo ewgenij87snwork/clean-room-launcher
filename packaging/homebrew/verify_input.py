@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fail-closed intake for the exact P07 Homebrew preview archive."""
+"""Fail-closed intake for the exact CLROOM_PACKAGING Homebrew preview archive."""
 from __future__ import annotations
 import argparse, hashlib, json, os, platform, re, subprocess, sys, tarfile, tempfile
 from dataclasses import dataclass
@@ -31,7 +31,7 @@ def strict_key_value_lines(data: bytes) -> dict[str, str]:
 def parse_version(data: bytes) -> dict[str, str]:
     fields = strict_key_value_lines(data)
     if set(fields) != VERSION_KEYS or not re.fullmatch(r"[0-9a-f]{40}", fields["source_commit"]) or not re.fullmatch(r"[0-9a-f]{64}", fields["packaging_script_sha256"]): refuse("ARTIFACT_METADATA_MISMATCH")
-    if fields["target"] != "aarch64-apple-darwin" or fields["qualification"] != "NOT_QUALIFIED" or fields["signing"] != "unsigned-preview-only": refuse("ARTIFACT_METADATA_MISMATCH")
+    if fields["target"] != "aarch64-apple-darwin" or fields["qualification"] != "NOT_QUALIFIED" or fields["signing"] != "unsigned": refuse("ARTIFACT_METADATA_MISMATCH")
     return fields
 def macos_symbol(version: str) -> str:
     major = ".".join(version.split(".")[:2]) if version.startswith("10.") else version.split(".")[0]
@@ -91,12 +91,12 @@ def verify_archive(args):
     fields = parse_version(layout.version)
     if fields["source_commit"] != args.expected_source_commit or fields["target"] != args.expected_target: refuse("ARTIFACT_METADATA_MISMATCH")
     macho_arch, minimum = inspect_macho(layout.clroom); symbol = macos_symbol(minimum)
-    return {"schema_version":"taskseal.p07.homebrew-input.v1","evidence_class":"real-current","archive":{"filename":Path(args.archive).name,"sha256":layout.sha256,"size":layout.size},"artifact":{"version":fields["version"],"source_commit":fields["source_commit"],"target":fields["target"],"qualification":fields["qualification"],"signing":fields["signing"],"root":layout.root,"members":layout.members,"clroom_sha256":hashlib.sha256(layout.clroom).hexdigest()},"host":{"system":"Darwin","machine":"arm64","macho_arch":macho_arch,"minimum_macos":minimum,"homebrew_symbol":symbol}}
+    return {"schema_version":"clroom.packaging.homebrew-input.v1","evidence_class":"real-current","archive":{"filename":Path(args.archive).name,"sha256":layout.sha256,"size":layout.size},"artifact":{"version":fields["version"],"source_commit":fields["source_commit"],"target":fields["target"],"qualification":fields["qualification"],"signing":fields["signing"],"root":layout.root,"members":layout.members,"clroom_sha256":hashlib.sha256(layout.clroom).hexdigest()},"host":{"system":"Darwin","machine":"arm64","macho_arch":macho_arch,"minimum_macos":minimum,"homebrew_symbol":symbol}}
 def main():
     parser = argparse.ArgumentParser(); parser.add_argument("--archive", required=True); parser.add_argument("--expected-sha256", required=True); parser.add_argument("--expected-source-commit", required=True); parser.add_argument("--expected-target", required=True); parser.add_argument("--output", required=True); args = parser.parse_args()
     try:
         result = verify_archive(args); canonical_write(Path(args.output), result)
     except InputRefused as exc:
-        print("P07_HOMEBREW_INPUT_REFUSED:" + exc.code, file=sys.stderr); return 1
-    print("P07_HOMEBREW_INPUT_PASS sha256=%s minimum_macos=%s" % (result["archive"]["sha256"], result["host"]["minimum_macos"])); return 0
+        print("CLROOM_PACKAGING_HOMEBREW_INPUT_REFUSED:" + exc.code, file=sys.stderr); return 1
+    print("CLROOM_PACKAGING_HOMEBREW_INPUT_PASS sha256=%s minimum_macos=%s" % (result["archive"]["sha256"], result["host"]["minimum_macos"])); return 0
 if __name__ == "__main__": raise SystemExit(main())

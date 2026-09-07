@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Focused, dependency-free P07 Homebrew contract tests."""
+"""Focused, dependency-free CLROOM_PACKAGING Homebrew contract tests."""
 import argparse
 import hashlib
 import importlib.util
@@ -13,7 +13,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 SPEC = importlib.util.spec_from_file_location("verify_input", ROOT / "packaging/homebrew/verify_input.py")
 if SPEC is None or SPEC.loader is None:
-    raise SystemExit("P07_HOMEBREW_INPUT_TEST_REFUSED:IMPLEMENTATION_MISSING")
+    raise SystemExit("CLROOM_PACKAGING_HOMEBREW_INPUT_TEST_REFUSED:IMPLEMENTATION_MISSING")
 mod = importlib.util.module_from_spec(SPEC)
 sys.modules[SPEC.name] = mod
 SPEC.loader.exec_module(mod)
@@ -32,7 +32,7 @@ def version(**changes):
         "rust_toolchain": "1.97.1", "target": "aarch64-apple-darwin", "rustc": "rustc 1.97.1",
         "cargo": "cargo 1.97.1", "python": "Python 3.11.15", "packaging_script_sha256": "a" * 64,
         "archive_profile": "normalized-local-toolchain", "qualification": "NOT_QUALIFIED",
-        "signing": "unsigned-preview-only", "dependencies": "cargo-lock",
+        "signing": "unsigned", "dependencies": "cargo-lock",
     }
     fields.update(changes)
     return "".join(f"{key}={value}\n" for key, value in fields.items()).encode()
@@ -73,9 +73,9 @@ def run_archive():
 
 def input_contract():
     return {
-        "schema_version": "taskseal.p07.homebrew-input.v1", "evidence_class": "real-current",
+        "schema_version": "clroom.packaging.homebrew-input.v1", "evidence_class": "real-current",
         "archive": {"filename": "clean-room-launcher-v0.1.0-aarch64-apple-darwin.tar.gz", "sha256": "6" * 64, "size": 42},
-        "artifact": {"version": "0.1.0", "source_commit": "01ad1d894aabe265b08d61d67d39da1a29cad9e4", "target": "aarch64-apple-darwin", "qualification": "NOT_QUALIFIED", "signing": "unsigned-preview-only", "root": "clean-room-launcher-v0.1.0-aarch64-apple-darwin", "members": ["LICENSE", "NOTICE", "VERSION", "bin/clroom", "share/doc/clean-room-launcher/CHANGELOG.md"], "clroom_sha256": "a" * 64},
+        "artifact": {"version": "0.1.0", "source_commit": "01ad1d894aabe265b08d61d67d39da1a29cad9e4", "target": "aarch64-apple-darwin", "qualification": "NOT_QUALIFIED", "signing": "unsigned", "root": "clean-room-launcher-v0.1.0-aarch64-apple-darwin", "members": ["LICENSE", "NOTICE", "VERSION", "bin/clroom", "share/doc/clean-room-launcher/CHANGELOG.md"], "clroom_sha256": "a" * 64},
         "host": {"system": "Darwin", "machine": "arm64", "macho_arch": "arm64", "minimum_macos": "13.0", "homebrew_symbol": "ventura"},
     }
 
@@ -104,7 +104,7 @@ def run_formula():
         assert b"provider" not in first.lower() and b"login" not in first.lower()
         assert __import__("subprocess").run(["ruby", "-c", str(output)], stdout=__import__("subprocess").PIPE, stderr=__import__("subprocess").PIPE).returncode == 0
         for bad_url in ["https://127.0.0.1:49152/clean-room-launcher-v0.1.0-aarch64-apple-darwin.tar.gz", "http://localhost:49152/clean-room-launcher-v0.1.0-aarch64-apple-darwin.tar.gz", "http://127.0.0.1:49152/other.tar.gz", "http://user@127.0.0.1:49152/clean-room-launcher-v0.1.0-aarch64-apple-darwin.tar.gz", url + "?x=1"]:
-            expect_formula_refusal(lambda bad_url=bad_url: renderer.render(contract, "taskseal-preview", bad_url), renderer)
+            expect_formula_refusal(lambda bad_url=bad_url: renderer.render(contract, "clroom-preview", bad_url), renderer)
         for bad_id in ["clroom", "clroom-preview; system('x')", "clroom-preview@bad"]:
             expect_formula_refusal(lambda bad_id=bad_id: renderer.render(contract, bad_id, url), renderer)
         malformed = dict(contract); malformed["extra"] = True
@@ -125,8 +125,8 @@ def expect_formula_refusal(fn, renderer):
 def main():
     parser = argparse.ArgumentParser(); parser.add_argument("--section", required=True); args = parser.parse_args()
     if args.section == "input": run_input(); run_archive()
-    elif args.section == "formula": run_formula(); print("P07_HOMEBREW_FORMULA_TEST_PASS"); return
+    elif args.section == "formula": run_formula(); print("CLROOM_PACKAGING_HOMEBREW_FORMULA_TEST_PASS"); return
     else: raise SystemExit("unknown section")
-    print("P07_HOMEBREW_INPUT_TEST_PASS")
+    print("CLROOM_PACKAGING_HOMEBREW_INPUT_TEST_PASS")
 
 if __name__ == "__main__": main()

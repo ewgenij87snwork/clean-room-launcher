@@ -16,7 +16,7 @@ fn process_cases_cover_exact_argv_and_terminal_outcomes_without_private_data() {
 #[test]
 fn process_receipt_is_refusal_or_is_publicly_excluded() {
     let root = Path::new(env!("CARGO_MANIFEST_DIR"));
-    let receipt_path = root.join("reports/gates/p06/task-10.json");
+    let receipt_path = root.join("reports/gates/clroom-macos/task-10.json");
     if !receipt_path.is_file() {
         let inventory =
             std::fs::read_to_string(root.join("qualification/public-release-inventory-v1.json"))

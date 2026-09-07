@@ -14,7 +14,7 @@ fn doctor_reports_unqualified_adapters_without_claiming_provider_support_or_muta
     assert_eq!(before, after, "doctor must not mutate its root");
     let stdout = String::from_utf8(output.stdout).unwrap();
     assert!(stdout.contains("DOCTOR_PASS"));
-    assert!(stdout.contains("P06_REQUIRED"));
+    assert!(stdout.contains("CLROOM_MACOS_REQUIRED"));
     assert!(!stdout.contains("SUPPORTED"));
 }
 

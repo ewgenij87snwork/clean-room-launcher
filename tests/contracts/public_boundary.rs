@@ -58,7 +58,7 @@ fn poisoned_public_inventory_fails_with_a_stable_reason() {
     }
 
     let symlink_root = std::env::temp_dir().join(format!(
-        "taskseal-public-symlink-test-{}",
+        "clroom-public-symlink-test-{}",
         std::process::id()
     ));
     std::fs::create_dir(&symlink_root).expect("create symlink fixture root");
@@ -90,7 +90,7 @@ fn assert_negative_fixtures_are_excluded() {
 
 #[test]
 fn accepted_p05_surface_is_allowlisted_but_adjacent_surface_is_not() {
-    let root = std::env::temp_dir().join(format!("taskseal-p05-public-{}", std::process::id()));
+    let root = std::env::temp_dir().join(format!("clroom-p05-public-{}", std::process::id()));
     let _ = std::fs::remove_dir_all(&root);
     std::fs::create_dir_all(root.join("fixtures/cli")).unwrap();
     std::fs::write(root.join("fixtures/cli/fake-provider.rs"), "fn main() {}\n").unwrap();

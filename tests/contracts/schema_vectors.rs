@@ -1,5 +1,5 @@
 use std::fs;
-use taskseal::contracts::schema::{SchemaKind, validate};
+use clroom::contracts::schema::{SchemaKind, validate};
 
 #[test]
 fn valid_vectors_pass_for_each_public_schema() {
@@ -58,14 +58,14 @@ fn errors_are_sorted_by_json_pointer_and_schema_ids_are_owned() {
         .unwrap_err()
         .to_string();
     assert!(error.contains("/"), "{error}");
-    assert!(!error.contains("taskseal.example"), "{error}");
+    assert!(!error.contains("clroom.example"), "{error}");
 }
 
 #[test]
 fn l2_requires_scope_graph_typed_sections_and_evidence() {
     let valid = serde_json::json!({
         "schema_version":"l2.v2",
-        "scope_id":"repo:taskseal",
+        "scope_id":"repo:clroom",
         "scope_kind":"repo",
         "parent_scope_ids":[],
         "sections":{"deny_union":["no ambient HOME"]},

@@ -12,7 +12,7 @@ static NEXT_TEMP: AtomicU64 = AtomicU64::new(1000);
 
 fn root() -> (std::path::PathBuf, Dir) {
     let path = std::env::temp_dir().join(format!(
-        "taskseal-p03-operations-{}-{}",
+        "clroom-p03-operations-{}-{}",
         std::process::id(),
         NEXT_TEMP.fetch_add(1, Ordering::Relaxed)
     ));

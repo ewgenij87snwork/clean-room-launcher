@@ -1,10 +1,10 @@
 import io, os, sys, tarfile, gzip
 
 kind, output = sys.argv[1:]
-root = "taskseal-v0.1.0"
-payload = {"LICENSE": b"license\n", "NOTICE": b"notice\n", "VERSION": b"source_commit=abc\nqualification=NOT_QUALIFIED\n", "bin/taskseal": b"same", "bin/tseal": b"same", "share/doc/taskseal/CHANGELOG.md": b"change\n"}
+root = "clroom-v0.1.0"
+payload = {"LICENSE": b"license\n", "NOTICE": b"notice\n", "VERSION": b"source_commit=abc\nqualification=NOT_QUALIFIED\n", "bin/clroom": b"same", "bin/tseal": b"same", "share/doc/clroom/CHANGELOG.md": b"change\n"}
 if kind == "traversal": payload["../outside"] = b"bad"
-elif kind == "wrong-name": payload["bin/not-taskseal"] = payload.pop("bin/taskseal")
+elif kind == "wrong-name": payload["bin/not-clroom"] = payload.pop("bin/clroom")
 elif kind == "missing-license": payload.pop("LICENSE")
 elif kind == "metadata": pass
 else: raise SystemExit("unknown poison kind")

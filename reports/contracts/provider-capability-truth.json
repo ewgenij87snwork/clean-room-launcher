@@ -1,5 +1,5 @@
 {
-  "schema_version": "taskseal.provider-capability-truth.v2",
+  "schema_version": "clroom.provider-capability-truth.v2",
   "authority": {
     "classification": "HISTORICAL_ONLY_NON_AUTHORITATIVE",
     "superseded_by": [
@@ -17,7 +17,7 @@
         "/persistent_subjects/codex_auth_sha256_after"
       ]
     },
-    "rule": "The predecessor Git object preserves provenance only. TaskSeal does not read, retain, compare, or authorize provider access from an authentication fingerprint."
+    "rule": "The predecessor Git object preserves provenance only. CLROOM does not read, retain, compare, or authorize provider access from an authentication fingerprint."
   },
   "observed_at": "2026-08-12T05:51:18Z",
   "model_invoked": false,

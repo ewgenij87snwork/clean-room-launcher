@@ -1,4 +1,4 @@
-# p02-gate p03-gate p04-gate p05-gate p06-gate p07-gate
+# p02-gate p03-gate p04-gate p05-gate clroom-macos-gate clroom-packaging-gate
 jobs:
   poisoned:
     steps:

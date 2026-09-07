@@ -111,7 +111,7 @@ fn final_zero_auth_ingestion_raw_token_state_refuses_before_deserialization() {
     let store = StateStore::at(scratch("raw-sensitive-before-json"));
     fs::write(
         store.state_path(),
-        br#"{"schema_version":"taskseal.saved-start.v1","starts":[{"argv":["--access-token","must-not-be-deserialized"]"#,
+        br#"{"schema_version":"clroom.saved-start.v1","starts":[{"argv":["--access-token","must-not-be-deserialized"]"#,
     )
     .unwrap();
     fs::set_permissions(store.state_path(), fs::Permissions::from_mode(0o600)).unwrap();
@@ -153,7 +153,7 @@ fn malformed_or_permissive_state_refuses_without_replacement() {
 
     fs::write(
         store.state_path(),
-        br#"{"schema_version":"taskseal.saved-start.v1","starts":[]}"#,
+        br#"{"schema_version":"clroom.saved-start.v1","starts":[]}"#,
     )
     .unwrap();
     fs::set_permissions(store.state_path(), fs::Permissions::from_mode(0o644)).unwrap();

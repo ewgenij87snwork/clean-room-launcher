@@ -322,7 +322,7 @@ fn isolated_preview_uses_the_last_override_and_stops_at_double_dash() {
 #[test]
 fn launch_contract_reports_boundary_expansion_unknown_syntax_and_model_neutrality() {
     use launch_contract::{BoundaryState, LaunchContract};
-    use taskseal::adapters::claude::managed::Presence;
+    use clroom::adapters::claude::managed::Presence;
 
     let codex_expansions = [
         vec!["-c", "features.apps=true"],

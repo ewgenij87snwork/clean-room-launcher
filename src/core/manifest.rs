@@ -57,7 +57,7 @@ pub fn build_manifest(compilation: &Compilation) -> Result<Manifest, ManifestErr
 
 pub(crate) fn generation_digest(inputs: &[String], artifacts: &ArtifactSet) -> String {
     let mut framed = Vec::new();
-    framed.extend_from_slice(b"taskseal-generation-v1\0");
+    framed.extend_from_slice(b"clroom-generation-v1\0");
     for input in inputs {
         frame(&mut framed, input.as_bytes());
     }

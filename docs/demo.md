@@ -1,6 +1,6 @@
 ---
 layout: page
-title: Demo
+title: Boundary walkthrough
 permalink: /demo.html
 ---
 

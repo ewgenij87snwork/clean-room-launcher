@@ -1,5 +1,5 @@
 {
-  "schema_version": "taskseal.release-namespace-ownership.v1",
+  "schema_version": "clroom.release-namespace-ownership.v1",
   "recorded_at": "2026-08-16T10:51:17Z",
   "public_product_name": "Clean Room Launcher",
   "category": "A clean-room launcher for coding-agent CLIs.",

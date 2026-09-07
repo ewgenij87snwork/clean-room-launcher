@@ -92,7 +92,7 @@ fn privacy_clean_python_reference_matches_rust_bytes_manifests_and_refusals() {
     for case in cases {
         let reference = python(&case);
         let mut actual = rust(&case);
-        if std::env::var_os("TASKSEAL_PARITY_INJECT_MISMATCH").is_some() {
+        if std::env::var_os("CLROOM_PARITY_INJECT_MISMATCH").is_some() {
             actual["status"] = json!("known-mismatch");
         }
         assert_eq!(actual, reference, "case: {case}");

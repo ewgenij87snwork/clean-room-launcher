@@ -1,6 +1,6 @@
 use std::path::Path;
-use taskseal::contracts::adapter::parse_declaration;
-use taskseal::core::installation::verify_installation;
+use clroom::contracts::adapter::parse_declaration;
+use clroom::core::installation::verify_installation;
 
 pub fn run(args: &[String]) -> Result<String, String> {
     let root = parse_root(args)?;
@@ -26,7 +26,7 @@ pub fn run(args: &[String]) -> Result<String, String> {
         return Err(format!("{}: {}", integrity.code, integrity.safe_action));
     }
     Ok(format!(
-        "DOCTOR_PASS\n{}\nP06_REQUIRED\nprovider qualification has not run",
+        "DOCTOR_PASS\n{}\nCLROOM_MACOS_REQUIRED\nprovider qualification has not run",
         integrity.code
     ))
 }

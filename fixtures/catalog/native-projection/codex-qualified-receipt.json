@@ -1,5 +1,5 @@
 {
-  "schema_version": "taskseal.native-projection-qualification.v1",
+  "schema_version": "clroom.native-projection-qualification.v1",
   "provider_id": "codex",
   "provider_version": "fixture-1",
   "executable_digest": "6acc9ac65c20562659f690f8d1f960a3c4d4fe0269ec63f49b86130e7c99bff3",
@@ -7,7 +7,7 @@
   "catalog_digest": "5b6eecee06e584ba621fb7d7286cc41f04bda4f90e02ca26c9272170a6d66031",
   "probe_artifact_digest": "6acc9ac65c20562659f690f8d1f960a3c4d4fe0269ec63f49b86130e7c99bff3",
   "observed_at": "2026-08-12T00:00:00Z",
-  "producer": "taskseal-test-probe",
+  "producer": "clroom-test-probe",
   "probe_result": "canary_body_digest_observed",
   "native_progressive_disclosure": true,
   "projection_candidate": true,

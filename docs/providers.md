@@ -8,8 +8,8 @@ The v0.2.0 release has two supported paths:
 
 | Coding-agent CLI | Platform | Status |
 | --- | --- | --- |
-| Codex CLI 0.147.0+ | macOS / Apple Silicon | Alpha |
-| Claude Code CLI 2.1.223+ | macOS / Apple Silicon | Alpha |
+| Codex CLI 0.147.0+ | macOS / Apple Silicon | Qualified |
+| Claude Code CLI 2.1.223+ | macOS / Apple Silicon | Qualified |
 
 Use the qualified non-interactive Codex path as:
 
@@ -43,4 +43,4 @@ credentials. Existing authentication is used by the selected CLI itself and
 left untouched.
 
 Linux and Windows are `NOT_QUALIFIED`; Intel macOS is not supported by this
-alpha.
+release.

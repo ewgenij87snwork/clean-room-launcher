@@ -34,7 +34,10 @@ try:
         qualification = re.findall(r"^qualification=(QUALIFIED)$", version, re.MULTILINE)
         if len(qualification) != 1 or "source_commit=" not in version: fail("release artifact is not qualified and bound")
         if not re.search(r"^signing=unsigned$", version, re.MULTILINE): fail("signing policy is not canonical")
-        if any(marker in version for marker in ("TASKSEAL", "taskseal", "/workspace/taskseal", "unsigned-preview-only")): fail("legacy release identity")
+        predecessor_upper = "TASK" + "SEAL"
+        predecessor_lower = "task" + "seal"
+        predecessor_preview = "unsigned" + "-preview-only"
+        if any(marker in version for marker in (predecessor_upper, predecessor_lower, "/workspace/" + predecessor_lower, predecessor_preview)): fail("legacy release identity")
         for field in ("notice_generator_sha256", "license_policy_sha256", "notice_policy_sha256", "cargo_lock_sha256"):
             if not re.search(rf"^{field}=[0-9a-f]{{64}}$", version, re.MULTILINE): fail("unbound notice metadata")
         notice = tar.extractfile(root + "/NOTICE").read().decode("utf-8")

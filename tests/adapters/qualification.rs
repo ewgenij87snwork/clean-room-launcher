@@ -1,4 +1,4 @@
-use taskseal::adapters::qualification::{
+use clroom::adapters::qualification::{
     EvidenceRef, QualificationReason, QualificationState, TupleClaim, parse_evidence, qualify,
     seal_receipt, verify_receipt, verify_receipt_bytes,
 };
@@ -63,10 +63,10 @@ fn closed_evidence_parser_refuses_unknown_fields_and_wrong_tuple() {
     let expected = claim();
     let output = b"privacy-clean observation\n";
     let valid = format!(
-        r#"{{"schema_version":"taskseal.provider-evidence.v1","kind":"provider-launch-observed","provider_id":"fixture","declaration_digest":"{}","artifact_digest":"{}","version":[1,2,3],"os":"macos","arch":"aarch64","interpreter_digest":null,"observed_at":1,"expires_at":2,"output_digest":"{}","refused":false}}"#,
+        r#"{{"schema_version":"clroom.provider-evidence.v1","kind":"provider-launch-observed","provider_id":"fixture","declaration_digest":"{}","artifact_digest":"{}","version":[1,2,3],"os":"macos","arch":"aarch64","interpreter_digest":null,"observed_at":1,"expires_at":2,"output_digest":"{}","refused":false}}"#,
         expected.declaration_digest,
         expected.artifact_digest,
-        taskseal::core::inventory::sha256_hex(output)
+        clroom::core::inventory::sha256_hex(output)
     );
     assert!(parse_evidence(valid.as_bytes(), output, &expected).is_ok());
     assert!(parse_evidence(br#"{"unknown":true}"#, output, &expected).is_err());
@@ -102,9 +102,9 @@ fn portable_receipt_is_canonical_bound_and_rejects_tampering() {
     assert_eq!(verify_receipt_bytes(&bytes).unwrap(), receipt);
     assert_eq!(
         receipt.schema_version,
-        "taskseal.provider-qualification-receipt.v1"
+        "clroom.provider-qualification-receipt.v1"
     );
-    assert_eq!(receipt.verifier_version, "taskseal.p06.t4.v1");
+    assert_eq!(receipt.verifier_version, "clroom.macos.t4.v1");
     assert_eq!(receipt.receipt_digest.len(), 64);
 
     let mut tampered = receipt.clone();

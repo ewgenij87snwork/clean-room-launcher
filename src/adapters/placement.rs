@@ -98,7 +98,7 @@ pub fn place_context(
         .map_err(|_| PlacementError("PLACEMENT_CREATE_REFUSED"))?;
     write_new(project, &format!("{target}/context.md"), &context)?;
     let stored = StoredReceipt {
-        schema_version: "taskseal-placement.v1".into(),
+        schema_version: "clroom-placement.v1".into(),
         declaration_digest: declaration_digest.clone(),
         manifest_digest: manifest.digest.clone(),
         context_digest: context_digest.clone(),
@@ -180,7 +180,7 @@ fn verify_owned(
     let context = project
         .read(&context_path)
         .map_err(|_| PlacementError("PLACEMENT_CONTEXT_MISSING"))?;
-    if stored.schema_version != "taskseal-placement.v1"
+    if stored.schema_version != "clroom-placement.v1"
         || stored.outcome != "STAGED_NOT_APPLIED"
         || stored.declaration_digest != declaration_digest
         || stored.manifest_digest != manifest.digest

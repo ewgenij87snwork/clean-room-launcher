@@ -5,7 +5,7 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
-use taskseal::adapters::codex::isolation::{IsolationInputs, plan, plan_with_skills};
+use clroom::adapters::codex::isolation::{IsolationInputs, plan, plan_with_skills};
 
 struct TempRoot(PathBuf);
 
@@ -16,7 +16,7 @@ impl TempRoot {
             .unwrap()
             .as_nanos();
         let root =
-            std::env::temp_dir().join(format!("taskseal-{label}-{}-{nonce}", std::process::id()));
+            std::env::temp_dir().join(format!("clroom-{label}-{}-{nonce}", std::process::id()));
         fs::create_dir_all(&root).unwrap();
         Self(root)
     }

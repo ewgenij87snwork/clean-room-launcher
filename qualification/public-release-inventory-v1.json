@@ -1,5 +1,5 @@
 {
-  "schema_version": "taskseal.p06.public-release-inventory.v1",
+  "schema_version": "clroom.macos.public-release-inventory.v1",
   "result": "PASS",
   "public_paths": [
     ".github/workflows",
@@ -41,7 +41,7 @@
     "site"
   ],
   "excluded_internal_paths": [
-    ".taskseal-dev",
+    ".clroom-dev",
     "reports/gates",
     "scripts/gates"
   ],
@@ -49,6 +49,6 @@
     "tests/fixtures",
     "tests/release/audit_fixtures"
   ],
-  "generic_fixture_root": "/workspace/taskseal",
+  "generic_fixture_root": "/workspace/clroom",
   "history_policy": "IMMUTABLE_INTERNAL_EVIDENCE_EXCLUDED_FROM_PUBLIC_SOURCE"
 }

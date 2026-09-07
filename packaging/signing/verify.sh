@@ -105,7 +105,7 @@ try:
         refuse("USAGE")
     fixture = options.get("--tool-root") is not None
     if fixture:
-        if os.environ.get("TASKSEAL_SIGNING_FIXTURE") != "1":
+        if os.environ.get("CLROOM_SIGNING_FIXTURE") != "1":
             refuse("FIXTURE_REFUSED")
         tools = Path(options["--tool-root"]).resolve()
         evidence_class = "fixture"
@@ -119,8 +119,8 @@ try:
     else:
         observed, mechanism = windows(artifact, claim, options.get("--identity"), tools)
     suffix = " signature=adhoc" if mechanism == "adhoc" else ""
-    print(f"P07_SIGNING_VERIFY_PASS state={observed} qualification=NOT_QUALIFIED evidence={evidence_class}{suffix}")
+    print(f"CLROOM_PACKAGING_SIGNING_VERIFY_PASS state={observed} qualification=NOT_QUALIFIED evidence={evidence_class}{suffix}")
 except Refused as error:
-    print("P07_SIGNING_REFUSED:" + str(error), file=sys.stderr)
+    print("CLROOM_PACKAGING_SIGNING_REFUSED:" + str(error), file=sys.stderr)
     raise SystemExit(1)
 PY

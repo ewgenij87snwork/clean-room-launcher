@@ -76,7 +76,7 @@ pub fn parse_qualification_receipt(
 ) -> Result<QualificationReceipt, ProjectionError> {
     let receipt: QualificationReceipt =
         serde_json::from_slice(bytes).map_err(|_| ProjectionError::InvalidReceipt)?;
-    if receipt.schema_version != "taskseal.native-projection-qualification.v1"
+    if receipt.schema_version != "clroom.native-projection-qualification.v1"
         || receipt.provider_id != declaration.provider_id
         || receipt.declaration_digest != declaration_digest(declaration)
     {
@@ -142,7 +142,7 @@ pub fn project_native(
     d: &AdapterDeclaration,
     r: QualificationReceipt,
 ) -> Result<NativeProjection, ProjectionError> {
-    if r.schema_version != "taskseal.native-projection-qualification.v1"
+    if r.schema_version != "clroom.native-projection-qualification.v1"
         || r.provider_id != d.provider_id
         || r.declaration_digest != declaration_digest(d)
     {

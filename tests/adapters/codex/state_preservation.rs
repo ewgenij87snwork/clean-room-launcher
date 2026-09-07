@@ -7,7 +7,7 @@ fn state_cases_cover_normal_failure_and_interruption_teardown() {
         let text = std::fs::read_to_string(root.join(format!("{case}.fixture"))).unwrap();
         assert!(text.contains("protected_before="));
         assert!(text.contains("protected_after="));
-        assert!(text.contains("taskseal_ephemeral_removed=true"));
+        assert!(text.contains("clroom_ephemeral_removed=true"));
         assert!(!text.contains("credential="));
         assert!(!text.contains("private_content="));
     }
@@ -16,7 +16,7 @@ fn state_cases_cover_normal_failure_and_interruption_teardown() {
 #[test]
 fn state_receipt_refuses_or_is_publicly_excluded() {
     let root = Path::new(env!("CARGO_MANIFEST_DIR"));
-    let receipt_path = root.join("reports/gates/p06/task-11.json");
+    let receipt_path = root.join("reports/gates/clroom-macos/task-11.json");
     if !receipt_path.is_file() {
         let inventory =
             std::fs::read_to_string(root.join("qualification/public-release-inventory-v1.json"))

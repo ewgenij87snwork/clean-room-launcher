@@ -1,4 +1,4 @@
-use taskseal::contracts::adapter::parse_declaration;
+use clroom::contracts::adapter::parse_declaration;
 
 #[test]
 fn valid_unqualified_declarations_parse_without_support_claims() {

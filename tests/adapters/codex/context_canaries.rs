@@ -1,4 +1,4 @@
-use taskseal::adapters::codex::{
+use clroom::adapters::codex::{
     context_canaries::{
         CanaryState, ContextLayer, NativeCanaryState, evaluate_native_observation,
         observe_without_provider,
