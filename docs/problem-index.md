@@ -198,6 +198,37 @@ OpenAI documents global instructions under `CODEX_HOME` plus project instruction
 
 **Go deeper:** [Codex](codex.md) · [Configuration Matrix](configuration-matrix.md) · [When To Use Clroom](when-to-use-clroom.md)
 
+<a id="codex-ignore-user-config"></a>
+## Do you need `codex --ignore-user-config` or a clean Codex `config.toml`?
+
+**Common ways people ask this:**
+
+- `codex --ignore-user-config`
+- `clean codex config.toml`
+- `Codex without user config`
+
+Use native `codex exec --ignore-user-config` for broad non-interactive user-
+config suppression. Use CLROOM when you also need its qualified selective
+project/local-preserving boundary and selected-skill workflow; interactive
+Codex qualification remains fail-closed.
+
+**Go deeper:** [Codex](codex.md) · [Limitations](limitations.md)
+
+<a id="claude-restricted"></a>
+## Should you use `claude --restricted` or CLROOM?
+
+**Common ways people ask this:**
+
+- `claude --restricted`
+- `Claude restricted mode`
+- `restricted vs CLROOM`
+
+Claude Code `--restricted` is the native strong restriction for evaluation or
+shared-machine use from version `2.1.248+`. CLROOM is for selective launches
+that preserve project/local configuration while admitting chosen skills.
+
+**Go deeper:** [Claude Code](claude-code.md) · [When To Use Clroom](when-to-use-clroom.md)
+
 <a id="codex-home-and-profiles"></a>
 ## Should you use `CODEX_HOME` or a Codex profile instead?
 

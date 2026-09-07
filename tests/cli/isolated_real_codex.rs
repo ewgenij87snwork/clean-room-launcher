@@ -18,7 +18,8 @@ fn temporary_result() -> PathBuf {
 #[test]
 fn sole_gate_rejects_ambiguous_canary_fields_that_look_like_real_codex_observation() {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    let gate = root.join("scripts/gates/clroom-macos/successors/clroom-macos-isolated-launch-v1/verify.sh");
+    let gate = root
+        .join("scripts/gates/clroom-macos/successors/clroom-macos-isolated-launch-v1/verify.sh");
     if !gate.exists() {
         let inventory =
             fs::read_to_string(root.join("qualification/public-release-inventory-v1.json"))

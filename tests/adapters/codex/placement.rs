@@ -1,7 +1,7 @@
-use std::fs;
 use clroom::adapters::codex::placement::{
     CodexPlacementState, preflight_projection, preflight_provider_handoff,
 };
+use std::fs;
 
 #[test]
 fn projection_refuses_before_provider_birth_for_any_ambient_or_target_request() {

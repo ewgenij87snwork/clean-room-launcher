@@ -72,6 +72,17 @@ Use the native flag alone if it completely solves the problem.
 
 CLROOM additionally applies its provider-specific launch controls and selected-skill workflow. Those are implementation details, not a reason to use CLROOM when the native flag is already sufficient.
 
+## `claude --restricted` vs CLROOM
+
+Claude Code `--restricted` is available from Claude Code `2.1.248+`. It is a
+stronger evaluation and shared-machine restriction mode. Use it when you need
+that broad native restriction.
+
+CLROOM serves a different purpose: a selective project/local-preserving
+workflow that omits ordinary personal-global sources and admits explicitly
+selected skills. This documentation addition does not raise CLROOM's
+qualified minimum Claude Code version.
+
 ## Why `--add-dir` matters for selected skills
 
 Anthropic documents skills and commands as an exception to the usual additional-directory rule: `.claude/skills/` and `.claude/commands/` in an added directory can be discovered automatically.
@@ -87,4 +98,4 @@ This is also why managed-policy interactions around selected skills require care
 - [Claude Code skills](https://code.claude.com/docs/en/skills)
 - [Claude Code documentation index](https://code.claude.com/docs/llms.txt)
 
-Last verified against current Anthropic documentation: **2026-08-28**.
+Last verified against current Anthropic documentation: **2026-09-07**.

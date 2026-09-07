@@ -1,6 +1,6 @@
+use clroom::contracts::trace::{load_control_map, validate_control_map};
 use std::fs;
 use std::process::Command;
-use clroom::contracts::trace::{load_control_map, validate_control_map};
 
 #[test]
 fn canonical_map_has_446_explicit_rows_and_reciprocal_fields() {

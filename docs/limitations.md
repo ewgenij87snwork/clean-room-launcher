@@ -4,7 +4,8 @@ title: Limitations
 permalink: /limitations.html
 ---
 
-- `v0.1.0-alpha.4.2` is an unsigned, unnotarized prerelease, not a stable release.
+- `v0.2.0` is unsigned and unnotarized; qualification is limited to the
+  documented macOS Apple Silicon release path.
 - Only macOS on Apple Silicon with Codex CLI `0.147.0+` or Claude Code CLI
   `2.1.223+` is supported.
 - The boundary is a narrow macOS filesystem denylist, not a VM, container,

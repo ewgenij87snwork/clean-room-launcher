@@ -204,7 +204,7 @@ def generate(output: Path) -> int:
     finally:
         if os.path.exists(temporary):
             os.unlink(temporary)
-    print(f"P07_DEPENDENCY_NOTICE_PASS components={len(packages)}")
+    print(f"CLROOM_DEPENDENCY_NOTICE_PASS components={len(packages)}")
     return 0
 
 

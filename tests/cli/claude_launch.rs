@@ -321,8 +321,7 @@ fn claude_projection_accepts_a_complete_plugin_namespace_from_claude_cache() {
     .unwrap();
 
     let projection =
-        clroom::adapters::claude::projection::project(&home, &["superpowers".to_owned()])
-            .unwrap();
+        clroom::adapters::claude::projection::project(&home, &["superpowers".to_owned()]).unwrap();
 
     assert_eq!(projection.selected_global_skills, 2);
     assert!(

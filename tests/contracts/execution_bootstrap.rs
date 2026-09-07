@@ -47,8 +47,7 @@ fn checked_in_authority_schema_accepts_only_the_exact_private_receipt() {
         ("unknown field", add_unknown_field(&authority)),
     ] {
         assert!(
-            clroom::contracts::execution::validate_authority(&schema, &poison.1, &subject)
-                .is_err(),
+            clroom::contracts::execution::validate_authority(&schema, &poison.1, &subject).is_err(),
             "accepted {} authority",
             poison.0
         );

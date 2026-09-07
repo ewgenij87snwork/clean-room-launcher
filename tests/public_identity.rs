@@ -47,7 +47,12 @@ fn clroom_is_the_only_public_identity_and_preserves_the_native_codex_process() {
     assert!(bare_stdout.contains("Clean Room Launcher"));
     assert!(bare_stdout.contains("Launch Codex without unrelated global instructions and skills."));
     assert!(bare_stdout.contains("clroom codex"));
-    let stale = [format!("{}{}", "T", "ASKSEAL"), format!("{}{}", "t", "askseal"), "tseal".to_owned(), "croom".to_owned()];
+    let stale = [
+        format!("{}{}", "T", "ASKSEAL"),
+        format!("{}{}", "t", "askseal"),
+        "tseal".to_owned(),
+        "croom".to_owned(),
+    ];
     for stale in stale {
         assert!(
             !bare_stdout.contains(&stale),
@@ -59,7 +64,7 @@ fn clroom_is_the_only_public_identity_and_preserves_the_native_codex_process() {
     assert!(help.status.success());
     let help_stdout = String::from_utf8(help.stdout).unwrap();
     assert!(help_stdout.starts_with(
-        "\n\nClean Room Launcher v0.1.0-alpha.4.2\nLaunch Codex or Claude Code without\nunrelated global instructions and skills.\n"
+        "\n\nClean Room Launcher v0.2.0\nLaunch Codex or Claude Code without\nunrelated global instructions and skills.\n"
     ));
     assert!(help_stdout.contains("\nUsage\n  clroom codex exec [CODEX_ARGS...]"));
 

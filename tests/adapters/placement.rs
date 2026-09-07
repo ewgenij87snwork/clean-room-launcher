@@ -1,8 +1,4 @@
 use cap_std::{ambient_authority, fs::Dir};
-use std::{
-    fs,
-    sync::atomic::{AtomicU64, Ordering},
-};
 use clroom::{
     adapters::placement::{PlacementOutcome, place_context},
     contracts::adapter::AdapterDeclaration,
@@ -11,6 +7,10 @@ use clroom::{
         publish::publish,
         render::ArtifactSet,
     },
+};
+use std::{
+    fs,
+    sync::atomic::{AtomicU64, Ordering},
 };
 
 static NEXT: AtomicU64 = AtomicU64::new(0);

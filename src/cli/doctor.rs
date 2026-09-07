@@ -1,6 +1,6 @@
-use std::path::Path;
 use clroom::contracts::adapter::parse_declaration;
 use clroom::core::installation::verify_installation;
+use std::path::Path;
 
 pub fn run(args: &[String]) -> Result<String, String> {
     let root = parse_root(args)?;

@@ -235,7 +235,7 @@ fn codex_plugin_cache_is_not_inventoried_without_provider_activation_state() {
 
     assert_eq!(
         error,
-        taskseal::adapters::codex::isolation::IsolationError::UnknownSkillSelector(
+        clroom::adapters::codex::isolation::IsolationError::UnknownSkillSelector(
             "superpowers:brainstorming".to_owned()
         )
     );
@@ -308,7 +308,7 @@ fn stale_codex_plugin_cache_is_not_a_skill_source() {
 
     assert_eq!(
         error,
-        taskseal::adapters::codex::isolation::IsolationError::UnknownSkillSelector(
+        clroom::adapters::codex::isolation::IsolationError::UnknownSkillSelector(
             "stale:ghost".to_owned()
         )
     );
@@ -337,7 +337,7 @@ fn symlinked_codex_skill_root_is_not_an_inventory_source() {
     .unwrap_err();
     assert_eq!(
         error,
-        taskseal::adapters::codex::isolation::IsolationError::UnknownSkillSelector(
+        clroom::adapters::codex::isolation::IsolationError::UnknownSkillSelector(
             "escape".to_owned()
         )
     );

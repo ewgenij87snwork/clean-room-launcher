@@ -57,10 +57,8 @@ fn poisoned_public_inventory_fails_with_a_stable_reason() {
         assert_negative_fixtures_are_excluded();
     }
 
-    let symlink_root = std::env::temp_dir().join(format!(
-        "clroom-public-symlink-test-{}",
-        std::process::id()
-    ));
+    let symlink_root =
+        std::env::temp_dir().join(format!("clroom-public-symlink-test-{}", std::process::id()));
     std::fs::create_dir(&symlink_root).expect("create symlink fixture root");
     std::os::unix::fs::symlink("/etc/hosts", symlink_root.join("README.md"))
         .expect("create symlink fixture");

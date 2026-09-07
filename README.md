@@ -108,7 +108,7 @@ summary of the active boundary:
 - developer instructions and notifications are cleared by default.
 
 ```text
-╓──○──╖ ╭─ CLEAN ROOM ─ v0.1.0-alpha.4.2 ─╮
+╓──○──╖ ╭─ CLEAN ROOM ─ v0.2.0 ─╮
 ║░░░░░║⠒│                               │
 ║░░░░░║⠒│     Global AGENTS.md  off     │
 ║░░░░░║⠒│     Global skills    3 on     │
@@ -138,8 +138,8 @@ You need macOS on Apple Silicon and at least one already working provider:
 Codex CLI `0.147.0+` or Claude Code CLI `2.1.223+`.
 
 ```sh
-VERSION=v0.1.0-alpha.4.2
-ASSET=clean-room-launcher-v0.1.0-alpha.4.2-aarch64-apple-darwin.tar.gz
+VERSION=v0.2.0
+ASSET=clean-room-launcher-v0.2.0-aarch64-apple-darwin.tar.gz
 
 curl -fLO "https://github.com/ewgenij87snwork/clean-room-launcher/releases/download/$VERSION/$ASSET"
 curl -fLO "https://github.com/ewgenij87snwork/clean-room-launcher/releases/download/$VERSION/SHA256SUMS"
@@ -147,7 +147,7 @@ shasum -a 256 -c SHA256SUMS
 tar -xzf "$ASSET"
 
 mkdir -p "$HOME/.local/bin"
-install -m 0755 "clean-room-launcher-v0.1.0-alpha.4.2-aarch64-apple-darwin/bin/clroom" "$HOME/.local/bin/clroom"
+install -m 0755 "clean-room-launcher-v0.2.0-aarch64-apple-darwin/bin/clroom" "$HOME/.local/bin/clroom"
 export PATH="$HOME/.local/bin:$PATH"
 clroom --help
 ```
@@ -160,14 +160,14 @@ prefer the Cargo installation below. Do not disable Gatekeeper globally.
 
 ## Install with Cargo
 
-Rust users can build the same alpha from the public tag:
+Rust users can build the same release from the public tag:
 
 ```sh
 cargo install --git https://github.com/ewgenij87snwork/clean-room-launcher \
-  --tag v0.1.0-alpha.4.2 --locked
+  --tag v0.2.0 --locked
 ```
 
-No crates.io package is published for this alpha.
+No crates.io package is published for this release.
 
 ## Launch
 

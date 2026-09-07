@@ -4,14 +4,16 @@
 
 | Version | Status |
 | --- | --- |
-| `0.1.0-alpha.4.2` | Best-effort security fixes during the alpha |
+| `0.2.0` | Current supported release |
+| `0.1.0-alpha.4.2` | Superseded historical release |
 | `0.1.0-alpha.4.1` | Superseded by `0.1.0-alpha.4.2` |
 | `0.1.0-alpha.4` | Superseded by `0.1.0-alpha.4.1` |
 | `0.1.0-alpha.3` | Superseded by `0.1.0-alpha.4` |
 | `0.1.0-alpha.2` | Superseded by `0.1.0-alpha.3` |
 | `0.1.0-alpha.1` | Superseded by `0.1.0-alpha.2` |
 
-The alpha is unsigned and unnotarized. It is not a stable-support promise.
+The current release is unsigned and unnotarized, and is qualified only for
+macOS on Apple Silicon.
 
 ## Reporting a vulnerability
 

@@ -1,14 +1,14 @@
-use std::{
-    fs,
-    os::unix::fs::PermissionsExt,
-    sync::atomic::{AtomicUsize, Ordering},
-};
 use clroom::{
     adapters::{
         environment::ProviderNativePreauthenticatedSession,
         identity::{resolve_identity, revalidate_identity},
     },
     contracts::adapter::AdapterDeclaration,
+};
+use std::{
+    fs,
+    os::unix::fs::PermissionsExt,
+    sync::atomic::{AtomicUsize, Ordering},
 };
 fn declaration() -> AdapterDeclaration {
     AdapterDeclaration {

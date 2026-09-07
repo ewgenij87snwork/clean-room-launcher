@@ -1,5 +1,5 @@
-use serde_json::json;
 use clroom::contracts::canonical::{MergeOperation, canonicalize, merge};
+use serde_json::json;
 
 #[test]
 fn canonical_bytes_are_key_sorted_compact_and_repeatable() {

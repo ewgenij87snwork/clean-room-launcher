@@ -1,5 +1,5 @@
-use std::fs;
 use clroom::contracts::schema::{SchemaKind, validate};
+use std::fs;
 
 #[test]
 fn valid_vectors_pass_for_each_public_schema() {
