@@ -17,6 +17,28 @@ pub struct IsolationInputs {
     pub codex_home: PathBuf,
 }
 
+/// Qualified Codex skill sources. Filesystem residue outside these sources is
+/// intentionally not an inventory input.
+pub const CODEX_SKILL_SOURCE_MAP: &[(&str, &str)] = &[
+    (
+        "REPO",
+        "$CWD/.agents/skills and ancestors through $REPO_ROOT/.agents/skills",
+    ),
+    ("USER", "$HOME/.agents/skills and $CODEX_HOME/skills"),
+    (
+        "ADMIN",
+        "/private/etc/codex/skills from the system config layer",
+    ),
+    (
+        "SYSTEM",
+        "$CODEX_HOME/skills/.system (provider-owned embedded skills)",
+    ),
+    (
+        "PLUGIN",
+        "provider-owned effective config plus PluginStore; not inventoried by CLROOM",
+    ),
+];
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum IsolationError {
     UnsupportedPlatform,
@@ -79,6 +101,9 @@ pub fn plan_with_skills(
         codex_home.join("plugins"),
         codex_home.join("hooks"),
         home.join(".agents/skills"),
+    ];
+    let provider_skill_roots = [
+        codex_home.join("skills/.system"),
         PathBuf::from("/private/etc/codex/skills"),
     ];
     let credential_roots = [
@@ -90,7 +115,7 @@ pub fn plan_with_skills(
     let inventory = if selectors.is_empty() {
         Vec::new()
     } else {
-        discover_global_skills(&denied_roots)
+        discover_global_skills(&[codex_home.join("skills"), home.join(".agents/skills")])
     };
     let selection = resolve_skill_selectors(selectors, &inventory)?;
     let mut denied_subpaths = denied_roots.iter().cloned().collect::<BTreeSet<_>>();
@@ -119,6 +144,16 @@ pub fn plan_with_skills(
         profile.push_str("\")");
     }
     profile.push_str(")\n");
+    profile.push_str("(allow file-read*");
+    for root in &provider_skill_roots {
+        profile.push_str("\n  (literal \"");
+        profile.push_str(&escape_scheme_path(root)?);
+        profile.push_str("\")");
+        profile.push_str("\n  (subpath \"");
+        profile.push_str(&escape_scheme_path(root)?);
+        profile.push_str("\")");
+    }
+    profile.push_str(")\n");
     profile.push_str("(allow file-read-metadata");
     for path in &denied_files {
         profile.push_str("\n  (literal \"");
@@ -132,9 +167,20 @@ pub fn plan_with_skills(
         profile.push_str(&escape_scheme_path(path)?);
         profile.push_str("\")");
     }
-    for path in denied_roots.iter().chain(credential_roots.iter()) {
+    for path in denied_roots
+        .iter()
+        .chain(provider_skill_roots.iter())
+        .chain(credential_roots.iter())
+    {
         profile.push_str("\n  (subpath \"");
         profile.push_str(&escape_scheme_path(path)?);
+        profile.push_str("\")");
+    }
+    profile.push_str(")\n");
+    profile.push_str("(allow file-read-metadata");
+    for root in &provider_skill_roots {
+        profile.push_str("\n  (subpath \"");
+        profile.push_str(&escape_scheme_path(root)?);
         profile.push_str("\")");
     }
     profile.push_str(")\n");
@@ -173,6 +219,15 @@ pub fn plan_with_skills(
 fn discover_global_skills(roots: &[PathBuf]) -> Vec<GlobalSkill> {
     let mut inventory = Vec::new();
     for (source_precedence, root) in roots.iter().enumerate() {
+        let Ok(root_metadata) = fs::symlink_metadata(root) else {
+            continue;
+        };
+        if root_metadata.file_type().is_symlink() || !root_metadata.is_dir() {
+            continue;
+        }
+        let Ok(canonical_root) = fs::canonicalize(root) else {
+            continue;
+        };
         let Ok(entries) = fs::read_dir(root) else {
             continue;
         };
@@ -181,17 +236,30 @@ fn discover_global_skills(roots: &[PathBuf]) -> Vec<GlobalSkill> {
                 continue;
             };
             let entry_path = entry.path();
-            if !fs::metadata(entry_path.join("SKILL.md")).is_ok_and(|metadata| metadata.is_file()) {
+            let Ok(entry_metadata) = fs::symlink_metadata(&entry_path) else {
+                continue;
+            };
+            if entry_metadata.file_type().is_symlink() || !entry_metadata.is_dir() {
+                continue;
+            }
+            if name == ".system"
+                || !valid_skill_name(&name)
+                || !fs::metadata(entry_path.join("SKILL.md"))
+                    .is_ok_and(|metadata| metadata.is_file())
+            {
                 continue;
             }
             let Ok(canonical_path) = fs::canonicalize(&entry_path) else {
                 continue;
             };
+            if !canonical_path.starts_with(&canonical_root) {
+                continue;
+            }
             if !fs::metadata(&canonical_path).is_ok_and(|metadata| metadata.is_dir()) {
                 continue;
             }
             inventory.push(GlobalSkill {
-                namespace: plugin_namespace(&canonical_path),
+                namespace: None,
                 name,
                 source_precedence,
                 entry_path,
@@ -214,36 +282,6 @@ fn discover_global_skills(roots: &[PathBuf]) -> Vec<GlobalSkill> {
             ))
     });
     inventory
-}
-
-fn plugin_namespace(skill_path: &Path) -> Option<String> {
-    let skills_root = skill_path
-        .ancestors()
-        .find(|ancestor| ancestor.file_name().is_some_and(|name| name == "skills"))?;
-    let package_root = skills_root.parent()?;
-    for manifest in [
-        package_root.join(".codex-plugin/plugin.json"),
-        package_root.join(".claude-plugin/plugin.json"),
-    ] {
-        let Ok(metadata) = fs::metadata(&manifest) else {
-            continue;
-        };
-        if !metadata.is_file() || metadata.len() > 64 * 1024 {
-            continue;
-        }
-        let Ok(bytes) = fs::read(&manifest) else {
-            continue;
-        };
-        let Ok(value) = serde_json::from_slice::<serde_json::Value>(&bytes) else {
-            continue;
-        };
-        if let Some(name) = value.get("name").and_then(serde_json::Value::as_str)
-            && valid_skill_name(name)
-        {
-            return Some(name.to_owned());
-        }
-    }
-    None
 }
 
 fn resolve_skill_selectors(

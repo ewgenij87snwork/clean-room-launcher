@@ -69,13 +69,30 @@ struct GlobalSkill {
     canonical_path: PathBuf,
 }
 
+/// Qualified Claude Code skill sources. Synced/remote skills are provider
+/// state and are never inferred from local cache residue.
+pub const CLAUDE_SKILL_SOURCE_MAP: &[(&str, &str)] = &[
+    ("ENTERPRISE", "managed settings .claude/skills"),
+    ("PERSONAL", "$HOME/.claude/skills"),
+    ("PROJECT", "$CWD/.claude/skills and repository parents"),
+    (
+        "PLUGIN",
+        "$HOME/.claude/plugins/cache only when named by installed_plugins.json",
+    ),
+    (
+        "SYNCED",
+        "provider-managed claude.ai sync (not filesystem-inventoried)",
+    ),
+];
+
 pub fn project(home: &Path, selectors: &[String]) -> Result<Projection, ProjectionError> {
     if !home.is_absolute() {
         return Err(ProjectionError::Unavailable);
     }
     let roots = [home.join(".claude/skills"), home.join(".agents/skills")];
     let approved_target_roots = approved_target_roots(home, &roots);
-    let inventory = discover_global_skills(&roots, &approved_target_roots);
+    let mut inventory = discover_global_skills(&roots, &approved_target_roots);
+    discover_active_plugin_skills(home, &mut inventory);
     let selected = resolve_skill_selectors(selectors, &inventory)?;
     reject_native_name_collisions(&selected)?;
     let (storage_root, root) = create_root()?;
@@ -675,6 +692,83 @@ fn discover_global_skills(
             ))
     });
     inventory
+}
+
+fn discover_active_plugin_skills(home: &Path, inventory: &mut Vec<GlobalSkill>) {
+    let Some(cache_root) = canonical_nonsymlink_directory(&home.join(".claude/plugins/cache"))
+    else {
+        return;
+    };
+    let registry = home.join(".claude/plugins/installed_plugins.json");
+    let Ok(registry_metadata) = fs::symlink_metadata(&registry) else {
+        return;
+    };
+    if registry_metadata.file_type().is_symlink()
+        || !registry_metadata.is_file()
+        || registry_metadata.len() > 1024 * 1024
+    {
+        return;
+    }
+    let Ok(bytes) = fs::read(registry) else {
+        return;
+    };
+    let Ok(value) = serde_json::from_slice::<serde_json::Value>(&bytes) else {
+        return;
+    };
+    let Some(plugins) = value.get("plugins").and_then(serde_json::Value::as_object) else {
+        return;
+    };
+    for installations in plugins.values().filter_map(serde_json::Value::as_array) {
+        for installation in installations {
+            let Some(path) = installation
+                .get("installPath")
+                .and_then(serde_json::Value::as_str)
+            else {
+                continue;
+            };
+            let path = PathBuf::from(path);
+            let Some(path) = canonical_nonsymlink_directory(&path) else {
+                continue;
+            };
+            if !path.starts_with(&cache_root) {
+                continue;
+            }
+            discover_plugin_skills(&path, inventory);
+        }
+    }
+}
+
+fn discover_plugin_skills(plugin_root: &Path, inventory: &mut Vec<GlobalSkill>) {
+    let skills_root = plugin_root.join("skills");
+    let Ok(entries) = fs::read_dir(&skills_root) else {
+        return;
+    };
+    for entry in entries.flatten() {
+        let entry_path = entry.path();
+        let Some(name) = entry.file_name().to_str().map(str::to_owned) else {
+            continue;
+        };
+        if !valid_skill_name(&name)
+            || !fs::metadata(entry_path.join("SKILL.md")).is_ok_and(|metadata| metadata.is_file())
+        {
+            continue;
+        }
+        let Some(canonical_path) = canonical_nonsymlink_directory(&entry_path) else {
+            continue;
+        };
+        if !canonical_path.starts_with(plugin_root) {
+            continue;
+        }
+        let Some(namespace) = plugin_namespace(&canonical_path) else {
+            continue;
+        };
+        inventory.push(GlobalSkill {
+            name,
+            namespace: Some(namespace),
+            source_precedence: usize::MAX,
+            canonical_path,
+        });
+    }
 }
 
 fn canonical_nonsymlink_directory(path: &Path) -> Option<PathBuf> {

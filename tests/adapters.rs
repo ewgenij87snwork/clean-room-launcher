@@ -1,3 +1,5 @@
+#[path = "adapters/claude_projection_inventory.rs"]
+mod claude_projection_inventory;
 #[path = "adapters/codex/context_canaries.rs"]
 mod codex_context_canaries;
 #[path = "adapters/codex/environment.rs"]
