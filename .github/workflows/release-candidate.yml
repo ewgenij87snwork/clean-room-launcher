@@ -53,6 +53,15 @@ jobs:
           install -m 0755 "$tool" "$tool_dir/cargo-deny"
           echo "$tool_dir" >> "$GITHUB_PATH"
           test "$("$tool_dir/cargo-deny" --version)" = "cargo-deny 0.20.2"
+      - name: Install pinned Python verifier dependency
+        shell: bash
+        run: |
+          set -euo pipefail
+          venv="$RUNNER_TEMP/clroom-python"
+          python3 -m venv "$venv"
+          "$venv/bin/python" -m pip install --disable-pip-version-check --no-input "jsonschema==4.25.1"
+          test "$("$venv/bin/python" -c 'import jsonschema; print(jsonschema.__version__)')" = "4.25.1"
+          echo "$venv/bin" >> "$GITHUB_PATH"
       - name: Run canonical fail-closed gate
         env:
           CLROOM_RELEASE_VERSION: 0.2.0
