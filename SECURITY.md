@@ -4,14 +4,14 @@
 
 | Version | Status |
 | --- | --- |
-| `0.1.0-alpha.4.2` | Best-effort security fixes during the alpha |
-| `0.1.0-alpha.4.1` | Superseded by `0.1.0-alpha.4.2` |
+| `0.2.0` | Security fixes for the current release |
+| `0.1.0-alpha.4.1` | Superseded by `0.2.0` |
 | `0.1.0-alpha.4` | Superseded by `0.1.0-alpha.4.1` |
 | `0.1.0-alpha.3` | Superseded by `0.1.0-alpha.4` |
 | `0.1.0-alpha.2` | Superseded by `0.1.0-alpha.3` |
 | `0.1.0-alpha.1` | Superseded by `0.1.0-alpha.2` |
 
-The alpha is unsigned and unnotarized. It is not a stable-support promise.
+The release is unsigned and unnotarized. Signing and notarization are not claimed.
 
 ## Reporting a vulnerability
 
