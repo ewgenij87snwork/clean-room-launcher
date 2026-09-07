@@ -1,4 +1,9 @@
-use std::{fs, path::PathBuf, process::Command, sync::atomic::{AtomicU64, Ordering}};
+use std::{
+    fs,
+    path::PathBuf,
+    process::Command,
+    sync::atomic::{AtomicU64, Ordering},
+};
 
 static SEQUENCE: AtomicU64 = AtomicU64::new(0);
 
@@ -13,14 +18,11 @@ fn temporary_result() -> PathBuf {
 #[test]
 fn sole_gate_rejects_ambiguous_canary_fields_that_look_like_real_codex_observation() {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    let gate = root.join(
-        "scripts/gates/p06/successors/clroom-macos-isolated-launch-v1/verify.sh",
-    );
+    let gate = root.join("scripts/gates/p06/successors/clroom-macos-isolated-launch-v1/verify.sh");
     if !gate.exists() {
-        let inventory = fs::read_to_string(
-            root.join("qualification/public-release-inventory-v1.json"),
-        )
-        .expect("public release inventory exists when internal gates are excluded");
+        let inventory =
+            fs::read_to_string(root.join("qualification/public-release-inventory-v1.json"))
+                .expect("public release inventory exists when internal gates are excluded");
         assert!(inventory.contains("\"scripts/gates\""));
         return;
     }

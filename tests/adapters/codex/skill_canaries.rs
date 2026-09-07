@@ -2,7 +2,13 @@
 fn native_skill_fixture_inventory_is_present_and_body_markers_are_not_startup_metadata() {
     let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("fixtures/adapters/codex/skill-canaries");
-    for name in ["needed", "unused", "protected", "outside-boundary", "tampered"] {
+    for name in [
+        "needed",
+        "unused",
+        "protected",
+        "outside-boundary",
+        "tampered",
+    ] {
         let body = std::fs::read_to_string(root.join(name).join("SKILL.md")).unwrap();
         assert!(body.contains("TASKSEAL_SKILL_BODY_"));
         assert!(body.contains("name:"));
@@ -42,5 +48,8 @@ fn tampered_fixture_digest_is_not_admitted_as_its_recorded_digest() {
     let actual = taskseal::core::inventory::sha256_hex(
         &std::fs::read(root.join("tampered/SKILL.md")).unwrap(),
     );
-    assert_ne!(actual, "0000000000000000000000000000000000000000000000000000000000000000");
+    assert_ne!(
+        actual,
+        "0000000000000000000000000000000000000000000000000000000000000000"
+    );
 }

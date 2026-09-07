@@ -60,9 +60,11 @@ pub fn evaluate_native_observation(
 ) -> NativeCanaryState {
     if !is_exact_tuple(tuple)
         || observed_nonce_digests.len() != REQUIRED_NONCE_DIGESTS.len()
-        || !REQUIRED_NONCE_DIGESTS
-            .iter()
-            .all(|required| observed_nonce_digests.iter().any(|observed| observed == required))
+        || !REQUIRED_NONCE_DIGESTS.iter().all(|required| {
+            observed_nonce_digests
+                .iter()
+                .any(|observed| observed == required)
+        })
     {
         return NativeCanaryState::Refused;
     }

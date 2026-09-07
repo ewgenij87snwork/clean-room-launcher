@@ -9,14 +9,14 @@ use std::{
 use taskseal::adapters::claude::{
     isolation::IsolationPlan as ClaudeIsolationPlan, projection::Projection,
 };
-use taskseal::adapters::codex::isolation::{plan_with_skills, IsolationInputs, IsolationPlan};
+use taskseal::adapters::codex::isolation::{IsolationInputs, IsolationPlan, plan_with_skills};
 use taskseal::adapters::{
-    identity::{resolve_identity, revalidate_identity, ProviderIdentity},
+    identity::{ProviderIdentity, resolve_identity, revalidate_identity},
     session::ProviderNativePreauthenticatedSession,
 };
 use taskseal::contracts::adapter::parse_declaration;
 
-use super::launch_contract::{classify_codex_invocation, CodexInvocation, LaunchContract};
+use super::launch_contract::{CodexInvocation, LaunchContract, classify_codex_invocation};
 
 #[derive(Clone, Copy)]
 enum ProviderEnvironment {
