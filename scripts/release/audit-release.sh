@@ -1,7 +1,6 @@
 #!/bin/sh
+# P08 Task 7: one fail-closed release audit over the exact private candidate.
 set -eu
-echo "LEGACY_RELEASE_PATH_REFUSED: use scripts/release/readiness.sh" >&2
-exit 64
 
 root=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd -P)
 exec python3 - "$root" "$@" <<'PY'

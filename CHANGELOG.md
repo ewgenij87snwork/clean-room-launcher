@@ -7,7 +7,7 @@ Semantic Versioning after the first public release.
 
 ## [Unreleased]
 
-## [0.2.0] - 2026-08-24
+## [0.1.0-alpha.4.2] - 2026-08-24
 
 ### Fixed
 
