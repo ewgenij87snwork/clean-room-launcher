@@ -1,6 +1,7 @@
 use std::{
     fs,
     path::PathBuf,
+    sync::atomic::{AtomicU64, Ordering},
     time::{SystemTime, UNIX_EPOCH},
 };
 
@@ -8,12 +9,14 @@ use std::{
 use std::os::unix::fs::symlink;
 
 fn scratch() -> PathBuf {
+    static SEQUENCE: AtomicU64 = AtomicU64::new(0);
     let nonce = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap()
         .as_nanos();
+    let sequence = SEQUENCE.fetch_add(1, Ordering::Relaxed);
     let root = std::env::temp_dir().join(format!(
-        "clroom-claude-inventory-{}-{nonce}",
+        "clroom-claude-inventory-{}-{nonce}-{sequence}",
         std::process::id()
     ));
     fs::create_dir_all(&root).unwrap();
