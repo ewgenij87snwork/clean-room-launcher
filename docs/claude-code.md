@@ -98,4 +98,4 @@ This is also why managed-policy interactions around selected skills require care
 - [Claude Code skills](https://code.claude.com/docs/en/skills)
 - [Claude Code documentation index](https://code.claude.com/docs/llms.txt)
 
-Last verified against current Anthropic documentation: **2026-09-08**.
+Last verified against current Anthropic documentation: **2026-09-07**.

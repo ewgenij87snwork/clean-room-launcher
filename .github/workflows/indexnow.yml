@@ -2,7 +2,7 @@ name: IndexNow
 
 on:
   push:
-    branches: [feat/clroom-public-alpha-v1]
+    branches: [feat/clroom-public-alpha-v1, main]
 
 permissions:
   contents: read

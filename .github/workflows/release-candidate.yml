@@ -17,6 +17,16 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
+      - name: Provision existing Python supply-chain verifier
+        shell: bash
+        run: |
+          set -euo pipefail
+          verifier_root="$RUNNER_TEMP/clroom-supply-chain-verifier"
+          python3 -m venv "$verifier_root"
+          "$verifier_root/bin/python" -m pip install --disable-pip-version-check --no-input \
+            "jsonschema==4.26.0"
+          echo "$verifier_root/bin" >> "$GITHUB_PATH"
+          test "$(python3 -c 'import importlib.metadata; print(importlib.metadata.version("jsonschema"))')" = "4.26.0"
       - name: Install cargo-deny 0.20.2 verification tool
         shell: bash
         run: |
