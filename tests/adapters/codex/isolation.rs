@@ -5,6 +5,9 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
+#[cfg(unix)]
+use std::os::unix::fs::symlink;
+
 use clroom::adapters::codex::isolation::{IsolationInputs, plan, plan_with_skills};
 
 struct TempRoot(PathBuf);
@@ -192,6 +195,151 @@ fn selected_duplicate_logical_skill_prefers_codex_root_and_denies_agents_body() 
         output.status,
         String::from_utf8_lossy(&output.stdout),
         String::from_utf8_lossy(&output.stderr)
+    );
+}
+
+#[test]
+fn codex_plugin_cache_is_not_inventoried_without_provider_activation_state() {
+    let root = TempRoot::new("active-plugin-skill");
+    let project = root.path().join("project");
+    let home = root.path().join("home");
+    let codex_home = root.path().join("codex-home");
+    let plugin = codex_home.join("plugins/cache/superpowers/6.3.0");
+    fs::create_dir_all(project.as_path()).unwrap();
+    fs::create_dir_all(plugin.join(".codex-plugin")).unwrap();
+    fs::create_dir_all(plugin.join("skills/brainstorming/references")).unwrap();
+    fs::write(
+        plugin.join(".codex-plugin/plugin.json"),
+        br#"{"name":"superpowers"}"#,
+    )
+    .unwrap();
+    fs::write(
+        plugin.join("skills/brainstorming/SKILL.md"),
+        b"brainstorming\n",
+    )
+    .unwrap();
+    fs::write(
+        plugin.join("skills/brainstorming/references/guide.md"),
+        b"guide\n",
+    )
+    .unwrap();
+    fs::create_dir_all(plugin.join("hooks")).unwrap();
+    fs::write(plugin.join("hooks/hooks.json"), b"{}\n").unwrap();
+    let error = plan_with_skills(
+        &project,
+        Path::new("/bin/sh"),
+        &IsolationInputs { home, codex_home },
+        &["superpowers:brainstorming".to_owned()],
+    )
+    .unwrap_err();
+
+    assert_eq!(
+        error,
+        taskseal::adapters::codex::isolation::IsolationError::UnknownSkillSelector(
+            "superpowers:brainstorming".to_owned()
+        )
+    );
+}
+
+#[test]
+fn provider_owned_system_and_admin_skill_roots_remain_readable_but_not_writable() {
+    let root = TempRoot::new("provider-owned-skill-roots");
+    let project = root.path().join("project");
+    let home = root.path().join("home");
+    let codex_home = root.path().join("codex-home");
+    let system_skill = codex_home.join("skills/.system/skill-creator/SKILL.md");
+    let admin_skill = root.path().join("private/etc/codex/skills/admin/SKILL.md");
+    fs::create_dir_all(system_skill.parent().unwrap()).unwrap();
+    fs::create_dir_all(admin_skill.parent().unwrap()).unwrap();
+    fs::write(&system_skill, b"system\n").unwrap();
+    fs::write(&admin_skill, b"admin\n").unwrap();
+    fs::create_dir_all(&project).unwrap();
+
+    let isolation = plan(
+        &project,
+        Path::new("/bin/sh"),
+        &IsolationInputs { home, codex_home },
+    )
+    .unwrap();
+    assert!(isolation.profile.contains("/private/etc/codex/skills"));
+    assert!(isolation.profile.contains("skills/.system"));
+
+    let output = Command::new("/usr/bin/sandbox-exec")
+        .args(["-p", &isolation.profile, "--", "/bin/sh", "-c"])
+        .arg("/bin/cat \"$1\" >/dev/null || exit 80; printf 'blocked\\n' >>\"$1\" 2>/dev/null && exit 81; exit 0")
+        .arg("fixture")
+        .arg(&system_skill)
+        .output()
+        .unwrap();
+
+    assert!(
+        output.status.success(),
+        "provider SYSTEM skill must be readable but not writable: status={:?} stdout={} stderr={}",
+        output.status,
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+}
+
+#[test]
+fn stale_codex_plugin_cache_is_not_a_skill_source() {
+    let root = TempRoot::new("stale-plugin-cache");
+    let project = root.path().join("project");
+    let home = root.path().join("home");
+    let codex_home = root.path().join("codex-home");
+    let plugin = codex_home.join("plugins/cache/stale/1.0.0");
+    fs::create_dir_all(project.as_path()).unwrap();
+    fs::create_dir_all(plugin.join(".codex-plugin")).unwrap();
+    fs::create_dir_all(plugin.join("skills/ghost")).unwrap();
+    fs::write(plugin.join("skills/ghost/SKILL.md"), b"ghost\n").unwrap();
+    fs::write(
+        plugin.join(".codex-plugin/plugin.json"),
+        br#"{"name":"stale"}"#,
+    )
+    .unwrap();
+
+    let error = plan_with_skills(
+        &project,
+        Path::new("/bin/sh"),
+        &IsolationInputs { home, codex_home },
+        &["stale:ghost".to_owned()],
+    )
+    .unwrap_err();
+
+    assert_eq!(
+        error,
+        taskseal::adapters::codex::isolation::IsolationError::UnknownSkillSelector(
+            "stale:ghost".to_owned()
+        )
+    );
+}
+
+#[cfg(unix)]
+#[test]
+fn symlinked_codex_skill_root_is_not_an_inventory_source() {
+    let root = TempRoot::new("symlinked-skill-root");
+    let project = root.path().join("project");
+    let home = root.path().join("home");
+    let codex_home = root.path().join("codex-home");
+    let outside = root.path().join("outside/escape");
+    fs::create_dir_all(outside.as_path()).unwrap();
+    fs::write(outside.join("SKILL.md"), b"outside\n").unwrap();
+    fs::create_dir_all(codex_home.join("skills")).unwrap();
+    symlink(&outside, codex_home.join("skills/escape")).unwrap();
+    fs::create_dir_all(&project).unwrap();
+
+    let error = plan_with_skills(
+        &project,
+        Path::new("/bin/sh"),
+        &IsolationInputs { home, codex_home },
+        &["escape".to_owned()],
+    )
+    .unwrap_err();
+    assert_eq!(
+        error,
+        taskseal::adapters::codex::isolation::IsolationError::UnknownSkillSelector(
+            "escape".to_owned()
+        )
     );
 }
 

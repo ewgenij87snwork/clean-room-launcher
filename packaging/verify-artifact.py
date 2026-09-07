@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fail-closed verifier for exact CLROOM release archives."""
+"""Fail-closed verifier for locally generated TaskSeal preview archives."""
 import gzip, hashlib, os, re, sys, tarfile
 
 REQUIRED = {"LICENSE", "NOTICE", "VERSION", "bin/clroom", "share/doc/clean-room-launcher/CHANGELOG.md"}

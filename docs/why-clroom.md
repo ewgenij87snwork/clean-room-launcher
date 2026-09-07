@@ -104,9 +104,9 @@ Those limits are documented openly:
 
 CLROOM is open source under MPL-2.0.
 
-The current public release supports Codex and Claude Code on macOS / Apple Silicon. For current provider/version details, use the repository and installation/limitations pages rather than copying a version number from an old article.
+The current public alpha supports Codex and Claude Code on macOS / Apple Silicon. For current provider/version details, use the repository and installation/limitations pages rather than copying a version number from an old article.
 
 - [GitHub repository](https://github.com/ewgenij87snwork/clean-room-launcher)
 - [Installation](install.md)
 - [Find your problem in the configuration problem index](problem-index.md)
-- [Boundary walkthrough](demo.md)
+- [40-second demo](https://www.youtube.com/watch?v=YAEUJM-_VeE)

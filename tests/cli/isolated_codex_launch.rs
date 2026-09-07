@@ -226,10 +226,9 @@ fn add_selective_skill_fixture(root: &Scratch, home: &Path, project: &Path) -> P
     )
     .unwrap();
     for name in ["systematic-debugging", "brainstorming"] {
-        let target = plugin.join("skills").join(name);
+        let target = global_skills.join(name);
         fs::create_dir_all(&target).unwrap();
         fs::write(target.join("SKILL.md"), format!("{name}\n")).unwrap();
-        std::os::unix::fs::symlink(&target, global_skills.join(name)).unwrap();
     }
     plugin
 }
@@ -317,7 +316,7 @@ fn codex_handoff_keeps_explicit_user_overrides_after_clean_defaults() {
 }
 
 #[test]
-fn codex_handoff_admits_one_exact_skill_and_a_complete_namespace_for_this_run() {
+fn codex_handoff_admits_exact_native_skills_for_this_run() {
     // Break caught: selection is forwarded to Codex or the sandbox still blocks
     // explicitly invited skills while admitting unrelated global skills.
     let (root, project, home, codex_home, bin) = isolated_fixture();
@@ -344,7 +343,7 @@ fn codex_handoff_admits_one_exact_skill_and_a_complete_namespace_for_this_run() 
         .args([
             "codex",
             "exec",
-            "--skill-set=arrow,superpowers",
+            "--skill-set=arrow,systematic-debugging,brainstorming",
             "--exit-42",
             "literal value",
         ])
@@ -375,7 +374,7 @@ fn codex_handoff_admits_one_exact_skill_and_a_complete_namespace_for_this_run() 
 }
 
 #[test]
-fn codex_handoff_admits_one_namespaced_skill_without_its_siblings() {
+fn codex_handoff_admits_one_native_skill_without_its_siblings() {
     let (root, project, home, codex_home, bin) = isolated_fixture();
     let plugin = add_selective_skill_fixture(&root, &home, &project);
     let capture = project.join(".clroom-capture");
@@ -400,7 +399,7 @@ fn codex_handoff_admits_one_namespaced_skill_without_its_siblings() {
         .args([
             "codex",
             "exec",
-            "--skill-set=arrow,superpowers:systematic-debugging",
+            "--skill-set=arrow,systematic-debugging",
             "features",
             "list",
         ])
@@ -470,21 +469,16 @@ fn codex_handoff_prefers_codex_local_duplicates_and_denies_agents_bodies() {
     .unwrap();
 
     let second_plugin = root.join("second-plugin-cache/superpowers");
-    fs::create_dir_all(second_plugin.join(".codex-plugin")).unwrap();
-    fs::write(
-        second_plugin.join(".codex-plugin/plugin.json"),
-        br#"{"name":"superpowers","version":"2.0.0"}"#,
-    )
-    .unwrap();
     fs::create_dir_all(second_plugin.join("skills/systematic-debugging")).unwrap();
     fs::write(
         second_plugin.join("skills/systematic-debugging/SKILL.md"),
         b"second systematic-debugging source\n",
     )
     .unwrap();
-    std::os::unix::fs::symlink(
-        second_plugin.join("skills/systematic-debugging"),
-        codex_skills.join("systematic-debugging"),
+    fs::create_dir_all(codex_skills.join("systematic-debugging")).unwrap();
+    fs::write(
+        codex_skills.join("systematic-debugging/SKILL.md"),
+        b"codex systematic-debugging source\n",
     )
     .unwrap();
 
@@ -512,7 +506,7 @@ fn codex_handoff_prefers_codex_local_duplicates_and_denies_agents_bodies() {
         .args([
             "codex",
             "exec",
-            "--skill-set=arrow,superpowers:systematic-debugging",
+            "--skill-set=arrow,systematic-debugging",
             "--version",
         ])
         .env("CLROOM_ARROW_CODEX", codex_skills.join("arrow/SKILL.md"))
@@ -574,7 +568,7 @@ fn codex_handoff_expands_multiple_named_sets_and_direct_skills_without_rewriting
     let config_home = root.join("config");
     let config = config_home.join("clroom/skill-sets.yaml");
     fs::create_dir_all(config.parent().unwrap()).unwrap();
-    let yaml = b"review:\n  - arrow\n  - superpowers:systematic-debugging\ndebugging:\n  - superpowers\n  - arrow\ndocumentation:\n  - superpowers:brainstorming\n";
+    let yaml = b"review:\n  - arrow\n  - systematic-debugging\ndebugging:\n  - brainstorming\n  - arrow\ndocumentation:\n  - brainstorming\n";
     fs::write(&config, yaml).unwrap();
 
     let output = command(&project, &home, &codex_home, &bin, &capture)

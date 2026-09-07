@@ -9,6 +9,20 @@ Semantic Versioning after the first public release.
 
 ## [0.2.0] - 2026-09-07
 
+### Added
+
+- Qualified Codex exec launches with clean user configuration, provider-aware
+  selected-skill inventory, and fail-closed boundary limitations.
+- Canonical release readiness and SCA verification with SHA256SUMS, CycloneDX
+  SBOM, and GitHub attestations.
+
+### Security
+
+- Qualified for macOS on Apple Silicon; release artifacts remain unsigned and
+  unnotarized.
+
+## [0.1.0-alpha.4.2] - 2026-08-24
+
 ### Fixed
 
 - Tag CI exposed a concurrent reaper/owner cleanup race; cleanup is idempotent

@@ -108,7 +108,7 @@ summary of the active boundary:
 - developer instructions and notifications are cleared by default.
 
 ```text
-╓──○──╖ ╭─ CLEAN ROOM ─ v0.2.0 ─╮
+╓──○──╖ ╭─ CLEAN ROOM ─ v0.1.0-alpha.4.2 ─╮
 ║░░░░░║⠒│                               │
 ║░░░░░║⠒│     Global AGENTS.md  off     │
 ║░░░░░║⠒│     Global skills    3 on     │
@@ -138,8 +138,8 @@ You need macOS on Apple Silicon and at least one already working provider:
 Codex CLI `0.147.0+` or Claude Code CLI `2.1.223+`.
 
 ```sh
-VERSION=v0.2.0
-ASSET=clean-room-launcher-v0.2.0-aarch64-apple-darwin.tar.gz
+VERSION=v0.1.0-alpha.4.2
+ASSET=clean-room-launcher-v0.1.0-alpha.4.2-aarch64-apple-darwin.tar.gz
 
 curl -fLO "https://github.com/ewgenij87snwork/clean-room-launcher/releases/download/$VERSION/$ASSET"
 curl -fLO "https://github.com/ewgenij87snwork/clean-room-launcher/releases/download/$VERSION/SHA256SUMS"
@@ -147,7 +147,7 @@ shasum -a 256 -c SHA256SUMS
 tar -xzf "$ASSET"
 
 mkdir -p "$HOME/.local/bin"
-install -m 0755 "clean-room-launcher-v0.2.0-aarch64-apple-darwin/bin/clroom" "$HOME/.local/bin/clroom"
+install -m 0755 "clean-room-launcher-v0.1.0-alpha.4.2-aarch64-apple-darwin/bin/clroom" "$HOME/.local/bin/clroom"
 export PATH="$HOME/.local/bin:$PATH"
 clroom --help
 ```
@@ -160,14 +160,14 @@ prefer the Cargo installation below. Do not disable Gatekeeper globally.
 
 ## Install with Cargo
 
-Rust users can build the same release from the public tag:
+Rust users can build the same alpha from the public tag:
 
 ```sh
 cargo install --git https://github.com/ewgenij87snwork/clean-room-launcher \
-  --tag v0.2.0 --locked
+  --tag v0.1.0-alpha.4.2 --locked
 ```
 
-No crates.io package is published for this release.
+No crates.io package is published for this alpha.
 
 ## Launch
 
@@ -323,12 +323,12 @@ See the official [Claude Code CLI reference][claude-cli-reference] and
 
 ## Coding-agent support
 
-The v0.2.0 release supports two macOS paths:
+The current alpha supports two macOS paths:
 
 | Coding agent | Platform | Status |
 |---|---|---|
-| Codex CLI 0.147.0+ | macOS / Apple Silicon | Supported |
-| Claude Code CLI 2.1.223+ | macOS / Apple Silicon | Supported |
+| Codex CLI 0.147.0+ | macOS / Apple Silicon | Alpha |
+| Claude Code CLI 2.1.223+ | macOS / Apple Silicon | Alpha |
 
 Linux and Windows are `NOT_QUALIFIED`. Intel macOS, Homebrew, crates.io,
 signing, and notarization are not supported by this release.
@@ -389,7 +389,7 @@ container.
 Yes. The launch plaque shows the active boundary categories, admitted global
 skills, and—when present—the project-local skill count before the provider starts.
 
-This release does not yet provide a per-file review interface or compiled-context
+This alpha does not yet provide a per-file review interface or compiled-context
 manifest.
 
 ### Can I override the clean defaults?
@@ -425,11 +425,12 @@ Removing Clean Room Launcher does not modify either provider or its authenticati
 
 ## Project status
 
-`v0.2.0` is a public, unsigned, and unnotarized release for macOS
-on Apple Silicon.
+`v0.2.0` is the current supported public release for macOS on Apple Silicon.
+Its artifacts are unsigned and unnotarized.
 
 It supports Codex CLI `0.147.0+` and Claude Code CLI `2.1.223+` through a
-focused clean-room boundary. Signing and notarization are not claimed.
+focused clean-room boundary. The qualification is limited to the documented
+macOS Apple Silicon path.
 
 See the
 [GitHub release](https://github.com/ewgenij87snwork/clean-room-launcher/releases/tag/v0.2.0)

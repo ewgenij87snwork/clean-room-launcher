@@ -72,7 +72,7 @@ def write_json(path, value):
 
 def validate_official_schemas():
     manifest = load_json(SCHEMA_ROOT / "manifest.json")
-    if manifest.get("schema_version") != "clroom.official-schemas.v2" or not isinstance(manifest.get("sources"), list):
+    if manifest.get("schema_version") != "taskseal.p07.official-schemas.v1" or not isinstance(manifest.get("sources"), list):
         refuse("SCHEMA_MANIFEST")
     for item in manifest["sources"]:
         if set(item) != {"path", "sha256", "url"}:
@@ -104,15 +104,15 @@ def validate_slsa_profile(provenance, rules, artifact_name, artifact_sha):
     if not isinstance(build, dict) or set(build) != {"buildType", "externalParameters", "internalParameters", "resolvedDependencies"}:
         refuse("PROVENANCE_PROFILE")
     external, internal = build["externalParameters"], build["internalParameters"]
-    if build["buildType"] != "https://clroom.invalid/build-types/cargo-release/v2" or not isinstance(external, dict) or set(external) != {"source_commit", "target", "qualification"} or external["qualification"] != rules["qualification"]:
+    if build["buildType"] != "https://taskseal.invalid/build-types/cargo-release/v1" or not isinstance(external, dict) or set(external) != {"source_commit", "target", "qualification"} or external["qualification"] != rules["qualification"]:
         refuse("PROVENANCE_CLAIM")
     if not isinstance(internal, dict) or internal != {"locked": True, "network": False}:
         refuse("PROVENANCE_CLAIM")
     dependencies = build["resolvedDependencies"]
     source_commit = external["source_commit"]
-    if dependencies != [{"uri": "git+local://clroom@" + source_commit, "digest": {"gitCommit": source_commit}}]:
+    if dependencies != [{"uri": "git+local://taskseal@" + source_commit, "digest": {"gitCommit": source_commit}}]:
         refuse("PROVENANCE_CLAIM")
-    if not isinstance(run, dict) or set(run) != {"builder", "metadata"} or set(run["builder"]) != {"id"} or run["builder"]["id"] not in rules["allowed_builders"] or set(run["metadata"]) != {"invocationId"} or run["metadata"]["invocationId"] != "urn:clroom:release:" + artifact_sha:
+    if not isinstance(run, dict) or set(run) != {"builder", "metadata"} or set(run["builder"]) != {"id"} or run["builder"]["id"] not in rules["allowed_builders"] or set(run["metadata"]) != {"invocationId"} or run["metadata"]["invocationId"] != "urn:taskseal:p07:" + artifact_sha:
         refuse("PROVENANCE_CLAIM")
 
 def policy():
@@ -122,7 +122,7 @@ def policy():
         refuse("POLICY")
     if set(value) != {"schema_version", "cyclonedx_spec", "slsa_predicate", "statement_type", "qualification", "allowed_builders"}:
         refuse("POLICY")
-    if value["schema_version"] != "clroom.supply-chain-policy.v2" or value["qualification"] != "QUALIFIED":
+    if value["schema_version"] != "taskseal.p07.supply-chain-policy.v1" or value["qualification"] != "NOT_QUALIFIED":
         refuse("POLICY")
     return value
 
@@ -142,7 +142,7 @@ def cargo_components():
         item = {"type": "library", "name": package.get("name"), "version": package.get("version"), "bom-ref": f"pkg:cargo/{package.get('name')}@{package.get('version')}", "purl": f"pkg:cargo/{package.get('name')}@{package.get('version')}", "licenses": [{"expression": package.get("license")}]}
         if not all(isinstance(item[key], str) and item[key] for key in ("name", "version")) or not item["licenses"][0]["expression"]:
             refuse("COMPONENT_LICENSE")
-        if package.get("name") == "clean-room-launcher":
+        if package.get("name") == "taskseal":
             root_package = item
         else:
             packages.append(item)
@@ -167,8 +167,8 @@ def generate(options, rules):
     root_package, components = cargo_components()
     root_component = {**root_package, "type": "application", "hashes": [{"alg": "SHA-256", "content": artifact_sha}]}
     serial = str(uuid.UUID(artifact_sha[:32]))
-    sbom = {"bomFormat": "CycloneDX", "specVersion": rules["cyclonedx_spec"], "serialNumber": "urn:uuid:" + serial, "version": 1, "metadata": {"component": root_component, "properties": [{"name": "clroom:qualification", "value": rules["qualification"]}]}, "components": components}
-    provenance = {"_type": rules["statement_type"], "subject": [{"name": artifact.name, "digest": {"sha256": artifact_sha}}], "predicateType": rules["slsa_predicate"], "predicate": {"buildDefinition": {"buildType": "https://clroom.invalid/build-types/cargo-release/v2", "externalParameters": {"source_commit": source_commit, "target": target, "qualification": rules["qualification"]}, "internalParameters": {"locked": True, "network": False}, "resolvedDependencies": [{"uri": "git+local://clroom@" + source_commit, "digest": {"gitCommit": source_commit}}]}, "runDetails": {"builder": {"id": builder}, "metadata": {"invocationId": "urn:clroom:release:" + artifact_sha}}}}
+    sbom = {"bomFormat": "CycloneDX", "specVersion": rules["cyclonedx_spec"], "serialNumber": "urn:uuid:" + serial, "version": 1, "metadata": {"component": root_component, "properties": [{"name": "taskseal:qualification", "value": rules["qualification"]}]}, "components": components}
+    provenance = {"_type": rules["statement_type"], "subject": [{"name": artifact.name, "digest": {"sha256": artifact_sha}}], "predicateType": rules["slsa_predicate"], "predicate": {"buildDefinition": {"buildType": "https://taskseal.invalid/build-types/cargo-release/v1", "externalParameters": {"source_commit": source_commit, "target": target, "qualification": rules["qualification"]}, "internalParameters": {"locked": True, "network": False}, "resolvedDependencies": [{"uri": "git+local://taskseal@" + source_commit, "digest": {"gitCommit": source_commit}}]}, "runDetails": {"builder": {"id": builder}, "metadata": {"invocationId": "urn:taskseal:p07:" + artifact_sha}}}}
     (output / "checksums.sha256").write_text(f"{artifact_sha}  {artifact.name}\n", encoding="utf-8")
     write_json(output / "sbom.cdx.json", sbom)
     write_json(output / "provenance.intoto.json", provenance)
@@ -189,7 +189,7 @@ def verify(options, rules, emit=True):
     if sbom.get("bomFormat") != "CycloneDX" or sbom.get("specVersion") != rules["cyclonedx_spec"] or sbom.get("version") != 1:
         refuse("SBOM_PROFILE")
     root_component = sbom.get("metadata", {}).get("component", {})
-    if root_component.get("name") != "clean-room-launcher" or {item.get("content") for item in root_component.get("hashes", []) if item.get("alg") == "SHA-256"} != {artifact_sha}:
+    if root_component.get("name") != "taskseal" or {item.get("content") for item in root_component.get("hashes", []) if item.get("alg") == "SHA-256"} != {artifact_sha}:
         refuse("SBOM_SUBJECT")
     components = sbom.get("components")
     if not isinstance(components, list) or not components or any(not item.get("name") or not item.get("version") or not item.get("licenses") or not item["licenses"][0].get("expression") for item in components):
@@ -203,17 +203,17 @@ def verify(options, rules, emit=True):
     if SECRET.search(text) or "/Users/" in text or "/home/" in text:
         refuse("PRIVATE_DATA")
     if emit:
-        print("CLROOM_SUPPLY_CHAIN_VERIFY_PASS qualification=QUALIFIED")
+        print("P07_SUPPLY_CHAIN_VERIFY_PASS qualification=NOT_QUALIFIED")
 
 try:
     mode, options = parse_cli(sys.argv[2:])
     rules = policy()
     if mode == "generate":
         generate(options, rules)
-        print("CLROOM_SUPPLY_CHAIN_GENERATE_PASS qualification=QUALIFIED")
+        print("P07_SUPPLY_CHAIN_GENERATE_PASS qualification=NOT_QUALIFIED")
     else:
         verify(options, rules)
 except Refused as error:
-    print("CLROOM_SUPPLY_CHAIN_REFUSED:" + str(error), file=sys.stderr)
+    print("P07_SUPPLY_CHAIN_REFUSED:" + str(error), file=sys.stderr)
     raise SystemExit(1)
 PY
