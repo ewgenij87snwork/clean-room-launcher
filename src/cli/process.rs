@@ -9,14 +9,14 @@ use std::{
 use taskseal::adapters::claude::{
     isolation::IsolationPlan as ClaudeIsolationPlan, projection::Projection,
 };
-use taskseal::adapters::codex::isolation::IsolationPlan;
+use taskseal::adapters::codex::isolation::{plan_with_skills, IsolationInputs, IsolationPlan};
 use taskseal::adapters::{
-    identity::{ProviderIdentity, resolve_identity, revalidate_identity},
+    identity::{resolve_identity, revalidate_identity, ProviderIdentity},
     session::ProviderNativePreauthenticatedSession,
 };
 use taskseal::contracts::adapter::parse_declaration;
 
-use super::launch_contract::{CodexInvocation, LaunchContract, classify_codex_invocation};
+use super::launch_contract::{classify_codex_invocation, CodexInvocation, LaunchContract};
 
 #[derive(Clone, Copy)]
 enum ProviderEnvironment {
@@ -156,32 +156,93 @@ pub fn preflight_codex(
         classify_codex_invocation(provider_args),
         CodexInvocation::Exec(_)
     ) {
-        verify_codex_exec_clean_user_config(&identity)?;
+        verify_codex_exec_clean_user_config(&identity, executable)?;
     }
     Ok(identity)
 }
 
-fn verify_codex_exec_clean_user_config(identity: &ProviderIdentity) -> Result<(), String> {
+fn verify_codex_exec_clean_user_config(
+    identity: &ProviderIdentity,
+    executable: &Path,
+) -> Result<(), String> {
+    let root = std::env::temp_dir().join(format!(
+        "clroom-codex-preflight-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map_err(|_| codex_exec_unsupported())?
+            .as_nanos()
+    ));
+    let project = root.join("project");
+    let home = root.join("home");
+    let codex_home = home.join(".codex");
+    let fixture_paths = [
+        codex_home.join("skills/ambient/SKILL.md"),
+        codex_home.join("plugins/cache/ambient/plugin.json"),
+        codex_home.join("hooks/ambient-hook"),
+        home.join(".agents/skills/ambient/SKILL.md"),
+        home.join(".ssh/canary"),
+        home.join(".aws/canary"),
+        home.join(".config/gcloud/canary"),
+        home.join(".azure/canary"),
+    ];
+    if fs::create_dir_all(&project).is_err()
+        || fs::create_dir_all(&codex_home).is_err()
+        || fixture_paths.iter().any(|path| {
+            path.parent()
+                .is_none_or(|parent| fs::create_dir_all(parent).is_err())
+                || fs::write(path, b"synthetic CLROOM preflight canary\n").is_err()
+        })
+        || fs::write(codex_home.join("config.toml"), b"synthetic CLROOM config\n").is_err()
+        || fs::write(
+            codex_home.join("AGENTS.md"),
+            b"synthetic CLROOM instruction\n",
+        )
+        .is_err()
+        || fs::write(
+            codex_home.join("AGENTS.override.md"),
+            b"synthetic CLROOM override\n",
+        )
+        .is_err()
+    {
+        let _ = fs::remove_dir_all(&root);
+        return Err(codex_exec_unsupported());
+    }
+
+    let plan = match plan_with_skills(
+        &project,
+        executable,
+        &IsolationInputs {
+            home: home.clone(),
+            codex_home: codex_home.clone(),
+        },
+        &[],
+    ) {
+        Ok(plan) => plan,
+        Err(_) => {
+            let _ = fs::remove_dir_all(&root);
+            return Err(codex_exec_unsupported());
+        }
+    };
     let sandbox = Path::new("/usr/bin/sandbox-exec");
-    let profile = "(version 1)\n(allow default)\n(deny network*)\n(deny file-write*)\n";
     let status = Command::new(sandbox)
-        .args(["-p", profile, "--"])
+        .args(["-p", &plan.profile, "--"])
         .arg(&identity.real_executable)
         .args(["exec", "--ignore-user-config", "--help"])
         .env_clear()
-        .env("HOME", "/")
-        .env("CODEX_HOME", "/")
+        .env("HOME", &home)
+        .env("CODEX_HOME", &codex_home)
         .env("PATH", "/usr/bin:/bin")
-        .current_dir("/")
+        .current_dir(&project)
         .stdout(Stdio::null())
         .stderr(Stdio::null())
-        .status()
-        .map_err(|_| codex_exec_unsupported())?;
-    if status.success() {
-        Ok(())
-    } else {
-        Err(codex_exec_unsupported())
-    }
+        .status();
+    let result = match status {
+        Ok(status) if status.success() => Ok(()),
+        Ok(_) | Err(_) => Err(codex_exec_unsupported()),
+    };
+    let _ = fs::remove_dir_all(&root);
+    result
 }
 
 pub fn preflight_claude(executable: &Path) -> Result<ProviderIdentity, String> {

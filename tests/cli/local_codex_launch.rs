@@ -50,6 +50,78 @@ fn main() {{
     (executable, capture)
 }
 
+fn fake_codex_requires_synthetic_clean_fixture() -> (PathBuf, PathBuf) {
+    let dir = std::env::temp_dir().join(format!(
+        "clroom-codex-preflight-{}-{}",
+        std::process::id(),
+        SCRATCH_SEQUENCE.fetch_add(1, Ordering::Relaxed)
+    ));
+    let _ = fs::remove_dir_all(&dir);
+    fs::create_dir_all(&dir).unwrap();
+    let executable = dir.join("codex");
+    let capture = dir.join("capture");
+    let source = dir.join("fake-provider.rs");
+    fs::write(
+        &source,
+        format!(
+            r#"use std::{{env, fs, path::PathBuf}};
+fn main() {{
+    if env::args().nth(1).as_deref() == Some("--version") {{ println!("0.147.0"); return; }}
+    let args = env::args().skip(1).collect::<Vec<_>>();
+    if args == ["exec", "--ignore-user-config", "--help"] {{
+        let home = PathBuf::from(env::var("HOME").unwrap());
+        let codex_home = PathBuf::from(env::var("CODEX_HOME").unwrap());
+        if home == PathBuf::from("/") || codex_home == PathBuf::from("/") {{ fs::write({:?}, b"preflight=61").unwrap(); std::process::exit(61); }}
+        let config = codex_home.join("config.toml");
+        if fs::metadata(&config).is_err() {{ fs::write({:?}, b"preflight=62").unwrap(); std::process::exit(62); }}
+        if fs::read_to_string(&config).is_ok() {{ fs::write({:?}, b"preflight=63").unwrap(); std::process::exit(63); }}
+        if fs::write(&config, b"must stay denied").is_ok() {{ fs::write({:?}, b"preflight=64").unwrap(); std::process::exit(64); }}
+        println!("--ignore-user-config");
+        return;
+    }}
+    fs::write({:?}, format!("{{}}\0", args.join("\0"))).unwrap();
+}}
+"#,
+            capture, capture, capture, capture, capture
+        ),
+    )
+    .unwrap();
+    let output = Command::new("rustc")
+        .args([source, PathBuf::from("-o"), executable.clone()])
+        .output()
+        .expect("rustc must start");
+    assert!(output.status.success(), "fake provider must compile");
+    fs::set_permissions(&executable, fs::Permissions::from_mode(0o700)).unwrap();
+    (executable, capture)
+}
+
+#[test]
+fn codex_exec_preflight_uses_a_populated_synthetic_home_with_production_shape() {
+    let (codex, capture) = fake_codex_requires_synthetic_clean_fixture();
+    let root = codex.parent().unwrap().join("launch-home");
+    let codex_home = root.join(".codex");
+    fs::create_dir_all(&codex_home).unwrap();
+    fs::write(codex_home.join("config.toml"), "synthetic-config\n").unwrap();
+
+    let output = Command::new(env!("CARGO_BIN_EXE_clroom"))
+        .args(["codex", "exec", "--ignore-user-config", "--help"])
+        .env("PATH", codex.parent().unwrap())
+        .env("HOME", &root)
+        .env("CODEX_HOME", &codex_home)
+        .output()
+        .expect("clroom must run");
+
+    assert_eq!(
+        output.status.code(),
+        Some(0),
+        "production-shaped synthetic preflight must pass: stderr={}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let observed = fs::read_to_string(&capture).unwrap();
+    assert!(observed.starts_with(CODEX_CLEAN_DEFAULTS));
+    assert!(observed.ends_with("exec\0--ignore-user-config\0--ignore-user-config\0--help\0"));
+}
+
 #[test]
 fn codex_exec_without_native_clean_config_support_refuses_before_provider_launch() {
     let (codex, capture) = fake_codex();
