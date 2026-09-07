@@ -19,7 +19,8 @@ fn exact_tuple() -> CodexTuple {
 const L0_NONCE_SHA256: &str = "f7b586cf98ee8c8f2ba2ea22d9a24c4a05f59a5b30ec93b25fbe54c1f1ce3914";
 const L2_NONCE_SHA256: &str = "4395db3ed4c16654d9c9a5d0af713a0d6019c0fdc6c18a10acbd5f69bd688a6b";
 const L3_NONCE_SHA256: &str = "7e4b5c4f10b7a5601d19f0b9e9cc96cec0d1b7a791d1bfd02c12e63d601aeb21";
-const FORBIDDEN_NONCE_SHA256: &str = "7cb282822bd4a9eebc8cf2e8fbef163cbf21e36c75a6b6c4b0b1d442f0b2e4c0";
+const FORBIDDEN_NONCE_SHA256: &str =
+    "7cb282822bd4a9eebc8cf2e8fbef163cbf21e36c75a6b6c4b0b1d442f0b2e4c0";
 
 #[test]
 fn forbidden_ambient_canary_refuses_before_any_native_provider_process() {
@@ -105,10 +106,7 @@ fn native_observation_refuses_forbidden_ambient_or_wrong_tuple() {
     let mut wrong = exact_tuple();
     wrong.version = (0, 148, 0);
     assert_eq!(
-        evaluate_native_observation(
-            &wrong,
-            &[L0_NONCE_SHA256, L2_NONCE_SHA256, L3_NONCE_SHA256],
-        ),
+        evaluate_native_observation(&wrong, &[L0_NONCE_SHA256, L2_NONCE_SHA256, L3_NONCE_SHA256],),
         NativeCanaryState::Refused
     );
 }
@@ -116,10 +114,16 @@ fn native_observation_refuses_forbidden_ambient_or_wrong_tuple() {
 #[test]
 fn native_instruction_fixtures_bind_only_digest_codes() {
     let fixtures = [
-        include_str!("../../../fixtures/adapters/codex/context-canaries/native/codex-home/AGENTS.md"),
+        include_str!(
+            "../../../fixtures/adapters/codex/context-canaries/native/codex-home/AGENTS.md"
+        ),
         include_str!("../../../fixtures/adapters/codex/context-canaries/native/project/AGENTS.md"),
-        include_str!("../../../fixtures/adapters/codex/context-canaries/native/project/task/AGENTS.md"),
-        include_str!("../../../fixtures/adapters/codex/context-canaries/native/ambient-home/AGENTS.md"),
+        include_str!(
+            "../../../fixtures/adapters/codex/context-canaries/native/project/task/AGENTS.md"
+        ),
+        include_str!(
+            "../../../fixtures/adapters/codex/context-canaries/native/ambient-home/AGENTS.md"
+        ),
     ];
     for (fixture, digest) in fixtures.into_iter().zip([
         L0_NONCE_SHA256,

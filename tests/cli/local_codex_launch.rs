@@ -119,7 +119,7 @@ fn codex_exec_preflight_uses_a_populated_synthetic_home_with_production_shape() 
     );
     let observed = fs::read_to_string(&capture).unwrap();
     assert!(observed.starts_with(CODEX_CLEAN_DEFAULTS));
-    assert!(observed.ends_with("exec\0--ignore-user-config\0--ignore-user-config\0--help\0"));
+    assert!(observed.ends_with("exec\0--ignore-user-config\0--help\0"));
 }
 
 #[test]
