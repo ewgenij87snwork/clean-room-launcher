@@ -28,10 +28,12 @@ This table is deliberately conservative.
 
 CLROOM inventories only provider-qualified local sources. For Codex this is
 the repository `.agents/skills` chain, personal `$HOME/.agents/skills` and
-`$CODEX_HOME/skills`, provider admin/system behavior, and an active cached
-package version named by the provider's `installed_plugins.json`. For Claude
-Code this is project/enterprise/personal skill locations and an active cached
-plugin version named by its `installed_plugins.json`.
+`$CODEX_HOME/skills`, and provider-owned admin/system behavior. Codex plugin
+activation remains provider-owned: CLROOM does not infer activation from
+cached package residue or invent an `installed_plugins.json` authority. For
+Claude Code this is project/enterprise/personal skill locations and an active
+cached plugin version gated by its provider-supported `installed_plugins.json`
+contract.
 
 Provider-managed synced/remote state is not guessed from filesystem residue.
 Cached package directories without an active install record are stale and
