@@ -108,8 +108,14 @@ impl LaunchContract {
             .collect::<Vec<_>>();
         argv.extend_from_slice(user_args);
         if let CodexInvocation::Exec(index) = classify_codex_invocation(user_args) {
-            let insert_at = CODEX_CLEAN_DEFAULTS.len() + index + 1;
-            argv.insert(insert_at, "--ignore-user-config".to_owned());
+            let has_clean_user_config_flag = user_args
+                .iter()
+                .take_while(|argument| argument.as_str() != "--")
+                .any(|argument| argument == "--ignore-user-config");
+            if !has_clean_user_config_flag {
+                let insert_at = CODEX_CLEAN_DEFAULTS.len() + index + 1;
+                argv.insert(insert_at, "--ignore-user-config".to_owned());
+            }
         }
         let (boundary, boundary_controls, model_choice) =
             analyze(Provider::Codex, user_args, !pass_env.is_empty());
@@ -338,6 +344,45 @@ mod tests {
             .position(|argument| argument == "--ignore-user-config")
             .unwrap();
         assert_eq!(contract.argv[position - 1], "exec");
+    }
+
+    #[test]
+    fn codex_exec_does_not_duplicate_user_supplied_clean_user_config_suppression() {
+        let contract = LaunchContract::codex(&[
+            "exec".to_owned(),
+            "--ignore-user-config".to_owned(),
+            "prompt".to_owned(),
+        ]);
+        assert_eq!(
+            contract
+                .argv
+                .iter()
+                .filter(|argument| argument.as_str() == "--ignore-user-config")
+                .count(),
+            1
+        );
+    }
+
+    #[test]
+    fn codex_exec_inserts_suppression_before_literal_after_terminator() {
+        let contract = LaunchContract::codex(&[
+            "exec".to_owned(),
+            "--".to_owned(),
+            "--ignore-user-config".to_owned(),
+        ]);
+        let terminator = contract
+            .argv
+            .iter()
+            .position(|argument| argument == "--")
+            .unwrap();
+        assert_eq!(
+            contract.argv[..terminator]
+                .iter()
+                .filter(|argument| argument.as_str() == "--ignore-user-config")
+                .count(),
+            1
+        );
+        assert_eq!(contract.argv[terminator + 1], "--ignore-user-config");
     }
 
     #[test]
