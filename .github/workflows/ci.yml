@@ -35,6 +35,21 @@ jobs:
           CARGO_MANIFEST_DIR="$PWD" rustc --test tests/packaging/target_matrix.rs -o /tmp/clroom-target-matrix
           /tmp/clroom-target-matrix
 
+  docs-discovery:
+    name: Validate docs discovery assets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate sitemap and robots contract
+        run: |
+          test -s docs/sitemap.xml
+          grep -Fq 'permalink: /sitemap.xml' docs/sitemap.xml
+          grep -Fq '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' docs/sitemap.xml
+          grep -Fq 'Sitemap: https://ewgenij87snwork.github.io/clean-room-launcher/sitemap.xml' docs/robots.txt
+          grep -Fq 'url: "https://ewgenij87snwork.github.io"' docs/_config.yml
+          grep -Fq 'baseurl: "/clean-room-launcher"' docs/_config.yml
+          ! grep -Eq '^[[:space:]]*-[[:space:]]+jekyll-sitemap[[:space:]]*$' docs/_config.yml
+
   qualified-target-lanes:
     name: Build qualified target lane
     needs: target-matrix

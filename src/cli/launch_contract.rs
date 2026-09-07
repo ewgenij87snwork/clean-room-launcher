@@ -47,6 +47,21 @@ pub enum Provider {
     Claude,
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum CodexInvocation {
+    Exec(usize),
+    Diagnostic,
+    Interactive,
+}
+
+pub(crate) fn classify_codex_invocation(args: &[String]) -> CodexInvocation {
+    match args.first().map(String::as_str) {
+        Some("exec" | "e") => CodexInvocation::Exec(0),
+        Some("--help" | "-h" | "--version" | "-V") => CodexInvocation::Diagnostic,
+        _ => CodexInvocation::Interactive,
+    }
+}
+
 #[allow(dead_code)]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum BoundaryState {
@@ -92,6 +107,16 @@ impl LaunchContract {
             })
             .collect::<Vec<_>>();
         argv.extend_from_slice(user_args);
+        if let CodexInvocation::Exec(index) = classify_codex_invocation(user_args) {
+            let has_clean_user_config_flag = user_args
+                .iter()
+                .take_while(|argument| argument.as_str() != "--")
+                .any(|argument| argument == "--ignore-user-config");
+            if !has_clean_user_config_flag {
+                let insert_at = CODEX_CLEAN_DEFAULTS.len() + index + 1;
+                argv.insert(insert_at, "--ignore-user-config".to_owned());
+            }
+        }
         let (boundary, boundary_controls, model_choice) =
             analyze(Provider::Codex, user_args, !pass_env.is_empty());
         Self {
@@ -308,5 +333,82 @@ mod tests {
             Presence::Absent,
         );
         assert_eq!(claude.boundary, BoundaryState::Unknown);
+    }
+
+    #[test]
+    fn codex_exec_gets_native_clean_user_config_suppression_after_subcommand() {
+        let contract = LaunchContract::codex(&["exec".to_owned(), "prompt".to_owned()]);
+        let position = contract
+            .argv
+            .iter()
+            .position(|argument| argument == "--ignore-user-config")
+            .unwrap();
+        assert_eq!(contract.argv[position - 1], "exec");
+    }
+
+    #[test]
+    fn codex_exec_does_not_duplicate_user_supplied_clean_user_config_suppression() {
+        let contract = LaunchContract::codex(&[
+            "exec".to_owned(),
+            "--ignore-user-config".to_owned(),
+            "prompt".to_owned(),
+        ]);
+        assert_eq!(
+            contract
+                .argv
+                .iter()
+                .filter(|argument| argument.as_str() == "--ignore-user-config")
+                .count(),
+            1
+        );
+    }
+
+    #[test]
+    fn codex_exec_inserts_suppression_before_literal_after_terminator() {
+        let contract = LaunchContract::codex(&[
+            "exec".to_owned(),
+            "--".to_owned(),
+            "--ignore-user-config".to_owned(),
+        ]);
+        let terminator = contract
+            .argv
+            .iter()
+            .position(|argument| argument == "--")
+            .unwrap();
+        assert_eq!(
+            contract.argv[..terminator]
+                .iter()
+                .filter(|argument| argument.as_str() == "--ignore-user-config")
+                .count(),
+            1
+        );
+        assert_eq!(contract.argv[terminator + 1], "--ignore-user-config");
+    }
+
+    #[test]
+    fn codex_invocation_classification_is_fail_closed_for_interactive_paths() {
+        use super::{CodexInvocation, classify_codex_invocation};
+
+        assert_eq!(
+            classify_codex_invocation(&["exec".to_owned(), "prompt".to_owned()]),
+            CodexInvocation::Exec(0)
+        );
+        assert_eq!(
+            classify_codex_invocation(&[
+                "--profile".to_owned(),
+                "safe".to_owned(),
+                "exec".to_owned(),
+                "prompt".to_owned(),
+            ]),
+            CodexInvocation::Interactive
+        );
+        assert_eq!(
+            classify_codex_invocation(&["resume".to_owned(), "thread".to_owned()]),
+            CodexInvocation::Interactive
+        );
+        assert_eq!(
+            classify_codex_invocation(&["--help".to_owned()]),
+            CodexInvocation::Diagnostic
+        );
     }
 }

@@ -4,11 +4,11 @@
 
 <h1 align="center">Clean Room Launcher (CLROOM)</h1>
 
-[![Animated Clean Room Launcher demo: unrelated global inputs stay outside while project context, CLI arguments, and selected global skills reach Codex or Claude Code.](docs/assets/clean-room-launcher-hero.gif)](https://youtu.be/YAEUJM-_VeE)
+[![Clean Room Launcher boundary overview](docs/assets/clean-room-launcher-hero.gif)]
 
 <p align="center">
   <a href="https://ewgenij87snwork.github.io/clean-room-launcher/">Documentation →</a> ·
-  <a href="https://youtu.be/YAEUJM-_VeE">Watch the demo in HD on YouTube →</a>
+  <a href="docs/demo.md">Read the boundary walkthrough →</a>
 </p>
 
 <p align="center">
@@ -50,7 +50,7 @@ Project-local skills are available automatically.
 Global skills stay outside unless you add them for this launch.
 
 ```sh
-clroom codex --skill-set=my-skill,@my-skill-set --approve-for-me
+clroom codex exec --skill-set=my-skill,@my-skill-set --approve-for-me
 
 clroom claude --skill-set=my-skill,@my-skill-set
 ```
@@ -98,7 +98,7 @@ feature-planning:
 
 ## See the boundary as Codex starts
 
-Run `clroom codex --skill-set=my-skill,@my-skill-set` from the directory where
+Run `clroom codex exec --skill-set=my-skill,@my-skill-set` from the directory where
 you want to work.
 
 Before Codex takes over the terminal, Clean Room Launcher shows a compact
@@ -110,7 +110,7 @@ summary of the active boundary:
 - developer instructions and notifications are cleared by default.
 
 ```text
-╓──○──╖ ╭─ CLEAN ROOM ─ v0.1.0-alpha.4.2 ─╮
+╓──○──╖ ╭─ CLEAN ROOM ─ v0.2.0 ─╮
 ║░░░░░║⠒│                               │
 ║░░░░░║⠒│     Global AGENTS.md  off     │
 ║░░░░░║⠒│     Global skills    3 on     │
@@ -130,8 +130,9 @@ When project-local skills are present in `.agents/skills`, the separate card
 shows how many remain available; with none, the card is omitted. Project
 context and explicit Codex arguments remain available.
 
-Codex then starts immediately in the same terminal. There is no menu,
-confirmation step, second launch, or artificial delay.
+For the qualified clean-user-config path, Codex `exec` starts immediately in
+the same terminal. Interactive Codex commands are refused until Codex exposes
+an independently qualified equivalent suppression capability.
 
 ## Install in sixty seconds
 
@@ -139,8 +140,8 @@ You need macOS on Apple Silicon and at least one already working provider:
 Codex CLI `0.147.0+` or Claude Code CLI `2.1.223+`.
 
 ```sh
-VERSION=v0.1.0-alpha.4.2
-ASSET=clean-room-launcher-v0.1.0-alpha.4.2-aarch64-apple-darwin.tar.gz
+VERSION=v0.2.0
+ASSET=clean-room-launcher-v0.2.0-aarch64-apple-darwin.tar.gz
 
 curl -fLO "https://github.com/ewgenij87snwork/clean-room-launcher/releases/download/$VERSION/$ASSET"
 curl -fLO "https://github.com/ewgenij87snwork/clean-room-launcher/releases/download/$VERSION/SHA256SUMS"
@@ -148,7 +149,7 @@ shasum -a 256 -c SHA256SUMS
 tar -xzf "$ASSET"
 
 mkdir -p "$HOME/.local/bin"
-install -m 0755 "clean-room-launcher-v0.1.0-alpha.4.2-aarch64-apple-darwin/bin/clroom" "$HOME/.local/bin/clroom"
+install -m 0755 "clean-room-launcher-v0.2.0-aarch64-apple-darwin/bin/clroom" "$HOME/.local/bin/clroom"
 export PATH="$HOME/.local/bin:$PATH"
 clroom --help
 ```
@@ -161,25 +162,25 @@ prefer the Cargo installation below. Do not disable Gatekeeper globally.
 
 ## Install with Cargo
 
-Rust users can build the same alpha from the public tag:
+Rust users can build the same release from the public tag:
 
 ```sh
 cargo install --git https://github.com/ewgenij87snwork/clean-room-launcher \
-  --tag v0.1.0-alpha.4.2 --locked
+  --tag v0.2.0 --locked
 ```
 
-No crates.io package is published for this alpha.
+No crates.io package is published for this release.
 
 ## Launch
 
 ### Codex
 
-For a low-friction Codex launch with eligible approval requests handled by
+For a non-interactive Codex task with eligible approval requests handled by
 Codex Auto-review:
 
 ```sh
 cd your-project
-clroom codex --approve-for-me
+clroom codex exec --approve-for-me
 ```
 
 `--approve-for-me` is a Codex option. It keeps the Codex workspace sandbox and
@@ -187,18 +188,28 @@ routes eligible approval requests through its automatic reviewer. Availability
 and reviewer behavior are controlled by the installed Codex version and
 account.
 
-If you prefer to review approval requests yourself:
+For a non-interactive task where you prefer to review approval requests yourself:
 
 ```sh
-clroom codex
+clroom codex exec
 ```
 
-Ordinary Codex arguments pass through unchanged:
+Non-interactive `codex exec` arguments pass through unchanged:
+
+```sh
+clroom codex exec --enable apps --enable hooks --enable plugins
+```
+
+For provider diagnostics, use the top-level forms:
 
 ```sh
 clroom codex --help
-clroom codex --enable apps --enable hooks --enable plugins
+clroom codex --version
 ```
+
+Interactive `clroom codex` is currently refused fail-closed because its clean
+user-config suppression is not independently qualified. `codex exec` is not a
+substitute for the interactive TUI.
 
 ### Claude Code
 
@@ -314,12 +325,12 @@ See the official [Claude Code CLI reference][claude-cli-reference] and
 
 ## Coding-agent support
 
-The current alpha supports two macOS paths:
+The v0.2.0 release supports two macOS paths:
 
 | Coding agent | Platform | Status |
 |---|---|---|
-| Codex CLI 0.147.0+ | macOS / Apple Silicon | Alpha |
-| Claude Code CLI 2.1.223+ | macOS / Apple Silicon | Alpha |
+| Codex CLI 0.147.0+ | macOS / Apple Silicon | Supported |
+| Claude Code CLI 2.1.223+ | macOS / Apple Silicon | Supported |
 
 Linux and Windows are `NOT_QUALIFIED`. Intel macOS, Homebrew, crates.io,
 signing, and notarization are not supported by this release.
@@ -380,7 +391,7 @@ container.
 Yes. The launch plaque shows the active boundary categories, admitted global
 skills, and—when present—the project-local skill count before the provider starts.
 
-This alpha does not yet provide a per-file review interface or compiled-context
+This release does not yet provide a per-file review interface or compiled-context
 manifest.
 
 ### Can I override the clean defaults?
@@ -416,14 +427,14 @@ Removing Clean Room Launcher does not modify either provider or its authenticati
 
 ## Project status
 
-`v0.1.0-alpha.4.2` is a public, unsigned, and unnotarized prerelease for macOS
+`v0.2.0` is a public, unsigned, and unnotarized release for macOS
 on Apple Silicon.
 
 It supports Codex CLI `0.147.0+` and Claude Code CLI `2.1.223+` through a
-focused clean-room boundary. It is not a stable-support promise.
+focused clean-room boundary. Signing and notarization are not claimed.
 
 See the
-[GitHub prerelease](https://github.com/ewgenij87snwork/clean-room-launcher/releases/tag/v0.1.0-alpha.4.2)
+[GitHub prerelease](https://github.com/ewgenij87snwork/clean-room-launcher/releases/tag/v0.2.0)
 for the archive and `SHA256SUMS`.
 
 ## Help improve Clean Room Launcher

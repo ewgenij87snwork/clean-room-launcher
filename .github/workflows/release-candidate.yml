@@ -1,0 +1,21 @@
+name: Release candidate readiness
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  release-readiness:
+    name: CLROOM v0.2.0 release readiness
+    runs-on: macos-14
+    steps:
+      - name: Check out exact PR HEAD
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Run canonical fail-closed gate
+        env:
+          CLROOM_RELEASE_VERSION: 0.2.0
+        run: scripts/release/readiness.sh

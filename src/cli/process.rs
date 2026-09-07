@@ -3,20 +3,20 @@ use std::{
     ffi::OsString,
     fs, io,
     path::{Path, PathBuf},
-    process::{Command, ExitCode},
+    process::{Command, ExitCode, Stdio},
 };
 
 use taskseal::adapters::claude::{
     isolation::IsolationPlan as ClaudeIsolationPlan, projection::Projection,
 };
-use taskseal::adapters::codex::isolation::IsolationPlan;
+use taskseal::adapters::codex::isolation::{IsolationInputs, IsolationPlan, plan_with_skills};
 use taskseal::adapters::{
     identity::{ProviderIdentity, resolve_identity, revalidate_identity},
     session::ProviderNativePreauthenticatedSession,
 };
 use taskseal::contracts::adapter::parse_declaration;
 
-use super::launch_contract::LaunchContract;
+use super::launch_contract::{CodexInvocation, LaunchContract, classify_codex_invocation};
 
 #[derive(Clone, Copy)]
 enum ProviderEnvironment {
@@ -141,14 +141,108 @@ pub fn resolve_claude_executable() -> Result<PathBuf, String> {
     resolve_executable("claude", local_claude_unavailable)
 }
 
-pub fn preflight_codex(executable: &Path) -> Result<ProviderIdentity, String> {
+pub fn preflight_codex(
+    executable: &Path,
+    provider_args: &[String],
+) -> Result<ProviderIdentity, String> {
     if !Path::new("/usr/bin/sandbox-exec").is_file() {
         return Err(
             "CLROOM_ISOLATION_UNAVAILABLE: macOS sandbox-exec is unavailable; continue locally"
                 .to_owned(),
         );
     }
-    resolve_launch_identity(executable, "codex", ">=0.147.0")
+    let identity = resolve_launch_identity(executable, "codex", ">=0.147.0")?;
+    if matches!(
+        classify_codex_invocation(provider_args),
+        CodexInvocation::Exec(_)
+    ) {
+        verify_codex_exec_clean_user_config(&identity, executable)?;
+    }
+    Ok(identity)
+}
+
+fn verify_codex_exec_clean_user_config(
+    identity: &ProviderIdentity,
+    executable: &Path,
+) -> Result<(), String> {
+    let root = std::env::temp_dir().join(format!(
+        "clroom-codex-preflight-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map_err(|_| codex_exec_unsupported())?
+            .as_nanos()
+    ));
+    let project = root.join("project");
+    let home = root.join("home");
+    let codex_home = home.join(".codex");
+    let fixture_paths = [
+        codex_home.join("skills/ambient/SKILL.md"),
+        codex_home.join("plugins/cache/ambient/plugin.json"),
+        codex_home.join("hooks/ambient-hook"),
+        home.join(".agents/skills/ambient/SKILL.md"),
+        home.join(".ssh/canary"),
+        home.join(".aws/canary"),
+        home.join(".config/gcloud/canary"),
+        home.join(".azure/canary"),
+    ];
+    if fs::create_dir_all(&project).is_err()
+        || fs::create_dir_all(&codex_home).is_err()
+        || fixture_paths.iter().any(|path| {
+            path.parent()
+                .is_none_or(|parent| fs::create_dir_all(parent).is_err())
+                || fs::write(path, b"synthetic CLROOM preflight canary\n").is_err()
+        })
+        || fs::write(codex_home.join("config.toml"), b"synthetic CLROOM config\n").is_err()
+        || fs::write(
+            codex_home.join("AGENTS.md"),
+            b"synthetic CLROOM instruction\n",
+        )
+        .is_err()
+        || fs::write(
+            codex_home.join("AGENTS.override.md"),
+            b"synthetic CLROOM override\n",
+        )
+        .is_err()
+    {
+        let _ = fs::remove_dir_all(&root);
+        return Err(codex_exec_unsupported());
+    }
+
+    let plan = match plan_with_skills(
+        &project,
+        executable,
+        &IsolationInputs {
+            home: home.clone(),
+            codex_home: codex_home.clone(),
+        },
+        &[],
+    ) {
+        Ok(plan) => plan,
+        Err(_) => {
+            let _ = fs::remove_dir_all(&root);
+            return Err(codex_exec_unsupported());
+        }
+    };
+    let sandbox = Path::new("/usr/bin/sandbox-exec");
+    let status = Command::new(sandbox)
+        .args(["-p", &plan.profile, "--"])
+        .arg(&identity.real_executable)
+        .args(["exec", "--ignore-user-config", "--help"])
+        .env_clear()
+        .env("HOME", &home)
+        .env("CODEX_HOME", &codex_home)
+        .env("PATH", "/usr/bin:/bin")
+        .current_dir(&project)
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .status();
+    let result = match status {
+        Ok(status) if status.success() => Ok(()),
+        Ok(_) | Err(_) => Err(codex_exec_unsupported()),
+    };
+    let _ = fs::remove_dir_all(&root);
+    result
 }
 
 pub fn preflight_claude(executable: &Path) -> Result<ProviderIdentity, String> {
@@ -327,6 +421,10 @@ fn isolated_launch_error(_: io::Error) -> String {
 
 fn local_codex_unavailable() -> String {
     "LOCAL_CODEX_UNAVAILABLE: executable 'codex' not found; continue locally".to_owned()
+}
+
+fn codex_exec_unsupported() -> String {
+    "CLROOM_CODEX_EXEC_UNSUPPORTED: installed Codex does not expose a qualified 'exec --ignore-user-config' path; continue locally".to_owned()
 }
 
 fn local_claude_unavailable() -> String {

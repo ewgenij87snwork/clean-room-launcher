@@ -39,8 +39,8 @@ const COMMANDS: &[CommandSpec] = &[
         command: Command::Provider,
         canonical: "codex",
         aliases: &[],
-        description: "Launch the installed Codex CLI with unchanged arguments",
-        usage: "codex [CODEX_ARGS...]",
+        description: "Non-interactive exec only",
+        usage: "codex exec [CODEX_ARGS...]",
         example: "codex --help",
     },
     CommandSpec {
@@ -212,8 +212,8 @@ fn render_top(invoked_as: &str, skill_sets_path: &str, width: usize, styled: boo
     lines.push(String::new());
     lines.push(section("Usage", styled));
     lines.extend(usage(
-        &format!("{invoked_as} codex [CODEX_ARGS...]"),
-        "Launch Codex",
+        &format!("{invoked_as} codex exec [CODEX_ARGS...]"),
+        "Non-interactive Codex exec",
         width,
         styled,
     ));
@@ -289,7 +289,7 @@ fn styled_wrapped(
 }
 
 fn primary_command(invoked_as: &str, width: usize, styled: bool) -> Vec<String> {
-    let base = format!("{invoked_as} codex");
+    let base = format!("{invoked_as} codex exec");
     let selector = "--skill-set=any-my-skill,@any-my-skill-set";
     let approval = "--approve-for-me";
     let plain = format!("{base} {selector} {approval}");
@@ -405,7 +405,7 @@ fn render_skill_set_card(invoked_as: &str) -> String {
         .unwrap_or_else(|_| std::path::PathBuf::from("$HOME/.config/clroom/skill-sets.yaml"));
     let skill_sets_path = display_skill_sets_path(&skill_sets_path, &home);
     format!(
-        "Clean Room Launcher — skill-set\n\nChoose global skills for one clean launch.\nProject-local skills stay available automatically.\n\nUsage:\n  {invoked_as} <codex|claude> --skill-set=<SKILL_OR_SET>[,...] [PROVIDER_ARGS...]\n\nSelectors:\n  any-my-skill                   one global skill\n  any-namespace                 every skill in one namespace\n  any-namespace:any-other-skill one namespaced skill\n  @any-my-skill-set             one reusable group\n\nSkill sets:\n  {skill_sets_path}\n\n  any-my-skill-set:\n    - any-my-skill\n    - any-namespace:any-other-skill\n\nExample:\n  {invoked_as} codex --skill-set=any-my-skill,@any-my-skill-set --approve-for-me\n"
+        "Clean Room Launcher — skill-set\n\nChoose global skills for one clean launch.\nProject-local skills stay available automatically.\n\nUsage:\n  {invoked_as} <codex|claude> --skill-set=<SKILL_OR_SET>[,...] [PROVIDER_ARGS...]\n\nSelectors:\n  any-my-skill                   one global skill\n  any-namespace                 every skill in one namespace\n  any-namespace:any-other-skill one namespaced skill\n  @any-my-skill-set             one reusable group\n\nSkill sets:\n  {skill_sets_path}\n\n  any-my-skill-set:\n    - any-my-skill\n    - any-namespace:any-other-skill\n\nExample:\n  {invoked_as} codex exec --skill-set=any-my-skill,@any-my-skill-set --approve-for-me\n"
     )
 }
 

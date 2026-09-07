@@ -40,7 +40,8 @@ fn poisoned_public_inventory_fails_with_a_stable_reason() {
         ("credential", "CREDENTIAL_TOKEN"),
         ("transcript", "TRANSCRIPT_FRAGMENT"),
     ];
-    let fixtures_root = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/public-boundary");
+    let fixtures_root =
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/public-boundary");
     if fixtures_root.exists() {
         for (fixture, reason) in fixtures {
             let root = fixtures_root.join(fixture);

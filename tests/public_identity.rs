@@ -58,15 +58,16 @@ fn clroom_is_the_only_public_identity_and_preserves_the_native_codex_process() {
     assert!(help.status.success());
     let help_stdout = String::from_utf8(help.stdout).unwrap();
     assert!(help_stdout.starts_with(
-        "\n\nClean Room Launcher v0.1.0-alpha.4.2\nLaunch Codex or Claude Code without\nunrelated global instructions and skills.\n"
+        "\n\nClean Room Launcher v0.2.0\nLaunch Codex or Claude Code without\nunrelated global instructions and skills.\n"
     ));
-    assert!(help_stdout.contains("\nUsage\n  clroom codex [CODEX_ARGS...]"));
+    assert!(help_stdout.contains("\nUsage\n  clroom codex exec [CODEX_ARGS...]"));
 
     let (codex, capture) = fake_codex();
     let provider_path = codex.parent().unwrap();
     let native = |args: &[&str]| {
         Command::new(clroom())
             .arg("codex")
+            .arg("exec")
             .args(args)
             .env("PATH", provider_path)
             .env("CLROOM_INHERITED_MARKER", "inherited")
@@ -86,17 +87,20 @@ fn clroom_is_the_only_public_identity_and_preserves_the_native_codex_process() {
 
     let no_args = native(&[]);
     assert!(no_args.status.success());
-    assert_eq!(fs::read_to_string(&capture).unwrap(), clean_defaults);
+    assert_eq!(
+        fs::read_to_string(&capture).unwrap(),
+        format!("{clean_defaults}exec\0--ignore-user-config\0")
+    );
 
     let forwarded = native(&["--help", "--approve-for-me", "--yolo"]);
     assert!(forwarded.status.success());
     assert_eq!(
         fs::read_to_string(&capture).unwrap(),
-        format!("{clean_defaults}--help\0--approve-for-me\0--yolo\0")
+        format!("{clean_defaults}exec\0--ignore-user-config\0--help\0--approve-for-me\0--yolo\0")
     );
 
     let mut stdio = Command::new(clroom())
-        .args(["codex", "--stdio"])
+        .args(["codex", "exec", "--stdio"])
         .env("PATH", provider_path)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
@@ -124,7 +128,12 @@ fn clroom_is_the_only_public_identity_and_preserves_the_native_codex_process() {
 
     for refused in [&["login"][..], &["--api-key", "must-not-be-retained"]] {
         let _ = fs::remove_file(&capture);
-        let output = native(refused);
+        let output = Command::new(clroom())
+            .arg("codex")
+            .args(refused)
+            .env("PATH", provider_path)
+            .output()
+            .unwrap();
         assert_eq!(output.status.code(), Some(2));
         assert!(output.stdout.is_empty());
         assert!(!capture.exists(), "refused provider child was born");

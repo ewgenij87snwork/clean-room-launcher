@@ -6,6 +6,10 @@ fn main() {
         println!("0.147.0");
         return;
     }
+    if args == ["exec", "--ignore-user-config", "--help"] {
+        println!("--ignore-user-config");
+        return;
+    }
     let capture = env::current_exe()
         .expect("fake provider executable must resolve")
         .with_file_name("capture");
