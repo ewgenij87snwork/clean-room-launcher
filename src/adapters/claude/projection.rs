@@ -700,6 +700,15 @@ fn discover_active_plugin_skills(home: &Path, inventory: &mut Vec<GlobalSkill>) 
         return;
     };
     let registry = home.join(".claude/plugins/installed_plugins.json");
+    let Ok(registry_metadata) = fs::symlink_metadata(&registry) else {
+        return;
+    };
+    if registry_metadata.file_type().is_symlink()
+        || !registry_metadata.is_file()
+        || registry_metadata.len() > 1024 * 1024
+    {
+        return;
+    }
     let Ok(bytes) = fs::read(registry) else {
         return;
     };

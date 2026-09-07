@@ -5,6 +5,9 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
+#[cfg(unix)]
+use std::os::unix::fs::symlink;
+
 use taskseal::adapters::codex::isolation::{IsolationInputs, plan, plan_with_skills};
 
 struct TempRoot(PathBuf);
@@ -196,7 +199,7 @@ fn selected_duplicate_logical_skill_prefers_codex_root_and_denies_agents_body() 
 }
 
 #[test]
-fn selected_codex_plugin_skill_requires_active_install_record_and_excludes_siblings() {
+fn codex_plugin_cache_is_not_inventoried_without_provider_activation_state() {
     let root = TempRoot::new("active-plugin-skill");
     let project = root.path().join("project");
     let home = root.path().join("home");
@@ -222,34 +225,59 @@ fn selected_codex_plugin_skill_requires_active_install_record_and_excludes_sibli
     .unwrap();
     fs::create_dir_all(plugin.join("hooks")).unwrap();
     fs::write(plugin.join("hooks/hooks.json"), b"{}\n").unwrap();
-    fs::create_dir_all(codex_home.join("plugins")).unwrap();
-    fs::write(
-        codex_home.join("plugins/installed_plugins.json"),
-        format!(
-            r#"{{"plugins":{{"superpowers":[{{"installPath":"{}"}}]}}}}"#,
-            plugin.display()
-        ),
-    )
-    .unwrap();
-
-    let isolation = plan_with_skills(
+    let error = plan_with_skills(
         &project,
         Path::new("/bin/sh"),
         &IsolationInputs { home, codex_home },
         &["superpowers:brainstorming".to_owned()],
     )
-    .unwrap();
+    .unwrap_err();
 
-    assert_eq!(isolation.selected_global_skills, 1);
-    assert!(
-        isolation
-            .profile
-            .contains(plugin.join("skills/brainstorming").to_str().unwrap())
+    assert_eq!(
+        error,
+        taskseal::adapters::codex::isolation::IsolationError::UnknownSkillSelector(
+            "superpowers:brainstorming".to_owned()
+        )
     );
+}
+
+#[test]
+fn provider_owned_system_and_admin_skill_roots_remain_readable_but_not_writable() {
+    let root = TempRoot::new("provider-owned-skill-roots");
+    let project = root.path().join("project");
+    let home = root.path().join("home");
+    let codex_home = root.path().join("codex-home");
+    let system_skill = codex_home.join("skills/.system/skill-creator/SKILL.md");
+    let admin_skill = root.path().join("private/etc/codex/skills/admin/SKILL.md");
+    fs::create_dir_all(system_skill.parent().unwrap()).unwrap();
+    fs::create_dir_all(admin_skill.parent().unwrap()).unwrap();
+    fs::write(&system_skill, b"system\n").unwrap();
+    fs::write(&admin_skill, b"admin\n").unwrap();
+    fs::create_dir_all(&project).unwrap();
+
+    let isolation = plan(
+        &project,
+        Path::new("/bin/sh"),
+        &IsolationInputs { home, codex_home },
+    )
+    .unwrap();
+    assert!(isolation.profile.contains("/private/etc/codex/skills"));
+    assert!(isolation.profile.contains("skills/.system"));
+
+    let output = Command::new("/usr/bin/sandbox-exec")
+        .args(["-p", &isolation.profile, "--", "/bin/sh", "-c"])
+        .arg("/bin/cat \"$1\" >/dev/null || exit 80; printf 'blocked\\n' >>\"$1\" 2>/dev/null && exit 81; exit 0")
+        .arg("fixture")
+        .arg(&system_skill)
+        .output()
+        .unwrap();
+
     assert!(
-        !isolation
-            .profile
-            .contains(plugin.join("hooks").to_str().unwrap())
+        output.status.success(),
+        "provider SYSTEM skill must be readable but not writable: status={:?} stdout={} stderr={}",
+        output.status,
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
     );
 }
 
@@ -282,6 +310,35 @@ fn stale_codex_plugin_cache_is_not_a_skill_source() {
         error,
         taskseal::adapters::codex::isolation::IsolationError::UnknownSkillSelector(
             "stale:ghost".to_owned()
+        )
+    );
+}
+
+#[cfg(unix)]
+#[test]
+fn symlinked_codex_skill_root_is_not_an_inventory_source() {
+    let root = TempRoot::new("symlinked-skill-root");
+    let project = root.path().join("project");
+    let home = root.path().join("home");
+    let codex_home = root.path().join("codex-home");
+    let outside = root.path().join("outside/escape");
+    fs::create_dir_all(outside.as_path()).unwrap();
+    fs::write(outside.join("SKILL.md"), b"outside\n").unwrap();
+    fs::create_dir_all(codex_home.join("skills")).unwrap();
+    symlink(&outside, codex_home.join("skills/escape")).unwrap();
+    fs::create_dir_all(&project).unwrap();
+
+    let error = plan_with_skills(
+        &project,
+        Path::new("/bin/sh"),
+        &IsolationInputs { home, codex_home },
+        &["escape".to_owned()],
+    )
+    .unwrap_err();
+    assert_eq!(
+        error,
+        taskseal::adapters::codex::isolation::IsolationError::UnknownSkillSelector(
+            "escape".to_owned()
         )
     );
 }
