@@ -81,10 +81,12 @@ def main() -> int:
     release_workflow = body(".github/workflows/release.yml")
     for needle in (
         "CLROOM_ARTIFACT_QUALIFICATION: QUALIFIED",
-        "grep -qx 'qualification=QUALIFIED'",
+        'tarfile.open(sys.argv[1], "r:gz")',
     ):
         if needle not in release_workflow:
             raise SystemExit("CLROOM_RELEASE_PUBLIC_SURFACE_REFUSED:RELEASE_WORKFLOW:" + needle)
+    if "--wildcards" in release_workflow or "--wildcards" in readiness:
+        raise SystemExit("CLROOM_RELEASE_PUBLIC_SURFACE_REFUSED:PORTABLE_ARCHIVE_CHECK")
 
     readme = body("README.md")
     if "clean-room-launcher-hero.gif" in readme:

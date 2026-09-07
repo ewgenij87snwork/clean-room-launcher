@@ -44,8 +44,20 @@ CLROOM_TARGET='' \
 artifact=$(sed -n 's/^ARTIFACT=//p' /tmp/clroom-release-build.log)
 [[ -n "$artifact" && -f "$artifact" ]] || fail "ARTIFACT_MISSING"
 python3 packaging/verify-artifact.py "$artifact" || fail "ARTIFACT_METADATA"
-grep -qx 'qualification=QUALIFIED' <(tar -xOzf "$artifact" --wildcards '*/VERSION') || fail "ARTIFACT_NOT_QUALIFIED"
-grep -qx 'signing=unsigned' <(tar -xOzf "$artifact" --wildcards '*/VERSION') || fail "ARTIFACT_SIGNING_METADATA"
+python3 - "$artifact" <<'PY' || fail "ARTIFACT_METADATA"
+import sys
+import tarfile
+
+with tarfile.open(sys.argv[1], "r:gz") as archive:
+    versions = [member for member in archive.getmembers() if member.isfile() and member.name.endswith("/VERSION")]
+    if len(versions) != 1:
+        raise SystemExit("expected exactly one VERSION")
+    body = archive.extractfile(versions[0]).read().decode("utf-8")
+    if "qualification=QUALIFIED\n" not in body:
+        raise SystemExit("archive is not qualified")
+    if "signing=unsigned\n" not in body:
+        raise SystemExit("archive signing metadata is unexpected")
+PY
 
 metadata_dir="$artifact_dir/metadata"
 ./packaging/supply-chain/generate.sh generate \
