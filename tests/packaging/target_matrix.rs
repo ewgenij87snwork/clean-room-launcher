@@ -190,7 +190,7 @@ fn matrix_advertised_targets_exactly_equal_qualified_lanes() {
     assert!(matrix_is_honest(&matrix));
     assert_eq!(
         list_value(&matrix, "advertised_targets"),
-        ["alpha-macos-aarch64"]
+        ["macos-aarch64"]
     );
     for target in target_blocks(&matrix) {
         for field in ["name", "rust_target", "runner", "qualification_status", "artifact_name", "required_checks", "signing_policy"] {
@@ -212,7 +212,7 @@ fn matrix_mutations_refuse_false_claims_and_mismatched_lists() {
     );
     assert!(!matrix_is_honest(&advertised_false), "a NOT_QUALIFIED advertised target must fail");
     let lists_mismatch = matrix.replace(
-        "qualified_targets = [\"alpha-macos-aarch64\"]",
+        "qualified_targets = [\"macos-aarch64\"]",
         "qualified_targets = []",
     );
     assert!(!matrix_is_honest(&lists_mismatch), "advertised/qualified mismatch must fail");

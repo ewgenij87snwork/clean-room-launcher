@@ -26,7 +26,7 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - name: Bind tag, version, changelog, and main
+      - name: Bind tag, version, changelog, and accepted default branch
         id: release
         shell: bash
         run: |
@@ -56,9 +56,9 @@ jobs:
             echo "Cargo.toml version $manifest_version does not match tag $tag" >&2
             exit 1
           }
-          git fetch --no-tags --depth=1 origin main
-          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" || {
-            echo "release tag must point to the exact accepted main tip" >&2
+          git fetch --no-tags --depth=1 origin feat/clroom-public-alpha-v1
+          test "$(git rev-parse HEAD)" = "$(git rev-parse FETCH_HEAD)" || {
+            echo "release tag must point to the exact accepted default-branch tip" >&2
             exit 1
           }
           prerelease=false
