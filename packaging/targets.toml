@@ -2,20 +2,20 @@
 # Exact-subject macOS acceptance qualifies the single advertised release lane.
 # Unsupported and missing-runner fixtures remain excluded from release claims.
 schema_version = "clroom.packaging-targets.v2"
-advertised_targets = ["macos-aarch64"]
-qualified_targets = ["macos-aarch64"]
+advertised_targets = ["alpha-macos-aarch64"]
+qualified_targets = ["alpha-macos-aarch64"]
 claims_policy = "advertised targets exactly equal qualified build/test lanes"
 
 # Matrix fixtures are data, not release claims. Unsupported and missing-runner
 # lanes must be excluded from claims (never silently skipped).
-fixture_supported = "macos-aarch64"
+fixture_supported = "alpha-macos-aarch64"
 fixture_unsupported = "unsupported-linux-riscv64"
 fixture_missing_runner = "missing-runner-windows-aarch64"
 fixture_disposition = "unsupported targets are excluded"
 target_entry_policy = "CI selects only names listed in qualified_targets and verifies qualification_status"
 
 [[targets]]
-name = "macos-aarch64"
+name = "alpha-macos-aarch64"
 rust_target = "aarch64-apple-darwin"
 runner = "macos-14"
 qualification_status = "QUALIFIED"

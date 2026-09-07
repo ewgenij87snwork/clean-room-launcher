@@ -20,14 +20,27 @@ legacy_lower=$(printf '%s%s' task seal)
 legacy_preview=$(printf '%s-%s' unsigned preview-only)
 legacy_identity_pattern=$(printf '%s|%s|P0[678]|%s|/workspace/%s|local://%s' \
   "$legacy_upper" "$legacy_lower" "$legacy_preview" "$legacy_lower" "$legacy_lower")
-rg -n "$legacy_identity_pattern" \
-  packaging/build-artifacts.sh packaging/targets.toml \
-  packaging/supply-chain/generate.sh packaging/supply-chain/policy.toml \
-  packaging/signing/policy.md .github/workflows/release-candidate.yml && \
-  fail "LEGACY_RELEASE_IDENTITY"
+legacy_files=(
+  packaging/build-artifacts.sh packaging/targets.toml
+  packaging/supply-chain/generate.sh packaging/supply-chain/policy.toml
+  packaging/signing/policy.md .github/workflows/release-candidate.yml
+)
+if command -v rg >/dev/null 2>&1; then
+  if rg -n "$legacy_identity_pattern" "${legacy_files[@]}"; then
+    fail "LEGACY_RELEASE_IDENTITY"
+  fi
+else
+  if grep -En "$legacy_identity_pattern" "${legacy_files[@]}"; then
+    fail "LEGACY_RELEASE_IDENTITY"
+  fi
+fi
 
 ./scripts/check-public-boundary.sh --root "$root" || fail "PUBLIC_BOUNDARY"
-shellcheck packaging/build-artifacts.sh scripts/release/readiness.sh || fail "SHELLCHECK"
+if command -v shellcheck >/dev/null 2>&1; then
+  shellcheck packaging/build-artifacts.sh scripts/release/readiness.sh || fail "SHELLCHECK"
+else
+  bash -n packaging/build-artifacts.sh scripts/release/readiness.sh || fail "SHELL_SYNTAX"
+fi
 cargo test --locked --all-targets || fail "FULL_LOCKED_TESTS"
 
 if ! command -v cargo-deny >/dev/null 2>&1; then
