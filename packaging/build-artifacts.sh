@@ -20,9 +20,9 @@ fi
 [[ -f "$root/LICENSE" ]] || { echo "LICENSE is required" >&2; exit 2; }
 [[ -n "$version" && -n "$toolchain" ]] || { echo "version/toolchain metadata missing" >&2; exit 2; }
 if [[ -n "$target" ]]; then
-  cargo_args=(--target "$target"); target_label=$target
+  target_label=$target
 else
-  cargo_args=(); target_label=$(rustc -vV | sed -n 's/^host: //p')
+  target_label=$(rustc -vV | sed -n 's/^host: //p')
 fi
 [[ $target_label =~ ^[A-Za-z0-9._-]+$ ]] || { echo "unsafe target label" >&2; exit 2; }
 target_dir=${CARGO_TARGET_DIR:-"$root/target"}
@@ -33,7 +33,11 @@ build_cargo_home=$(cd "$build_cargo_home" && pwd -P)
 [[ -z ${RUSTFLAGS:-} && -z ${CARGO_ENCODED_RUSTFLAGS:-} ]] || { echo "external rust flags prevent exact path remapping" >&2; exit 2; }
 export CARGO_ENCODED_RUSTFLAGS="--remap-path-prefix=$root=/workspace/clean-room-launcher"$'\x1f'"--remap-path-prefix=$build_cargo_home=/cargo"
 export CARGO_NET_OFFLINE=${CARGO_NET_OFFLINE:-true} LC_ALL=C TZ=UTC SOURCE_DATE_EPOCH=0
-cargo build --locked --release --bin clroom "${cargo_args[@]}"
+if [[ -n "$target" ]]; then
+  cargo build --locked --release --bin clroom --target "$target"
+else
+  cargo build --locked --release --bin clroom
+fi
 [[ -x "$binary" ]] || { echo "built clroom binary not found" >&2; exit 2; }
 mkdir -p "$out_dir"
 tmp=$(mktemp -d "${TMPDIR:-/tmp}/clean-room-launcher-artifact.XXXXXX"); trap 'rm -rf "$tmp"' EXIT
