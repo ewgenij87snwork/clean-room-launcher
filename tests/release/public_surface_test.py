@@ -78,6 +78,18 @@ def main() -> int:
         if needle not in readiness:
             raise SystemExit("CLROOM_RELEASE_PUBLIC_SURFACE_REFUSED:READINESS:" + needle)
 
+    release_workflow = body(".github/workflows/release.yml")
+    for needle in (
+        "CLROOM_ARTIFACT_QUALIFICATION: QUALIFIED",
+        "grep -qx 'qualification=QUALIFIED'",
+    ):
+        if needle not in release_workflow:
+            raise SystemExit("CLROOM_RELEASE_PUBLIC_SURFACE_REFUSED:RELEASE_WORKFLOW:" + needle)
+
+    readme = body("README.md")
+    if "clean-room-launcher-hero.gif" in readme:
+        raise SystemExit("CLROOM_RELEASE_PUBLIC_SURFACE_REFUSED:STALE_HERO_GIF")
+
     print("CLROOM_RELEASE_PUBLIC_SURFACE_PASS local_security_inputs=3")
     return 0
 

@@ -91,7 +91,7 @@ jobs:
         env:
           CLROOM_TARGET: aarch64-apple-darwin
           CLROOM_SOURCE_COMMIT: ${{ github.sha }}
-          CLROOM_ARTIFACT_QUALIFICATION: NOT_QUALIFIED
+          CLROOM_ARTIFACT_QUALIFICATION: QUALIFIED
         run: |
           set -euo pipefail
           rm -rf target/release-artifacts
@@ -106,6 +106,7 @@ jobs:
           artifact="target/release-artifacts/${{ needs.prepare.outputs.artifact_name }}"
           test -f "$artifact"
           python3 packaging/verify-artifact.py "$artifact"
+          grep -qx 'qualification=QUALIFIED' <(tar -xOzf "$artifact" --wildcards '*/VERSION')
           python3 packaging/generate-release-sbom.py \
             --artifact "$artifact" \
             --metadata target/release-artifacts/cargo-metadata.json \

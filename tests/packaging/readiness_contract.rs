@@ -8,7 +8,7 @@ fn canonical_release_readiness_gate_covers_required_v020_controls() {
         "check-public-boundary.sh",
         "shellcheck",
         "cargo test --locked --all-targets",
-        "cargo-deny",
+        "cargo deny --config deny.toml --locked check",
         "qualification=QUALIFIED",
         "sbom.cdx.json",
         "provenance.intoto.json",

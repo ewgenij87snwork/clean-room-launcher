@@ -33,7 +33,7 @@ cargo test --locked --all-targets || fail "FULL_LOCKED_TESTS"
 if ! command -v cargo-deny >/dev/null 2>&1; then
   fail "SCA_TOOL_NOT_AVAILABLE"
 fi
-cargo deny --config deny.toml --locked check licenses || fail "DEPENDENCY_LICENSE_REVIEW"
+cargo deny --config deny.toml --locked check || fail "DEPENDENCY_SCA_REVIEW"
 
 rm -rf "$artifact_dir"
 mkdir -p "$artifact_dir"

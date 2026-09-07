@@ -4,8 +4,6 @@
 
 <h1 align="center">Clean Room Launcher (CLROOM)</h1>
 
-[![Clean Room Launcher boundary overview](docs/assets/clean-room-launcher-hero.gif)]
-
 <p align="center">
   <a href="https://ewgenij87snwork.github.io/clean-room-launcher/">Documentation →</a> ·
   <a href="docs/demo.md">Read the boundary walkthrough →</a>
