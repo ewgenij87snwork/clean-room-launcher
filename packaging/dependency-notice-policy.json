@@ -1,5 +1,5 @@
 {
-  "schema_version": "clroom.dependency-notice-policy.v2",
+  "schema_version": "taskseal.p07.dependency-notice-policy.v1",
   "canonical_fallbacks": [
     {
       "package": "jsonschema-regex@0.49.9",

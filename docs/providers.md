@@ -1,10 +1,10 @@
 ---
 layout: page
-title: Provider support in v0.2.0
+title: Provider support in v0.1.0-alpha.4.2
 permalink: /providers.html
 ---
 
-The v0.2.0 release has two supported paths:
+The alpha has two supported paths:
 
 | Coding-agent CLI | Platform | Status |
 | --- | --- | --- |

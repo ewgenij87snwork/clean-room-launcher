@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fail-closed verifier for exact CLROOM release archives."""
+"""Fail-closed verifier for locally generated TaskSeal preview archives."""
 import gzip, hashlib, os, re, sys, tarfile
 
 REQUIRED = {"LICENSE", "NOTICE", "VERSION", "bin/clroom", "share/doc/clean-room-launcher/CHANGELOG.md"}
@@ -31,10 +31,8 @@ try:
         clroom = tar.extractfile(root + "/bin/clroom").read()
         if PRIVATE_HOME.search(clroom): fail("binary contains a private HOME path")
         version = tar.extractfile(root + "/VERSION").read().decode("utf-8")
-        qualification = re.findall(r"^qualification=(QUALIFIED)$", version, re.MULTILINE)
-        if len(qualification) != 1 or "source_commit=" not in version: fail("release artifact is not qualified and bound")
-        if not re.search(r"^signing=unsigned$", version, re.MULTILINE): fail("signing policy is not canonical")
-        if any(marker in version for marker in ("TASKSEAL", "taskseal", "/workspace/taskseal", "unsigned-preview-only")): fail("legacy release identity")
+        qualification = re.findall(r"^qualification=(QUALIFIED|NOT_QUALIFIED)$", version, re.MULTILINE)
+        if len(qualification) != 1 or "source_commit=" not in version: fail("unbound qualification metadata")
         for field in ("notice_generator_sha256", "license_policy_sha256", "notice_policy_sha256", "cargo_lock_sha256"):
             if not re.search(rf"^{field}=[0-9a-f]{{64}}$", version, re.MULTILINE): fail("unbound notice metadata")
         notice = tar.extractfile(root + "/NOTICE").read().decode("utf-8")
