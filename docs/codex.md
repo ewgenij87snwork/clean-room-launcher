@@ -81,4 +81,4 @@ Administrator-managed behavior belongs to a different control plane from the per
 
 The `developers.openai.com` Codex URLs can redirect to their current ChatGPT Learn canonical pages.
 
-Last verified against current OpenAI documentation: **2026-09-08**.
+Last verified against current OpenAI documentation: **2026-09-07**.
