@@ -14,7 +14,7 @@ import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
 GENERATOR = ROOT / "packaging/generate-notice.py"
-POLICY = ROOT / "packaging/license-policy.toml"
+POLICY = ROOT / "deny.toml"
 
 
 def run(command: list[str], *, env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
@@ -49,7 +49,7 @@ def main() -> int:
     with tempfile.TemporaryDirectory(prefix="clroom-packaging-legal-notice-") as temporary:
         notice = Path(temporary) / "NOTICE"
         generated = run([sys.executable, str(GENERATOR), "--output", str(notice)])
-        if generated.returncode or generated.stdout != f"CLROOM_PACKAGING_DEPENDENCY_NOTICE_PASS components={len(packages)}\n":
+        if generated.returncode or generated.stdout != f"CLROOM_DEPENDENCY_NOTICE_PASS components={len(packages)}\n":
             raise SystemExit("CLROOM_PACKAGING_LEGAL_NOTICE_REFUSED:GENERATOR\n" + generated.stdout)
         body = notice.read_text(encoding="utf-8")
 
@@ -79,7 +79,7 @@ def main() -> int:
 
     build = (ROOT / "packaging/build-artifacts.sh").read_text(encoding="utf-8")
     verifier = (ROOT / "packaging/verify-artifact.py").read_text(encoding="utf-8")
-    for needle in ("packaging/generate-notice.py", "notice_generator_sha256", "license_policy_sha256", "cargo_lock_sha256", "--remap-path-prefix"):
+    for needle in ("packaging/generate-notice.py", "deny.toml", "notice_generator_sha256", "license_policy_sha256", "cargo_lock_sha256", "--remap-path-prefix"):
         if needle not in build:
             raise SystemExit("CLROOM_PACKAGING_LEGAL_NOTICE_REFUSED:BUILD_BINDING:" + needle)
     for needle in ("Third-party dependency notices", "Component count:", "Cargo\\.lock SHA-256", "binary contains a private HOME path"):

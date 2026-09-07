@@ -44,7 +44,7 @@ install -m 0644 "$root/LICENSE" "$stage/LICENSE"
 python3 "$root/packaging/generate-notice.py" --output "$stage/NOTICE"
 script_sha=$(shasum -a 256 "$root/packaging/build-artifacts.sh" | awk '{print $1}')
 notice_generator_sha=$(shasum -a 256 "$root/packaging/generate-notice.py" | awk '{print $1}')
-license_policy_sha=$(shasum -a 256 "$root/packaging/license-policy.toml" | awk '{print $1}')
+license_policy_sha=$(shasum -a 256 "$root/deny.toml" | awk '{print $1}')
 notice_policy_sha=$(shasum -a 256 "$root/packaging/dependency-notice-policy.json" | awk '{print $1}')
 cargo_lock_sha=$(shasum -a 256 "$root/Cargo.lock" | awk '{print $1}')
 rustc_version=$(rustc --version)
