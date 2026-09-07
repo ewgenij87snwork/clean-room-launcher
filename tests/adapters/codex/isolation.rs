@@ -115,6 +115,42 @@ fn plan_renders_denies_for_nonexistent_synthetic_codex_home_without_inspecting_i
 }
 
 #[test]
+fn codex_provider_files_allow_metadata_but_deny_contents() {
+    // Break caught: allowing no provider-file metadata makes --ignore-user-config
+    // fail before launch; allowing file data would re-admit ambient config.
+    let root = TempRoot::new("provider-file-metadata");
+    let project = root.path().join("project");
+    let home = root.path().join("home");
+    let codex_home = home.join(".codex");
+    fs::create_dir_all(&project).unwrap();
+    fs::create_dir_all(&codex_home).unwrap();
+    let config = codex_home.join("config.toml");
+    fs::write(&config, b"ambient-canary = true\n").unwrap();
+
+    let isolation = plan(
+        &project,
+        Path::new("/bin/sh"),
+        &IsolationInputs { home, codex_home },
+    )
+    .unwrap();
+    let output = Command::new("/usr/bin/sandbox-exec")
+        .args(["-p", &isolation.profile, "--", "/bin/sh", "-c"])
+        .arg("/usr/bin/stat \"$1\" >/dev/null || exit 80; /bin/cat \"$1\" >/dev/null 2>&1 && exit 81; exit 0")
+        .arg("fixture")
+        .arg(&config)
+        .output()
+        .unwrap();
+
+    assert!(
+        output.status.success(),
+        "provider config metadata must be visible while its contents stay denied: status={:?} stdout={} stderr={}",
+        output.status,
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+}
+
+#[test]
 fn selected_duplicate_logical_skill_prefers_codex_root_and_denies_agents_body() {
     // Break caught: admitting every native duplicate produces duplicate rows in
     // Codex's picker instead of one deterministic selected skill.

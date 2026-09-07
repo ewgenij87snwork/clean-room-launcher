@@ -119,6 +119,13 @@ pub fn plan_with_skills(
         profile.push_str("\")");
     }
     profile.push_str(")\n");
+    profile.push_str("(allow file-read-metadata");
+    for path in &denied_files {
+        profile.push_str("\n  (literal \"");
+        profile.push_str(&escape_scheme_path(path)?);
+        profile.push_str("\")");
+    }
+    profile.push_str(")\n");
     profile.push_str("(deny file-write*");
     for path in &denied_files {
         profile.push_str("\n  (literal \"");
