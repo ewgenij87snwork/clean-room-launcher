@@ -189,7 +189,7 @@ fn launch_isolated_codex(
     };
     let plan = plan_with_skills(&project, &executable, &inputs, &selectors)
         .map_err(isolation_error_message)?;
-    let identity = match process::preflight_codex(&executable) {
+    let identity = match process::preflight_codex(&executable, provider_args) {
         Ok(identity) => identity,
         Err(error) => {
             contract.boundary = launch_contract::BoundaryState::NotLaunchable;

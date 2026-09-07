@@ -29,6 +29,10 @@ fn main() {{
     if env::args().nth(1).as_deref() == Some("--version") {{ println!("0.147.0"); return; }}
     assert!(env::var_os("CLROOM_INHERITED_MARKER").is_none());
     let args = env::args().skip(1).collect::<Vec<_>>();
+    if args == ["exec", "--ignore-user-config", "--help"] {{
+        println!("--ignore-user-config");
+        return;
+    }}
     fs::write({:?}, format!("{{}}\0", args.join("\0"))).unwrap();
     if args.iter().any(|argument| argument == "--exit-42") {{ std::process::exit(42); }}
 }}
@@ -44,6 +48,44 @@ fn main() {{
     assert!(output.status.success(), "fake provider must compile");
     fs::set_permissions(&executable, fs::Permissions::from_mode(0o700)).unwrap();
     (executable, capture)
+}
+
+#[test]
+fn codex_exec_without_native_clean_config_support_refuses_before_provider_launch() {
+    let (codex, capture) = fake_codex();
+    let unsupported_dir = codex.parent().unwrap().join("unsupported-bin");
+    fs::create_dir(&unsupported_dir).unwrap();
+    let source = unsupported_dir.join("fake-provider.rs");
+    let unsupported = unsupported_dir.join("codex");
+    fs::write(
+        &source,
+        format!(
+            r#"use std::{{env, fs}};
+fn main() {{
+    if env::args().nth(1).as_deref() == Some("--version") {{ println!("0.147.0"); return; }}
+    let args = env::args().skip(1).collect::<Vec<_>>();
+    if args == ["exec", "--ignore-user-config", "--help"] {{ std::process::exit(64); }}
+    fs::write({:?}, b"provider-born").unwrap();
+}}
+"#,
+            capture
+        ),
+    )
+    .unwrap();
+    let output = Command::new("rustc")
+        .args([source, PathBuf::from("-o"), unsupported.clone()])
+        .output()
+        .expect("rustc must start");
+    assert!(output.status.success(), "fake provider must compile");
+    fs::set_permissions(&unsupported, fs::Permissions::from_mode(0o700)).unwrap();
+    let output = Command::new(env!("CARGO_BIN_EXE_clroom"))
+        .args(["codex", "exec", "safe prompt"])
+        .env("PATH", unsupported.parent().unwrap())
+        .output()
+        .expect("clroom must run");
+    assert_eq!(output.status.code(), Some(2));
+    assert!(String::from_utf8_lossy(&output.stderr).contains("CLROOM_CODEX_EXEC_UNSUPPORTED"));
+    assert!(!capture.exists());
 }
 
 fn fake_codex_with_env_capture() -> (PathBuf, PathBuf, PathBuf) {
@@ -65,6 +107,10 @@ fn fake_codex_with_env_capture() -> (PathBuf, PathBuf, PathBuf) {
 fn main() {{
     if env::args().nth(1).as_deref() == Some("--version") {{ println!("0.147.0"); return; }}
     let args = env::args().skip(1).collect::<Vec<_>>();
+    if args == ["exec", "--ignore-user-config", "--help"] {{
+        println!("--ignore-user-config");
+        return;
+    }}
     fs::write({:?}, format!("{{}}\0", args.join("\0"))).unwrap();
     let status = ["RUNNER_REQUESTED", "RUNNER_UNREQUESTED"]
         .iter()
