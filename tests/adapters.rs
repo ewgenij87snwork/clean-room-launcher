@@ -8,6 +8,8 @@ mod codex_environment;
 mod codex_identity;
 #[path = "adapters/codex/isolation.rs"]
 mod codex_isolation;
+#[path = "adapters/codex/symlink_skills.rs"]
+mod codex_symlink_skills;
 #[path = "adapters/codex/placement.rs"]
 mod codex_placement;
 #[path = "adapters/codex/process_parity.rs"]
