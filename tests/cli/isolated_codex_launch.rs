@@ -64,6 +64,7 @@ fn isolated_fixture() -> (Scratch, PathBuf, PathBuf, PathBuf, PathBuf) {
     fs::create_dir_all(&bin).unwrap();
     fs::write(project.join("canaries/PROJECT.md"), b"project\n").unwrap();
     fs::write(codex_home.join("AGENTS.md"), b"global\n").unwrap();
+    fs::write(codex_home.join("auth.json"), b"credential bytes\n").unwrap();
     fs::write(
         home.join(".agents/skills/ambient/SKILL.md"),
         b"ambient skill\n",
@@ -272,18 +273,31 @@ fn codex_handoff_preserves_literal_argv_exit_and_stdio_inside_the_isolated_bound
 }
 
 #[test]
-fn codex_handoff_launches_interactive_provider_paths_through_isolation() {
+fn codex_handoff_launches_interactive_provider_with_persistent_clean_state() {
     let (_root, project, home, codex_home, bin) = isolated_fixture();
     let capture = project.join(".clroom-capture");
     let output = command(&project, &home, &codex_home, &bin, &capture)
         .args(["codex", "resume", "--last"])
         .output()
         .unwrap();
-    assert_eq!(output.status.code(), Some(42));
     assert_eq!(
-        fs::read(capture).unwrap(),
-        expected_argv(&["resume", "--last"])
+        output.status.code(),
+        Some(42),
+        "stdout={} stderr={}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
     );
+    assert!(capture.exists());
+    let state_root = home.join("Library/Application Support/Clean Room Launcher/Codex");
+    assert!(state_root.join("home/auth.json").is_symlink());
+    assert!(state_root.join("sqlite").is_dir());
+
+    let second = command(&project, &home, &codex_home, &bin, &capture)
+        .args(["codex", "resume", "--last"])
+        .output()
+        .unwrap();
+    assert_eq!(second.status.code(), Some(42));
+    assert!(state_root.join("home/auth.json").is_symlink());
 }
 
 #[test]

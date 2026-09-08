@@ -177,7 +177,7 @@ fn launch_isolated_codex(
         codex_home: std::env::var_os("CODEX_HOME")
             .map(PathBuf::from)
             .unwrap_or_else(|| home.join(".codex")),
-        home,
+        home: home.clone(),
     };
     let project = std::env::current_dir().map_err(|_| {
         "CLROOM_ISOLATION_INVALID: current project is unavailable; continue locally".to_owned()
@@ -239,6 +239,17 @@ fn launch_isolated_codex(
             return Err(error);
         }
     };
+    let state = if launch_contract::classify_codex_invocation(&provider_args)
+        == launch_contract::CodexInvocation::Interactive
+    {
+        Some(process::prepare_codex_state(
+            &home,
+            &inputs.codex_home,
+            &plan.selected_global_skill_paths,
+        )?)
+    } else {
+        None
+    };
     if std::io::stderr().is_terminal() {
         let feature_state = screen::PlaqueFeatureState::from_provider_args(&provider_args);
         eprintln!(
@@ -259,7 +270,14 @@ fn launch_isolated_codex(
             .join("\n")
         );
     }
-    process::launch_isolated_codex(&plan, &executable, &contract, &identity, pass_env)
+    process::launch_isolated_codex(
+        &plan,
+        &executable,
+        &contract,
+        &identity,
+        pass_env,
+        state.as_ref(),
+    )
 }
 
 fn launch_isolated_claude(
