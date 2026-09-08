@@ -37,4 +37,4 @@ These pages separate:
 
 If a native provider feature is the simpler correct option, these docs say so.
 
-Last structured provider-doc review: **2026-08-28**.
+Last structured provider-doc review: **2026-09-07**.

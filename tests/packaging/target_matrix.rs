@@ -1,9 +1,9 @@
-//! Focused, dependency-free contract tests for the P07 release target matrix.
+//! Focused, dependency-free contract tests for the CLROOM release target matrix.
 
 use std::{collections::BTreeMap, fs, path::Path, process::Command};
 
-const RECEIPT_PATH: &str = "reports/gates/p07/task-1.json";
-const TOPOLOGY_EVIDENCE_ID: &str = "EVD-P07-T1-R4-GIT-TOPOLOGY-DURABILITY-GREEN";
+const RECEIPT_PATH: &str = "reports/gates/clroom-packaging/task-1.json";
+const TOPOLOGY_EVIDENCE_ID: &str = "EVD-CLROOM_PACKAGING-T1-R4-GIT-TOPOLOGY-DURABILITY-GREEN";
 
 fn read(path: &str) -> String {
     fs::read_to_string(Path::new(env!("CARGO_MANIFEST_DIR")).join(path))

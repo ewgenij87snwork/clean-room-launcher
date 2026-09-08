@@ -11,6 +11,8 @@ pub fn preflight_projection(ambient_names: &[&str], target: &str) -> CodexPlacem
 pub fn preflight_provider_handoff() -> Result<(), &'static str> {
     let ambient_names = ["HOME", "PATH", "ALL_PROXY", "HTTP_PROXY", "HTTPS_PROXY"];
     match preflight_projection(&ambient_names, "provider_native_context") {
-        CodexPlacementState::Refused => Err("P06_REQUIRED: provider tuple is not qualified"),
+        CodexPlacementState::Refused => {
+            Err("CLROOM_MACOS_REQUIRED: provider tuple is not qualified")
+        }
     }
 }

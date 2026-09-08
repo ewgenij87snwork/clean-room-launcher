@@ -1,5 +1,5 @@
 ---
-name: taskseal-unused
+name: clroom-unused
 description: Deferred native skill that must remain uninvoked.
 ---
-TASKSEAL_SKILL_BODY_UNUSED_29A4
+CLROOM_SKILL_BODY_UNUSED_29A4

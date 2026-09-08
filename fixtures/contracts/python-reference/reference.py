@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Privacy-clean stdlib reference for the public TaskSeal v0.1 core contract."""
+"""Privacy-clean stdlib reference for the public CLROOM v0.1 core contract."""
 
 import hashlib
 import json
@@ -41,7 +41,7 @@ def main():
         for heading, value in zip((b"# L0\n", b"# L2\n", b"# L3\n"), raw)
     )
     inputs = sorted(set(request.get("inputs", [])), key=lambda value: value.encode("utf-8"))
-    digest_input = bytearray(b"taskseal-generation-v1\0")
+    digest_input = bytearray(b"clroom-generation-v1\0")
     for value in inputs:
         digest_input.extend(frame(value.encode("utf-8")))
     digest_input.append(0xFF)

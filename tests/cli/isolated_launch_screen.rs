@@ -76,7 +76,7 @@ fn isolated_preview_renders_the_accepted_plain_launch_receipt() {
     assert_eq!(
         output,
         "\n\n\n\
-╓──○──╖ ╭─ CLEAN ROOM ─ v0.1.0-alpha.4.2 ─╮\n\
+╓──○──╖ ╭─ CLEAN ROOM ─ v0.2.0 ─╮\n\
 ║░░░░░║⠒│                               │\n\
 ║░░░░░║⠒│     Global AGENTS.md  off     │\n\
 ║░░░░░║⠒│     Global skills     off     │\n\
@@ -105,9 +105,7 @@ fn isolated_preview_styles_only_the_visual_hierarchy() {
     .join("\n");
 
     assert!(output.starts_with("\n\n\n\u{1b}[2m╓──○──╖\u{1b}[0m "));
-    assert!(
-        output.contains("\u{1b}[1;36mCLEAN ROOM\u{1b}[0m\u{1b}[2m ─ v0.1.0-alpha.4.2 ─╮\u{1b}[0m")
-    );
+    assert!(output.contains("\u{1b}[1;36mCLEAN ROOM\u{1b}[0m\u{1b}[2m ─ v0.2.0 ─╮\u{1b}[0m"));
     assert!(output.contains("\u{1b}[2m╙──○──╜ ╰───────────────────────────────╯\u{1b}[0m"));
     assert!(
         output.contains("\u{1b}[2m║░░░░░║⠒│\u{1b}[0m     \u{1b}[1mGlobal AGENTS.md\u{1b}[0m  off")
@@ -167,7 +165,7 @@ fn claude_preview_reports_only_proven_claude_boundaries() {
     assert!(output.contains("Auto memory"));
     assert!(output.contains("Project skills   2 on"));
     assert_project_supports_centered(&output);
-    assert_eq!(output.matches("v0.1.0-alpha.4.2").count(), 1);
+    assert_eq!(output.matches("v0.2.0").count(), 1);
     for codex_only in [
         "Global AGENTS.md",
         "Apps",
@@ -228,7 +226,7 @@ fn isolated_preview_keeps_the_version_top_right_and_project_supports_symmetric()
     )
     .join("\n");
 
-    assert!(output.contains("╓──○──╖ ╭─ CLEAN ROOM ─ v0.1.0-alpha.4.2 ─╮"));
+    assert!(output.contains("╓──○──╖ ╭─ CLEAN ROOM ─ v0.2.0 ─╮"));
     let expected_attachment = [
         "╙──○──╜ ╰───────────╥───────╥───────────╯",
         "        ╭───────────╨───────╨───────────╮",
@@ -242,7 +240,7 @@ fn isolated_preview_keeps_the_version_top_right_and_project_supports_symmetric()
     );
 
     assert_project_supports_centered(&output);
-    assert_eq!(output.matches("v0.1.0-alpha.4.2").count(), 1);
+    assert_eq!(output.matches("v0.2.0").count(), 1);
     assert!(!output.contains("╭─ Project"));
 }
 
@@ -321,8 +319,8 @@ fn isolated_preview_uses_the_last_override_and_stops_at_double_dash() {
 
 #[test]
 fn launch_contract_reports_boundary_expansion_unknown_syntax_and_model_neutrality() {
+    use clroom::adapters::claude::managed::Presence;
     use launch_contract::{BoundaryState, LaunchContract};
-    use taskseal::adapters::claude::managed::Presence;
 
     let codex_expansions = [
         vec!["-c", "features.apps=true"],

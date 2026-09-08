@@ -10,7 +10,7 @@ fn fixture(name: &str) -> PathBuf {
 
 #[test]
 fn changing_body_during_read_refuses_with_stable_reason() {
-    let root = std::env::temp_dir().join(format!("taskseal-changing-{}", std::process::id()));
+    let root = std::env::temp_dir().join(format!("clroom-changing-{}", std::process::id()));
     let skill = root.join("alpha");
     std::fs::create_dir_all(&skill).unwrap();
     std::fs::write(
@@ -41,7 +41,7 @@ fn changing_body_during_read_refuses_with_stable_reason() {
 #[test]
 fn unreadable_body_refuses_instead_of_disappearing() {
     use std::os::unix::fs::PermissionsExt;
-    let scratch = std::env::temp_dir().join(format!("taskseal-unreadable-{}", std::process::id()));
+    let scratch = std::env::temp_dir().join(format!("clroom-unreadable-{}", std::process::id()));
     let skill = scratch.join("skill");
     std::fs::create_dir_all(&skill).unwrap();
     std::fs::write(
@@ -111,7 +111,7 @@ fn inventories_provider_native_skill_md_frontmatter_without_sidecar() {
 
 #[test]
 fn native_frontmatter_handles_quotes_blocks_bom_crlf_and_enforces_directory_name() {
-    let root = std::env::temp_dir().join(format!("taskseal-frontmatter-{}", std::process::id()));
+    let root = std::env::temp_dir().join(format!("clroom-frontmatter-{}", std::process::id()));
     let skill = root.join("quoted-skill");
     std::fs::create_dir_all(&skill).unwrap();
     std::fs::write(
@@ -155,7 +155,7 @@ fn native_frontmatter_handles_quotes_blocks_bom_crlf_and_enforces_directory_name
 
 #[test]
 fn native_frontmatter_uses_yaml_escaped_scalars_and_comments() {
-    let root = std::env::temp_dir().join(format!("taskseal-yaml-{}", std::process::id()));
+    let root = std::env::temp_dir().join(format!("clroom-yaml-{}", std::process::id()));
     let skill = root.join("yaml-skill");
     std::fs::create_dir_all(&skill).unwrap();
     std::fs::write(

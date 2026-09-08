@@ -55,6 +55,17 @@ That may be the simpler answer when the desired change is permanent.
 
 CLROOM is aimed at session-specific selection without editing the normal setup.
 
+## What does `codex exec --ignore-user-config` do?
+
+Codex provides `codex exec --ignore-user-config` as a native non-interactive
+way to suppress user configuration for an exec task. Use it directly when
+that broad suppression is exactly what you need.
+
+CLROOM preflights this capability and injects the flag for its qualified
+`codex exec` path, while preserving its selective filesystem restrictions and
+selected-skill inventory. CLROOM does not claim interactive Codex
+qualification; interactive paths remain fail-closed.
+
 ## Is CLROOM a way around managed Codex controls?
 
 No.
@@ -70,4 +81,4 @@ Administrator-managed behavior belongs to a different control plane from the per
 
 The `developers.openai.com` Codex URLs can redirect to their current ChatGPT Learn canonical pages.
 
-Last verified against current OpenAI documentation: **2026-08-28**.
+Last verified against current OpenAI documentation: **2026-09-07**.

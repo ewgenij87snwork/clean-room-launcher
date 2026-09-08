@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://taskseal.org/schemas/l2.v2.json",
+  "$id": "https://clroom.org/schemas/l2.v2.json",
   "type": "object",
   "additionalProperties": false,
   "required": ["schema_version", "scope_id", "scope_kind", "parent_scope_ids", "sections", "provenance", "approval", "source_hashes"],

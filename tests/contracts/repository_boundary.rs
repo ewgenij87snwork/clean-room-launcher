@@ -38,36 +38,36 @@ fn repository_is_an_independent_non_main_sibling() {
                 .as_array()
                 .expect("excluded internal paths are listed")
                 .iter()
-                .any(|path| path == ".taskseal-dev")
+                .any(|path| path == ".clroom-dev")
         );
         return;
     }
     let authority: serde_json::Value = serde_json::from_slice(
-        &std::fs::read(".taskseal-dev/execution-authority.json").expect("private authority"),
+        &std::fs::read(".clroom-dev/execution-authority.json").expect("private authority"),
     )
     .expect("valid authority JSON");
     let repository = PathBuf::from(authority["repository_realpath"].as_str().unwrap());
     let checkpoint = PathBuf::from(authority["plan_checkpoint_path"].as_str().unwrap());
-    let owner_taskseal_root = checkpoint.parent().unwrap().parent().unwrap();
+    let owner_clroom_root = checkpoint.parent().unwrap().parent().unwrap();
 
     assert_eq!(
         git(&worktree, &["rev-parse", "--show-toplevel"]),
         worktree.display().to_string()
     );
     assert_ne!(git(&worktree, &["branch", "--show-current"]), "main");
-    assert!(!repository.starts_with(owner_taskseal_root));
-    assert!(!owner_taskseal_root.starts_with(&repository));
+    assert!(!repository.starts_with(owner_clroom_root));
+    assert!(!owner_clroom_root.starts_with(&repository));
     assert_ne!(
         git(&worktree, &["rev-parse", "--git-common-dir"]),
-        owner_taskseal_root.display().to_string()
+        owner_clroom_root.display().to_string()
     );
 }
 
 #[test]
 fn nested_and_main_boundaries_are_refused() {
     assert!(
-        taskseal::contracts::repository::validate_boundary(
-            Path::new("/tmp/taskseal"),
+        clroom::contracts::repository::validate_boundary(
+            Path::new("/tmp/clroom"),
             Path::new("/tmp/wisdom"),
             "feat/p02-contracts",
             false,
@@ -75,8 +75,8 @@ fn nested_and_main_boundaries_are_refused() {
         .is_ok()
     );
     assert!(
-        taskseal::contracts::repository::validate_boundary(
-            Path::new("/tmp/wisdom/taskseal"),
+        clroom::contracts::repository::validate_boundary(
+            Path::new("/tmp/wisdom/clroom"),
             Path::new("/tmp/wisdom"),
             "feat/p02-contracts",
             false,
@@ -84,8 +84,8 @@ fn nested_and_main_boundaries_are_refused() {
         .is_err()
     );
     assert!(
-        taskseal::contracts::repository::validate_boundary(
-            Path::new("/tmp/taskseal"),
+        clroom::contracts::repository::validate_boundary(
+            Path::new("/tmp/clroom"),
             Path::new("/tmp/wisdom"),
             "main",
             false,
@@ -93,8 +93,8 @@ fn nested_and_main_boundaries_are_refused() {
         .is_err()
     );
     assert!(
-        taskseal::contracts::repository::validate_boundary(
-            Path::new("/tmp/taskseal"),
+        clroom::contracts::repository::validate_boundary(
+            Path::new("/tmp/clroom"),
             Path::new("/tmp/wisdom"),
             "feat/p02-contracts",
             true,

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Render the closed, private P07 local Homebrew Formula."""
+"""Render the closed, private CLROOM_PACKAGING local Homebrew Formula."""
 from __future__ import annotations
 
 import argparse
@@ -43,7 +43,7 @@ def validate_contract(value: object) -> dict:
     if not isinstance(value, dict) or set(value) != {"schema_version", "evidence_class", "archive", "artifact", "host"}:
         refuse()
     archive, artifact, host = value["archive"], value["artifact"], value["host"]
-    if value["schema_version"] != "taskseal.p07.homebrew-input.v1" or value["evidence_class"] != "real-current":
+    if value["schema_version"] != "clroom.packaging.homebrew-input.v1" or value["evidence_class"] != "real-current":
         refuse()
     if not isinstance(archive, dict) or set(archive) != {"filename", "sha256", "size"}:
         refuse()
@@ -57,7 +57,7 @@ def validate_contract(value: object) -> dict:
         refuse()
     if not isinstance(artifact["clroom_sha256"], str) or not HEX64.fullmatch(artifact["clroom_sha256"]) or not isinstance(artifact["version"], str) or not VERSION.fullmatch(artifact["version"]):
         refuse()
-    if artifact["target"] != "aarch64-apple-darwin" or artifact["qualification"] != "NOT_QUALIFIED" or artifact["signing"] != "unsigned-preview-only":
+    if artifact["target"] != "aarch64-apple-darwin" or artifact["qualification"] != "NOT_QUALIFIED" or artifact["signing"] != "unsigned":
         refuse()
     if host["system"] != "Darwin" or host["machine"] != "arm64" or host["macho_arch"] != "arm64" or host["homebrew_symbol"] not in MACOS:
         refuse()
@@ -135,9 +135,9 @@ def main() -> int:
         rendered = render(load_contract(Path(args.input_contract)), args.formula_id, args.artifact_url)
         atomic_write(Path(args.output), rendered)
     except FormulaRefused as exc:
-        print("P07_HOMEBREW_FORMULA_REFUSED:" + exc.code, file=sys.stderr)
+        print("CLROOM_PACKAGING_HOMEBREW_FORMULA_REFUSED:" + exc.code, file=sys.stderr)
         return 1
-    print("P07_HOMEBREW_FORMULA_PASS sha256=" + hashlib.sha256(rendered).hexdigest())
+    print("CLROOM_PACKAGING_HOMEBREW_FORMULA_PASS sha256=" + hashlib.sha256(rendered).hexdigest())
     return 0
 
 if __name__ == "__main__":

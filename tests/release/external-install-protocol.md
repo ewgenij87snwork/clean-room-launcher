@@ -1,6 +1,6 @@
 # External clean-install protocol
 
-This protocol is controller-only evidence for canonical P08 Task 8. It is not
+This protocol is controller-only evidence for canonical CLROOM_RELEASE Task 8. It is not
 provided to the tester and must not be used to coach or repair the public
 README path.
 

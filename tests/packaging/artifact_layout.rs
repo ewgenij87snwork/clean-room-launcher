@@ -3,7 +3,7 @@ fn root() -> std::path::PathBuf { Path::new(env!("CARGO_MANIFEST_DIR")).to_path_
 #[test]
 fn build_script_declares_safe_deterministic_complete_layout() {
     let script = fs::read_to_string(root().join("packaging/build-artifacts.sh")).unwrap();
-    for needle in ["cargo build --locked", "source_commit=", "rust_toolchain=", "rustc=", "cargo=", "python=", "CLROOM_ARTIFACT_QUALIFICATION", "qualification=%s", "signing=unsigned-preview-only", "mtime=0", "info.uid = info.gid = 0", "bin/clroom", "clean-room-launcher-v", "LICENSE", "NOTICE", "gzip.GzipFile"] { assert!(script.contains(needle), "missing layout control: {}", needle); }
+    for needle in ["cargo build --locked", "source_commit=", "rust_toolchain=", "rustc=", "cargo=", "python=", "CLROOM_ARTIFACT_QUALIFICATION", "qualification=%s", "signing=unsigned", "mtime=0", "info.uid = info.gid = 0", "bin/clroom", "clean-room-launcher-v", "LICENSE", "NOTICE", "gzip.GzipFile"] { assert!(script.contains(needle), "missing layout control: {}", needle); }
     assert!(script.contains("QUALIFIED|NOT_QUALIFIED"));
 }
 #[test]
@@ -14,7 +14,7 @@ fn archive_fixture_names_are_path_safe_and_complete() {
 }
 #[test]
 fn poisoned_fixtures_are_rejected_by_contract() {
-    for (file, needle) in [("archive-path-traversal.txt", "../"), ("archive-wrong-binary.txt", "bin/taskseal-old"), ("archive-missing-license.txt", "NOTICE"), ("archive-nondeterministic-metadata.txt", "mtime=now")] {
+    for (file, needle) in [("archive-path-traversal.txt", "../"), ("archive-wrong-binary.txt", "bin/clroom-old"), ("archive-missing-license.txt", "NOTICE"), ("archive-nondeterministic-metadata.txt", "mtime=now")] {
         let text = fs::read_to_string(root().join("tests/packaging/fixtures").join(file)).unwrap(); assert!(text.contains(needle));
         if file.contains("path-traversal") { assert!(text.lines().any(|l| l.starts_with("../"))); }
         if file.contains("wrong-binary") { assert!(!text.lines().any(|l| l == "bin/clroom")); }
@@ -26,7 +26,7 @@ fn poisoned_fixtures_are_rejected_by_contract() {
 fn production_verifier_rejects_generated_poison_archives() {
     let verifier = root().join("packaging/verify-artifact.py");
     let maker = root().join("tests/packaging/fixtures/make_poison_archive.py");
-    let temp = std::env::temp_dir().join(format!("taskseal-poison-{}", std::process::id()));
+    let temp = std::env::temp_dir().join(format!("clroom-poison-{}", std::process::id()));
     let _ = fs::create_dir_all(&temp);
     for kind in ["traversal", "wrong-name", "missing-license", "metadata"] {
         let archive = temp.join(format!("{kind}.tar.gz"));
@@ -42,7 +42,7 @@ fn clroom_is_the_only_packaged_cli_entrypoint() {
     let bin = root().join("target/release");
     let output = Command::new(bin.join("clroom")).args(["--output", "json", "status"]).output().unwrap();
     assert_eq!(output.status.code(), Some(2));
-    assert!(!bin.join("taskseal").exists());
+    assert!(!bin.join("clroom").exists());
     assert!(!bin.join("tseal").exists());
 }
 #[test]

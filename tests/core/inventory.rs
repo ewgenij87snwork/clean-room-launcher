@@ -96,7 +96,7 @@ fn inventory_refuses_a_file_changed_after_opening() {
 }
 
 fn temp_root(name: &str) -> PathBuf {
-    let root = std::env::temp_dir().join(format!("taskseal-p03-{name}-{}", std::process::id()));
+    let root = std::env::temp_dir().join(format!("clroom-p03-{name}-{}", std::process::id()));
     let _ = fs::remove_dir_all(&root);
     root
 }

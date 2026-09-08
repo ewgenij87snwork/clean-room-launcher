@@ -7,6 +7,20 @@ Semantic Versioning after the first public release.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-09-07
+
+### Added
+
+- Qualified Codex exec launches with clean user configuration, provider-aware
+  selected-skill inventory, and fail-closed filesystem restrictions.
+- Canonical release readiness and SCA verification with SHA256SUMS, CycloneDX
+  SBOM, and GitHub attestations.
+
+### Security
+
+- Qualified for macOS on Apple Silicon; release artifacts remain unsigned and
+  unnotarized.
+
 ## [0.1.0-alpha.4.2] - 2026-08-24
 
 ### Fixed
@@ -21,8 +35,8 @@ Semantic Versioning after the first public release.
 
 - Revalidated provider executable identity and version immediately before each
   launch, with a closed allowlisted parent environment and truthful launch
-  status when the clean boundary cannot be established.
-- Hardened path, symlink, and selected-skill boundary checks for the qualified
+  status when the clean filesystem restrictions cannot be established.
+- Hardened path, symlink, and selected-skill filesystem checks for the qualified
   macOS provider paths.
 
 ### Fixed
@@ -82,7 +96,7 @@ Semantic Versioning after the first public release.
 ### Fixed
 
 - Native Codex skill discovery can enumerate known roots while unselected skill
-  contents remain outside the launch boundary.
+  contents remain outside the launch restrictions.
 - Duplicate selected global skills resolve once using Codex root precedence.
 
 ### Security
@@ -95,7 +109,7 @@ Semantic Versioning after the first public release.
 ### Added
 
 - One `--skill-set=` option for exact global skills, whole namespaces, exact
-  `namespace:skill` selectors, reusable named `@sets`, and mixed selections.
+  `namespace:skill` skill names, reusable named `@sets`, and mixed selections.
 - User-owned skill sets from `$XDG_CONFIG_HOME/clroom/skill-sets.yaml` or
   `~/.config/clroom/skill-sets.yaml`; Clean Room Launcher reads this file only
   when an `@set` is requested and never creates or rewrites it.
@@ -108,7 +122,7 @@ Semantic Versioning after the first public release.
 
 ### Security
 
-- Unknown, malformed, nested, unsafe-path, and ambiguous selectors fail before
+- Unknown, malformed, nested, unsafe-path, and ambiguous skill choices fail before
   Codex starts.
 
 ## [0.1.0-alpha.1] - 2026-08-21
@@ -117,7 +131,7 @@ Semantic Versioning after the first public release.
 
 - `clroom codex [ARGS...]` for the locally installed Codex CLI on macOS/Apple
   Silicon.
-- A macOS Seatbelt boundary that blocks global Codex instructions and known
+- A macOS Seatbelt policy that blocks global Codex instructions and known
   ambient skill roots while retaining project access.
 - Clean launch defaults for apps, hooks, plugins, developer instructions and
   notifications, with explicit user arguments retaining final priority.
@@ -125,8 +139,8 @@ Semantic Versioning after the first public release.
 
 ### Changed
 
-- The pre-launch screen is a compact boundary status plaque that reports the
-  enforced global boundary and temporary Codex defaults without delaying exec.
+- The pre-launch screen is a compact status plaque that reports the enforced
+  filesystem restrictions and temporary Codex defaults without delaying exec.
 
 ### Deprecated
 

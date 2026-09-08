@@ -221,7 +221,7 @@ fn claude_projection_exposes_only_selected_skills_as_live_native_links() {
     fs::set_permissions(&helper, fs::Permissions::from_mode(0o700)).unwrap();
 
     let projection =
-        taskseal::adapters::claude::projection::project(&home, &["arrow".to_owned()]).unwrap();
+        clroom::adapters::claude::projection::project(&home, &["arrow".to_owned()]).unwrap();
     let selected = projection.add_dir.join(".claude/skills/arrow");
     let projected_helper = selected.join("run.sh");
 
@@ -264,7 +264,7 @@ fn claude_projection_exposes_only_selected_skills_as_live_native_links() {
 fn claude_projection_provider_view_is_canonical_and_inside_storage() {
     let (_root, _project, home, _bin, _capture) = fixture();
     let projection =
-        taskseal::adapters::claude::projection::project(&home, &["arrow".to_owned()]).unwrap();
+        clroom::adapters::claude::projection::project(&home, &["arrow".to_owned()]).unwrap();
 
     assert_eq!(
         projection.add_dir,
@@ -321,8 +321,7 @@ fn claude_projection_accepts_a_complete_plugin_namespace_from_claude_cache() {
     .unwrap();
 
     let projection =
-        taskseal::adapters::claude::projection::project(&home, &["superpowers".to_owned()])
-            .unwrap();
+        clroom::adapters::claude::projection::project(&home, &["superpowers".to_owned()]).unwrap();
 
     assert_eq!(projection.selected_global_skills, 2);
     assert!(
@@ -345,9 +344,9 @@ fn claude_projections_are_session_scoped_and_drop_never_removes_skill_sources() 
     let source = home.join(".claude/skills/arrow");
 
     let first =
-        taskseal::adapters::claude::projection::project(&home, &["arrow".to_owned()]).unwrap();
+        clroom::adapters::claude::projection::project(&home, &["arrow".to_owned()]).unwrap();
     let second =
-        taskseal::adapters::claude::projection::project(&home, &["arrow".to_owned()]).unwrap();
+        clroom::adapters::claude::projection::project(&home, &["arrow".to_owned()]).unwrap();
     let first_add_dir = first.add_dir.clone();
     let second_add_dir = second.add_dir.clone();
 
@@ -518,7 +517,7 @@ fn claude_projection_reaps_only_marked_dead_clroom_residue() {
     .unwrap();
 
     let projection =
-        taskseal::adapters::claude::projection::project(&home, &["arrow".to_owned()]).unwrap();
+        clroom::adapters::claude::projection::project(&home, &["arrow".to_owned()]).unwrap();
 
     assert!(
         !dead.exists(),
@@ -734,7 +733,7 @@ fn native_claude_accepts_the_materialized_skill_add_dir() {
         .expect("set CLROOM_NATIVE_CLAUDE_BIN to the installed Claude executable");
     let (_root, _project, home, _bin, _capture) = fixture();
     let projection =
-        taskseal::adapters::claude::projection::project(&home, &["arrow".to_owned()]).unwrap();
+        clroom::adapters::claude::projection::project(&home, &["arrow".to_owned()]).unwrap();
 
     let output = Command::new(claude)
         .arg("--add-dir")
@@ -752,7 +751,7 @@ fn native_claude_accepts_the_materialized_skill_add_dir() {
 
 #[test]
 fn managed_policy_probe_reports_presence_without_reading_policy_contents() {
-    use taskseal::adapters::claude::managed::{Presence, probe_paths};
+    use clroom::adapters::claude::managed::{Presence, probe_paths};
 
     let root = Scratch::new();
     let absent = root.join("absent-managed-policy.json");

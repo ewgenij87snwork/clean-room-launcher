@@ -18,11 +18,11 @@ use std::io::{IsTerminal, Write};
 use std::path::PathBuf;
 use std::process::ExitCode;
 
-use taskseal::adapters::claude::isolation::{
+use clroom::adapters::claude::isolation::{
     IsolationError as ClaudeIsolationError, plan as plan_claude,
 };
-use taskseal::adapters::claude::projection::{ProjectionError, project};
-use taskseal::adapters::codex::isolation::{IsolationError, IsolationInputs, plan_with_skills};
+use clroom::adapters::claude::projection::{ProjectionError, project};
+use clroom::adapters::codex::isolation::{IsolationError, IsolationInputs, plan_with_skills};
 
 pub fn run(invoked_as: &str, args: impl IntoIterator<Item = String>) -> ExitCode {
     let mut source = args.into_iter();
@@ -253,7 +253,7 @@ fn launch_isolated_claude(args: &[String]) -> Result<ExitCode, String> {
     let mut contract = launch_contract::LaunchContract::claude(
         &provider_args,
         &projection.add_dir,
-        taskseal::adapters::claude::managed::probe(),
+        clroom::adapters::claude::managed::probe(),
     );
     let executable = match process::resolve_claude_executable() {
         Ok(executable) => executable,

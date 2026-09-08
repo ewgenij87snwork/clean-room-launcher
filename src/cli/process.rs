@@ -6,15 +6,15 @@ use std::{
     process::{Command, ExitCode, Stdio},
 };
 
-use taskseal::adapters::claude::{
+use clroom::adapters::claude::{
     isolation::IsolationPlan as ClaudeIsolationPlan, projection::Projection,
 };
-use taskseal::adapters::codex::isolation::{IsolationInputs, IsolationPlan, plan_with_skills};
-use taskseal::adapters::{
+use clroom::adapters::codex::isolation::{IsolationInputs, IsolationPlan, plan_with_skills};
+use clroom::adapters::{
     identity::{ProviderIdentity, resolve_identity, revalidate_identity},
     session::ProviderNativePreauthenticatedSession,
 };
-use taskseal::contracts::adapter::parse_declaration;
+use clroom::contracts::adapter::parse_declaration;
 
 use super::launch_contract::{CodexInvocation, LaunchContract, classify_codex_invocation};
 

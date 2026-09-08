@@ -1,4 +1,4 @@
-use taskseal::adapters::{
+use clroom::adapters::{
     environment::{
         EnvironmentPolicy, LaunchEnvironment, ProviderNativePreauthenticatedSession, ProxyMode,
         build_environment,

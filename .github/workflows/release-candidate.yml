@@ -1,0 +1,69 @@
+name: Release candidate readiness
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  release-readiness:
+    name: CLROOM v0.2.0 release readiness
+    runs-on: macos-14
+    steps:
+      - name: Check out exact PR HEAD
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Provision existing Python supply-chain verifier
+        shell: bash
+        run: |
+          set -euo pipefail
+          verifier_root="$RUNNER_TEMP/clroom-supply-chain-verifier"
+          python3 -m venv "$verifier_root"
+          "$verifier_root/bin/python" -m pip install --disable-pip-version-check --no-input \
+            "jsonschema==4.26.0"
+          echo "$verifier_root/bin" >> "$GITHUB_PATH"
+          test "$("$verifier_root/bin/python" -c 'import importlib.metadata; print(importlib.metadata.version("jsonschema"))')" = "4.26.0"
+      - name: Install cargo-deny 0.20.2 verification tool
+        shell: bash
+        run: |
+          set -euo pipefail
+          asset=""
+          expected=""
+          case "$(uname -m)" in
+            arm64)
+              asset="cargo-deny-0.20.2-aarch64-apple-darwin.tar.gz"
+              expected="fe67d82a10d8597a3549364cb733a3f9cc1bfff9031b7ae46384a9f2a72090c3"
+              ;;
+            x86_64)
+              asset="cargo-deny-0.20.2-x86_64-apple-darwin.tar.gz"
+              expected="248da7f581724e470071990c088ffc55c811981715f4cbdb258621fb79f8b7a6"
+              ;;
+            *)
+              echo "unsupported runner architecture: $(uname -m)" >&2
+              exit 1
+              ;;
+          esac
+          archive="$RUNNER_TEMP/$asset"
+          curl --fail --location --silent --show-error --retry 3 \
+            --output "$archive" \
+            "https://github.com/EmbarkStudios/cargo-deny/releases/download/0.20.2/$asset"
+          actual="$(shasum -a 256 "$archive" | awk '{print $1}')"
+          test "$actual" = "$expected"
+          tool_root="$RUNNER_TEMP/cargo-deny-0.20.2"
+          mkdir -p "$tool_root"
+          tar -xzf "$archive" -C "$tool_root"
+          tool="$(find "$tool_root" -type f -name cargo-deny -print -quit)"
+          test -n "$tool"
+          tool_dir="$RUNNER_TEMP/cargo-deny-bin"
+          mkdir -p "$tool_dir"
+          install -m 0755 "$tool" "$tool_dir/cargo-deny"
+          echo "$tool_dir" >> "$GITHUB_PATH"
+          test "$("$tool_dir/cargo-deny" --version)" = "cargo-deny 0.20.2"
+      - name: Run canonical fail-closed gate
+        env:
+          CLROOM_RELEASE_VERSION: 0.2.0
+        run: scripts/release/readiness.sh

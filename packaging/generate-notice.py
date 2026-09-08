@@ -20,7 +20,7 @@ HEX64 = re.compile(r"[0-9a-f]{64}\Z")
 
 
 def refuse(code: str) -> None:
-    raise SystemExit("P07_DEPENDENCY_NOTICE_REFUSED:" + code)
+    raise SystemExit("CLROOM_DEPENDENCY_NOTICE_REFUSED:" + code)
 
 
 def digest(data: bytes) -> str:
@@ -79,7 +79,7 @@ def metadata() -> dict:
 
 def load_fallbacks() -> dict[str, dict]:
     policy = strict_json(POLICY_PATH)
-    if set(policy) != {"schema_version", "canonical_fallbacks"} or policy["schema_version"] != "taskseal.p07.dependency-notice-policy.v1":
+    if set(policy) != {"schema_version", "canonical_fallbacks"} or policy["schema_version"] != "clroom.dependency-notice-policy.v2":
         refuse("POLICY_IDENTITY")
     fallbacks = policy["canonical_fallbacks"]
     if not isinstance(fallbacks, list):
@@ -204,7 +204,7 @@ def generate(output: Path) -> int:
     finally:
         if os.path.exists(temporary):
             os.unlink(temporary)
-    print(f"P07_DEPENDENCY_NOTICE_PASS components={len(packages)}")
+    print(f"CLROOM_DEPENDENCY_NOTICE_PASS components={len(packages)}")
     return 0
 
 

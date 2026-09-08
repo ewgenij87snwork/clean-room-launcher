@@ -17,8 +17,8 @@ def pair(directory: Path) -> dict[str, object]:
     for version in ("0.0.1", "0.0.2"):
         name = f"clean-room-launcher-v{version}-aarch64-apple-darwin.tar.gz"; records.append({"version": version, "filename": name, "sha256": make(directory / name, version), "evidence_class": "lifecycle-fixture"})
     if records[0]["sha256"] == records[1]["sha256"]: raise RuntimeError("fixture archive collision")
-    value = {"schema_version": "taskseal.p07.homebrew-fixtures.v1", "archives": records}; (directory / "fixture-archives.json").write_text(json.dumps(value, sort_keys=True, separators=(",", ":")) + "\n", encoding="utf-8"); return value
+    value = {"schema_version": "clroom.packaging.homebrew-fixtures.v1", "archives": records}; (directory / "fixture-archives.json").write_text(json.dumps(value, sort_keys=True, separators=(",", ":")) + "\n", encoding="utf-8"); return value
 
 def main() -> int:
-    parser = argparse.ArgumentParser(); parser.add_argument("--output-dir", required=True); args = parser.parse_args(); pair(Path(args.output_dir)); print("P07_HOMEBREW_FIXTURE_ARCHIVES_PASS"); return 0
+    parser = argparse.ArgumentParser(); parser.add_argument("--output-dir", required=True); args = parser.parse_args(); pair(Path(args.output_dir)); print("CLROOM_PACKAGING_HOMEBREW_FIXTURE_ARCHIVES_PASS"); return 0
 if __name__ == "__main__": raise SystemExit(main())

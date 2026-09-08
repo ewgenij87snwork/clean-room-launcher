@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Stateful, workspace-confined fake brew for P07 process tests only."""
+"""Stateful, workspace-confined fake brew for CLROOM_PACKAGING process tests only."""
 from __future__ import annotations
 import json, os, sys
 import urllib.request
 from pathlib import Path
 
-root = Path(os.environ["P07_FAKE_ROOT"]).resolve(); prefix = root / "prefix"; argv = sys.argv[1:]; scenario = os.environ.get("P07_SCENARIO", "")
+root = Path(os.environ["CLROOM_PACKAGING_FAKE_ROOT"]).resolve(); prefix = root / "prefix"; argv = sys.argv[1:]; scenario = os.environ.get("CLROOM_PACKAGING_SCENARIO", "")
 credential_words = ("TOKEN", "SECRET", "PASSWORD", "CREDENTIAL", "KEY")
 if not argv or Path(os.environ.get("HOMEBREW_PREFIX", "")).resolve() != prefix or os.environ.get("HOME") != str(root / "home") or os.environ.get("PATH") != f"{root / 'poison'}:/usr/bin:/bin:/usr/sbin:/sbin" or any(any(word in key.upper() for word in credential_words) for key in os.environ): raise SystemExit(2)
 if scenario == "require_portable_ruby" and not (Path(os.environ["HOMEBREW_REPOSITORY"]) / "Library/Homebrew/vendor/portable-ruby/current/bin/ruby").is_file(): raise SystemExit(2)
@@ -16,7 +16,7 @@ if scenario == "require_rendered_formula":
 ledger = root / "ledger.jsonl"; ledger.parent.mkdir(parents=True, exist_ok=True)
 with ledger.open("a", encoding="utf-8") as out: out.write(json.dumps({"argv": argv}, sort_keys=True, separators=(",", ":")) + "\n")
 state_path = root / "state.json"; state = json.loads(state_path.read_text()) if state_path.exists() else {"tap": False, "trusted": [], "installed": []}
-formulae = {"taskseal-local/preview/clroom-preview", "taskseal-local/preview/clroom-preview@0.0.1"}
+formulae = {"clroom-local/preview/clroom-preview", "clroom-local/preview/clroom-preview@0.0.1"}
 if argv in (["--prefix"], ["--repository"]):
     if scenario == "reported_prefix_mismatch" and argv == ["--prefix"] or scenario == "reported_repository_mismatch" and argv == ["--repository"]: print(root / "live")
     else: print(prefix)
@@ -28,12 +28,12 @@ elif argv[:2] in (["trust", "--formula"], ["untrust", "--formula"]):
 elif argv[0] == "tap":
     if scenario == "tap_clone_failed":
         print("fatal: local clone failed", file=sys.stderr); raise SystemExit(2)
-    if argv[:2] != ["tap", "taskseal-local/preview"] or len(argv) != 3 or not Path(argv[2]).resolve().is_relative_to(root) or os.environ.get("HOMEBREW_ALLOWED_TAPS") != argv[2]: raise SystemExit(2)
+    if argv[:2] != ["tap", "clroom-local/preview"] or len(argv) != 3 or not Path(argv[2]).resolve().is_relative_to(root) or os.environ.get("HOMEBREW_ALLOWED_TAPS") != argv[2]: raise SystemExit(2)
     state["tap"] = True
 elif argv[0] in {"style", "audit", "test", "upgrade", "unlink", "link", "install", "uninstall"}:
     item = argv[-1]
     if scenario == "require_native_install_boundary" and argv[0] in {"install", "upgrade", "test"}:
-        if os.environ.get("P07_NETWORK_BOUNDARY") != "homebrew-native-sandbox-loopback-proxy" or "HOMEBREW_AVOID_NESTED_SANDBOXING" in os.environ: raise SystemExit(2)
+        if os.environ.get("CLROOM_PACKAGING_NETWORK_BOUNDARY") != "homebrew-native-sandbox-loopback-proxy" or "HOMEBREW_AVOID_NESTED_SANDBOXING" in os.environ: raise SystemExit(2)
         if argv[0] == "test": print("Error: metadata network unavailable", file=sys.stderr); raise SystemExit(2)
     if item not in formulae or (argv[0] in {"install", "upgrade"} and item not in state["trusted"]): raise SystemExit(2)
     if scenario == "install_archive_fetch_failed" and argv[0] == "install":
@@ -57,7 +57,7 @@ exit 2
     if argv[0] == "uninstall" and scenario != "partial_uninstall": state["installed"] = [x for x in state["installed"] if x != item]; shutil_target = prefix / "Cellar" / item.rsplit("/", 1)[-1];
     if argv[0] == "uninstall" and scenario != "partial_uninstall":
         import shutil; shutil.rmtree(prefix / "Cellar" / item.rsplit("/", 1)[-1], ignore_errors=True)
-elif argv == ["untap", "taskseal-local/preview"]:
+elif argv == ["untap", "clroom-local/preview"]:
     if scenario == "cleanup_failure": raise SystemExit(2)
     state["tap"] = False
 else: raise SystemExit(2)

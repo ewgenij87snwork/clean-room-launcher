@@ -1,6 +1,6 @@
 use std::{collections::BTreeSet, path::Path};
 
-use taskseal::adapters::claude::managed::Presence;
+use clroom::adapters::claude::managed::Presence;
 
 const CODEX_CLEAN_DEFAULTS: &[&str] = &[
     "-c",

@@ -1,5 +1,5 @@
 ---
-name: taskseal-outside-boundary
+name: clroom-outside-boundary
 description: Outside-boundary body is observed but not admitted.
 ---
-TASKSEAL_SKILL_BODY_OUTSIDE_91F2
+CLROOM_SKILL_BODY_OUTSIDE_91F2

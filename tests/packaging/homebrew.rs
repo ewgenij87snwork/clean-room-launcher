@@ -3,7 +3,7 @@ use std::{fs, path::Path, process::Command};
 fn root() -> std::path::PathBuf { Path::new(env!("CARGO_MANIFEST_DIR")).to_path_buf() }
 
 fn run(name: &str, scenario: Option<&str>, injected: Option<&str>) -> (bool, String, String, String) {
-    let temp = std::env::temp_dir().join(format!("p07-homebrew-{name}-{}", std::process::id()));
+    let temp = std::env::temp_dir().join(format!("clroom-packaging-homebrew-{name}-{}", std::process::id()));
     let _ = fs::remove_dir_all(&temp);
     fs::create_dir_all(&temp).unwrap();
     let result = temp.join("result.json");
@@ -25,7 +25,7 @@ fn fake_lifecycle_executes_each_approved_transition_and_cleans_up() {
     assert!(json.contains("\"cleanup_complete\":true"));
     assert!(json.contains("\"poison_provider_absent\":true"), "poison capture was not mechanically observed: {}", json);
     assert!(!json.contains("raw_output") && !json.contains("/Users/"));
-    assert_eq!(marker, "P07_HOMEBREW_LIFECYCLE_TEST_PASS\n");
+    assert_eq!(marker, "CLROOM_PACKAGING_HOMEBREW_LIFECYCLE_TEST_PASS\n");
 }
 
 #[test]
@@ -58,7 +58,7 @@ fn fake_lifecycle_closed_refusal_matrix_is_canonical_and_cleanup_owned() {
         ("unexpected_installed_path", "INSTALL_REFUSED"),
         ("smoke_refusal", "INSTALL_REFUSED"),
         ("config_mutation", "CONFIG_MUTATION_REFUSED"),
-        ("sentinel_taskseal_mutation", "CONFIG_MUTATION_REFUSED"),
+        ("sentinel_clroom_mutation", "CONFIG_MUTATION_REFUSED"),
         ("sentinel_provider_mutation", "CONFIG_MUTATION_REFUSED"),
         ("sentinel_git_mutation", "CONFIG_MUTATION_REFUSED"),
         ("sentinel_homebrew_mutation", "CONFIG_MUTATION_REFUSED"),
@@ -74,7 +74,7 @@ fn fake_lifecycle_closed_refusal_matrix_is_canonical_and_cleanup_owned() {
         if scenario == "tap_clone_failed" { assert!(json.contains("\"diagnostic\":\"tap_clone_refused\""), "{}: {}", scenario, json); }
         if scenario == "smoke_refusal" { assert!(json.contains("\"diagnostic\":\"smoke_formula_test_sandbox_refused\""), "{}: {}", scenario, json); }
         if !scenario.starts_with("reported_") {
-            assert!(ledger.contains("[\"untap\",\"taskseal-local/preview\"]"), "{} did not run cleanup: {}", scenario, ledger);
+            assert!(ledger.contains("[\"untap\",\"clroom-local/preview\"]"), "{} did not run cleanup: {}", scenario, ledger);
         }
         if scenario == "cleanup_failure" || scenario == "partial_uninstall" || scenario.starts_with("reported_") { assert!(json.contains("\"cleanup_complete\":false")); }
         else { assert!(json.contains("\"cleanup_complete\":true"), "{}: {}", scenario, json); }
@@ -83,7 +83,7 @@ fn fake_lifecycle_closed_refusal_matrix_is_canonical_and_cleanup_owned() {
 
 #[test]
 fn fixture_archive_pair_is_deterministic_distinct_and_executable_parity() {
-    let temp = std::env::temp_dir().join(format!("p07-fixture-pair-{}", std::process::id()));
+    let temp = std::env::temp_dir().join(format!("clroom-packaging-fixture-pair-{}", std::process::id()));
     let _ = fs::remove_dir_all(&temp);
     let generator = root().join("tests/packaging/fixtures/homebrew/make_fixture_archives.py");
     let output = Command::new("python3").args([generator.to_str().unwrap(), "--output-dir", temp.to_str().unwrap()]).output().unwrap();
@@ -108,7 +108,7 @@ for path, version in zip(sys.argv[1:], ('0.0.1', '0.0.2')):
 
 #[test]
 fn real_mode_prepares_only_a_disposable_local_git_source_and_real_current_evidence() {
-    let temp = std::env::temp_dir().join(format!("p07-real-preparation-{}", std::process::id()));
+    let temp = std::env::temp_dir().join(format!("clroom-packaging-real-preparation-{}", std::process::id()));
     let _ = fs::remove_dir_all(&temp);
     let source = temp.join("source");
     fs::create_dir_all(source.join("bin")).unwrap();
@@ -116,7 +116,7 @@ fn real_mode_prepares_only_a_disposable_local_git_source_and_real_current_eviden
     fs::copy(fake, source.join("bin/brew")).unwrap();
     let chmod = Command::new("chmod").args(["755", source.join("bin/brew").to_str().unwrap()]).status().unwrap();
     assert!(chmod.success());
-    for args in [["init"].as_slice(), ["add", "."].as_slice(), ["-c", "user.name=p07", "-c", "user.email=p07@example.invalid", "commit", "-m", "fixture"].as_slice()] {
+    for args in [["init"].as_slice(), ["add", "."].as_slice(), ["-c", "user.name=clroom-packaging", "-c", "user.email=clroom-packaging@example.invalid", "commit", "-m", "fixture"].as_slice()] {
         assert!(Command::new("git").current_dir(&source).args(args).status().unwrap().success());
     }
     let portable = source.join("Library/Homebrew/vendor/portable-ruby/fixture/bin");
@@ -138,9 +138,9 @@ fn real_mode_prepares_only_a_disposable_local_git_source_and_real_current_eviden
     let digest = String::from_utf8(Command::new("shasum").args(["-a", "256", archive.to_str().unwrap()]).output().unwrap().stdout).unwrap().split_whitespace().next().unwrap().to_owned();
     let next_digest = String::from_utf8(Command::new("shasum").args(["-a", "256", next_archive.to_str().unwrap()]).output().unwrap().stdout).unwrap().split_whitespace().next().unwrap().to_owned();
     let input = temp.join("input-contract.json");
-    fs::write(&input, format!(r#"{{"schema_version":"taskseal.p07.homebrew-input.v1","evidence_class":"real-current","archive":{{"filename":"clean-room-launcher-v0.0.1-aarch64-apple-darwin.tar.gz","sha256":"{digest}","size":1}},"artifact":{{"version":"0.0.1","source_commit":"1111111111111111111111111111111111111111","target":"aarch64-apple-darwin","qualification":"NOT_QUALIFIED","signing":"unsigned-preview-only","root":"clean-room-launcher-v0.0.1-aarch64-apple-darwin","members":["LICENSE","NOTICE","VERSION","bin/clroom","share/doc/clean-room-launcher/CHANGELOG.md"],"clroom_sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}},"host":{{"system":"Darwin","machine":"arm64","macho_arch":"arm64","minimum_macos":"13.0","homebrew_symbol":"ventura"}}}}"#)).unwrap();
+    fs::write(&input, format!(r#"{{"schema_version":"clroom.packaging.homebrew-input.v1","evidence_class":"real-current","archive":{{"filename":"clean-room-launcher-v0.0.1-aarch64-apple-darwin.tar.gz","sha256":"{digest}","size":1}},"artifact":{{"version":"0.0.1","source_commit":"1111111111111111111111111111111111111111","target":"aarch64-apple-darwin","qualification":"NOT_QUALIFIED","signing":"unsigned","root":"clean-room-launcher-v0.0.1-aarch64-apple-darwin","members":["LICENSE","NOTICE","VERSION","bin/clroom","share/doc/clean-room-launcher/CHANGELOG.md"],"clroom_sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}},"host":{{"system":"Darwin","machine":"arm64","macho_arch":"arm64","minimum_macos":"13.0","homebrew_symbol":"ventura"}}}}"#)).unwrap();
     let next_input = temp.join("next-input-contract.json");
-    fs::write(&next_input, format!(r#"{{"schema_version":"taskseal.p07.homebrew-input.v1","evidence_class":"real-current","archive":{{"filename":"clean-room-launcher-v0.0.2-aarch64-apple-darwin.tar.gz","sha256":"{next_digest}","size":1}},"artifact":{{"version":"0.0.2","source_commit":"1111111111111111111111111111111111111111","target":"aarch64-apple-darwin","qualification":"NOT_QUALIFIED","signing":"unsigned-preview-only","root":"clean-room-launcher-v0.0.2-aarch64-apple-darwin","members":["LICENSE","NOTICE","VERSION","bin/clroom","share/doc/clean-room-launcher/CHANGELOG.md"],"clroom_sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}},"host":{{"system":"Darwin","machine":"arm64","macho_arch":"arm64","minimum_macos":"13.0","homebrew_symbol":"ventura"}}}}"#)).unwrap();
+    fs::write(&next_input, format!(r#"{{"schema_version":"clroom.packaging.homebrew-input.v1","evidence_class":"real-current","archive":{{"filename":"clean-room-launcher-v0.0.2-aarch64-apple-darwin.tar.gz","sha256":"{next_digest}","size":1}},"artifact":{{"version":"0.0.2","source_commit":"1111111111111111111111111111111111111111","target":"aarch64-apple-darwin","qualification":"NOT_QUALIFIED","signing":"unsigned","root":"clean-room-launcher-v0.0.2-aarch64-apple-darwin","members":["LICENSE","NOTICE","VERSION","bin/clroom","share/doc/clean-room-launcher/CHANGELOG.md"],"clroom_sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}},"host":{{"system":"Darwin","machine":"arm64","macho_arch":"arm64","minimum_macos":"13.0","homebrew_symbol":"ventura"}}}}"#)).unwrap();
     let workspace = temp.join("workspace"); fs::create_dir_all(&workspace).unwrap(); let result = temp.join("result.json");
     let output = Command::new("python3").current_dir(root()).env("AWS_SECRET_ACCESS_KEY", "must-not-inherit").args(["packaging/homebrew/lifecycle.py", "--brew-source", source.to_str().unwrap(), "--api-cache-source", api_cache.to_str().unwrap(), "--input-contract", input.to_str().unwrap(), "--real-archive", archive.to_str().unwrap(), "--expected-sha256", &digest, "--expected-source-commit", "1111111111111111111111111111111111111111", "--next-input-contract", next_input.to_str().unwrap(), "--next-real-archive", next_archive.to_str().unwrap(), "--next-expected-sha256", &next_digest, "--scenario", "require_native_install_boundary", "--workspace", workspace.to_str().unwrap(), "--output", result.to_str().unwrap()]).output().unwrap();
     assert!(output.status.success(), "stderr={} result={}", String::from_utf8_lossy(&output.stderr), fs::read_to_string(&result).unwrap_or_default());

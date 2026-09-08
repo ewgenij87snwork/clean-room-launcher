@@ -1,4 +1,4 @@
-use taskseal::{
+use clroom::{
     adapters::{
         codex::identity::{CodexTupleError, bind_resolved_tuple, resolve_installed_tuple},
         environment::ProviderNativePreauthenticatedSession,

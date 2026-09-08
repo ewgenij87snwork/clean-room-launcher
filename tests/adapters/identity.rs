@@ -1,14 +1,14 @@
-use std::{
-    fs,
-    os::unix::fs::PermissionsExt,
-    sync::atomic::{AtomicUsize, Ordering},
-};
-use taskseal::{
+use clroom::{
     adapters::{
         environment::ProviderNativePreauthenticatedSession,
         identity::{resolve_identity, revalidate_identity},
     },
     contracts::adapter::AdapterDeclaration,
+};
+use std::{
+    fs,
+    os::unix::fs::PermissionsExt,
+    sync::atomic::{AtomicUsize, Ordering},
 };
 fn declaration() -> AdapterDeclaration {
     AdapterDeclaration {
@@ -35,7 +35,7 @@ fn claude_declaration() -> AdapterDeclaration {
 static NEXT: AtomicUsize = AtomicUsize::new(0);
 fn executable(version: &str) -> std::path::PathBuf {
     let root = std::env::temp_dir().join(format!(
-        "taskseal-v5-identity-{}-{}",
+        "clroom-v5-identity-{}-{}",
         std::process::id(),
         NEXT.fetch_add(1, Ordering::Relaxed)
     ));
@@ -143,7 +143,7 @@ fn provider_identity_refuses_opaque_session_states_before_process_birth() {
     .enumerate()
     {
         let root = std::env::temp_dir().join(format!(
-            "taskseal-v5-identity-preauth-{}-{index}",
+            "clroom-v5-identity-preauth-{}-{index}",
             std::process::id()
         ));
         let _ = fs::remove_dir_all(&root);
@@ -172,7 +172,7 @@ fn provider_identity_refuses_opaque_session_states_before_process_birth() {
 
 fn self_replacing(name: &str, version: &str) -> std::path::PathBuf {
     let root = std::env::temp_dir().join(format!(
-        "taskseal-self-replace-{}-{}",
+        "clroom-self-replace-{}-{}",
         std::process::id(),
         NEXT.fetch_add(1, Ordering::Relaxed)
     ));

@@ -1,7 +1,7 @@
-# TaskSeal v0.1 P08 target matrix.
-# Exact-subject macOS acceptance qualifies the single advertised alpha lane.
+# CLROOM v0.2 target matrix.
+# Exact-subject macOS acceptance qualifies the single advertised release lane.
 # Unsupported and missing-runner fixtures remain excluded from release claims.
-schema_version = "taskseal.packaging-targets.v1"
+schema_version = "clroom.packaging-targets.v2"
 advertised_targets = ["alpha-macos-aarch64"]
 qualified_targets = ["alpha-macos-aarch64"]
 claims_policy = "advertised targets exactly equal qualified build/test lanes"
@@ -19,9 +19,9 @@ name = "alpha-macos-aarch64"
 rust_target = "aarch64-apple-darwin"
 runner = "macos-14"
 qualification_status = "QUALIFIED"
-artifact_name = "taskseal-v0.1.0-alpha-macos-aarch64"
+artifact_name = "clean-room-launcher-v0.2.0-aarch64-apple-darwin"
 required_checks = "fmt, clippy, test, schema, target-matrix"
-signing_policy = "unsigned-preview-only"
+signing_policy = "unsigned"
 
 [[targets]]
 name = "fixture_unsupported"

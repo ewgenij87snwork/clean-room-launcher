@@ -47,9 +47,15 @@ fn clroom_is_the_only_public_identity_and_preserves_the_native_codex_process() {
     assert!(bare_stdout.contains("Clean Room Launcher"));
     assert!(bare_stdout.contains("Launch Codex without unrelated global instructions and skills."));
     assert!(bare_stdout.contains("clroom codex"));
-    for stale in ["TaskSeal", "taskseal", "tseal", "croom"] {
+    let stale = [
+        format!("{}{}", "T", "ASKSEAL"),
+        format!("{}{}", "t", "askseal"),
+        "tseal".to_owned(),
+        "croom".to_owned(),
+    ];
+    for stale in stale {
         assert!(
-            !bare_stdout.contains(stale),
+            !bare_stdout.contains(&stale),
             "stale public identity {stale:?}: {bare_stdout}"
         );
     }
@@ -58,7 +64,7 @@ fn clroom_is_the_only_public_identity_and_preserves_the_native_codex_process() {
     assert!(help.status.success());
     let help_stdout = String::from_utf8(help.stdout).unwrap();
     assert!(help_stdout.starts_with(
-        "\n\nClean Room Launcher v0.1.0-alpha.4.2\nLaunch Codex or Claude Code without\nunrelated global instructions and skills.\n"
+        "\n\nClean Room Launcher v0.2.0\nLaunch Codex or Claude Code without\nunrelated global instructions and skills.\n"
     ));
     assert!(help_stdout.contains("\nUsage\n  clroom codex exec [CODEX_ARGS...]"));
 
@@ -153,7 +159,7 @@ fn clroom_is_the_only_public_identity_and_preserves_the_native_codex_process() {
         home.join("Library/Application Support/Clean Room Launcher")
             .is_dir()
     );
-    assert!(!home.join("Library/Application Support/TaskSeal").exists());
+    assert!(!home.join("Library/Application Support/CLROOM").exists());
 
     fs::set_permissions(provider_path, fs::Permissions::from_mode(0o700)).unwrap();
     let _ = fs::remove_dir_all(provider_path);

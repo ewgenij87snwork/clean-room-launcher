@@ -1,0 +1,281 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: Validate release identity
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.release.outputs.version }}
+      prerelease: ${{ steps.release.outputs.prerelease }}
+      artifact_name: ${{ steps.release.outputs.artifact_name }}
+    steps:
+      - name: Check out exact tag
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Bind tag, version, changelog, and action-time default branch
+        id: release
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="$GITHUB_REF_NAME"
+          version="${tag#v}"
+          python3 - "$tag" "$version" <<'PY'
+          import re, sys
+          from pathlib import Path
+
+          tag, version = sys.argv[1:]
+          if tag != "v" + version:
+              raise SystemExit("release tag must start with v")
+          if not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+(?:-rc\.[0-9]+)?", version):
+              raise SystemExit("release tag must be vMAJOR.MINOR.PATCH or vMAJOR.MINOR.PATCH-rc.N")
+          heading = re.compile(rf"^## \[{re.escape(version)}\] - [0-9]{{4}}-[0-9]{{2}}-[0-9]{{2}}$")
+          if not any(heading.fullmatch(line) for line in Path("CHANGELOG.md").read_text(encoding="utf-8").splitlines()):
+              raise SystemExit(f"CHANGELOG.md has no dated entry for {version}")
+          PY
+          manifest_version=$(python3 - <<'PY'
+          import tomllib
+          with open("Cargo.toml", "rb") as handle:
+              print(tomllib.load(handle)["package"]["version"])
+          PY
+          )
+          test "$manifest_version" = "$version" || {
+            echo "Cargo.toml version $manifest_version does not match tag $tag" >&2
+            exit 1
+          }
+          default_ref=$(git ls-remote --symref origin HEAD | awk '$1 == "ref:" && $3 == "HEAD" {print $2}')
+          test -n "$default_ref" || {
+            echo "could not resolve the repository default branch" >&2
+            exit 1
+          }
+          git fetch --no-tags --depth=1 origin "$default_ref"
+          test "$(git rev-parse HEAD)" = "$(git rev-parse FETCH_HEAD)" || {
+            echo "release tag must point to the exact accepted default-branch tip" >&2
+            exit 1
+          }
+          prerelease=false
+          case "$version" in
+            *-rc.*) prerelease=true ;;
+          esac
+          artifact_name="clean-room-launcher-v${version}-aarch64-apple-darwin.tar.gz"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "prerelease=$prerelease" >> "$GITHUB_OUTPUT"
+          echo "artifact_name=$artifact_name" >> "$GITHUB_OUTPUT"
+
+  build-macos:
+    name: Build and verify macOS artifact
+    needs: prepare
+    runs-on: macos-14
+    steps:
+      - name: Check out exact tag
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Install qualified Rust target
+        run: rustup target add aarch64-apple-darwin
+      - name: Re-run exact release tests
+        run: |
+          set -euo pipefail
+          cargo test --locked --all-targets --target aarch64-apple-darwin
+          git diff --check
+      - name: Build deterministic release bundle
+        env:
+          CLROOM_TARGET: aarch64-apple-darwin
+          CLROOM_SOURCE_COMMIT: ${{ github.sha }}
+          CLROOM_ARTIFACT_QUALIFICATION: QUALIFIED
+        run: |
+          set -euo pipefail
+          rm -rf target/release-artifacts
+          mkdir -p target/release-artifacts
+          cargo metadata \
+            --locked \
+            --offline \
+            --filter-platform aarch64-apple-darwin \
+            --format-version 1 \
+            > target/release-artifacts/cargo-metadata.json
+          ./packaging/build-artifacts.sh target/release-artifacts
+          artifact="target/release-artifacts/${{ needs.prepare.outputs.artifact_name }}"
+          test -f "$artifact"
+          python3 packaging/verify-artifact.py "$artifact"
+          python3 - "$artifact" <<'PY'
+          import sys
+          import tarfile
+
+          with tarfile.open(sys.argv[1], "r:gz") as archive:
+              versions = [member for member in archive.getmembers() if member.isfile() and member.name.endswith("/VERSION")]
+              if len(versions) != 1:
+                  raise SystemExit("expected exactly one VERSION")
+              body = archive.extractfile(versions[0]).read().decode("utf-8")
+              if "qualification=QUALIFIED\n" not in body:
+                  raise SystemExit("archive is not qualified")
+          PY
+          python3 packaging/generate-release-sbom.py \
+            --artifact "$artifact" \
+            --metadata target/release-artifacts/cargo-metadata.json \
+            --output target/release-artifacts/sbom.cdx.json
+          (
+            cd target/release-artifacts
+            shasum -a 256 \
+              "${{ needs.prepare.outputs.artifact_name }}" \
+              sbom.cdx.json \
+              > SHA256SUMS
+            shasum -a 256 -c SHA256SUMS
+          )
+      - name: Upload verified release bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-macos-aarch64
+          path: |
+            target/release-artifacts/${{ needs.prepare.outputs.artifact_name }}
+            target/release-artifacts/SHA256SUMS
+            target/release-artifacts/sbom.cdx.json
+          if-no-files-found: error
+          retention-days: 7
+
+  attest:
+    name: Attest release archive and SBOM
+    needs: [prepare, build-macos]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+      artifact-metadata: write
+    steps:
+      - name: Download verified release bundle
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: release-macos-aarch64
+          path: release-artifacts
+      - name: Reconcile attestation subjects
+        run: |
+          set -euo pipefail
+          test -f "release-artifacts/${{ needs.prepare.outputs.artifact_name }}"
+          test -f release-artifacts/SHA256SUMS
+          test -f release-artifacts/sbom.cdx.json
+          test "$(find release-artifacts -maxdepth 1 -type f | wc -l | tr -d ' ')" = 3
+          (
+            cd release-artifacts
+            shasum -a 256 -c SHA256SUMS
+          )
+      - name: Attest build provenance
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: release-artifacts/${{ needs.prepare.outputs.artifact_name }}
+      - name: Attest CycloneDX SBOM
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: release-artifacts/${{ needs.prepare.outputs.artifact_name }}
+          sbom-path: release-artifacts/sbom.cdx.json
+
+  draft-release:
+    name: Create guarded draft release
+    needs: [prepare, build-macos, attest]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check out exact tag
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Download verified release bundle
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: release-macos-aarch64
+          path: release-artifacts
+      - name: Reconcile release bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f "release-artifacts/${{ needs.prepare.outputs.artifact_name }}"
+          test -f release-artifacts/SHA256SUMS
+          test -f release-artifacts/sbom.cdx.json
+          test "$(find release-artifacts -maxdepth 1 -type f | wc -l | tr -d ' ')" = 3
+          (
+            cd release-artifacts
+            shasum -a 256 -c SHA256SUMS
+          )
+      - name: Prepare release notes
+        env:
+          VERSION: ${{ needs.prepare.outputs.version }}
+          ARTIFACT: ${{ needs.prepare.outputs.artifact_name }}
+        run: |
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+
+          version = os.environ["VERSION"]
+          artifact = os.environ["ARTIFACT"]
+          lines = Path("CHANGELOG.md").read_text(encoding="utf-8").splitlines()
+          start = None
+          body = []
+          for index, line in enumerate(lines):
+              if line.startswith(f"## [{version}] - "):
+                  start = index + 1
+                  continue
+              if start is not None and line.startswith("## ["):
+                  break
+              if start is not None:
+                  body.append(line)
+          if start is None:
+              raise SystemExit("missing changelog release section")
+          text = "\n".join(body).strip()
+          footer = f"""
+
+          ## Download and verification
+
+          - `{artifact}` — macOS Apple Silicon archive
+          - `SHA256SUMS` — SHA-256 digests for the archive and SBOM
+          - `sbom.cdx.json` — CycloneDX SBOM bound to the archive digest
+          - GitHub build-provenance and SBOM attestations are generated for the exact archive bytes
+
+          The distributed archive is currently unsigned at the Apple platform-signing layer. Verify the checksums and GitHub attestations before use.
+          """.strip()
+          Path("release-notes.md").write_text(text + "\n\n" + footer + "\n", encoding="utf-8")
+          PY
+      - name: Create or refresh draft GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.prepare.outputs.version }}
+          PRERELEASE: ${{ needs.prepare.outputs.prerelease }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="$GITHUB_REF_NAME"
+          title="Clean Room Launcher $VERSION"
+          if gh release view "$tag" --json isDraft,isPrerelease,tagName >/tmp/clroom-release.json 2>/dev/null; then
+            test "$(jq -r .isDraft /tmp/clroom-release.json)" = true || {
+              echo "refusing to modify an already-published release" >&2
+              exit 1
+            }
+            test "$(jq -r .tagName /tmp/clroom-release.json)" = "$tag" || {
+              echo "draft release tag mismatch" >&2
+              exit 1
+            }
+            test "$(jq -r .isPrerelease /tmp/clroom-release.json)" = "$PRERELEASE" || {
+              echo "draft release prerelease state mismatch" >&2
+              exit 1
+            }
+            gh release edit "$tag" --title "$title" --notes-file release-notes.md
+          else
+            args=(release create "$tag" --draft --verify-tag --title "$title" --notes-file release-notes.md)
+            if [ "$PRERELEASE" = true ]; then args+=(--prerelease); fi
+            gh "${args[@]}"
+          fi
+          gh release upload "$tag" release-artifacts/* --clobber

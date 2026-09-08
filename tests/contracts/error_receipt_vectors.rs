@@ -1,5 +1,5 @@
-use taskseal::contracts::error::ErrorRecord;
-use taskseal::contracts::receipt::ReceiptSeam;
+use clroom::contracts::error::ErrorRecord;
+use clroom::contracts::receipt::ReceiptSeam;
 
 #[test]
 fn error_record_round_trips_with_stable_json() {

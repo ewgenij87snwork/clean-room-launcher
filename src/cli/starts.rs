@@ -46,7 +46,7 @@ fn preflight(starts: &[SavedStart], args: &[String]) -> Result<String, String> {
         Vec::new(),
         Vec::new(),
         start.provider.clone(),
-        taskseal::core::inventory::sha256_hex(&start.argv.join("\0").into_bytes()),
+        clroom::core::inventory::sha256_hex(&start.argv.join("\0").into_bytes()),
         start.qualification_digest.clone(),
         start.access_class.clone(),
     )
@@ -61,5 +61,5 @@ fn preflight(starts: &[SavedStart], args: &[String]) -> Result<String, String> {
     consent
         .verify(&proposal)
         .map_err(|error| error.code().to_owned())?;
-    Err("P06_REQUIRED: provider launch is not qualified".to_owned())
+    Err("CLROOM_MACOS_REQUIRED: provider launch is not qualified".to_owned())
 }

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fail-closed disposable Homebrew lifecycle runner for P07 local evidence.
+"""Fail-closed disposable Homebrew lifecycle runner for CLROOM_PACKAGING local evidence.
 
 The fake mode is deliberately a process boundary: tests never import this module
 or fake_brew.  Real mode has the same guarded command path but is dormant until
@@ -33,7 +33,7 @@ SCENARIO_REFUSALS = {
     "extra_served_name": "FORMULA_RENDER_REFUSED", "checksum_substitution": "ARTIFACT_DIGEST_MISMATCH",
     "cache_substitution": "ARTIFACT_DIGEST_MISMATCH", "metadata_substitution": "ARTIFACT_METADATA_MISMATCH", "stale_link": "ROLLBACK_REFUSED",
     "unexpected_installed_path": "INSTALL_REFUSED", "config_mutation": "CONFIG_MUTATION_REFUSED",
-    "sentinel_taskseal_mutation": "CONFIG_MUTATION_REFUSED", "sentinel_provider_mutation": "CONFIG_MUTATION_REFUSED",
+    "sentinel_clroom_mutation": "CONFIG_MUTATION_REFUSED", "sentinel_provider_mutation": "CONFIG_MUTATION_REFUSED",
     "sentinel_git_mutation": "CONFIG_MUTATION_REFUSED", "sentinel_homebrew_mutation": "CONFIG_MUTATION_REFUSED",
     "sentinel_unrelated_mutation": "CONFIG_MUTATION_REFUSED", "partial_uninstall": "UNINSTALL_REFUSED",
 }
@@ -65,15 +65,15 @@ def closed_env(paths: SafeHomebrew, scenario: str | None = None, native_install_
     capture = paths.root / "poison-provider-invoked"
     for provider in ("codex", "claude"):
         script = poison / provider
-        script.write_text("#!/bin/sh\nprintf invoked > \"$P07_POISON_CAPTURE\"\nexit 97\n", encoding="utf-8")
+        script.write_text("#!/bin/sh\nprintf invoked > \"$CLROOM_PACKAGING_POISON_CAPTURE\"\nexit 97\n", encoding="utf-8")
         script.chmod(0o755)
-    env = {"PATH": f"{poison}:/usr/bin:/bin:/usr/sbin:/sbin", "HOME": str(paths.home), "XDG_CONFIG_HOME": str(paths.user_config), "XDG_CACHE_HOME": str(paths.cache), "XDG_DATA_HOME": str(paths.root / "data"), "GIT_CONFIG_GLOBAL": str(paths.root / "gitconfig"), "HOMEBREW_PREFIX": str(paths.prefix), "HOMEBREW_REPOSITORY": str(paths.repository), "HOMEBREW_CELLAR": str(paths.cellar), "HOMEBREW_CACHE": str(paths.cache), "HOMEBREW_TEMP": str(paths.temp), "HOMEBREW_USER_CONFIG_HOME": str(paths.user_config), "HOMEBREW_NO_AUTO_UPDATE": "1", "HOMEBREW_NO_ANALYTICS": "1", "HOMEBREW_NO_INSTALL_CLEANUP": "1", "HOMEBREW_NO_AUTOREMOVE": "1", "HOMEBREW_NO_ASK": "1", "HOMEBREW_AVOID_NESTED_SANDBOXING": "1", "HOMEBREW_REQUIRE_TAP_TRUST": "1", "HOMEBREW_ALLOWED_TAPS": str(paths.root / "tap"), "P07_FAKE_ROOT": str(paths.root), "P07_POISON_CAPTURE": str(capture)}
+    env = {"PATH": f"{poison}:/usr/bin:/bin:/usr/sbin:/sbin", "HOME": str(paths.home), "XDG_CONFIG_HOME": str(paths.user_config), "XDG_CACHE_HOME": str(paths.cache), "XDG_DATA_HOME": str(paths.root / "data"), "GIT_CONFIG_GLOBAL": str(paths.root / "gitconfig"), "HOMEBREW_PREFIX": str(paths.prefix), "HOMEBREW_REPOSITORY": str(paths.repository), "HOMEBREW_CELLAR": str(paths.cellar), "HOMEBREW_CACHE": str(paths.cache), "HOMEBREW_TEMP": str(paths.temp), "HOMEBREW_USER_CONFIG_HOME": str(paths.user_config), "HOMEBREW_NO_AUTO_UPDATE": "1", "HOMEBREW_NO_ANALYTICS": "1", "HOMEBREW_NO_INSTALL_CLEANUP": "1", "HOMEBREW_NO_AUTOREMOVE": "1", "HOMEBREW_NO_ASK": "1", "HOMEBREW_AVOID_NESTED_SANDBOXING": "1", "HOMEBREW_REQUIRE_TAP_TRUST": "1", "HOMEBREW_ALLOWED_TAPS": str(paths.root / "tap"), "CLROOM_PACKAGING_FAKE_ROOT": str(paths.root), "CLROOM_PACKAGING_POISON_CAPTURE": str(capture)}
     if native_install_boundary:
         env.pop("HOMEBREW_AVOID_NESTED_SANDBOXING")
-        env.update({"P07_NETWORK_BOUNDARY": "homebrew-native-sandbox-loopback-proxy", "HTTP_PROXY": "http://127.0.0.1:9", "HTTPS_PROXY": "http://127.0.0.1:9", "ALL_PROXY": "http://127.0.0.1:9", "NO_PROXY": "127.0.0.1,localhost", "http_proxy": "http://127.0.0.1:9", "https_proxy": "http://127.0.0.1:9", "all_proxy": "http://127.0.0.1:9", "no_proxy": "127.0.0.1,localhost", "GIT_ALLOW_PROTOCOL": "file"})
+        env.update({"CLROOM_PACKAGING_NETWORK_BOUNDARY": "homebrew-native-sandbox-loopback-proxy", "HTTP_PROXY": "http://127.0.0.1:9", "HTTPS_PROXY": "http://127.0.0.1:9", "ALL_PROXY": "http://127.0.0.1:9", "NO_PROXY": "127.0.0.1,localhost", "http_proxy": "http://127.0.0.1:9", "https_proxy": "http://127.0.0.1:9", "all_proxy": "http://127.0.0.1:9", "no_proxy": "127.0.0.1,localhost", "GIT_ALLOW_PROTOCOL": "file"})
     if scenario == "missing_require_tap_trust": env.pop("HOMEBREW_REQUIRE_TAP_TRUST")
     if scenario == "wrong_allowed_taps": env["HOMEBREW_ALLOWED_TAPS"] = "other/tap"
-    if scenario: env["P07_SCENARIO"] = scenario
+    if scenario: env["CLROOM_PACKAGING_SCENARIO"] = scenario
     return env
 
 def within(root: Path, candidate: Path) -> bool:
@@ -219,14 +219,14 @@ def render_tap_formula(paths: SafeHomebrew, input_contract: Path, message: str, 
     result = subprocess.run([sys.executable, str(renderer), "--input-contract", str(input_contract), "--formula-id", "clroom-preview", "--artifact-url", "http://127.0.0.1:49152/" + archive_name, "--output", str(formula)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
     if result.returncode: raise LifecycleRefused("FORMULA_RENDER_REFUSED")
     if initialize: run_git(["init"], tap, True)
-    run_git(["add", "Formula/clroom-preview.rb"], tap, True); run_git(["-c", "user.name=p07", "-c", "user.email=p07@example.invalid", "commit", "-m", message], tap, True)
+    run_git(["add", "Formula/clroom-preview.rb"], tap, True); run_git(["-c", "user.name=clroom-packaging", "-c", "user.email=clroom-packaging@example.invalid", "commit", "-m", message], tap, True)
 
 def prepare_git_tap(paths: SafeHomebrew, input_contract: Path) -> None:
     render_tap_formula(paths, input_contract, "local-preview-n", True)
 
 def sync_installed_tap(paths: SafeHomebrew, scenario: str | None) -> None:
     if scenario == "require_native_install_boundary": return
-    clone = paths.repository / "Library/Taps/taskseal-local/homebrew-preview"
+    clone = paths.repository / "Library/Taps/clroom-local/homebrew-preview"
     if not (clone / ".git").exists(): raise LifecycleRefused("UPGRADE_REFUSED")
     run_git(["fetch", "--force", "origin"], clone, True)
     run_git(["reset", "--hard", "origin/HEAD"], clone, True)
@@ -253,7 +253,7 @@ def verify_formula_syntax(paths: SafeHomebrew, steps: list[dict[str, object]]) -
     if result.returncode: raise LifecycleRefused("FORMULA_AUDIT_REFUSED")
 
 def sentinels(paths: SafeHomebrew) -> dict[str, str]:
-    values = {"taskseal": paths.root / "sentinel-taskseal", "provider": paths.root / "sentinel-provider", "git": paths.root / "sentinel-git", "homebrew": paths.root / "sentinel-homebrew", "unrelated": paths.root / "sentinel-unrelated", "config": paths.root / "gitconfig"}
+    values = {"clroom": paths.root / "sentinel-clroom", "provider": paths.root / "sentinel-provider", "git": paths.root / "sentinel-git", "homebrew": paths.root / "sentinel-homebrew", "unrelated": paths.root / "sentinel-unrelated", "config": paths.root / "gitconfig"}
     for name, path in values.items(): path.write_text(name + "\n", encoding="utf-8")
     return {name: hashlib.sha256(path.read_bytes()).hexdigest() for name, path in values.items()}
 
@@ -271,7 +271,7 @@ def verify_clroom(paths: SafeHomebrew, network_bound: bool = False) -> None:
 
 def cleanup(paths: SafeHomebrew, scenario: str | None, steps: list[dict[str, object]]) -> bool:
     ok = True
-    for name, item in (("uninstall_versioned", "taskseal-local/preview/clroom-preview@0.0.1"), ("uninstall_current", "taskseal-local/preview/clroom-preview"), ("untrust_versioned", "taskseal-local/preview/clroom-preview@0.0.1"), ("untrust", "taskseal-local/preview/clroom-preview"), ("untap", "taskseal-local/preview")):
+    for name, item in (("uninstall_versioned", "clroom-local/preview/clroom-preview@0.0.1"), ("uninstall_current", "clroom-local/preview/clroom-preview"), ("untrust_versioned", "clroom-local/preview/clroom-preview@0.0.1"), ("untrust", "clroom-local/preview/clroom-preview"), ("untap", "clroom-local/preview")):
         argv = ["untap", item] if name == "untap" else (["untrust", "--formula", item] if name.startswith("untrust") else ["uninstall", item])
         try: run_step(paths, name, argv, "CLEANUP_REFUSED", scenario, steps)
         except LifecycleRefused: ok = False
@@ -282,8 +282,8 @@ def cleanup(paths: SafeHomebrew, scenario: str | None, steps: list[dict[str, obj
 
 def cleanup_real_current(paths: SafeHomebrew, scenario: str | None, steps: list[dict[str, object]], installed: bool) -> bool:
     ok = True
-    operations = [("untrust", ["untrust", "--formula", "taskseal-local/preview/clroom-preview"]), ("untap", ["untap", "taskseal-local/preview"])]
-    if installed: operations.insert(0, ("uninstall_current", ["uninstall", "taskseal-local/preview/clroom-preview"]))
+    operations = [("untrust", ["untrust", "--formula", "clroom-local/preview/clroom-preview"]), ("untap", ["untap", "clroom-local/preview"])]
+    if installed: operations.insert(0, ("uninstall_current", ["uninstall", "clroom-local/preview/clroom-preview"]))
     for name, argv in operations:
         try: run_step(paths, name, argv, "CLEANUP_REFUSED", scenario, steps, True)
         except LifecycleRefused: ok = False
@@ -292,7 +292,7 @@ def cleanup_real_current(paths: SafeHomebrew, scenario: str | None, steps: list[
     return ok and all(not path.exists() for path in (paths.prefix, paths.cache, paths.user_config, paths.home, paths.temp, paths.root / "tap", paths.root / "poison"))
 
 def document(steps: list[dict[str, object]], cleanup_complete: bool, failure: str | None, checks: dict[str, bool], evidence_class: str, archive: dict[str, object] | None = None, network_boundary: str | None = None) -> dict[str, object]:
-    value = {"schema_version": "taskseal.p07.homebrew-lifecycle.v1", "evidence_class": evidence_class, "qualification": "NOT_QUALIFIED", "steps": steps, "checks": checks, "refusal_vocabulary": sorted(REFUSALS), "cleanup_complete": cleanup_complete, "failure_class": failure, "forbidden_actions": {"publication": False, "upload": False, "signing": False, "notarization": False, "provider_requests": False, "external_contact": False, "credential_access": False, "keychain_access": False, "main_mutation": False, "integration": False, "live_homebrew_mutation": False}}
+    value = {"schema_version": "clroom.packaging.homebrew-lifecycle.v1", "evidence_class": evidence_class, "qualification": "NOT_QUALIFIED", "steps": steps, "checks": checks, "refusal_vocabulary": sorted(REFUSALS), "cleanup_complete": cleanup_complete, "failure_class": failure, "forbidden_actions": {"publication": False, "upload": False, "signing": False, "notarization": False, "provider_requests": False, "external_contact": False, "credential_access": False, "keychain_access": False, "main_mutation": False, "integration": False, "live_homebrew_mutation": False}}
     if archive is not None: value["archive"] = archive
     if network_boundary is not None: value["network_boundary"] = network_boundary
     return value
@@ -309,25 +309,25 @@ def lifecycle(paths: SafeHomebrew, scenario: str | None, injected: str | None, e
         if evidence_class == "real-current":
             steps.extend([StepResult("clone_local", 0).evidence(), StepResult("origin_removed", 0).evidence(), StepResult("tap_git_ready", 0).evidence()])
         if scenario in {"non_loopback_bind", "non_loopback_url", "extra_served_name"}: raise LifecycleRefused("FORMULA_RENDER_REFUSED")
-        run_step(paths, "tap", ["tap", "taskseal-local/preview", str(paths.root / "tap")], "TAP_TRUST_REFUSED", scenario, steps)
-        if scenario == "whole_tap_trust": run_step(paths, "whole_tap_trust", ["trust", "--tap", "taskseal-local/preview"], "TAP_TRUST_REFUSED", scenario, steps)
-        run_step(paths, "item_trust", ["trust", "--formula", "taskseal-local/preview/clroom-preview"], "TAP_TRUST_REFUSED", scenario, steps)
-        run_step(paths, "style", ["style", "--formula", "taskseal-local/preview/clroom-preview"], "FORMULA_AUDIT_REFUSED", scenario, steps)
-        run_step(paths, "audit", ["audit", "--strict", "--formula", "taskseal-local/preview/clroom-preview"], "FORMULA_AUDIT_REFUSED", scenario, steps)
+        run_step(paths, "tap", ["tap", "clroom-local/preview", str(paths.root / "tap")], "TAP_TRUST_REFUSED", scenario, steps)
+        if scenario == "whole_tap_trust": run_step(paths, "whole_tap_trust", ["trust", "--tap", "clroom-local/preview"], "TAP_TRUST_REFUSED", scenario, steps)
+        run_step(paths, "item_trust", ["trust", "--formula", "clroom-local/preview/clroom-preview"], "TAP_TRUST_REFUSED", scenario, steps)
+        run_step(paths, "style", ["style", "--formula", "clroom-local/preview/clroom-preview"], "FORMULA_AUDIT_REFUSED", scenario, steps)
+        run_step(paths, "audit", ["audit", "--strict", "--formula", "clroom-local/preview/clroom-preview"], "FORMULA_AUDIT_REFUSED", scenario, steps)
         if scenario in {"checksum_substitution", "cache_substitution"}: raise LifecycleRefused("ARTIFACT_DIGEST_MISMATCH")
         if scenario == "metadata_substitution": raise LifecycleRefused("ARTIFACT_METADATA_MISMATCH")
-        run_step(paths, "install_n", ["install", "taskseal-local/preview/clroom-preview"], "INSTALL_REFUSED", scenario, steps)
+        run_step(paths, "install_n", ["install", "clroom-local/preview/clroom-preview"], "INSTALL_REFUSED", scenario, steps)
         require_sentinels(paths, baseline)
         if scenario == "unexpected_installed_path": raise LifecycleRefused("INSTALL_REFUSED")
         verify_clroom(paths); checks.update({"clroom_executable": True, "status_paths": True, "selector_refusal": True, "poison_provider_absent": not (paths.root / "poison-provider-invoked").exists()})
-        run_step(paths, "test", ["test", "taskseal-local/preview/clroom-preview"], "INSTALL_REFUSED", scenario, steps)
+        run_step(paths, "test", ["test", "clroom-local/preview/clroom-preview"], "INSTALL_REFUSED", scenario, steps)
         if injected == "upgrade": raise LifecycleRefused("UPGRADE_REFUSED")
-        run_step(paths, "upgrade_n_plus_1", ["upgrade", "taskseal-local/preview/clroom-preview"], "UPGRADE_REFUSED", scenario, steps)
-        run_step(paths, "install_versioned_trust", ["trust", "--formula", "taskseal-local/preview/clroom-preview@0.0.1"], "TAP_TRUST_REFUSED", scenario, steps)
-        run_step(paths, "rollback_n", ["install", "taskseal-local/preview/clroom-preview@0.0.1"], "ROLLBACK_REFUSED", scenario, steps)
-        run_step(paths, "unlink", ["unlink", "taskseal-local/preview/clroom-preview"], "ROLLBACK_REFUSED", scenario, steps)
+        run_step(paths, "upgrade_n_plus_1", ["upgrade", "clroom-local/preview/clroom-preview"], "UPGRADE_REFUSED", scenario, steps)
+        run_step(paths, "install_versioned_trust", ["trust", "--formula", "clroom-local/preview/clroom-preview@0.0.1"], "TAP_TRUST_REFUSED", scenario, steps)
+        run_step(paths, "rollback_n", ["install", "clroom-local/preview/clroom-preview@0.0.1"], "ROLLBACK_REFUSED", scenario, steps)
+        run_step(paths, "unlink", ["unlink", "clroom-local/preview/clroom-preview"], "ROLLBACK_REFUSED", scenario, steps)
         if scenario == "stale_link": raise LifecycleRefused("ROLLBACK_REFUSED")
-        run_step(paths, "link", ["link", "taskseal-local/preview/clroom-preview@0.0.1"], "ROLLBACK_REFUSED", scenario, steps)
+        run_step(paths, "link", ["link", "clroom-local/preview/clroom-preview@0.0.1"], "ROLLBACK_REFUSED", scenario, steps)
     except LifecycleRefused as exc: failure = exc.code
     complete = cleanup(paths, scenario, steps)
     if not complete and failure is None:
@@ -344,22 +344,22 @@ def real_current_lifecycle(paths: SafeHomebrew, scenario: str | None, archive_n:
         with serve_exact_archives([archive_n_path, archive_next_path]) as loopback_port:
             preflight(paths, scenario, True, loopback_port); steps.extend([StepResult("preflight", 0).evidence(), StepResult("clone_local", 0).evidence(), StepResult("origin_removed", 0).evidence(), StepResult("tap_git_ready", 0).evidence()])
             verify_formula_syntax(paths, steps)
-            run_step(paths, "tap", ["tap", "taskseal-local/preview", str(paths.root / "tap")], "TAP_TRUST_REFUSED", scenario, steps, True, loopback_port)
-            run_step(paths, "item_trust", ["trust", "--formula", "taskseal-local/preview/clroom-preview"], "TAP_TRUST_REFUSED", scenario, steps, True, loopback_port)
-            run_step(paths, "install_n", ["install", "taskseal-local/preview/clroom-preview"], "INSTALL_REFUSED", scenario, steps, True, loopback_port)
+            run_step(paths, "tap", ["tap", "clroom-local/preview", str(paths.root / "tap")], "TAP_TRUST_REFUSED", scenario, steps, True, loopback_port)
+            run_step(paths, "item_trust", ["trust", "--formula", "clroom-local/preview/clroom-preview"], "TAP_TRUST_REFUSED", scenario, steps, True, loopback_port)
+            run_step(paths, "install_n", ["install", "clroom-local/preview/clroom-preview"], "INSTALL_REFUSED", scenario, steps, True, loopback_port)
             installed = True
             if scenario != "require_native_install_boundary": require_keg_version(paths, str(archive_n["version"]))
             require_sentinels(paths, baseline); verify_clroom(paths, True)
             render_tap_formula(paths, input_next, "local-preview-n-plus-1")
             sync_installed_tap(paths, scenario)
-            run_step(paths, "upgrade_n_plus_1", ["upgrade", "taskseal-local/preview/clroom-preview"], "UPGRADE_REFUSED", scenario, steps, True, loopback_port)
+            run_step(paths, "upgrade_n_plus_1", ["upgrade", "clroom-local/preview/clroom-preview"], "UPGRADE_REFUSED", scenario, steps, True, loopback_port)
             if scenario != "require_native_install_boundary": require_keg_version(paths, str(archive_next["version"]))
             verify_clroom(paths, True)
-            run_step(paths, "uninstall_n_plus_1", ["uninstall", "taskseal-local/preview/clroom-preview"], "ROLLBACK_REFUSED", scenario, steps, True, loopback_port); installed = False
+            run_step(paths, "uninstall_n_plus_1", ["uninstall", "clroom-local/preview/clroom-preview"], "ROLLBACK_REFUSED", scenario, steps, True, loopback_port); installed = False
             render_tap_formula(paths, input_n, "local-preview-rollback-n")
             sync_installed_tap(paths, scenario)
-            run_step(paths, "rollback_n", ["install", "taskseal-local/preview/clroom-preview"], "ROLLBACK_REFUSED", scenario, steps, True, loopback_port); installed = True
-            run_step(paths, "rollback_link_n", ["link", "--overwrite", "taskseal-local/preview/clroom-preview"], "ROLLBACK_REFUSED", scenario, steps, True, loopback_port)
+            run_step(paths, "rollback_n", ["install", "clroom-local/preview/clroom-preview"], "ROLLBACK_REFUSED", scenario, steps, True, loopback_port); installed = True
+            run_step(paths, "rollback_link_n", ["link", "--overwrite", "clroom-local/preview/clroom-preview"], "ROLLBACK_REFUSED", scenario, steps, True, loopback_port)
             if scenario != "require_native_install_boundary": require_keg_version(paths, str(archive_n["version"]))
             verify_clroom(paths, True)
             checks.update({"clroom_executable": True, "status_paths": True, "selector_refusal": True, "poison_provider_absent": not (paths.root / "poison-provider-invoked").exists()})
@@ -371,10 +371,10 @@ def real_current_lifecycle(paths: SafeHomebrew, scenario: str | None, archive_n:
 def main() -> int:
     parser = argparse.ArgumentParser(); parser.add_argument("--fake", action="store_true"); parser.add_argument("--fake-brew"); parser.add_argument("--brew-source"); parser.add_argument("--api-cache-source"); parser.add_argument("--input-contract"); parser.add_argument("--real-archive"); parser.add_argument("--expected-sha256"); parser.add_argument("--expected-source-commit"); parser.add_argument("--next-input-contract"); parser.add_argument("--next-real-archive"); parser.add_argument("--next-expected-sha256"); parser.add_argument("--scenario"); parser.add_argument("--inject-failure"); parser.add_argument("--workspace", required=True); parser.add_argument("--output", required=True); args = parser.parse_args()
     if args.fake:
-        if not args.fake_brew: print("P07_HOMEBREW_LIFECYCLE_REFUSED:INSTALL_REFUSED", file=sys.stderr); return 1
+        if not args.fake_brew: print("CLROOM_PACKAGING_HOMEBREW_LIFECYCLE_REFUSED:INSTALL_REFUSED", file=sys.stderr); return 1
         brew = Path(args.fake_brew)
     else:
-        if not (args.brew_source and args.api_cache_source and args.input_contract and args.real_archive and args.expected_sha256 and args.expected_source_commit and args.next_input_contract and args.next_real_archive and args.next_expected_sha256): print("P07_HOMEBREW_LIFECYCLE_REFUSED:ARTIFACT_MISSING", file=sys.stderr); return 1
+        if not (args.brew_source and args.api_cache_source and args.input_contract and args.real_archive and args.expected_sha256 and args.expected_source_commit and args.next_input_contract and args.next_real_archive and args.next_expected_sha256): print("CLROOM_PACKAGING_HOMEBREW_LIFECYCLE_REFUSED:ARTIFACT_MISSING", file=sys.stderr); return 1
         root = Path(args.workspace).resolve(); root.mkdir(parents=True, exist_ok=True)
         try:
             archive = validate_real_archive(Path(args.real_archive), args.expected_sha256, args.expected_source_commit)
@@ -385,10 +385,10 @@ def main() -> int:
         except LifecycleRefused as exc:
             value = document([], False, exc.code, {"clroom_executable": False, "status_paths": False, "selector_refusal": False, "poison_provider_absent": False}, "real-current")
         atomic_write(Path(args.output), value)
-        if value["failure_class"] or not value["cleanup_complete"]: print("P07_HOMEBREW_LIFECYCLE_REFUSED:" + str(value["failure_class"] or "CLEANUP_REFUSED"), file=sys.stderr); return 1
-        print("P07_HOMEBREW_REAL_LOCAL_LIFECYCLE_PASS qualification=NOT_QUALIFIED"); return 0
+        if value["failure_class"] or not value["cleanup_complete"]: print("CLROOM_PACKAGING_HOMEBREW_LIFECYCLE_REFUSED:" + str(value["failure_class"] or "CLEANUP_REFUSED"), file=sys.stderr); return 1
+        print("CLROOM_PACKAGING_HOMEBREW_REAL_LOCAL_LIFECYCLE_PASS qualification=NOT_QUALIFIED"); return 0
     value = lifecycle(make_paths(Path(args.workspace), brew), args.scenario, args.inject_failure); atomic_write(Path(args.output), value)
-    if value["failure_class"] or not value["cleanup_complete"]: print("P07_HOMEBREW_LIFECYCLE_REFUSED:" + str(value["failure_class"] or "CLEANUP_REFUSED"), file=sys.stderr); return 1
-    print("P07_HOMEBREW_LIFECYCLE_TEST_PASS" if args.fake else "P07_HOMEBREW_REAL_LOCAL_LIFECYCLE_PASS qualification=NOT_QUALIFIED"); return 0
+    if value["failure_class"] or not value["cleanup_complete"]: print("CLROOM_PACKAGING_HOMEBREW_LIFECYCLE_REFUSED:" + str(value["failure_class"] or "CLEANUP_REFUSED"), file=sys.stderr); return 1
+    print("CLROOM_PACKAGING_HOMEBREW_LIFECYCLE_TEST_PASS" if args.fake else "CLROOM_PACKAGING_HOMEBREW_REAL_LOCAL_LIFECYCLE_PASS qualification=NOT_QUALIFIED"); return 0
 
 if __name__ == "__main__": raise SystemExit(main())

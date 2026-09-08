@@ -85,7 +85,7 @@ pub fn parse_evidence(
 ) -> Result<EvidenceRef, QualificationReason> {
     let stored: StoredEvidence =
         serde_json::from_slice(bytes).map_err(|_| QualificationReason::InvalidClaim)?;
-    if stored.schema_version != "taskseal.provider-evidence.v1"
+    if stored.schema_version != "clroom.provider-evidence.v1"
         || stored.kind.is_empty()
         || stored.output_digest != crate::core::inventory::sha256_hex(output)
         || stored.provider_id != claim.provider_id
@@ -149,8 +149,8 @@ pub fn seal_receipt(
 ) -> Result<ProviderQualificationReceipt, QualificationReason> {
     evidence.sort_by(|left, right| left.kind.cmp(&right.kind));
     let mut receipt = ProviderQualificationReceipt {
-        schema_version: "taskseal.provider-qualification-receipt.v1".into(),
-        verifier_version: "taskseal.p06.t4.v1".into(),
+        schema_version: "clroom.provider-qualification-receipt.v1".into(),
+        verifier_version: "clroom.macos.t4.v1".into(),
         claim,
         evidence,
         observed_at,
@@ -199,8 +199,8 @@ pub fn receipt_digest(
 }
 
 fn validate_receipt(receipt: &ProviderQualificationReceipt) -> Result<(), QualificationReason> {
-    if receipt.schema_version != "taskseal.provider-qualification-receipt.v1"
-        || receipt.verifier_version != "taskseal.p06.t4.v1"
+    if receipt.schema_version != "clroom.provider-qualification-receipt.v1"
+        || receipt.verifier_version != "clroom.macos.t4.v1"
         || !valid_claim(&receipt.claim)
         || receipt.observed_at > receipt.expires_at
         || !valid_digest(&receipt.receipt_digest) && !receipt.receipt_digest.is_empty()

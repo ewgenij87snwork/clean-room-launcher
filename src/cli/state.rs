@@ -11,7 +11,7 @@ use std::{
 const STATE_FILE: &str = "saved-starts.json";
 const LOCK_FILE: &str = "saved-starts.lock";
 const TEMP_PREFIX: &str = "saved-starts.json.tmp-";
-const SCHEMA_VERSION: &str = "taskseal.saved-start.v1";
+const SCHEMA_VERSION: &str = "clroom.saved-start.v1";
 static TEMP_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

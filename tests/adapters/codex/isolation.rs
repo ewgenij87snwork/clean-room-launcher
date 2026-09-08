@@ -8,7 +8,7 @@ use std::{
 #[cfg(unix)]
 use std::os::unix::fs::symlink;
 
-use taskseal::adapters::codex::isolation::{IsolationInputs, plan, plan_with_skills};
+use clroom::adapters::codex::isolation::{IsolationInputs, plan, plan_with_skills};
 
 struct TempRoot(PathBuf);
 
@@ -19,7 +19,7 @@ impl TempRoot {
             .unwrap()
             .as_nanos();
         let root =
-            std::env::temp_dir().join(format!("taskseal-{label}-{}-{nonce}", std::process::id()));
+            std::env::temp_dir().join(format!("clroom-{label}-{}-{nonce}", std::process::id()));
         fs::create_dir_all(&root).unwrap();
         Self(root)
     }
@@ -235,7 +235,7 @@ fn codex_plugin_cache_is_not_inventoried_without_provider_activation_state() {
 
     assert_eq!(
         error,
-        taskseal::adapters::codex::isolation::IsolationError::UnknownSkillSelector(
+        clroom::adapters::codex::isolation::IsolationError::UnknownSkillSelector(
             "superpowers:brainstorming".to_owned()
         )
     );
@@ -308,7 +308,7 @@ fn stale_codex_plugin_cache_is_not_a_skill_source() {
 
     assert_eq!(
         error,
-        taskseal::adapters::codex::isolation::IsolationError::UnknownSkillSelector(
+        clroom::adapters::codex::isolation::IsolationError::UnknownSkillSelector(
             "stale:ghost".to_owned()
         )
     );
@@ -337,7 +337,7 @@ fn symlinked_codex_skill_root_is_not_an_inventory_source() {
     .unwrap_err();
     assert_eq!(
         error,
-        taskseal::adapters::codex::isolation::IsolationError::UnknownSkillSelector(
+        clroom::adapters::codex::isolation::IsolationError::UnknownSkillSelector(
             "escape".to_owned()
         )
     );

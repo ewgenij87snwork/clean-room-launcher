@@ -8,28 +8,28 @@ set -eu
 
 root=$(cd "$2" && pwd -P)
 
-if find "$root" \( -name .git -o -name target -o -name .taskseal-dev -o -path "$root/reports/gates" -o -path "$root/scripts/gates" \) -prune -o -type l -print | grep -q .; then
+if find "$root" \( -name .git -o -name target -o -name .clroom-dev -o -path "$root/reports/gates" -o -path "$root/scripts/gates" \) -prune -o -type l -print | grep -q .; then
   echo "SYMLINK_ESCAPE" >&2
   exit 10
 fi
 
-inventory=$(mktemp "${TMPDIR:-/tmp}/taskseal-public-inventory.XXXXXX")
+inventory=$(mktemp "${TMPDIR:-/tmp}/clroom-public-inventory.XXXXXX")
 cleanup() {
   case "$inventory" in
-    "${TMPDIR:-/tmp}"/taskseal-public-inventory.*) rm -f -- "$inventory" ;;
+    "${TMPDIR:-/tmp}"/clroom-public-inventory.*) rm -f -- "$inventory" ;;
     *) echo "REFUSED_UNSAFE_TEMP_CLEANUP" >&2; exit 70 ;;
   esac
 }
 trap cleanup EXIT HUP INT TERM
 
-find "$root" \( -name .git -o -name target -o -name .taskseal-dev -o -path "$root/reports/gates" -o -path "$root/scripts/gates" \) -prune -o -type f -print |
+find "$root" \( -name .git -o -name target -o -name .clroom-dev -o -path "$root/reports/gates" -o -path "$root/scripts/gates" \) -prune -o -type f -print |
   LC_ALL=C sort > "$inventory"
 
 while IFS= read -r file; do
   relative=${file#"$root"/}
   case "$relative" in
-    AGENTS.md|README.md|Cargo.toml|Cargo.lock|rust-toolchain.toml|LICENSE|SECURITY.md|GOVERNANCE.md|CHANGELOG.md|deny.toml|.gitignore|.github/CODEOWNERS|.github/FUNDING.yml|.github/workflows/ci.yml|.github/workflows/release-candidate.yml|.github/workflows/indexnow.yml|schemas/canonical-json-profile.md) ;;
-    src/*|docs/*|packaging/*|qualification/*|schemas/contracts/*|schemas/release/*|fixtures/contracts/*|fixtures/core/*|fixtures/catalog/*|fixtures/cli/*|fixtures/adapters/*|adapters/declarations/*|tests/contracts/*|tests/core/*|tests/catalog/*|tests/cli.rs|tests/cli/*|tests/fixtures/*|tests/public_identity.rs|tests/adapters.rs|tests/adapters/*|tests/packaging/*|tests/release/*|controls/*|scripts/check-public-boundary.sh|scripts/check-control-coverage.rb|scripts/indexnow_changed_urls.py|scripts/probe/*|scripts/release/*|scripts/release-build/*|reports/contracts/*|reports/release/*|site/*) ;;
+    AGENTS.md|README.md|Cargo.toml|Cargo.lock|rust-toolchain.toml|LICENSE|SECURITY.md|GOVERNANCE.md|CHANGELOG.md|deny.toml|.gitignore|.github/CODEOWNERS|.github/FUNDING.yml|.github/workflows/ci.yml|.github/workflows/release.yml|.github/workflows/release-candidate.yml|.github/workflows/indexnow.yml|schemas/canonical-json-profile.md) ;;
+    src/*|docs/*|packaging/*|qualification/*|schemas/contracts/*|schemas/release/*|fixtures/contracts/*|fixtures/core/*|fixtures/catalog/*|fixtures/cli/*|fixtures/adapters/*|adapters/declarations/*|tests/contracts/*|tests/core/*|tests/catalog/*|tests/cli.rs|tests/cli/*|tests/fixtures/*|tests/public_identity.rs|tests/release_system.rs|tests/adapters.rs|tests/adapters/*|tests/packaging/*|tests/release/*|controls/*|scripts/check-public-boundary.sh|scripts/check-control-coverage.rb|scripts/indexnow_changed_urls.py|scripts/probe/*|scripts/release/*|scripts/release-build/*|reports/contracts/*|reports/release/*|site/*) ;;
     *) echo "UNALLOWLISTED_PUBLIC_PATH:$relative" >&2; exit 11 ;;
   esac
 

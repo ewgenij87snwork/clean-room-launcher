@@ -1,15 +1,15 @@
 ---
 layout: page
-title: Provider support in v0.1.0-alpha.4.2
+title: Provider support in v0.2.0
 permalink: /providers.html
 ---
 
-The alpha has two supported paths:
+The release has two supported paths:
 
 | Coding-agent CLI | Platform | Status |
 | --- | --- | --- |
-| Codex CLI 0.147.0+ | macOS / Apple Silicon | Alpha |
-| Claude Code CLI 2.1.223+ | macOS / Apple Silicon | Alpha |
+| Codex CLI 0.147.0+ | macOS / Apple Silicon | Qualified |
+| Claude Code CLI 2.1.223+ | macOS / Apple Silicon | Qualified |
 
 Use the qualified non-interactive Codex path as:
 
@@ -26,7 +26,7 @@ clroom codex --version
 ```
 
 Clean Room Launcher resolves `codex` from `PATH`, builds the macOS isolation
-profile, prints the boundary summary, then replaces itself with
+profile, prints the filesystem-restriction summary, then replaces itself with
 `codex exec --ignore-user-config` inside `sandbox-exec`. Terminal streams,
 signals and exit status remain native. Interactive `clroom codex` paths are
 currently refused fail-closed because no independently qualified clean-user-
@@ -43,4 +43,4 @@ credentials. Existing authentication is used by the selected CLI itself and
 left untouched.
 
 Linux and Windows are `NOT_QUALIFIED`; Intel macOS is not supported by this
-alpha.
+release.

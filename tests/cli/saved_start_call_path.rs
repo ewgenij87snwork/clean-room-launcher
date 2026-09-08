@@ -22,7 +22,7 @@ fn final_zero_auth_ingestion_saved_start_refuses_before_argv_hashing() {
     fs::write(
         store.state_path(),
         format!(
-            "{{\"schema_version\":\"taskseal.saved-start.v1\",\"starts\":[{{\"provider\":\"codex\",\"argv\":[\"--with-access-token\",\"must-not-be-hashed\"],\"project_digest\":\"{}\",\"access_class\":\"standard\",\"qualification_digest\":\"{}\"}}]}}",
+            "{{\"schema_version\":\"clroom.saved-start.v1\",\"starts\":[{{\"provider\":\"codex\",\"argv\":[\"--with-access-token\",\"must-not-be-hashed\"],\"project_digest\":\"{}\",\"access_class\":\"standard\",\"qualification_digest\":\"{}\"}}]}}",
             "a".repeat(64),
             "b".repeat(64)
         ),
@@ -95,7 +95,7 @@ fn standard_start_requires_explicit_approval_then_stops_before_provider_birth() 
     assert_eq!(approved.status.code(), Some(2));
     assert_eq!(
         String::from_utf8(approved.stderr).unwrap(),
-        "P06_REQUIRED: provider launch is not qualified\n"
+        "CLROOM_MACOS_REQUIRED: provider launch is not qualified\n"
     );
 }
 

@@ -111,25 +111,25 @@ case "$provider" in
       expected_version=$(cat "$fixture_root/version.txt")
       [ "$version" = "$expected_version" ] || state=unsupported
     else
-      ephemeral_home=$(mktemp -d "${TMPDIR:-/tmp}/taskseal-codex-home.XXXXXX")
+      ephemeral_home=$(mktemp -d "${TMPDIR:-/tmp}/clroom-codex-home.XXXXXX")
       cleanup_ephemeral_home() {
         case "$ephemeral_home" in
-          "${TMPDIR:-/tmp}"/taskseal-codex-home.*) rm -rf -- "$ephemeral_home" ;;
+          "${TMPDIR:-/tmp}"/clroom-codex-home.*) rm -rf -- "$ephemeral_home" ;;
           *) echo "REFUSED_UNSAFE_TEMP_CLEANUP" >&2; exit 70 ;;
         esac
       }
       trap cleanup_ephemeral_home EXIT HUP INT TERM
       cp -R "$fixture_root/." "$ephemeral_home/"
-      start_json=$(CODEX_HOME="$ephemeral_home" codex debug prompt-input 'TASKSEAL_START_PROBE')
-      invoked_json=$(CODEX_HOME="$ephemeral_home" codex debug prompt-input '$taskseal-canary TASKSEAL_CANARY_TRIGGER')
+      start_json=$(CODEX_HOME="$ephemeral_home" codex debug prompt-input 'CLROOM_START_PROBE')
+      invoked_json=$(CODEX_HOME="$ephemeral_home" codex debug prompt-input '$clroom-canary CLROOM_CANARY_TRIGGER')
 
-      if printf '%s' "$start_json" | grep -q 'TASKSEAL_CANARY_TRIGGER'; then
+      if printf '%s' "$start_json" | grep -q 'CLROOM_CANARY_TRIGGER'; then
         metadata_at_start=qualified
       fi
-      if printf '%s' "$start_json" | grep -q 'TASKSEAL_CANARY_BODY_7E5B1E21'; then
+      if printf '%s' "$start_json" | grep -q 'CLROOM_CANARY_BODY_7E5B1E21'; then
         metadata_at_start=unsupported
       fi
-      if printf '%s' "$invoked_json" | grep -q 'TASKSEAL_CANARY_BODY_7E5B1E21'; then
+      if printf '%s' "$invoked_json" | grep -q 'CLROOM_CANARY_BODY_7E5B1E21'; then
         body_on_invocation=qualified
       fi
 

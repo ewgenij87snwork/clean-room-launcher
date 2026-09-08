@@ -1,6 +1,7 @@
 use std::{
     fs,
     path::PathBuf,
+    sync::atomic::{AtomicU64, Ordering},
     time::{SystemTime, UNIX_EPOCH},
 };
 
@@ -8,12 +9,14 @@ use std::{
 use std::os::unix::fs::symlink;
 
 fn scratch() -> PathBuf {
+    static SEQUENCE: AtomicU64 = AtomicU64::new(0);
     let nonce = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap()
         .as_nanos();
+    let sequence = SEQUENCE.fetch_add(1, Ordering::Relaxed);
     let root = std::env::temp_dir().join(format!(
-        "clroom-claude-inventory-{}-{nonce}",
+        "clroom-claude-inventory-{}-{nonce}-{sequence}",
         std::process::id()
     ));
     fs::create_dir_all(&root).unwrap();
@@ -54,7 +57,7 @@ fn claude_projection_uses_only_active_cached_plugin_versions() {
     )
     .unwrap();
 
-    let projection = taskseal::adapters::claude::projection::project(
+    let projection = clroom::adapters::claude::projection::project(
         &home,
         &["superpowers:brainstorming".to_owned()],
     )
@@ -93,12 +96,12 @@ fn claude_stale_cached_plugin_version_is_not_selectable() {
     .unwrap();
     fs::write(plugin.join("skills/ghost/SKILL.md"), b"ghost\n").unwrap();
 
-    let error = taskseal::adapters::claude::projection::project(&home, &["stale:ghost".to_owned()])
+    let error = clroom::adapters::claude::projection::project(&home, &["stale:ghost".to_owned()])
         .unwrap_err();
 
     assert_eq!(
         error,
-        taskseal::adapters::claude::projection::ProjectionError::UnknownSelector(
+        clroom::adapters::claude::projection::ProjectionError::UnknownSelector(
             "stale:ghost".to_owned()
         )
     );
@@ -139,14 +142,14 @@ fn claude_symlinked_install_registry_is_not_authority() {
     )
     .unwrap();
 
-    let error = taskseal::adapters::claude::projection::project(
+    let error = clroom::adapters::claude::projection::project(
         &home,
         &["superpowers:brainstorming".to_owned()],
     )
     .unwrap_err();
     assert_eq!(
         error,
-        taskseal::adapters::claude::projection::ProjectionError::UnknownSelector(
+        clroom::adapters::claude::projection::ProjectionError::UnknownSelector(
             "superpowers:brainstorming".to_owned()
         )
     );
@@ -180,14 +183,14 @@ fn claude_registry_install_path_outside_cache_is_not_authority() {
     )
     .unwrap();
 
-    let error = taskseal::adapters::claude::projection::project(
+    let error = clroom::adapters::claude::projection::project(
         &home,
         &["superpowers:brainstorming".to_owned()],
     )
     .unwrap_err();
     assert_eq!(
         error,
-        taskseal::adapters::claude::projection::ProjectionError::UnknownSelector(
+        clroom::adapters::claude::projection::ProjectionError::UnknownSelector(
             "superpowers:brainstorming".to_owned()
         )
     );

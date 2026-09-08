@@ -1,6 +1,6 @@
 # Signing and notarization policy
 
-TaskSeal records three artifact states. A state is accepted only from the
+CLROOM records three artifact states. A state is accepted only from the
 platform verifier operating on the exact artifact bytes; the presence of a
 signature-shaped file or metadata field is never evidence.
 
@@ -8,7 +8,8 @@ signature-shaped file or metadata field is never evidence.
   ad-hoc signature with no authenticated identity. The ad-hoc mechanism is
   recorded explicitly and can never satisfy `signed` or `signed+notarized`.
   This state is usable only as an explicitly labelled unsigned preview and
-  remains `NOT_QUALIFIED`.
+  remains an unsigned, unnotarized release artifact; qualification is an
+  independent exact-target acceptance claim.
 - `signed`: the platform verifier accepts the artifact and the observed signer
   identity exactly matches the expected identity. Ad-hoc signatures, an
   unknown identity, or a verification error are refusals for authenticated
@@ -24,5 +25,6 @@ requires `Status=Valid` plus an exact signer subject. Credentials and signing
 commands are deliberately absent: this policy verifies artifacts but never
 creates signatures or notarization submissions.
 
-If a platform tool or approved identity is unavailable, the lane is
-`NOT_QUALIFIED`; it is never skipped or promoted from file presence alone.
+If a platform tool or approved identity is unavailable, signing remains
+`unsigned` and notarization remains `notarized=false`; those facts are never
+promoted from file presence alone.

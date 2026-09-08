@@ -62,7 +62,7 @@ fn refuses_duplicate_roots_after_normalization() {
 fn refuses_symlink_roots_instead_of_following_escape() {
     use std::os::unix::fs::symlink;
 
-    let scratch = std::env::temp_dir().join(format!("taskseal-p04-source-{}", std::process::id()));
+    let scratch = std::env::temp_dir().join(format!("clroom-p04-source-{}", std::process::id()));
     let _ = fs::remove_dir_all(&scratch);
     fs::create_dir_all(&scratch).unwrap();
     let link = scratch.join("escape");
@@ -91,7 +91,7 @@ fn poisoned_home_is_not_an_implicit_source() {
 #[test]
 fn refuses_symlink_in_any_parent_component() {
     use std::os::unix::fs::symlink;
-    let scratch = std::env::temp_dir().join(format!("taskseal-p04-parent-{}", std::process::id()));
+    let scratch = std::env::temp_dir().join(format!("clroom-p04-parent-{}", std::process::id()));
     let _ = fs::remove_dir_all(&scratch);
     fs::create_dir_all(scratch.join("real/root")).unwrap();
     symlink(scratch.join("real"), scratch.join("alias")).unwrap();

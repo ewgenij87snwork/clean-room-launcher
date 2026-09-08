@@ -1,6 +1,6 @@
 ---
 layout: page
-title: Demo
+title: Clean-launch walkthrough
 permalink: /demo.html
 ---
 
@@ -10,7 +10,7 @@ From any project on macOS/Apple Silicon:
 clroom codex exec "summarize this repository"
 ```
 
-Before Codex starts, the launcher prints a compact boundary status plaque. It
+Before Codex starts, the launcher prints a compact filesystem-restriction status plaque. It
 shows global instructions and skills blocked, and apps, hooks, plugins,
 developer instructions and notifications disabled by default.
 
