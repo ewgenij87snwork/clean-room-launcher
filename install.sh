@@ -9,6 +9,10 @@ fail() {
   exit 1
 }
 
+platform_supported() {
+  [ "$1" = "Darwin" ] && [ "$2" = "arm64" ]
+}
+
 select_subject() {
   /usr/bin/awk '
     NF == 2 &&
@@ -41,6 +45,8 @@ extract_binary() {
   member="$root/bin/clroom"
   count=$(/usr/bin/tar -tzf "$archive" | /usr/bin/awk -v expected="$member" '$0 == expected { n += 1 } END { print n + 0 }') || return 1
   [ "$count" -eq 1 ] || return 1
+  regular=$(/usr/bin/tar -tvzf "$archive" "$member" | /usr/bin/awk -v expected="$member" '$1 ~ /^-/ && $NF == expected { n += 1 } END { print n + 0 }') || return 1
+  [ "$regular" -eq 1 ] || return 1
   /usr/bin/tar -xOzf "$archive" "$member" > "$output" || return 1
   [ -s "$output" ]
 }
@@ -54,11 +60,18 @@ self_test() {
   /bin/chmod 0755 "$test_root/$root/bin/clroom"
   /usr/bin/tar -czf "$test_root/$asset" -C "$test_root" "$root"
   digest=$(/usr/bin/shasum -a 256 "$test_root/$asset" | /usr/bin/awk '{ print $1 }')
-  printf '%s  %s\n%s  %s\n' "$digest" "$asset" "$(printf '0%.0s' 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64)" "sbom.cdx.json" > "$test_root/SHA256SUMS"
+  zeros=$(printf '0%.0s' 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64)
+  printf '%s  %s\n%s  %s\n' "$digest" "$asset" "$zeros" "sbom.cdx.json" > "$test_root/SHA256SUMS"
+
+  platform_supported Darwin arm64 || fail "SELF_TEST_PLATFORM_POSITIVE"
+  if platform_supported Darwin x86_64 || platform_supported Linux arm64; then
+    fail "SELF_TEST_PLATFORM_NEGATIVE"
+  fi
 
   load_subject "$test_root/SHA256SUMS" || fail "SELF_TEST_SUBJECT"
   verify_archive "$test_root/$asset" || fail "SELF_TEST_DIGEST"
   extract_binary "$test_root/$asset" "$test_root/clroom" || fail "SELF_TEST_EXTRACT"
+  /bin/chmod 0755 "$test_root/clroom"
   [ "$("$test_root/clroom")" = "clroom fixture" ] || fail "SELF_TEST_BINARY"
 
   /bin/cp "$test_root/SHA256SUMS" "$test_root/SHA256SUMS.duplicate"
@@ -74,6 +87,18 @@ self_test() {
     fail "SELF_TEST_TAMPER_ACCEPTED"
   fi
 
+  /bin/rm -rf "$test_root/$root"
+  /bin/mkdir -p "$test_root/wrong-root/bin"
+  printf '#!/bin/sh\nexit 0\n' > "$test_root/wrong-root/bin/clroom"
+  /usr/bin/tar -czf "$test_root/$asset" -C "$test_root" wrong-root
+  digest=$(/usr/bin/shasum -a 256 "$test_root/$asset" | /usr/bin/awk '{ print $1 }')
+  printf '%s  %s\n' "$digest" "$asset" > "$test_root/SHA256SUMS.layout"
+  load_subject "$test_root/SHA256SUMS.layout" || fail "SELF_TEST_LAYOUT_SUBJECT"
+  verify_archive "$test_root/$asset" || fail "SELF_TEST_LAYOUT_DIGEST"
+  if extract_binary "$test_root/$asset" "$test_root/layout-clroom"; then
+    fail "SELF_TEST_LAYOUT_ACCEPTED"
+  fi
+
   /bin/rm -rf "$test_root"
   printf 'CLROOM_INSTALLER_SELF_TEST_PASS\n'
 }
@@ -84,13 +109,13 @@ if [ "${1:-}" = "--self-test" ]; then
 fi
 [ "$#" -eq 0 ] || fail "UNEXPECTED_ARGUMENT"
 
-[ "$(/usr/bin/uname -s)" = "Darwin" ] || fail "MACOS_REQUIRED"
-[ "$(/usr/bin/uname -m)" = "arm64" ] || fail "APPLE_SILICON_REQUIRED"
+platform_supported "$(/usr/bin/uname -s)" "$(/usr/bin/uname -m)" || fail "MACOS_APPLE_SILICON_REQUIRED"
 [ -n "${HOME:-}" ] || fail "HOME_REQUIRED"
 
 install_dir="$HOME/.local/bin"
 tmp=$(/usr/bin/mktemp -d "${TMPDIR:-/tmp}/clroom-install.XXXXXX") || fail "TMPDIR"
-trap '/bin/rm -rf "$tmp"' EXIT HUP INT TERM
+target_tmp=""
+trap '[ -z "${target_tmp:-}" ] || /bin/rm -f "$target_tmp"; /bin/rm -rf "$tmp"' EXIT HUP INT TERM
 
 manifest="$tmp/SHA256SUMS"
 /usr/bin/curl --proto '=https' --tlsv1.2 --fail --location --silent --show-error --retry 3 \
@@ -102,10 +127,15 @@ archive="$tmp/$ASSET"
   --output "$archive" "$RELEASE_BASE/$ASSET" || fail "ARCHIVE_DOWNLOAD"
 verify_archive "$archive" || fail "ARCHIVE_CHECKSUM"
 extract_binary "$archive" "$tmp/clroom" || fail "ARCHIVE_LAYOUT"
+/bin/chmod 0755 "$tmp/clroom" || fail "STAGED_BINARY_MODE"
+"$tmp/clroom" --help >/dev/null 2>&1 || fail "STAGED_BINARY_CHECK"
 
 /bin/mkdir -p "$install_dir" || fail "INSTALL_DIR"
-/usr/bin/install -m 0755 "$tmp/clroom" "$install_dir/clroom" || fail "INSTALL_BINARY"
-"$install_dir/clroom" --help >/dev/null 2>&1 || fail "INSTALLED_BINARY_CHECK"
+target_tmp=$(/usr/bin/mktemp "$install_dir/.clroom-install.XXXXXX") || fail "INSTALL_TEMP"
+/usr/bin/install -m 0755 "$tmp/clroom" "$target_tmp" || fail "INSTALL_STAGE"
+"$target_tmp" --help >/dev/null 2>&1 || fail "INSTALL_STAGE_CHECK"
+/bin/mv -f "$target_tmp" "$install_dir/clroom" || fail "INSTALL_BINARY"
+target_tmp=""
 
 printf 'Installed CLROOM to %s/clroom\n' "$install_dir"
 case ":${PATH:-}:" in
