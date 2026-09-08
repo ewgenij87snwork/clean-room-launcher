@@ -5,6 +5,18 @@ use std::{
 };
 
 const APP_SUPPORT_DIR: &str = "Library/Application Support/Clean Room Launcher/Codex";
+const STATE_MARKER: &str = ".clroom-state-v1";
+const STATE_MARKER_BYTES: &[u8] = b"clroom-state-v1\n";
+const EXPECTED_PROVIDER_ENTRIES: &[&str] = &[
+    "config.toml",
+    "history.jsonl",
+    "models_cache.json",
+    "version.json",
+    "sessions",
+    "archived_sessions",
+    "logs",
+    "shell_snapshots",
+];
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct CodexState {
@@ -29,7 +41,11 @@ pub(super) fn prepare(
     ensure_private_directory(&root)?;
     ensure_private_directory(&shadow_home)?;
     ensure_private_directory(&sqlite_home)?;
-    reject_shadow_junk(&shadow_home)?;
+    let initialized = read_state_marker(&shadow_home)?;
+    validate_shadow_entries(&shadow_home, initialized)?;
+    if !initialized {
+        create_state_marker(&shadow_home)?;
+    }
     project_selected_skills(
         &shadow_home,
         ambient_codex_home,
@@ -83,15 +99,53 @@ fn ensure_private_directory(path: &Path) -> Result<(), String> {
     Ok(())
 }
 
-fn reject_shadow_junk(shadow_home: &Path) -> Result<(), String> {
-    for name in [
-        "config.toml",
-        "plugins",
-        "hooks",
-        "AGENTS.md",
-        "AGENTS.override.md",
-    ] {
-        if fs::symlink_metadata(shadow_home.join(name)).is_ok() {
+fn read_state_marker(shadow_home: &Path) -> Result<bool, String> {
+    let marker = shadow_home.join(STATE_MARKER);
+    match fs::symlink_metadata(&marker) {
+        Ok(metadata) if metadata.file_type().is_symlink() || !metadata.is_file() => {
+            Err("CLROOM_CODEX_STATE_DIRTY".to_owned())
+        }
+        Ok(_) => match fs::read(&marker) {
+            Ok(bytes) if bytes == STATE_MARKER_BYTES => Ok(true),
+            _ => Err("CLROOM_CODEX_STATE_DIRTY".to_owned()),
+        },
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(false),
+        Err(_) => Err("CLROOM_CODEX_STATE_DIRTY".to_owned()),
+    }
+}
+
+fn create_state_marker(shadow_home: &Path) -> Result<(), String> {
+    use std::io::Write;
+    use std::os::unix::fs::OpenOptionsExt;
+
+    let marker = shadow_home.join(STATE_MARKER);
+    let mut file = std::fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .mode(0o600)
+        .open(&marker)
+        .map_err(|_| "CLROOM_CODEX_STATE_MARKER_FAILED".to_owned())?;
+    file.write_all(STATE_MARKER_BYTES)
+        .map_err(|_| "CLROOM_CODEX_STATE_MARKER_FAILED".to_owned())
+}
+
+fn validate_shadow_entries(shadow_home: &Path, initialized: bool) -> Result<(), String> {
+    for entry in fs::read_dir(shadow_home).map_err(|_| "CLROOM_CODEX_STATE_DIRTY".to_owned())? {
+        let entry = entry.map_err(|_| "CLROOM_CODEX_STATE_DIRTY".to_owned())?;
+        let name = entry
+            .file_name()
+            .to_str()
+            .map(str::to_owned)
+            .ok_or_else(|| "CLROOM_CODEX_STATE_DIRTY".to_owned())?;
+        if matches!(name.as_str(), STATE_MARKER | "auth.json" | "skills") {
+            continue;
+        }
+        if !initialized || !EXPECTED_PROVIDER_ENTRIES.contains(&name.as_str()) {
+            return Err("CLROOM_CODEX_STATE_DIRTY".to_owned());
+        }
+        let metadata = fs::symlink_metadata(entry.path())
+            .map_err(|_| "CLROOM_CODEX_STATE_DIRTY".to_owned())?;
+        if metadata.file_type().is_symlink() {
             return Err("CLROOM_CODEX_STATE_DIRTY".to_owned());
         }
     }
@@ -272,5 +326,40 @@ mod tests {
 
         assert_eq!(first, second);
         assert!(!clean.shadow_home.join("skills/arrow").exists());
+    }
+
+    #[test]
+    fn accepts_expected_provider_state_after_initial_clean_launch() {
+        let scratch = Scratch::new();
+        let home = scratch.0.join("home");
+        fs::create_dir_all(&home).unwrap();
+        let ambient_codex_home = home.join(".codex");
+        fs::create_dir_all(&ambient_codex_home).unwrap();
+        fs::write(ambient_codex_home.join("auth.json"), b"credential bytes").unwrap();
+
+        let state = prepare(&home, &ambient_codex_home, &[]).unwrap();
+        fs::write(state.shadow_home.join("config.toml"), b"provider state").unwrap();
+        fs::create_dir_all(state.shadow_home.join("sessions")).unwrap();
+
+        let resumed = prepare(&home, &ambient_codex_home, &[]).unwrap();
+
+        assert_eq!(resumed, state);
+    }
+
+    #[test]
+    fn rejects_foreign_shadow_entries_after_initial_clean_launch() {
+        let scratch = Scratch::new();
+        let home = scratch.0.join("home");
+        fs::create_dir_all(&home).unwrap();
+        let ambient_codex_home = home.join(".codex");
+        fs::create_dir_all(&ambient_codex_home).unwrap();
+        fs::write(ambient_codex_home.join("auth.json"), b"credential bytes").unwrap();
+
+        let state = prepare(&home, &ambient_codex_home, &[]).unwrap();
+        fs::write(state.shadow_home.join("foreign.txt"), b"unexpected").unwrap();
+
+        let error = prepare(&home, &ambient_codex_home, &[]).unwrap_err();
+
+        assert_eq!(error, "CLROOM_CODEX_STATE_DIRTY");
     }
 }
