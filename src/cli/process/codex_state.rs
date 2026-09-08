@@ -7,15 +7,22 @@ use std::{
 const APP_SUPPORT_DIR: &str = "Library/Application Support/Clean Room Launcher/Codex";
 const STATE_MARKER: &str = ".clroom-state-v1";
 const STATE_MARKER_BYTES: &[u8] = b"clroom-state-v1\n";
-const EXPECTED_PROVIDER_ENTRIES: &[&str] = &[
+const EXPECTED_PROVIDER_FILES: &[&str] = &[
+    ".sandbox_migration",
     "config.toml",
     "history.jsonl",
+    "installation_id",
     "models_cache.json",
+    "session_index.jsonl",
     "version.json",
+];
+const EXPECTED_PROVIDER_DIRECTORIES: &[&str] = &[
     "sessions",
     "archived_sessions",
     "logs",
     "shell_snapshots",
+    "thread-writer-locks",
+    "tmp",
 ];
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -130,8 +137,15 @@ fn create_state_marker(shadow_home: &Path) -> Result<(), String> {
 }
 
 fn validate_shadow_entries(shadow_home: &Path, initialized: bool) -> Result<(), String> {
-    for entry in fs::read_dir(shadow_home).map_err(|_| "CLROOM_CODEX_STATE_DIRTY".to_owned())? {
-        let entry = entry.map_err(|_| "CLROOM_CODEX_STATE_DIRTY".to_owned())?;
+    let entries = fs::read_dir(shadow_home)
+        .map_err(|_| "CLROOM_CODEX_STATE_DIRTY".to_owned())?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|_| "CLROOM_CODEX_STATE_DIRTY".to_owned())?;
+    let legacy_state = !initialized
+        && entries.iter().any(|entry| {
+            entry.file_name().to_str() == Some(".sandbox_migration")
+        });
+    for entry in entries {
         let name = entry
             .file_name()
             .to_str()
@@ -140,12 +154,22 @@ fn validate_shadow_entries(shadow_home: &Path, initialized: bool) -> Result<(), 
         if matches!(name.as_str(), STATE_MARKER | "auth.json" | "skills") {
             continue;
         }
-        if !initialized || !EXPECTED_PROVIDER_ENTRIES.contains(&name.as_str()) {
+        let expected_directory = if EXPECTED_PROVIDER_FILES.contains(&name.as_str()) {
+            Some(false)
+        } else if EXPECTED_PROVIDER_DIRECTORIES.contains(&name.as_str()) {
+            Some(true)
+        } else {
+            None
+        };
+        let Some(expected_directory) = expected_directory else {
+            return Err("CLROOM_CODEX_STATE_DIRTY".to_owned());
+        };
+        if !initialized && !legacy_state {
             return Err("CLROOM_CODEX_STATE_DIRTY".to_owned());
         }
         let metadata = fs::symlink_metadata(entry.path())
             .map_err(|_| "CLROOM_CODEX_STATE_DIRTY".to_owned())?;
-        if metadata.file_type().is_symlink() {
+        if metadata.file_type().is_symlink() || metadata.is_dir() != expected_directory {
             return Err("CLROOM_CODEX_STATE_DIRTY".to_owned());
         }
     }
@@ -163,6 +187,19 @@ fn project_selected_skills(
         if let Ok(entries) = fs::read_dir(&skills_root) {
             for entry in entries {
                 let entry = entry.map_err(|_| "CLROOM_CODEX_STATE_DIRTY".to_owned())?;
+                let name = entry
+                    .file_name()
+                    .to_str()
+                    .map(str::to_owned)
+                    .ok_or_else(|| "CLROOM_CODEX_STATE_DIRTY".to_owned())?;
+                if name == ".system" {
+                    let metadata = fs::symlink_metadata(entry.path())
+                        .map_err(|_| "CLROOM_CODEX_STATE_DIRTY".to_owned())?;
+                    if metadata.file_type().is_symlink() || !metadata.is_dir() {
+                        return Err("CLROOM_CODEX_STATE_DIRTY".to_owned());
+                    }
+                    continue;
+                }
                 let target = fs::read_link(entry.path())
                     .map_err(|_| "CLROOM_CODEX_STATE_DIRTY".to_owned())?;
                 if target.starts_with(ambient_codex_home) || target.starts_with(home) {
@@ -182,11 +219,19 @@ fn project_selected_skills(
         .collect::<std::collections::BTreeMap<_, _>>();
     for entry in fs::read_dir(&skills_root).map_err(|_| "CLROOM_CODEX_STATE_DIRTY".to_owned())? {
         let entry = entry.map_err(|_| "CLROOM_CODEX_STATE_DIRTY".to_owned())?;
-        let target =
-            fs::read_link(entry.path()).map_err(|_| "CLROOM_CODEX_STATE_DIRTY".to_owned())?;
         let Some(name) = entry.file_name().to_str().map(str::to_owned) else {
             return Err("CLROOM_CODEX_STATE_DIRTY".to_owned());
         };
+        if name == ".system" {
+            let metadata = fs::symlink_metadata(entry.path())
+                .map_err(|_| "CLROOM_CODEX_STATE_DIRTY".to_owned())?;
+            if metadata.file_type().is_symlink() || !metadata.is_dir() {
+                return Err("CLROOM_CODEX_STATE_DIRTY".to_owned());
+            }
+            continue;
+        }
+        let target =
+            fs::read_link(entry.path()).map_err(|_| "CLROOM_CODEX_STATE_DIRTY".to_owned())?;
         if selected
             .get(name.as_str())
             .is_some_and(|path| *path == target)
@@ -218,7 +263,7 @@ mod tests {
         sync::atomic::{AtomicU64, Ordering},
     };
 
-    use super::prepare;
+    use super::{prepare, STATE_MARKER};
 
     static TEST_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 
@@ -340,6 +385,45 @@ mod tests {
         let state = prepare(&home, &ambient_codex_home, &[]).unwrap();
         fs::write(state.shadow_home.join("config.toml"), b"provider state").unwrap();
         fs::create_dir_all(state.shadow_home.join("sessions")).unwrap();
+
+        let resumed = prepare(&home, &ambient_codex_home, &[]).unwrap();
+
+        assert_eq!(resumed, state);
+    }
+
+    #[test]
+    fn accepts_normal_codex_legacy_entries_with_exact_types() {
+        let scratch = Scratch::new();
+        let home = scratch.0.join("home");
+        fs::create_dir_all(&home).unwrap();
+        let ambient_codex_home = home.join(".codex");
+        fs::create_dir_all(&ambient_codex_home).unwrap();
+        fs::write(ambient_codex_home.join("auth.json"), b"credential bytes").unwrap();
+
+        let state = prepare(&home, &ambient_codex_home, &[]).unwrap();
+        fs::create_dir_all(state.shadow_home.join("skills/.system")).unwrap();
+        for name in [
+            ".sandbox_migration",
+            "config.toml",
+            "history.jsonl",
+            "installation_id",
+            "models_cache.json",
+            "session_index.jsonl",
+            "version.json",
+        ] {
+            fs::write(state.shadow_home.join(name), b"provider state").unwrap();
+        }
+        for name in [
+            "sessions",
+            "archived_sessions",
+            "logs",
+            "shell_snapshots",
+            "thread-writer-locks",
+            "tmp",
+        ] {
+            fs::create_dir(state.shadow_home.join(name)).unwrap();
+        }
+        fs::remove_file(state.shadow_home.join(STATE_MARKER)).unwrap();
 
         let resumed = prepare(&home, &ambient_codex_home, &[]).unwrap();
 
