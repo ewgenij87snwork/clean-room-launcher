@@ -15,6 +15,8 @@ Semantic Versioning after the first public release.
   selected-skill inventory, and fail-closed filesystem restrictions.
 - Canonical release readiness and SCA verification with SHA256SUMS, CycloneDX
   SBOM, and GitHub attestations.
+- Checksum-verified one-line macOS Apple Silicon installation from the current
+  stable GitHub Release, without `sudo` or shell-configuration mutation.
 
 ### Security
 

@@ -138,25 +138,21 @@ You need macOS on Apple Silicon and at least one already working provider:
 Codex CLI `0.147.0+` or Claude Code CLI `2.1.223+`.
 
 ```sh
-VERSION=v0.2.0
-ASSET=clean-room-launcher-v0.2.0-aarch64-apple-darwin.tar.gz
-
-curl -fLO "https://github.com/ewgenij87snwork/clean-room-launcher/releases/download/$VERSION/$ASSET"
-curl -fLO "https://github.com/ewgenij87snwork/clean-room-launcher/releases/download/$VERSION/SHA256SUMS"
-shasum -a 256 -c SHA256SUMS
-tar -xzf "$ASSET"
-
-mkdir -p "$HOME/.local/bin"
-install -m 0755 "clean-room-launcher-v0.2.0-aarch64-apple-darwin/bin/clroom" "$HOME/.local/bin/clroom"
-export PATH="$HOME/.local/bin:$PATH"
-clroom --help
+curl --proto '=https' --tlsv1.2 -fsSL \
+  https://github.com/ewgenij87snwork/clean-room-launcher/releases/latest/download/install.sh | sh
 ```
 
-The `export` makes `clroom` available in the current terminal. To keep it
-available in new terminals, add `$HOME/.local/bin` to your shell's `PATH`.
+The installer downloads the current stable macOS Apple Silicon release from
+GitHub Releases, verifies the exact archive against `SHA256SUMS`, extracts only
+the `clroom` binary, and installs it to `~/.local/bin/clroom`. It does not use
+`sudo`, edit shell startup files, install a service, or change provider state.
 
-The archive is unsigned and unnotarized. If local macOS policy refuses it,
-prefer the Cargo installation below. Do not disable Gatekeeper globally.
+If `~/.local/bin` is not already in `PATH`, the installer prints the directory
+to add. The archive is unsigned and unnotarized. If local macOS policy refuses
+it, prefer the Cargo installation below. Do not disable Gatekeeper globally.
+
+For the checksum-verified manual archive path, see
+[Install v0.2.0](docs/install.md).
 
 ## Install with Cargo
 
@@ -408,7 +404,7 @@ that the clean-room restrictions blocked the read. Review other errors normally.
 
 ## Remove
 
-For an archive installation:
+For an archive or one-line installation:
 
 ```sh
 rm "$HOME/.local/bin/clroom"

@@ -91,6 +91,7 @@ jobs:
         run: |
           set -euo pipefail
           cargo test --locked --all-targets --target aarch64-apple-darwin
+          sh install.sh --self-test
           git diff --check
       - name: Build deterministic release bundle
         env:
@@ -127,11 +128,13 @@ jobs:
             --artifact "$artifact" \
             --metadata target/release-artifacts/cargo-metadata.json \
             --output target/release-artifacts/sbom.cdx.json
+          install -m 0755 install.sh target/release-artifacts/install.sh
           (
             cd target/release-artifacts
             shasum -a 256 \
               "${{ needs.prepare.outputs.artifact_name }}" \
               sbom.cdx.json \
+              install.sh \
               > SHA256SUMS
             shasum -a 256 -c SHA256SUMS
           )
@@ -143,6 +146,7 @@ jobs:
             target/release-artifacts/${{ needs.prepare.outputs.artifact_name }}
             target/release-artifacts/SHA256SUMS
             target/release-artifacts/sbom.cdx.json
+            target/release-artifacts/install.sh
           if-no-files-found: error
           retention-days: 7
 
@@ -167,7 +171,8 @@ jobs:
           test -f "release-artifacts/${{ needs.prepare.outputs.artifact_name }}"
           test -f release-artifacts/SHA256SUMS
           test -f release-artifacts/sbom.cdx.json
-          test "$(find release-artifacts -maxdepth 1 -type f | wc -l | tr -d ' ')" = 3
+          test -f release-artifacts/install.sh
+          test "$(find release-artifacts -maxdepth 1 -type f | wc -l | tr -d ' ')" = 4
           (
             cd release-artifacts
             shasum -a 256 -c SHA256SUMS
@@ -206,7 +211,8 @@ jobs:
           test -f "release-artifacts/${{ needs.prepare.outputs.artifact_name }}"
           test -f release-artifacts/SHA256SUMS
           test -f release-artifacts/sbom.cdx.json
-          test "$(find release-artifacts -maxdepth 1 -type f | wc -l | tr -d ' ')" = 3
+          test -f release-artifacts/install.sh
+          test "$(find release-artifacts -maxdepth 1 -type f | wc -l | tr -d ' ')" = 4
           (
             cd release-artifacts
             shasum -a 256 -c SHA256SUMS
@@ -238,10 +244,17 @@ jobs:
           text = "\n".join(body).strip()
           footer = f"""
 
+          ## Install
+
+          ```sh
+          curl --proto '=https' --tlsv1.2 -fsSL https://github.com/ewgenij87snwork/clean-room-launcher/releases/latest/download/install.sh | sh
+          ```
+
           ## Download and verification
 
+          - `install.sh` — one-line macOS Apple Silicon installer
           - `{artifact}` — macOS Apple Silicon archive
-          - `SHA256SUMS` — SHA-256 digests for the archive and SBOM
+          - `SHA256SUMS` — SHA-256 digests for the archive, SBOM, and installer
           - `sbom.cdx.json` — CycloneDX SBOM bound to the archive digest
           - GitHub build-provenance and SBOM attestations are generated for the exact archive bytes
 
