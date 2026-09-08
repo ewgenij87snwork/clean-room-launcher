@@ -62,7 +62,7 @@ way to suppress user configuration for an exec task. Use it directly when
 that broad suppression is exactly what you need.
 
 CLROOM preflights this capability and injects the flag for its qualified
-`codex exec` path, while preserving its selective filesystem boundary and
+`codex exec` path, while preserving its selective filesystem restrictions and
 selected-skill inventory. CLROOM does not claim interactive Codex
 qualification; interactive paths remain fail-closed.
 

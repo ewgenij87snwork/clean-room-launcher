@@ -6,18 +6,18 @@
 
 <p align="center">
   <a href="https://ewgenij87snwork.github.io/clean-room-launcher/">Documentation →</a> ·
-  <a href="docs/demo.md">Read the boundary walkthrough →</a>
+  <a href="docs/demo.md">Read the clean-launch walkthrough →</a>
 </p>
 
 <p align="center">
   <a
     href="#use-the-global-skills-you-need-without-loading-the-rest"
   >Choose skills</a> ·
-  <a href="#see-the-boundary-as-codex-starts">See the boundary</a> ·
+  <a href="#see-the-clean-launch-as-codex-starts">See the clean launch</a> ·
   <a href="#install-in-sixty-seconds">Install</a> ·
   <a href="#launch">Launch</a> ·
   <a href="#how-it-works">How it works</a> ·
-  <a href="#trust-boundary">Trust boundary</a> ·
+  <a href="#trust-and-limitations">Trust and limitations</a> ·
   <a href="#frequently-asked-questions">FAQ</a> ·
   <a href="#remove">Remove</a>
 </p>
@@ -59,7 +59,7 @@ Use skill names installed in your own setup.
 
 For the full practical guide, see [Skill sets](docs/skill-sets.md).
 
-Run `clroom help skill-set` for selector and saved-set examples.
+Run `clroom help skill-set` for skill-name, namespace, and saved-set examples.
 
 Run `clroom --help` to see the exact skill-set file path. It is normally
 `~/.config/clroom/skill-sets.yaml`.
@@ -77,15 +77,15 @@ feature-planning:
 ```
 
 <details>
-<summary>Exact selector behavior</summary>
+<summary>Exact skill-choice behavior</summary>
 
 - A bare `name` admits the logical global skill with that name, or every skill
   in a namespace with that name.
 - `namespace:skill` admits one specific skill from a namespace.
 - `@set-name` admits a saved group from the YAML file.
-- Invalid or unknown selectors stop before the selected provider starts.
+- Invalid or unknown skill choices stop before the selected provider starts.
 - Selections apply to this launch only.
-- Repeated and overlapping selectors admit each logical skill once.
+- Repeated and overlapping skill choices admit each logical skill once.
 - If the same logical skill exists in multiple discovered roots, the provider's
   documented root precedence chooses one.
 - Saved groups cannot include other saved groups.
@@ -94,13 +94,13 @@ feature-planning:
 
 </details>
 
-## See the boundary as Codex starts
+## See the clean launch as Codex starts
 
 Run `clroom codex exec --skill-set=my-skill,@my-skill-set` from the directory where
 you want to work.
 
 Before Codex takes over the terminal, Clean Room Launcher shows a compact
-summary of the active boundary:
+summary of the active filesystem restrictions:
 
 - global Codex `AGENTS.md` files are blocked;
 - unselected global skill contents stay blocked;
@@ -123,7 +123,7 @@ summary of the active boundary:
         ╰───────────────────────────────╯
 ```
 
-The main plaque reports the global boundary and admitted global-skill count.
+The main plaque reports the global restrictions and admitted global-skill count.
 When project-local skills are present in `.agents/skills`, the separate card
 shows how many remain available; with none, the card is omitted. Project
 context and explicit Codex arguments remain available.
@@ -211,7 +211,7 @@ substitute for the interactive TUI.
 
 ### Claude Code
 
-Start Claude Code with the same clean boundary:
+Start Claude Code with the same clean launch:
 
 ```sh
 cd your-project
@@ -219,7 +219,7 @@ clroom claude
 ```
 
 Project-local Claude skills remain available automatically. Add selected
-global skills for this launch with the same selector:
+global skills for this launch with the same skill choice:
 
 ```sh
 clroom claude --skill-set=my-skill,@my-skill-set
@@ -231,11 +231,11 @@ clroom claude --skill-set=my-skill,@my-skill-set
    `codex` or `claude` executable through `PATH`. It does not install or replace
    either CLI.
 
-2. **Establish the boundary.** It creates a narrow macOS Seatbelt policy that
+2. **Apply filesystem restrictions.** It creates a narrow macOS Seatbelt policy that
    denies reads of the provider's global instruction files and unselected
    ambient skill contents.
 
-3. **Admit your selected skills.** Direct global skill selectors and named
+3. **Admit your selected skills.** Direct global skill names and named
    `@sets` composed with `--skill-set=` are readable for this launch only.
    Project-local skills remain available automatically.
 
@@ -243,7 +243,7 @@ clroom claude --skill-set=my-skill,@my-skill-set
    empty developer instructions, and no notifications. Claude starts without
    global `CLAUDE.md`, user settings, or auto memory.
 
-5. **Show the boundary.** The launcher prints the compact `CLEAN ROOM` status
+5. **Show the restrictions.** The launcher prints the compact `CLEAN ROOM` status
    plaque, admitted global-skill count, and a project-skill card when local
    skills are present.
 
@@ -276,14 +276,14 @@ the selected CLI starts.
 | Apps, hooks, and plugins are off by default | Explicit user arguments can re-enable them |
 | Provider-specific ambient settings are disabled by default | Provider configuration is not rewritten |
 | The selected project remains available | Project files, Git history, and project instructions remain untouched |
-| The provider starts inside the launcher boundary | Installation, login, and provider state remain provider-owned |
+| The provider starts with the launcher's filesystem restrictions | Installation, login, and provider state remain provider-owned |
 
 Clean Room Launcher does not need to copy authentication data into its own
 configuration. It does not open a browser or ask you to sign in.
 
-## Trust boundary
+## Trust and limitations
 
-Clean Room Launcher provides a focused context boundary. It is not a virtual
+Clean Room Launcher provides focused context restrictions. It is not a virtual
 machine, container, network sandbox, complete home-directory sandbox,
 permission broker, coding-agent proxy, or hosted coding service.
 
@@ -297,10 +297,10 @@ The launcher does not make unsafe commands safe and does not replace provider
 sandbox or approval controls.
 
 Codex may display `Operation not permitted` when it probes a blocked global
-`AGENTS.md` file. That warning is expected: the clean-room boundary denied the
+`AGENTS.md` file. That warning is expected: the clean-room restrictions denied the
 read. It does not mean Codex failed to start.
 
-If the required macOS isolation boundary cannot be created, Clean Room Launcher
+If the required macOS filesystem restrictions cannot be created, Clean Room Launcher
 fails instead of silently starting a normal inherited Codex session.
 
 See [the current limitations](docs/limitations.md) and
@@ -323,12 +323,12 @@ See the official [Claude Code CLI reference][claude-cli-reference] and
 
 ## Coding-agent support
 
-The current alpha supports two macOS paths:
+The current release supports two qualified macOS paths:
 
 | Coding agent | Platform | Status |
 |---|---|---|
-| Codex CLI 0.147.0+ | macOS / Apple Silicon | Alpha |
-| Claude Code CLI 2.1.223+ | macOS / Apple Silicon | Alpha |
+| Codex CLI 0.147.0+ | macOS / Apple Silicon | Qualified |
+| Claude Code CLI 2.1.223+ | macOS / Apple Silicon | Qualified |
 
 Linux and Windows are `NOT_QUALIFIED`. Intel macOS, Homebrew, crates.io,
 signing, and notarization are not supported by this release.
@@ -359,7 +359,7 @@ The documentation intentionally recommends native provider features when they ar
 ### Does it delete or rewrite my existing setup?
 
 No. Existing instructions, skills, provider settings, and other projects stay where
-they are. The boundary applies only to the launched process.
+they are. The filesystem restrictions apply only to the launched process.
 
 ### Does it remove all context from Codex?
 
@@ -386,10 +386,10 @@ container.
 
 ### Can I see what was cleaned?
 
-Yes. The launch plaque shows the active boundary categories, admitted global
+Yes. The launch plaque shows the active restriction categories, admitted global
 skills, and—when present—the project-local skill count before the provider starts.
 
-This alpha does not yet provide a per-file review interface or compiled-context
+This release does not provide a per-file review interface or compiled-context
 manifest.
 
 ### Can I override the clean defaults?
@@ -397,14 +397,14 @@ manifest.
 Yes. Explicit Codex arguments can re-enable apps, hooks, and plugins or replace
 the cleared Codex configuration values.
 
-They do not disable the launcher's filesystem boundary around global
-instructions and unselected skill roots. Use `--skill-set=` to admit direct
-skill selectors or named `@sets` for one launch.
+They do not disable the launcher's filesystem restrictions around global
+instructions and unselected skill roots. Use `--skill-set=` with direct skill
+names or named `@sets` for one launch.
 
 ### Why does Codex show `Operation not permitted`?
 
 Codex may probe a global `AGENTS.md` file during startup. The warning proves
-that the clean-room boundary blocked the read. Review other errors normally.
+that the clean-room restrictions blocked the read. Review other errors normally.
 
 ## Remove
 
@@ -429,7 +429,7 @@ Removing Clean Room Launcher does not modify either provider or its authenticati
 Its artifacts are unsigned and unnotarized.
 
 It supports Codex CLI `0.147.0+` and Claude Code CLI `2.1.223+` through a
-focused clean-room boundary. The qualification is limited to the documented
+focused clean-room restrictions. The qualification is limited to the documented
 macOS Apple Silicon path.
 
 See the

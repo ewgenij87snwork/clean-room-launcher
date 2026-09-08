@@ -209,7 +209,7 @@ OpenAI documents global instructions under `CODEX_HOME` plus project instruction
 
 Use native `codex exec --ignore-user-config` for broad non-interactive user-
 config suppression. Use CLROOM when you also need its qualified selective
-project/local-preserving boundary and selected-skill workflow; interactive
+project/local-preserving filesystem restrictions and selected-skill workflow; interactive
 Codex qualification remains fail-closed.
 
 **Go deeper:** [Codex](codex.md) · [Limitations](limitations.md)

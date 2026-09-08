@@ -79,6 +79,17 @@ def main() -> int:
             raise SystemExit("CLROOM_RELEASE_PUBLIC_SURFACE_REFUSED:READINESS:" + needle)
 
     release_workflow = body(".github/workflows/release.yml")
+    if "feat/clroom-public-alpha-v1" in release_workflow:
+        raise SystemExit("CLROOM_RELEASE_PUBLIC_SURFACE_REFUSED:LEGACY_DEFAULT_BRANCH")
+    for needle in (
+        'git ls-remote --symref origin HEAD',
+        'test -n "$default_ref"',
+        'git fetch --no-tags --depth=1 origin "$default_ref"',
+        'test "$(git rev-parse HEAD)" = "$(git rev-parse FETCH_HEAD)"',
+        'release tag must point to the exact accepted default-branch tip',
+    ):
+        if needle not in release_workflow:
+            raise SystemExit("CLROOM_RELEASE_PUBLIC_SURFACE_REFUSED:DEFAULT_BRANCH_CONTRACT:" + needle)
     for needle in (
         "CLROOM_ARTIFACT_QUALIFICATION: QUALIFIED",
         'tarfile.open(sys.argv[1], "r:gz")',

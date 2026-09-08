@@ -26,7 +26,7 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - name: Bind tag, version, changelog, and accepted default branch
+      - name: Bind tag, version, changelog, and action-time default branch
         id: release
         shell: bash
         run: |
@@ -56,7 +56,12 @@ jobs:
             echo "Cargo.toml version $manifest_version does not match tag $tag" >&2
             exit 1
           }
-          git fetch --no-tags --depth=1 origin feat/clroom-public-alpha-v1
+          default_ref=$(git ls-remote --symref origin HEAD | awk '$1 == "ref:" && $3 == "HEAD" {print $2}')
+          test -n "$default_ref" || {
+            echo "could not resolve the repository default branch" >&2
+            exit 1
+          }
+          git fetch --no-tags --depth=1 origin "$default_ref"
           test "$(git rev-parse HEAD)" = "$(git rev-parse FETCH_HEAD)" || {
             echo "release tag must point to the exact accepted default-branch tip" >&2
             exit 1

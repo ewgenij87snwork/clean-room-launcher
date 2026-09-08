@@ -26,7 +26,7 @@ clroom codex --version
 ```
 
 Clean Room Launcher resolves `codex` from `PATH`, builds the macOS isolation
-profile, prints the boundary summary, then replaces itself with
+profile, prints the filesystem-restriction summary, then replaces itself with
 `codex exec --ignore-user-config` inside `sandbox-exec`. Terminal streams,
 signals and exit status remain native. Interactive `clroom codex` paths are
 currently refused fail-closed because no independently qualified clean-user-
