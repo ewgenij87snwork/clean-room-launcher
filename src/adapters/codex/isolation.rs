@@ -112,11 +112,10 @@ pub fn plan_with_skills(
         home.join(".config/gcloud"),
         home.join(".azure"),
     ];
-    let inventory = if selectors.is_empty() {
-        Vec::new()
-    } else {
-        discover_global_skills(&[codex_home.join("skills"), home.join(".agents/skills")])
-    };
+    let inventory = discover_global_skills(&[
+        codex_home.join("skills"),
+        home.join(".agents/skills"),
+    ]);
     let selection = resolve_skill_selectors(selectors, &inventory)?;
     let mut denied_subpaths = denied_roots.iter().cloned().collect::<BTreeSet<_>>();
     denied_subpaths.extend(
@@ -239,7 +238,13 @@ fn discover_global_skills(roots: &[PathBuf]) -> Vec<GlobalSkill> {
             let Ok(entry_metadata) = fs::symlink_metadata(&entry_path) else {
                 continue;
             };
-            if entry_metadata.file_type().is_symlink() || !entry_metadata.is_dir() {
+            let entry_is_symlink = entry_metadata.file_type().is_symlink();
+            if !entry_is_symlink && !entry_metadata.is_dir() {
+                continue;
+            }
+            if entry_is_symlink
+                && !fs::metadata(&entry_path).is_ok_and(|metadata| metadata.is_dir())
+            {
                 continue;
             }
             if name == ".system"
@@ -252,7 +257,7 @@ fn discover_global_skills(roots: &[PathBuf]) -> Vec<GlobalSkill> {
             let Ok(canonical_path) = fs::canonicalize(&entry_path) else {
                 continue;
             };
-            if !canonical_path.starts_with(&canonical_root) {
+            if !entry_is_symlink && !canonical_path.starts_with(&canonical_root) {
                 continue;
             }
             if !fs::metadata(&canonical_path).is_ok_and(|metadata| metadata.is_dir()) {
