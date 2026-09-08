@@ -57,6 +57,8 @@ struct GlobalSkill {
     source_precedence: usize,
     entry_path: PathBuf,
     canonical_path: PathBuf,
+    is_symlink: bool,
+    selectable: bool,
 }
 
 #[derive(Debug, Default)]
@@ -112,10 +114,25 @@ pub fn plan_with_skills(
         home.join(".config/gcloud"),
         home.join(".azure"),
     ];
-    let inventory = discover_global_skills(&[
-        codex_home.join("skills"),
-        home.join(".agents/skills"),
+    let mut inventory = discover_global_skills(&[
+        (codex_home.join("skills"), false),
+        (home.join(".agents/skills"), true),
     ]);
+    for skill in &mut inventory {
+        if skill.is_symlink
+            && skill.selectable
+            && denied_files
+                .iter()
+                .chain(denied_roots.iter())
+                .chain(credential_roots.iter())
+                .any(|protected| {
+                    skill.canonical_path.starts_with(protected)
+                        || protected.starts_with(&skill.canonical_path)
+                })
+        {
+            skill.selectable = false;
+        }
+    }
     let selection = resolve_skill_selectors(selectors, &inventory)?;
     let mut denied_subpaths = denied_roots.iter().cloned().collect::<BTreeSet<_>>();
     denied_subpaths.extend(
@@ -215,9 +232,9 @@ pub fn plan_with_skills(
     })
 }
 
-fn discover_global_skills(roots: &[PathBuf]) -> Vec<GlobalSkill> {
+fn discover_global_skills(roots: &[(PathBuf, bool)]) -> Vec<GlobalSkill> {
     let mut inventory = Vec::new();
-    for (source_precedence, root) in roots.iter().enumerate() {
+    for (source_precedence, (root, allow_symlink_entries)) in roots.iter().enumerate() {
         let Ok(root_metadata) = fs::symlink_metadata(root) else {
             continue;
         };
@@ -269,6 +286,8 @@ fn discover_global_skills(roots: &[PathBuf]) -> Vec<GlobalSkill> {
                 source_precedence,
                 entry_path,
                 canonical_path,
+                is_symlink: entry_is_symlink,
+                selectable: !entry_is_symlink || *allow_symlink_entries,
             });
         }
     }
@@ -301,13 +320,19 @@ fn resolve_skill_selectors(
         let matched = if let Some((namespace, name)) = selector.split_once(':') {
             inventory
                 .iter()
-                .filter(|skill| skill.namespace.as_deref() == Some(namespace) && skill.name == name)
+                .filter(|skill| {
+                    skill.selectable
+                        && skill.namespace.as_deref() == Some(namespace)
+                        && skill.name == name
+                })
                 .collect::<Vec<_>>()
         } else {
             inventory
                 .iter()
                 .filter(|skill| {
-                    skill.name == *selector || skill.namespace.as_deref() == Some(selector.as_str())
+                    skill.selectable
+                        && (skill.name == *selector
+                            || skill.namespace.as_deref() == Some(selector.as_str()))
                 })
                 .collect::<Vec<_>>()
         };
