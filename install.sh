@@ -13,6 +13,12 @@ platform_supported() {
   [ "$1" = "Darwin" ] && [ "$2" = "arm64" ]
 }
 
+install_target_safe() {
+  target=$1
+  [ ! -L "$target" ] || return 1
+  [ ! -e "$target" ] || [ -f "$target" ]
+}
+
 select_subject() {
   /usr/bin/awk '
     NF == 2 &&
@@ -66,6 +72,19 @@ self_test() {
   platform_supported Darwin arm64 || fail "SELF_TEST_PLATFORM_POSITIVE"
   if platform_supported Darwin x86_64 || platform_supported Linux arm64; then
     fail "SELF_TEST_PLATFORM_NEGATIVE"
+  fi
+
+  missing_target="$test_root/missing-target"
+  install_target_safe "$missing_target" || fail "SELF_TEST_TARGET_MISSING"
+  printf 'existing\n' > "$test_root/existing-target"
+  install_target_safe "$test_root/existing-target" || fail "SELF_TEST_TARGET_REGULAR"
+  /bin/mkdir "$test_root/target-dir"
+  if install_target_safe "$test_root/target-dir"; then
+    fail "SELF_TEST_TARGET_DIRECTORY_ACCEPTED"
+  fi
+  /bin/ln -s "$test_root/existing-target" "$test_root/target-link"
+  if install_target_safe "$test_root/target-link"; then
+    fail "SELF_TEST_TARGET_SYMLINK_ACCEPTED"
   fi
 
   load_subject "$test_root/SHA256SUMS" || fail "SELF_TEST_SUBJECT"
@@ -131,13 +150,15 @@ extract_binary "$archive" "$tmp/clroom" || fail "ARCHIVE_LAYOUT"
 "$tmp/clroom" --help >/dev/null 2>&1 || fail "STAGED_BINARY_CHECK"
 
 /bin/mkdir -p "$install_dir" || fail "INSTALL_DIR"
+target="$install_dir/clroom"
+install_target_safe "$target" || fail "INSTALL_TARGET_UNSAFE"
 target_tmp=$(/usr/bin/mktemp "$install_dir/.clroom-install.XXXXXX") || fail "INSTALL_TEMP"
 /usr/bin/install -m 0755 "$tmp/clroom" "$target_tmp" || fail "INSTALL_STAGE"
 "$target_tmp" --help >/dev/null 2>&1 || fail "INSTALL_STAGE_CHECK"
-/bin/mv -f "$target_tmp" "$install_dir/clroom" || fail "INSTALL_BINARY"
+/bin/mv -f "$target_tmp" "$target" || fail "INSTALL_BINARY"
 target_tmp=""
 
-printf 'Installed CLROOM to %s/clroom\n' "$install_dir"
+printf 'Installed CLROOM to %s\n' "$target"
 case ":${PATH:-}:" in
   *":$install_dir:"*) ;;
   *) printf 'Add %s to PATH to run clroom from any directory.\n' "$install_dir" ;;
