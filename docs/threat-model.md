@@ -11,9 +11,9 @@ context, release artifacts and evidence. Protected assets are provider
 authentication state, user and project files, Git state, source skills,
 generated runtime state, artifact identity and release receipts.
 
-## Trust boundaries and attacker-controlled inputs
+## Trust model and attacker-controlled inputs
 
-Trust boundaries exist between the parent environment and the isolated runtime,
+Trust relationships exist between the parent environment and the isolated runtime,
 between source skills and generated context, between Clean Room Launcher and a provider
 CLI, and between a built artifact and its release evidence. Attacker-controlled
 inputs include project files, skill metadata, command arguments, environment
@@ -30,7 +30,7 @@ receipts.
 - Path and symlink escape can redirect placement, reads, writes or cleanup
   outside Clean Room Launcher-owned runtime roots.
 - Malicious context can use admitted files or skill metadata to influence a
-  provider outside the intended task boundary.
+  provider outside the intended task scope.
 - Adapter or provider drift can make evidence from one executable, version,
   operating system or architecture appear valid for another tuple.
 - Private-data leakage can place secrets, absolute user paths, prompts or

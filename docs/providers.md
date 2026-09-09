@@ -36,9 +36,9 @@ exec-only enhancement.
 For Claude, the launcher creates one private session-scoped skill projection,
 binds it to the real Claude consumer process, and removes it on normal exit or
 after a later launch proves the owner dead. Live or unknown sessions are kept.
-The current release qualifies the interactive Claude path. A Claude Code `-p`
-launch reached the provider and exited successfully during release-candidate
-testing, but its response-output semantics are not independently qualified here.
+The v0.2.0 release qualifies the interactive Claude path. A Claude Code `-p`
+launch reached the provider and exited successfully during v0.2.0 release
+qualification, but its response-output semantics are not independently qualified here.
 
 The launcher does not install either provider, create an account, perform
 browser login, inspect provider authentication state, or copy provider
