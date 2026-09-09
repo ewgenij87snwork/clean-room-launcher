@@ -7,6 +7,27 @@ nav_title: FAQ
 ---
 New to the project? Start with [Why Clean Room Launcher (CLROOM) exists](why-clroom.md), or use the [problem index](problem-index.md) if you arrived with a symptom or half-remembered term.
 
+## Can an app or CI job launch CLROOM?
+
+Yes. Invoke the same `clroom codex` or `clroom claude` command from the runner,
+script, or CI job, and keep scheduling and provider lifecycle outside CLROOM.
+
+## Can different workers get different skill sets?
+
+Yes. Pass a different direct selector or saved `@set` to each top-level launch.
+
+## Does CLROOM configure Claude agent-team teammates individually?
+
+No. Provider-owned teammates and subagents follow Claude Code's own inheritance
+and scoping rules. Launch separate processes when workers need independent
+CLROOM inputs.
+
+## Can I keep skills in one git repo and symlink them?
+
+Yes, for the supported individual-skill symlink forms. Selected links are
+admitted once, unselected canonical targets stay denied, and protected targets
+are refused. See [Skill sets](skill-sets.md#symlinked-global-skills).
+
 ## What problem does Clean Room Launcher (CLROOM) solve?
 
 CLROOM is for cases where personal-global coding-agent configuration that is useful elsewhere should not silently participate in this particular launch. It gives you a repeatable cleaner starting point without deleting the normal setup.

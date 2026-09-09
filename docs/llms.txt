@@ -12,6 +12,7 @@ permalink: /llms.txt
 - https://ewgenij87snwork.github.io/clean-room-launcher/
 - https://ewgenij87snwork.github.io/clean-room-launcher/problem-index/
 - https://ewgenij87snwork.github.io/clean-room-launcher/use-cases/
+- https://ewgenij87snwork.github.io/clean-room-launcher/agent-runners/
 - https://ewgenij87snwork.github.io/clean-room-launcher/skill-sets/
 - https://ewgenij87snwork.github.io/clean-room-launcher/when-to-use-clroom/
 - https://ewgenij87snwork.github.io/clean-room-launcher/claude-code/

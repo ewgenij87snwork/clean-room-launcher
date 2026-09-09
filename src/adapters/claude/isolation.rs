@@ -24,6 +24,7 @@ pub fn plan(
     home: &Path,
     projection_root: &Path,
     projection_view: &Path,
+    denied_source_paths: &[PathBuf],
     allowed_source_paths: &[PathBuf],
 ) -> Result<IsolationPlan, IsolationError> {
     if env::consts::OS != "macos" || env::consts::ARCH != "aarch64" {
@@ -78,6 +79,10 @@ pub fn plan(
     let mut profile = String::from("(version 1)\n(allow default)\n");
     profile.push_str("(deny file-read*");
     for path in &denied_read_roots {
+        push_subpath(&mut profile, path)?;
+    }
+    for path in denied_source_paths {
+        push_literal(&mut profile, path)?;
         push_subpath(&mut profile, path)?;
     }
     profile.push_str(")\n");

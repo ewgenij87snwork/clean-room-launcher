@@ -28,3 +28,25 @@ clroom claude --skill-set=@skill-set
 Your project context stays available. Your normal setup stays untouched.
 
 You configure only this launch.
+
+## Different skills for different workers
+
+Use separate saved groups when a planning, review, or debugging worker needs a
+different personal-global skill set:
+
+```sh
+clroom codex --skill-set=@planning
+clroom codex exec --skill-set=@review "Review the staged diff."
+clroom claude --skill-set=@debugging -p "Investigate the failing test."
+```
+
+## Cross-provider review workflow
+
+The same runner can qualify one task through both supported provider paths while
+keeping each provider's native environment and lifecycle rules.
+
+## Clean worker launched from a script or CI
+
+A script or CI job can invoke the same top-level commands. Keep provider
+authentication, queues, worktrees, and session reuse in the system that owns
+those responsibilities; CLROOM supplies the per-launch clean/selective layer.

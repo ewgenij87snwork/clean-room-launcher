@@ -16,6 +16,8 @@ permalink: /limitations.html
   hooks or plugins and therefore reduce the clean defaults.
 - The project directory and other host paths remain available unless macOS or
   the selected provider applies an additional restriction.
+- CLROOM controls each top-level launch. Provider-owned Claude Code teammates
+  and subagents follow Claude's own inheritance and scoping rules.
 - The launcher depends on the undocumented longevity of macOS `sandbox-exec`;
   it fails closed if the protection cannot be created.
 - No bounty program exists.

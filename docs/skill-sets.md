@@ -75,6 +75,21 @@ clroom codex exec --skill-set=my-skill,@review
 
 Selectors are comma-separated. Repeated and overlapping selectors are deduplicated, and the selection applies only to this launch.
 
+<a id="symlinked-global-skills"></a>
+## Symlinked global skills
+
+A common setup keeps reusable Agent Skills in one version-controlled directory and exposes individual skill directories to provider discovery locations with symlinks.
+
+CLROOM qualifies symlinked personal-global skills as both a discovery and filesystem-security case:
+
+- an unselected supported symlinked skill and its canonical target stay outside the clean launch;
+- a selected supported symlinked skill resolves to the intended skill and is counted once;
+- duplicate names follow the documented source precedence and the losing target stays unreadable;
+- links that would expose protected provider, configuration, or credential paths are refused;
+- provider-owned/system-managed skill locations are not automatically user-selectable.
+
+Exact support differs by provider and source location. See [Claude Code](claude-code.md) and [Codex](codex.md).
+
 ## Edit a skill set
 
 Open the same YAML file, add or remove selectors under the set name, and keep using the same `@set-name`.

@@ -24,6 +24,9 @@ receipts.
 
 - HOME contamination can expose parent configuration, unrelated skills or
   private files to a supposedly clean launch.
+- A symlinked personal-global skill can leak its canonical target even when the
+  discovery entry itself is under a known root; both providers must deny
+  unselected targets and refuse protected overlaps.
 - Path and symlink escape can redirect placement, reads, writes or cleanup
   outside Clean Room Launcher-owned runtime roots.
 - Malicious context can use admitted files or skill metadata to influence a
@@ -46,6 +49,8 @@ receipts.
   `NOT_QUALIFIED`.
 - Build an allowlisted environment, refuse collisions before placement, reject
   symlinks and path traversal, and clean only digest-bound launcher-owned state.
+- Track symlink entry and canonical paths separately, admit only selected
+  supported links, and keep losing or unselected targets denied.
 - Preserve provider-native skill loading and record only bounded observations;
   never retain raw provider output, prompts, credentials or transcripts.
 - Require normalized archives, locked dependencies, checksums, SBOM and

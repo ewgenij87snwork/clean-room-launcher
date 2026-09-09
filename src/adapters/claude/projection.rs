@@ -34,6 +34,7 @@ pub struct Projection {
     phase: ProjectionPhase,
     pub add_dir: PathBuf,
     pub selected_global_skills: usize,
+    denied_source_paths: Vec<PathBuf>,
     allowed_source_paths: Vec<PathBuf>,
 }
 
@@ -67,6 +68,7 @@ struct GlobalSkill {
     namespace: Option<String>,
     source_precedence: usize,
     canonical_path: PathBuf,
+    is_symlink: bool,
 }
 
 /// Qualified Claude Code skill sources. Synced/remote skills are provider
@@ -107,6 +109,11 @@ pub fn project(home: &Path, selectors: &[String]) -> Result<Projection, Projecti
         phase: ProjectionPhase::Creating,
         add_dir,
         selected_global_skills: selected.len(),
+        denied_source_paths: inventory
+            .iter()
+            .filter(|skill| skill.is_symlink)
+            .map(|skill| skill.canonical_path.clone())
+            .collect(),
         allowed_source_paths,
     };
     fs::create_dir_all(projection.add_dir.join(".claude/skills"))
@@ -123,6 +130,10 @@ pub fn project(home: &Path, selectors: &[String]) -> Result<Projection, Projecti
 }
 
 impl Projection {
+    pub fn denied_source_paths(&self) -> &[PathBuf] {
+        &self.denied_source_paths
+    }
+
     pub fn allowed_source_paths(&self) -> &[PathBuf] {
         &self.allowed_source_paths
     }
@@ -646,7 +657,7 @@ fn discover_global_skills(
         {
             continue;
         }
-        let Ok(entries) = fs::read_dir(root) else {
+        let Ok(entries) = fs::read_dir(&root) else {
             continue;
         };
         for entry in entries.flatten() {
@@ -654,6 +665,9 @@ fn discover_global_skills(
                 continue;
             };
             let entry_path = entry.path();
+            let Ok(entry_metadata) = fs::symlink_metadata(&entry_path) else {
+                continue;
+            };
             if !fs::metadata(entry_path.join("SKILL.md")).is_ok_and(|metadata| metadata.is_file()) {
                 continue;
             }
@@ -663,10 +677,14 @@ fn discover_global_skills(
             if !fs::metadata(&canonical_path).is_ok_and(|metadata| metadata.is_dir()) {
                 continue;
             }
-            if !approved_target_roots
-                .iter()
-                .any(|root| canonical_path.starts_with(root))
+            if !entry_metadata.file_type().is_symlink()
+                && !approved_target_roots
+                    .iter()
+                    .any(|root| canonical_path.starts_with(root))
             {
+                continue;
+            }
+            if is_protected_target(&canonical_path, &approved_target_roots, &root) {
                 continue;
             }
             inventory.push(GlobalSkill {
@@ -674,6 +692,7 @@ fn discover_global_skills(
                 name,
                 source_precedence,
                 canonical_path,
+                is_symlink: entry_metadata.file_type().is_symlink(),
             });
         }
     }
@@ -767,6 +786,7 @@ fn discover_plugin_skills(plugin_root: &Path, inventory: &mut Vec<GlobalSkill>) 
             namespace: Some(namespace),
             source_precedence: usize::MAX,
             canonical_path,
+            is_symlink: false,
         });
     }
 }
@@ -777,6 +797,41 @@ fn canonical_nonsymlink_directory(path: &Path) -> Option<PathBuf> {
         return None;
     }
     fs::canonicalize(path).ok()
+}
+
+fn is_protected_target(
+    path: &Path,
+    approved_target_roots: &[PathBuf],
+    discovery_root: &Path,
+) -> bool {
+    let home = discovery_root.parent().and_then(Path::parent);
+    let Some(home) = home else {
+        return true;
+    };
+    if approved_target_roots
+        .iter()
+        .any(|root| path.starts_with(root))
+    {
+        return false;
+    }
+    let protected = [
+        home.join(".ssh"),
+        home.join(".aws"),
+        home.join(".config/gcloud"),
+        home.join(".azure"),
+        home.join(".config/clroom"),
+        home.join(".claude.json"),
+        home.join(".claude/CLAUDE.md"),
+        home.join(".claude/settings.json"),
+        home.join(".claude/settings.local.json"),
+        home.join(".codex/config.toml"),
+        home.join(".codex/AGENTS.md"),
+        home.join(".codex/AGENTS.override.md"),
+    ];
+    protected
+        .iter()
+        .any(|root| path.starts_with(root) || root.starts_with(path))
+        || path.starts_with(std::env::temp_dir().join(APP_TEMP_DIR))
 }
 
 #[cfg(unix)]

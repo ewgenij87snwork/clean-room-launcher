@@ -26,6 +26,16 @@ Current CLROOM source launches Claude with `--setting-sources project,local`, `-
 
 Selected personal-global skills are exposed through a private temporary projection and `--add-dir`.
 
+Individual symlinked skill entries from a shared library are supported when
+their canonical target is a valid, non-protected skill directory. Unselected
+targets remain denied, duplicate names follow source precedence, and links
+into provider configuration or credential paths are refused. A root symlink is
+not treated as authority for an entire arbitrary tree.
+
+Provider-owned subagents and agent-team teammates follow Claude Code's own
+inheritance rules; a top-level CLROOM skill selection does not configure every
+internal teammate independently.
+
 For practical workflows, see [Use cases](use-cases.md) and [Skill sets](skill-sets.md).
 
 ## Does CLROOM remove every Claude global or provider-owned input?

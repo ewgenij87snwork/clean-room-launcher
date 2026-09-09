@@ -48,6 +48,7 @@ Project-local skills are available automatically.
 Global skills stay outside unless you add them for this launch.
 
 ```sh
+clroom codex --skill-set=my-skill,@my-skill-set
 clroom codex exec --skill-set=my-skill,@my-skill-set --approve-for-me
 
 clroom claude --skill-set=my-skill,@my-skill-set
@@ -201,9 +202,8 @@ clroom codex --help
 clroom codex --version
 ```
 
-Interactive `clroom codex` is currently refused fail-closed because its clean
-user-config suppression is not independently qualified. `codex exec` is not a
-substitute for the interactive TUI.
+Interactive `clroom codex` uses the same clean isolation path as the qualified
+exec launch. The native `--ignore-user-config` enhancement is exec-only.
 
 ### Claude Code
 

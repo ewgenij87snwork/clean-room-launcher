@@ -272,18 +272,18 @@ fn codex_handoff_preserves_literal_argv_exit_and_stdio_inside_the_isolated_bound
 }
 
 #[test]
-fn codex_handoff_refuses_interactive_provider_paths_before_child_birth() {
+fn codex_handoff_launches_interactive_provider_paths_through_isolation() {
     let (_root, project, home, codex_home, bin) = isolated_fixture();
     let capture = project.join(".clroom-capture");
     let output = command(&project, &home, &codex_home, &bin, &capture)
         .args(["codex", "resume", "--last"])
         .output()
         .unwrap();
-    assert_eq!(output.status.code(), Some(2));
-    assert!(
-        String::from_utf8_lossy(&output.stderr).contains("CLROOM_CODEX_INTERACTIVE_UNSUPPORTED")
+    assert_eq!(output.status.code(), Some(42));
+    assert_eq!(
+        fs::read(capture).unwrap(),
+        expected_argv(&["resume", "--last"])
     );
-    assert!(!capture.exists());
 }
 
 #[test]

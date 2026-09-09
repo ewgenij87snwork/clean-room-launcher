@@ -29,9 +29,8 @@ Clean Room Launcher resolves `codex` from `PATH`, builds the macOS isolation
 profile, prints the filesystem-restriction summary, then replaces itself with
 `codex exec --ignore-user-config` inside `sandbox-exec`. Terminal streams,
 signals and exit status remain native. Interactive `clroom codex` paths are
-currently refused fail-closed because no independently qualified clean-user-
-config capability exists for them; `codex exec` is not an interactive TUI
-substitute.
+uses the existing CLROOM isolation path. The native clean-user-config flag is
+an exec-only enhancement; it is not required for the interactive TUI path.
 
 For Claude, the launcher creates one private session-scoped skill projection,
 binds it to the real Claude consumer process, and removes it on normal exit or
