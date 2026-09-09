@@ -60,9 +60,8 @@ receipts.
 
 ## Residual risks
 
-- The current candidate is unsigned and has not been independently installed by
-  an external user or separate external machine.
-- Public repository, package and command namespaces are not reserved or owned.
+- The v0.2.0 artifacts are unsigned and unnotarized, and no independent security
+  audit has been completed.
 - The repository contains CODEOWNERS, but this document does not claim that
   repository-side enforcement is enabled. Private security-reporting
   availability must not be inferred from the public repository.

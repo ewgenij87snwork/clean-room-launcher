@@ -1,7 +1,7 @@
 # Governance
 
 Clean Room Launcher (CLROOM) is developed in public after its initial security
-boundary is proven.
+controls are verified.
 Changes require a reviewable branch, tests tied to explicit acceptance evidence
 and a clean public-boundary check.
 

@@ -131,8 +131,8 @@ context and explicit Codex arguments remain available.
 
 Codex `exec` starts immediately with the native
 `--ignore-user-config` enhancement. Interactive `clroom codex` is also a
-qualified path through the existing CLROOM isolation boundary; the native
-suppression flag is an exec-only enhancement.
+qualified path through the same CLROOM isolation path; the native suppression
+flag is an exec-only enhancement.
 
 ## Install in sixty seconds
 
@@ -320,12 +320,14 @@ See the official [Claude Code CLI reference][claude-cli-reference] and
 
 ## Coding-agent support
 
-The current release supports two qualified macOS paths:
+The v0.2.0 release supports these macOS provider paths:
 
-| Coding agent | Platform | Status |
+| Coding agent and launch path | Platform | Status |
 |---|---|---|
-| Codex CLI 0.147.0+ | macOS / Apple Silicon | Qualified |
-| Claude Code CLI 2.1.223+ | macOS / Apple Silicon | Qualified |
+| Codex CLI 0.147.0+ — interactive `clroom codex` | macOS / Apple Silicon | Qualified |
+| Codex CLI 0.147.0+ — `clroom codex exec` | macOS / Apple Silicon | Qualified |
+| Claude Code CLI 2.1.223+ — interactive `clroom claude` | macOS / Apple Silicon | Qualified |
+| Claude Code CLI `-p` response-output semantics | macOS / Apple Silicon | Not independently qualified |
 
 Linux and Windows are `NOT_QUALIFIED`. Intel macOS, Homebrew, crates.io,
 signing, and notarization are not supported by this release.
@@ -422,11 +424,12 @@ Removing Clean Room Launcher does not modify either provider or its authenticati
 
 ## Project status
 
-`v0.2.0` is the current supported public release for macOS on Apple Silicon.
+`v0.2.0` is the supported public release for macOS on Apple Silicon.
 Its artifacts are unsigned and unnotarized.
 
-It supports Codex CLI `0.147.0+` and Claude Code CLI `2.1.223+` through a
-focused clean-room restrictions. The qualification is limited to the documented
+It supports the documented Codex interactive and exec paths and the interactive
+Claude Code path through the focused clean-room restrictions. The qualification
+is limited to the documented
 macOS Apple Silicon path.
 
 See the
