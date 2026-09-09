@@ -129,9 +129,10 @@ When project-local skills are present in `.agents/skills`, the separate card
 shows how many remain available; with none, the card is omitted. Project
 context and explicit Codex arguments remain available.
 
-For the qualified clean-user-config path, Codex `exec` starts immediately in
-the same terminal. Interactive Codex commands are refused until Codex exposes
-an independently qualified equivalent suppression capability.
+Codex `exec` starts immediately with the native
+`--ignore-user-config` enhancement. Interactive `clroom codex` is also a
+qualified path through the existing CLROOM isolation boundary; the native
+suppression flag is an exec-only enhancement.
 
 ## Install in sixty seconds
 

@@ -38,6 +38,28 @@ fn run(args: &[&str]) -> std::process::Output {
 }
 
 #[test]
+fn public_boundary_rejects_legacy_product_identity() {
+    let root = scratch("legacy-product-identity");
+    let legacy = format!("{}{}", "Task", "Seal");
+    fs::write(
+        root.join("README.md"),
+        format!("{legacy} must not return\n"),
+    )
+    .unwrap();
+    let guard = Path::new(env!("CARGO_MANIFEST_DIR")).join("scripts/check-public-boundary.sh");
+    let output = Command::new(guard)
+        .args(["--root", root.to_str().unwrap()])
+        .output()
+        .unwrap();
+    assert!(!output.status.success());
+    assert_eq!(
+        String::from_utf8_lossy(&output.stderr).trim(),
+        "LEGACY_PRODUCT_IDENTITY"
+    );
+    let _ = fs::remove_dir_all(root);
+}
+
+#[test]
 fn clroom_is_the_only_public_identity_and_preserves_the_native_codex_process() {
     // Break caught: the shipped launcher is born under a stale name, rewrites native
     // Codex argv/stdio/status/signals, or exposes a login/credential acquisition path.

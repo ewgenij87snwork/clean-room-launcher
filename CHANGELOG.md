@@ -11,10 +11,14 @@ Semantic Versioning after the first public release.
 
 ### Added
 
+- Qualified interactive `clroom codex` alongside the qualified `codex exec`
+  path; native `--ignore-user-config` remains an exec-only enhancement.
+- Selected symlinked global skills now preserve canonical-target isolation and
+  duplicate-source safety across the qualified provider paths.
 - Qualified Codex exec launches with clean user configuration, provider-aware
   selected-skill inventory, and fail-closed filesystem restrictions.
 - Canonical release readiness and SCA verification with SHA256SUMS, CycloneDX
-  SBOM, and GitHub attestations.
+  SBOM, provenance, and GitHub attestations.
 - Checksum-verified one-line macOS Apple Silicon installation from the current
   stable GitHub Release, without `sudo` or shell-configuration mutation.
 

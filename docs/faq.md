@@ -120,7 +120,9 @@ No. Do not infer that from the product name. Read the existing threat model and 
 
 ## What platforms are supported?
 
-The current public alpha documents macOS on Apple Silicon with qualified Codex and Claude Code versions. Linux, Windows, and Intel macOS are not qualified by the current alpha.
+The current v0.2.0 documentation covers macOS on Apple Silicon with qualified
+Codex and Claude Code versions. Linux, Windows, and Intel macOS are not
+qualified by this release.
 
 ## Where should I verify provider behavior?
 

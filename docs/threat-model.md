@@ -63,7 +63,8 @@ receipts.
 - The current candidate is unsigned and has not been independently installed by
   an external user or separate external machine.
 - Public repository, package and command namespaces are not reserved or owned.
-- A verified private security-reporting route and enforceable CODEOWNERS mapping
-  do not exist until the public repository is created by the owner.
+- The repository contains CODEOWNERS, but this document does not claim that
+  repository-side enforcement is enabled. Private security-reporting
+  availability must not be inferred from the public repository.
 - Provider behavior may change after the exact observed version; evidence never
   transfers automatically to a new tuple.
