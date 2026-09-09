@@ -9,12 +9,14 @@ New to the project? Start with [Why Clean Room Launcher (CLROOM) exists](why-clr
 
 ## Can an app or CI job launch CLROOM?
 
-Yes. Invoke the same `clroom codex` or `clroom claude` command from the runner,
-script, or CI job, and keep scheduling and provider lifecycle outside CLROOM.
+Yes. For headless automation, the qualified path in this release is
+`clroom codex exec ...`. A runner that provides a terminal can also start the
+qualified interactive Codex or Claude Code path. Claude Code `-p` response
+semantics are not independently qualified in this release.
 
 ## Can different workers get different skill sets?
 
-Yes. Pass a different direct selector or saved `@set` to each top-level launch.
+Yes. Pass a different skill name or saved `@set` to each top-level launch.
 
 ## Does CLROOM configure Claude agent-team teammates individually?
 

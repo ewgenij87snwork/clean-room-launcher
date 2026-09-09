@@ -27,8 +27,12 @@ A runner can invoke the same commands a developer uses in a terminal:
 clroom codex --skill-set=@review
 clroom claude --skill-set=@review
 clroom codex exec --skill-set=@review "Review the current change."
-clroom claude --skill-set=@review -p "Review the current change."
 ```
+
+For headless automation, this release qualifies `clroom codex exec`. Claude Code
+`-p` can be passed through the launch path, but this release does not
+independently qualify its response-output semantics. Verify that provider path
+in your own harness before depending on its response contract.
 
 The launch is session-specific. CLROOM does not rewrite ordinary Codex or Claude Code configuration. Use the provider directly when its native flags already provide the clean/minimal behavior you need.
 

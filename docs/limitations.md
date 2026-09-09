@@ -18,6 +18,9 @@ permalink: /limitations.html
   the selected provider applies an additional restriction.
 - CLROOM controls each top-level launch. Provider-owned Claude Code teammates
   and subagents follow Claude's own inheritance and scoping rules.
+- Claude Code `-p` reached the provider and exited successfully in the current
+  release-candidate canary, but response-output semantics are not independently
+  qualified by this release.
 - The launcher depends on the undocumented longevity of macOS `sandbox-exec`;
   it fails closed if the protection cannot be created.
 - No bounty program exists.

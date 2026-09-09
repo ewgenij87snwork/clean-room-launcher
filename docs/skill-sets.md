@@ -5,7 +5,7 @@ description: Create, edit, use, and combine reusable Clean Room Launcher (CLROOM
 permalink: /skill-sets/
 nav_title: Skill sets
 ---
-CLROOM skill sets are user-created groups of global skill selectors. They let you reuse a selection without rewriting your normal provider setup.
+CLROOM skill sets are user-created groups of global skill references. They let you reuse a selection without rewriting your normal provider setup.
 
 ## Create a skill set
 
@@ -37,9 +37,9 @@ brainstorming:
   - superpowers:brainstorming
 ```
 
-The `my-*` names are placeholders for global skills you installed or created. The `superpowers:*` examples assume those skills are already installed in a global skill location CLROOM can discover. CLROOM groups selectors; it does not install skills.
+The `my-*` names are placeholders for global skills you installed or created. The `superpowers:*` examples assume those skills are already installed in a global skill location CLROOM can discover. CLROOM groups skill references; it does not install skills.
 
-For the built-in selector example, run:
+For the built-in skill-set example, run:
 
 ```sh
 clroom help skill-set
@@ -73,7 +73,7 @@ Or combine a direct global skill with a saved set:
 clroom codex exec --skill-set=my-skill,@review
 ```
 
-Selectors are comma-separated. Repeated and overlapping selectors are deduplicated, and the selection applies only to this launch.
+Skill references are comma-separated. Repeated and overlapping references are deduplicated, and the selection applies only to this launch.
 
 <a id="symlinked-global-skills"></a>
 ## Symlinked global skills
@@ -92,18 +92,18 @@ Exact support differs by provider and source location. See [Claude Code](claude-
 
 ## Edit a skill set
 
-Open the same YAML file, add or remove selectors under the set name, and keep using the same `@set-name`.
+Open the same YAML file, add or remove skill references under the set name, and keep using the same `@set-name`.
 
 CLROOM reads the file when an `@set` is used. It does not create or rewrite the file for you.
 
-## Selector rules
+## Selection rules
 
 - A bare `name` selects the logical global skill with that name, or every skill in a namespace with that name.
 - `namespace:skill` selects one specific skill from a namespace.
 - `@set-name` selects a user-created saved group from the YAML file.
 - Direct skills and saved sets can be combined in one comma-separated `--skill-set` value.
 - Multiple saved sets can be combined in one launch.
-- Repeated and overlapping selectors are deduplicated.
+- Repeated and overlapping skill references are deduplicated.
 - Saved sets cannot contain other `@sets`.
 - Invalid or unknown selections stop before the provider starts.
 - The YAML file is read only when an `@set` is used.

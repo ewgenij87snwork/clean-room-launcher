@@ -37,16 +37,18 @@ different personal-global skill set:
 ```sh
 clroom codex --skill-set=@planning
 clroom codex exec --skill-set=@review "Review the staged diff."
-clroom claude --skill-set=@debugging -p "Investigate the failing test."
+clroom claude --skill-set=@debugging
 ```
 
 ## Cross-provider review workflow
 
-The same runner can qualify one task through both supported provider paths while
-keeping each provider's native environment and lifecycle rules.
+The same runner can qualify one task through both supported interactive provider
+paths while keeping each provider's native environment and lifecycle rules.
 
 ## Clean worker launched from a script or CI
 
-A script or CI job can invoke the same top-level commands. Keep provider
-authentication, queues, worktrees, and session reuse in the system that owns
-those responsibilities; CLROOM supplies the per-launch clean/selective layer.
+For headless automation, the qualified path in this release is `clroom codex
+exec ...`. A runner that provides a terminal can also start the qualified
+interactive Codex or Claude Code path. Keep provider authentication, queues,
+worktrees, and session reuse in the system that owns those responsibilities;
+CLROOM supplies the per-launch clean/selective layer.
