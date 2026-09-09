@@ -18,6 +18,29 @@ This page routes those problems to the shortest correct answer. It also says whe
 
 If you want the human explanation before the provider details, read [Why Clean Room Launcher (CLROOM) exists](why-clroom.md).
 
+<a id="apps-runners-and-ci"></a>
+## Is an app, runner, script, or CI job launching the coding agent?
+
+**Common ways people ask this:**
+
+- `spawn Codex without user config`
+- `run Claude Code programmatically with clean config`
+- `agent runner per-worker skills`
+- `one runner for Claude Code and Codex`
+
+Use [Agent runners](agent-runners.md) for the integration pattern and the provider pages for exact behavior.
+
+<a id="symlinked-shared-skills"></a>
+## Do you keep shared skills in a central repo and expose them with symlinks?
+
+**Common ways people ask this:**
+
+- `Codex symlink skills not discovered`
+- `Claude Code symlink skills not discovered`
+- `shared skills directory Claude Code Codex symlink`
+
+See [Skill sets](skill-sets.md#symlinked-global-skills) and the provider-specific pages.
+
 <a id="clean-or-fresh-session"></a>
 ## Need a clean or fresh coding-agent session?
 
@@ -209,8 +232,8 @@ OpenAI documents global instructions under `CODEX_HOME` plus project instruction
 
 Use native `codex exec --ignore-user-config` for broad non-interactive user-
 config suppression. Use CLROOM when you also need its qualified selective
-project/local-preserving filesystem restrictions and selected-skill workflow; interactive
-Codex qualification remains fail-closed.
+project/local-preserving filesystem restrictions and selected-skill workflow;
+the same CLROOM isolation path also supports interactive Codex.
 
 **Go deeper:** [Codex](codex.md) · [Limitations](limitations.md)
 

@@ -196,3 +196,106 @@ fn claude_registry_install_path_outside_cache_is_not_authority() {
     );
     let _ = fs::remove_dir_all(root);
 }
+
+#[cfg(unix)]
+#[test]
+fn claude_accepts_selected_external_personal_skill_symlink() {
+    let root = scratch();
+    let home = root.join("home");
+    let external = root.join("shared/selected");
+    fs::create_dir_all(&external).unwrap();
+    fs::write(external.join("SKILL.md"), b"selected\n").unwrap();
+    fs::create_dir_all(home.join(".claude/skills")).unwrap();
+    symlink(&external, home.join(".claude/skills/selected")).unwrap();
+
+    let projection =
+        clroom::adapters::claude::projection::project(&home, &["selected".to_owned()]).unwrap();
+
+    assert_eq!(projection.selected_global_skills, 1);
+    assert_eq!(
+        fs::canonicalize(projection.add_dir.join(".claude/skills/selected")).unwrap(),
+        fs::canonicalize(&external).unwrap()
+    );
+    assert!(
+        projection
+            .allowed_source_paths()
+            .contains(&fs::canonicalize(&external).unwrap())
+    );
+    assert!(
+        projection
+            .denied_source_paths()
+            .contains(&fs::canonicalize(&external).unwrap())
+    );
+    let _ = fs::remove_dir_all(root);
+}
+
+#[cfg(unix)]
+#[test]
+fn claude_unselected_external_skill_symlink_is_denied_and_not_selectable() {
+    let root = scratch();
+    let home = root.join("home");
+    let external = root.join("shared/ambient");
+    fs::create_dir_all(&external).unwrap();
+    fs::write(external.join("SKILL.md"), b"ambient\n").unwrap();
+    fs::create_dir_all(home.join(".agents/skills")).unwrap();
+    symlink(&external, home.join(".agents/skills/ambient")).unwrap();
+
+    let projection = clroom::adapters::claude::projection::project(&home, &[]).unwrap();
+    assert_eq!(projection.selected_global_skills, 0);
+    assert!(
+        projection
+            .denied_source_paths()
+            .contains(&fs::canonicalize(&external).unwrap())
+    );
+    let _ = fs::remove_dir_all(root);
+}
+
+#[cfg(unix)]
+#[test]
+fn claude_duplicate_skill_uses_precedence_and_denies_loser_target() {
+    let root = scratch();
+    let home = root.join("home");
+    let loser = root.join("shared/rev");
+    fs::create_dir_all(&loser).unwrap();
+    fs::write(loser.join("SKILL.md"), b"loser\n").unwrap();
+    fs::create_dir_all(home.join(".claude/skills/rev")).unwrap();
+    fs::write(home.join(".claude/skills/rev/SKILL.md"), b"winner\n").unwrap();
+    fs::create_dir_all(home.join(".agents/skills")).unwrap();
+    symlink(&loser, home.join(".agents/skills/rev")).unwrap();
+
+    let projection =
+        clroom::adapters::claude::projection::project(&home, &["rev".to_owned()]).unwrap();
+    assert_eq!(projection.selected_global_skills, 1);
+    assert_eq!(
+        fs::read(projection.add_dir.join(".claude/skills/rev/SKILL.md")).unwrap(),
+        b"winner\n"
+    );
+    assert!(
+        projection
+            .denied_source_paths()
+            .contains(&fs::canonicalize(&loser).unwrap())
+    );
+    let _ = fs::remove_dir_all(root);
+}
+
+#[cfg(unix)]
+#[test]
+fn claude_refuses_protected_external_skill_target() {
+    let root = scratch();
+    let home = root.join("home");
+    let protected = home.join(".ssh/skill");
+    fs::create_dir_all(&protected).unwrap();
+    fs::write(protected.join("SKILL.md"), b"protected\n").unwrap();
+    fs::create_dir_all(home.join(".claude/skills")).unwrap();
+    symlink(&protected, home.join(".claude/skills/protected")).unwrap();
+
+    let error = clroom::adapters::claude::projection::project(&home, &["protected".to_owned()])
+        .unwrap_err();
+    assert_eq!(
+        error,
+        clroom::adapters::claude::projection::ProjectionError::UnknownSelector(
+            "protected".to_owned()
+        )
+    );
+    let _ = fs::remove_dir_all(root);
+}

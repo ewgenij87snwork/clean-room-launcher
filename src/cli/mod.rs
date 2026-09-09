@@ -97,14 +97,6 @@ fn run_codex(source: &mut impl Iterator<Item = String>) -> ExitCode {
             return ExitCode::from(2);
         }
     };
-    if launch_contract::classify_codex_invocation(&provider_args)
-        == launch_contract::CodexInvocation::Interactive
-    {
-        eprintln!(
-            "CLROOM_CODEX_INTERACTIVE_UNSUPPORTED: clean user-config suppression is qualified only for 'codex exec'; continue locally"
-        );
-        return ExitCode::from(2);
-    }
     match launch_isolated_codex(&selection_terms, &provider_args, &pass_env) {
         Ok(exit) => exit,
         Err(message) => {
@@ -286,6 +278,7 @@ fn launch_isolated_claude(args: &[String]) -> Result<ExitCode, String> {
         &home,
         projection.storage_root(),
         &projection.add_dir,
+        projection.denied_source_paths(),
         projection.allowed_source_paths(),
     )
     .map_err(claude_isolation_error_message)?;
@@ -537,10 +530,7 @@ fn run_local(invoked_as: &str, args: Vec<String>) -> ExitCode {
                 }
                 match screen::read_unqualified_action() {
                     Ok(screen::UnqualifiedAction::LaunchCodex) => {
-                        eprintln!(
-                            "CLROOM_CODEX_INTERACTIVE_UNSUPPORTED: clean user-config suppression is qualified only for 'codex exec'; continue locally"
-                        );
-                        return ExitCode::from(2);
+                        return run_codex(&mut std::iter::empty());
                     }
                     Ok(screen::UnqualifiedAction::Stop) => {}
                     Err(_) => {

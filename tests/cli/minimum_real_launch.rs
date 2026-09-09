@@ -30,9 +30,7 @@ impl Drop for Scratch {
 
 #[cfg(target_os = "macos")]
 #[test]
-fn interactive_enter_refuses_without_clean_user_config_capability() {
-    // Break caught: bare Enter starts an interactive provider without a
-    // provider-native clean-user-config suppression capability.
+fn interactive_enter_launches_through_the_existing_clean_isolation_path() {
     let root = Scratch::new();
     let project = root.0.join("project");
     let home = root.0.join("home");
@@ -100,15 +98,8 @@ fn interactive_enter_refuses_without_clean_user_config_capability() {
         .output()
         .unwrap();
 
-    assert_eq!(output.status.code(), Some(2));
-    assert!(!capture.exists());
-    let transcript = format!(
-        "{}{}",
-        String::from_utf8_lossy(&output.stdout),
-        String::from_utf8_lossy(&output.stderr)
-    )
-    .replace('\r', "");
-    assert!(transcript.contains("CLROOM_CODEX_INTERACTIVE_UNSUPPORTED"));
+    assert_eq!(output.status.code(), Some(42));
+    assert_eq!(fs::read(capture).unwrap(), b"isolated-enter");
 }
 
 #[test]
@@ -227,7 +218,7 @@ fn interactive_enter_refuses_locally_when_codex_is_unavailable() {
         String::from_utf8_lossy(&output.stderr)
     )
     .replace('\r', "");
-    assert!(transcript.contains("CLROOM_CODEX_INTERACTIVE_UNSUPPORTED"));
+    assert!(!transcript.contains("CLROOM_CODEX_INTERACTIVE_UNSUPPORTED"));
     let lower = transcript.to_ascii_lowercase();
     assert!(!lower.contains("login"));
     assert!(!lower.contains("sign in"));

@@ -1,5 +1,7 @@
 #[path = "adapters/claude_projection_inventory.rs"]
 mod claude_projection_inventory;
+#[path = "adapters/claude_symlink_sandbox.rs"]
+mod claude_symlink_sandbox;
 #[path = "adapters/codex/context_canaries.rs"]
 mod codex_context_canaries;
 #[path = "adapters/codex/environment.rs"]
@@ -8,6 +10,8 @@ mod codex_environment;
 mod codex_identity;
 #[path = "adapters/codex/isolation.rs"]
 mod codex_isolation;
+#[path = "adapters/codex/symlink_skills.rs"]
+mod codex_symlink_skills;
 #[path = "adapters/codex/placement.rs"]
 mod codex_placement;
 #[path = "adapters/codex/process_parity.rs"]

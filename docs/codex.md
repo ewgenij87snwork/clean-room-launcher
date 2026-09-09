@@ -7,9 +7,11 @@ nav_title: Codex
 ---
 CLROOM does not replace Codex. It launches the installed `codex` CLI.
 
-The qualified clean launch is `clroom codex exec ...`. CLROOM refuses
-interactive Codex paths until Codex exposes an independently qualified
-clean-user-config suppression capability for them.
+The qualified clean launch supports both interactive `clroom codex ...` and
+non-interactive `clroom codex exec ...` through the existing CLROOM isolation
+path. The native `--ignore-user-config` capability is specifically preflighted
+and injected for `exec`; its absence on the TUI path is not an interactive
+refusal reason.
 
 ## Codex can combine global instructions with project instructions
 
@@ -63,8 +65,8 @@ that broad suppression is exactly what you need.
 
 CLROOM preflights this capability and injects the flag for its qualified
 `codex exec` path, while preserving its selective filesystem restrictions and
-selected-skill inventory. CLROOM does not claim interactive Codex
-qualification; interactive paths remain fail-closed.
+selected-skill inventory. Interactive Codex uses the same existing isolation
+path without that exec-only flag.
 
 ## Is CLROOM a way around managed Codex controls?
 

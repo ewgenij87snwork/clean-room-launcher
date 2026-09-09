@@ -106,7 +106,7 @@ self_test() {
     fail "SELF_TEST_TAMPER_ACCEPTED"
   fi
 
-  /bin/rm -rf "$test_root/$root"
+  /bin/rm -rf -- "$test_root/${root:?}"
   /bin/mkdir -p "$test_root/wrong-root/bin"
   printf '#!/bin/sh\nexit 0\n' > "$test_root/wrong-root/bin/clroom"
   /usr/bin/tar -czf "$test_root/$asset" -C "$test_root" wrong-root
