@@ -20,14 +20,16 @@ fn git(root: &Path, args: &[&str]) -> String {
 }
 
 #[test]
-fn repository_is_an_independent_non_main_sibling() {
+fn repository_context_matches_public_or_private_boundary_contract() {
     let worktree = std::env::current_dir().expect("current worktree");
+    assert_eq!(
+        git(&worktree, &["rev-parse", "--show-toplevel"]),
+        worktree.display().to_string()
+    );
+
     if !Path::new("AGENTS.md").exists() {
-        assert_eq!(
-            git(&worktree, &["rev-parse", "--show-toplevel"]),
-            worktree.display().to_string()
-        );
-        assert_ne!(git(&worktree, &["branch", "--show-current"]), "main");
+        // Public CI intentionally runs on main. The non-main execution-worktree
+        // invariant belongs to the private authority-backed path below.
         let inventory: serde_json::Value = serde_json::from_slice(
             &std::fs::read("qualification/public-release-inventory-v1.json")
                 .expect("public release inventory exists"),
@@ -42,6 +44,7 @@ fn repository_is_an_independent_non_main_sibling() {
         );
         return;
     }
+
     let authority: serde_json::Value = serde_json::from_slice(
         &std::fs::read(".clroom-dev/execution-authority.json").expect("private authority"),
     )
@@ -50,10 +53,6 @@ fn repository_is_an_independent_non_main_sibling() {
     let checkpoint = PathBuf::from(authority["plan_checkpoint_path"].as_str().unwrap());
     let owner_clroom_root = checkpoint.parent().unwrap().parent().unwrap();
 
-    assert_eq!(
-        git(&worktree, &["rev-parse", "--show-toplevel"]),
-        worktree.display().to_string()
-    );
     assert_ne!(git(&worktree, &["branch", "--show-current"]), "main");
     assert!(!repository.starts_with(owner_clroom_root));
     assert!(!owner_clroom_root.starts_with(&repository));
