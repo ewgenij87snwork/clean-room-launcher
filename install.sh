@@ -84,7 +84,7 @@ self_test() {
   /bin/mkdir -p "$test_root/$root/bin"
   for name in clroom clroom-codex clroom-claude; do
     {
-      printf '%s\n' '#!/bin/sh' '[ "$#" -eq 1 ] && [ "$1" = "--clroom-installer-smoke" ] || exit 42'
+      printf '%s\n' '#!/bin/sh' "[ \"\$#\" -eq 1 ] && [ \"\$1\" = \"--clroom-installer-smoke\" ] || exit 42"
       printf 'printf "%s fixture\\n"\n' "$name"
     } > "$test_root/$root/bin/$name"
     /bin/chmod 0755 "$test_root/$root/bin/$name"
