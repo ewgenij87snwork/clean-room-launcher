@@ -19,6 +19,22 @@ install_target_safe() {
   [ ! -e "$target" ] || [ -f "$target" ]
 }
 
+install_dir_safe() {
+  target=$1
+  [ "$target" = "$HOME/.local/bin" ] || return 1
+  [ ! -L "$HOME/.local" ] || return 1
+  [ ! -e "$HOME/.local" ] || [ -d "$HOME/.local" ] || return 1
+  [ ! -L "$target" ] || return 1
+  [ ! -e "$target" ] || [ -d "$target" ]
+}
+
+preflight_install_targets() {
+  install_dir_safe "$install_dir" || return 1
+  for name in clroom clroom-codex clroom-claude; do
+    install_target_safe "$install_dir/$name" || return 1
+  done
+}
+
 select_subject() {
   /usr/bin/awk '
     NF == 2 &&
@@ -93,6 +109,21 @@ self_test() {
     fail "SELF_TEST_TARGET_SYMLINK_ACCEPTED"
   fi
 
+  saved_home=$HOME
+  HOME="$test_root/home"
+  /bin/mkdir -p "$HOME"
+  /bin/ln -s "$test_root" "$HOME/.local"
+  if install_dir_safe "$HOME/.local/bin"; then
+    fail "SELF_TEST_INSTALL_DIR_SYMLINK_ACCEPTED"
+  fi
+  /bin/rm "$HOME/.local"
+  printf '%s\n' directory > "$HOME/.local"
+  if install_dir_safe "$HOME/.local/bin"; then
+    fail "SELF_TEST_INSTALL_DIR_FILE_ACCEPTED"
+  fi
+  HOME=$saved_home
+  export HOME
+
   load_subject "$test_root/SHA256SUMS" || fail "SELF_TEST_SUBJECT"
   verify_archive "$test_root/$asset" || fail "SELF_TEST_DIGEST"
   extract_binary "$test_root/$asset" "$test_root/bin-out" || fail "SELF_TEST_EXTRACT"
@@ -155,6 +186,7 @@ verify_archive "$archive" || fail "ARCHIVE_CHECKSUM"
 extract_binary "$archive" "$tmp/bin" || fail "ARCHIVE_LAYOUT"
 for name in clroom clroom-codex clroom-claude; do "$tmp/bin/$name" --help >/dev/null 2>&1 || fail "STAGED_BINARY_CHECK"; done
 
+preflight_install_targets || fail "INSTALL_TARGET_PREFLIGHT"
 /bin/mkdir -p "$install_dir" || fail "INSTALL_DIR"
 for name in clroom clroom-codex clroom-claude; do
   target="$install_dir/$name"
