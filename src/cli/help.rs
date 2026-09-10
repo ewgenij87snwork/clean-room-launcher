@@ -39,8 +39,8 @@ const COMMANDS: &[CommandSpec] = &[
         command: Command::Provider,
         canonical: "codex",
         aliases: &[],
-        description: "Non-interactive exec only",
-        usage: "codex exec [CODEX_ARGS...]",
+        description: "Launch qualified interactive Codex or exec",
+        usage: "codex [CODEX_ARGS...]",
         example: "codex --help",
     },
     CommandSpec {
@@ -212,8 +212,14 @@ fn render_top(invoked_as: &str, skill_sets_path: &str, width: usize, styled: boo
     lines.push(String::new());
     lines.push(section("Usage", styled));
     lines.extend(usage(
+        &format!("{invoked_as} codex [CODEX_ARGS...]"),
+        "Qualified interactive Codex",
+        width,
+        styled,
+    ));
+    lines.extend(usage(
         &format!("{invoked_as} codex exec [CODEX_ARGS...]"),
-        "Non-interactive Codex exec",
+        "Qualified non-interactive Codex exec",
         width,
         styled,
     ));
@@ -222,6 +228,13 @@ fn render_top(invoked_as: &str, skill_sets_path: &str, width: usize, styled: boo
         "Launch Claude Code",
         width,
         styled,
+    ));
+    lines.extend(styled_wrapped(
+        "Provider options: repeat --pass-env=NAME to admit exact existing environment names. Drop-in commands: clroom-codex and clroom-claude.",
+        width,
+        2,
+        styled,
+        Style::Dim,
     ));
     lines.extend(usage(
         &format!("{invoked_as} doctor --root ."),
@@ -289,7 +302,7 @@ fn styled_wrapped(
 }
 
 fn primary_command(invoked_as: &str, width: usize, styled: bool) -> Vec<String> {
-    let base = format!("{invoked_as} codex exec");
+    let base = format!("{invoked_as} codex");
     let selector = "--skill-set=any-my-skill,@any-my-skill-set";
     let approval = "--approve-for-me";
     let plain = format!("{base} {selector} {approval}");

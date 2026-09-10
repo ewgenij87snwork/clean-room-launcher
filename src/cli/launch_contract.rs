@@ -130,6 +130,15 @@ impl LaunchContract {
     }
 
     pub fn claude(user_args: &[String], add_dir: &Path, managed: Presence) -> Self {
+        Self::claude_with_pass_env(user_args, add_dir, managed, &[])
+    }
+
+    pub fn claude_with_pass_env(
+        user_args: &[String],
+        add_dir: &Path,
+        managed: Presence,
+        pass_env: &[String],
+    ) -> Self {
         let mut argv = CLAUDE_CLEAN_DEFAULTS
             .iter()
             .map(|argument| (*argument).to_owned())
@@ -138,7 +147,7 @@ impl LaunchContract {
         argv.push(add_dir.as_os_str().to_string_lossy().into_owned());
         argv.extend_from_slice(user_args);
         let (mut boundary, boundary_controls, model_choice) =
-            analyze(Provider::Claude, user_args, false);
+            analyze(Provider::Claude, user_args, !pass_env.is_empty());
         if boundary == BoundaryState::Clean && managed != Presence::Absent {
             boundary = BoundaryState::Unknown;
         }
@@ -360,6 +369,29 @@ mod tests {
                 .filter(|argument| argument.as_str() == "--ignore-user-config")
                 .count(),
             1
+        );
+    }
+
+    #[test]
+    fn claude_pass_env_expands_contract_without_forwarding_launcher_options() {
+        let contract = LaunchContract::claude_with_pass_env(
+            &["--model".to_owned(), "sonnet".to_owned()],
+            Path::new("/tmp/view"),
+            Presence::Absent,
+            &["RUNNER_HANDLE".to_owned(), "RUNNER_HANDLE".to_owned()],
+        );
+        assert_eq!(contract.boundary, BoundaryState::Expanded);
+        assert_eq!(contract.boundary_controls, vec!["environment"]);
+        assert!(
+            !contract
+                .argv
+                .iter()
+                .any(|argument| argument.starts_with("--pass-env"))
+        );
+        assert!(
+            contract
+                .argv
+                .ends_with(&["--model".to_owned(), "sonnet".to_owned()])
         );
     }
 

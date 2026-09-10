@@ -48,13 +48,17 @@ extract_binary() {
   archive=$1
   output=$2
   root=${ASSET%.tar.gz}
-  member="$root/bin/clroom"
-  count=$(/usr/bin/tar -tzf "$archive" | /usr/bin/awk -v expected="$member" '$0 == expected { n += 1 } END { print n + 0 }') || return 1
-  [ "$count" -eq 1 ] || return 1
-  regular=$(/usr/bin/tar -tvzf "$archive" "$member" | /usr/bin/awk -v expected="$member" '$1 ~ /^-/ && $NF == expected { n += 1 } END { print n + 0 }') || return 1
-  [ "$regular" -eq 1 ] || return 1
-  /usr/bin/tar -xOzf "$archive" "$member" > "$output" || return 1
-  [ -s "$output" ]
+  /bin/mkdir -p "$output" || return 1
+  for name in clroom clroom-codex clroom-claude; do
+    member="$root/bin/$name"
+    count=$(/usr/bin/tar -tzf "$archive" | /usr/bin/awk -v expected="$member" '$0 == expected { n += 1 } END { print n + 0 }') || return 1
+    [ "$count" -eq 1 ] || return 1
+    regular=$(/usr/bin/tar -tvzf "$archive" "$member" | /usr/bin/awk -v expected="$member" '$1 ~ /^-/ && $NF == expected { n += 1 } END { print n + 0 }') || return 1
+    [ "$regular" -eq 1 ] || return 1
+    /usr/bin/tar -xOzf "$archive" "$member" > "$output/$name" || return 1
+    [ -s "$output/$name" ] || return 1
+    /bin/chmod 0755 "$output/$name" || return 1
+  done
 }
 
 self_test() {
@@ -62,8 +66,10 @@ self_test() {
   root="clean-room-launcher-v0.2.0-aarch64-apple-darwin"
   asset="$root.tar.gz"
   /bin/mkdir -p "$test_root/$root/bin"
-  printf '#!/bin/sh\nprintf "clroom fixture\\n"\n' > "$test_root/$root/bin/clroom"
-  /bin/chmod 0755 "$test_root/$root/bin/clroom"
+  for name in clroom clroom-codex clroom-claude; do
+    printf '#!/bin/sh\nprintf "%s fixture\\n"\n' "$name" > "$test_root/$root/bin/$name"
+    /bin/chmod 0755 "$test_root/$root/bin/$name"
+  done
   /usr/bin/tar -czf "$test_root/$asset" -C "$test_root" "$root"
   digest=$(/usr/bin/shasum -a 256 "$test_root/$asset" | /usr/bin/awk '{ print $1 }')
   zeros=$(printf '0%.0s' 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64)
@@ -89,9 +95,10 @@ self_test() {
 
   load_subject "$test_root/SHA256SUMS" || fail "SELF_TEST_SUBJECT"
   verify_archive "$test_root/$asset" || fail "SELF_TEST_DIGEST"
-  extract_binary "$test_root/$asset" "$test_root/clroom" || fail "SELF_TEST_EXTRACT"
-  /bin/chmod 0755 "$test_root/clroom"
-  [ "$("$test_root/clroom")" = "clroom fixture" ] || fail "SELF_TEST_BINARY"
+  extract_binary "$test_root/$asset" "$test_root/bin-out" || fail "SELF_TEST_EXTRACT"
+  for name in clroom clroom-codex clroom-claude; do
+    [ "$("$test_root/bin-out/$name")" = "$name fixture" ] || fail "SELF_TEST_BINARY"
+  done
 
   /bin/cp "$test_root/SHA256SUMS" "$test_root/SHA256SUMS.duplicate"
   printf '%s  %s\n' "$digest" "$asset" >> "$test_root/SHA256SUMS.duplicate"
@@ -108,7 +115,7 @@ self_test() {
 
   /bin/rm -rf -- "$test_root/${root:?}"
   /bin/mkdir -p "$test_root/wrong-root/bin"
-  printf '#!/bin/sh\nexit 0\n' > "$test_root/wrong-root/bin/clroom"
+  for name in clroom clroom-codex clroom-claude; do printf '#!/bin/sh\nexit 0\n' > "$test_root/wrong-root/bin/$name"; done
   /usr/bin/tar -czf "$test_root/$asset" -C "$test_root" wrong-root
   digest=$(/usr/bin/shasum -a 256 "$test_root/$asset" | /usr/bin/awk '{ print $1 }')
   printf '%s  %s\n' "$digest" "$asset" > "$test_root/SHA256SUMS.layout"
@@ -145,18 +152,19 @@ archive="$tmp/$ASSET"
 /usr/bin/curl --proto '=https' --tlsv1.2 --fail --location --silent --show-error --retry 3 \
   --output "$archive" "$RELEASE_BASE/$ASSET" || fail "ARCHIVE_DOWNLOAD"
 verify_archive "$archive" || fail "ARCHIVE_CHECKSUM"
-extract_binary "$archive" "$tmp/clroom" || fail "ARCHIVE_LAYOUT"
-/bin/chmod 0755 "$tmp/clroom" || fail "STAGED_BINARY_MODE"
-"$tmp/clroom" --help >/dev/null 2>&1 || fail "STAGED_BINARY_CHECK"
+extract_binary "$archive" "$tmp/bin" || fail "ARCHIVE_LAYOUT"
+for name in clroom clroom-codex clroom-claude; do "$tmp/bin/$name" --help >/dev/null 2>&1 || fail "STAGED_BINARY_CHECK"; done
 
 /bin/mkdir -p "$install_dir" || fail "INSTALL_DIR"
-target="$install_dir/clroom"
-install_target_safe "$target" || fail "INSTALL_TARGET_UNSAFE"
-target_tmp=$(/usr/bin/mktemp "$install_dir/.clroom-install.XXXXXX") || fail "INSTALL_TEMP"
-/usr/bin/install -m 0755 "$tmp/clroom" "$target_tmp" || fail "INSTALL_STAGE"
-"$target_tmp" --help >/dev/null 2>&1 || fail "INSTALL_STAGE_CHECK"
-/bin/mv -f "$target_tmp" "$target" || fail "INSTALL_BINARY"
-target_tmp=""
+for name in clroom clroom-codex clroom-claude; do
+  target="$install_dir/$name"
+  install_target_safe "$target" || fail "INSTALL_TARGET_UNSAFE"
+  target_tmp=$(/usr/bin/mktemp "$install_dir/.$name-install.XXXXXX") || fail "INSTALL_TEMP"
+  /usr/bin/install -m 0755 "$tmp/bin/$name" "$target_tmp" || fail "INSTALL_STAGE"
+  "$target_tmp" --help >/dev/null 2>&1 || fail "INSTALL_STAGE_CHECK"
+  /bin/mv -f "$target_tmp" "$target" || fail "INSTALL_BINARY"
+  target_tmp=""
+done
 
 printf 'Installed CLROOM to %s\n' "$target"
 case ":${PATH:-}:" in

@@ -5,11 +5,14 @@ Launch Codex or Claude Code without
 unrelated global instructions and skills.
 
 Launch example:
-clroom codex exec --skill-set=any-my-skill,@any-my-skill-set --approve-for-me
+clroom codex --skill-set=any-my-skill,@any-my-skill-set --approve-for-me
 
 Usage
-  clroom codex exec [CODEX_ARGS...] Non-interactive Codex exec
+  clroom codex [CODEX_ARGS...] Qualified interactive Codex
+  clroom codex exec [CODEX_ARGS...] Qualified non-interactive Codex exec
   clroom claude [CLAUDE_ARGS...] Launch Claude Code
+  Provider options: repeat --pass-env=NAME to admit exact existing environment
+  names. Drop-in commands: clroom-codex and clroom-claude.
   clroom doctor --root .     Check installation
 
 Skill sets

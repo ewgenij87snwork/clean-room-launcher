@@ -1,8 +1,7 @@
 use std::process::Command;
 
 #[test]
-fn cargo_exposes_only_the_clroom_executable_target() {
-    // Break caught: a legacy public executable alias is accidentally shipped again.
+fn cargo_exposes_the_three_provider_entrypoints() {
     let output = Command::new("cargo")
         .args(["metadata", "--no-deps", "--format-version", "1"])
         .current_dir(env!("CARGO_MANIFEST_DIR"))
@@ -25,5 +24,5 @@ fn cargo_exposes_only_the_clroom_executable_target() {
         })
         .map(|target| target["name"].as_str().unwrap())
         .collect::<Vec<_>>();
-    assert_eq!(names, ["clroom"]);
+    assert_eq!(names, ["clroom", "clroom-claude", "clroom-codex"]);
 }

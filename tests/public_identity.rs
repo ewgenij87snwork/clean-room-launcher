@@ -88,7 +88,10 @@ fn clroom_is_the_only_public_identity_and_preserves_the_native_codex_process() {
     assert!(help_stdout.starts_with(
         "\n\nClean Room Launcher v0.2.0\nLaunch Codex or Claude Code without\nunrelated global instructions and skills.\n"
     ));
-    assert!(help_stdout.contains("\nUsage\n  clroom codex exec [CODEX_ARGS...]"));
+    assert!(
+        help_stdout.contains("\nUsage\n  clroom codex [CODEX_ARGS...]")
+            && help_stdout.contains("clroom codex exec [CODEX_ARGS...]")
+    );
 
     let (codex, capture) = fake_codex();
     let provider_path = codex.parent().unwrap();

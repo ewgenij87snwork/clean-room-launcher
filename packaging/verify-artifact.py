@@ -2,7 +2,7 @@
 """Fail-closed verifier for exact CLROOM release archives."""
 import gzip, hashlib, os, re, sys, tarfile
 
-REQUIRED = {"LICENSE", "NOTICE", "VERSION", "bin/clroom", "share/doc/clean-room-launcher/CHANGELOG.md"}
+REQUIRED = {"LICENSE", "NOTICE", "VERSION", "bin/clroom", "bin/clroom-codex", "bin/clroom-claude", "share/doc/clean-room-launcher/CHANGELOG.md"}
 PRIVATE_HOME = re.compile(rb"(?:/(?:Users|home)/[A-Za-z0-9._-]+(?:/|\x00)|[A-Za-z]:\\Users\\[A-Za-z0-9._-]+(?:\\|\x00))")
 def fail(message):
     print("ARTIFACT_INVALID: " + message, file=sys.stderr); raise SystemExit(1)
@@ -21,15 +21,15 @@ try:
         for m, rel in zip([m for m in members if m.name != root], rels):
             if m.name.startswith("/") or ".." in m.name.split("/"): fail("path traversal")
             if m.uid != 0 or m.gid != 0 or m.mtime != 0: fail("non-normalized ownership or timestamp")
-            expected_mode = 0o755 if m.isdir() or rel == "bin/clroom" else 0o644
+            expected_mode = 0o755 if m.isdir() or rel in {"bin/clroom", "bin/clroom-codex", "bin/clroom-claude"} else 0o644
             if m.mode != expected_mode: fail("non-normalized mode")
-            if rel == "bin/clroom":
+            if rel in {"bin/clroom", "bin/clroom-codex", "bin/clroom-claude"}:
                 if not m.isfile(): fail("binary is not a regular file")
         rel_set = set(rels)
         if not REQUIRED.issubset(rel_set): fail("missing required member")
-        if any(rel.startswith("bin/") and rel != "bin/clroom" for rel in rels): fail("wrong binary name")
-        clroom = tar.extractfile(root + "/bin/clroom").read()
-        if PRIVATE_HOME.search(clroom): fail("binary contains a private HOME path")
+        if any(rel.startswith("bin/") and rel not in {"bin/clroom", "bin/clroom-codex", "bin/clroom-claude"} for rel in rels): fail("wrong binary name")
+        for binary in ("clroom", "clroom-codex", "clroom-claude"):
+            if PRIVATE_HOME.search(tar.extractfile(root + "/bin/" + binary).read()): fail("binary contains a private HOME path")
         version = tar.extractfile(root + "/VERSION").read().decode("utf-8")
         qualification = re.findall(r"^qualification=(QUALIFIED)$", version, re.MULTILINE)
         if len(qualification) != 1 or "source_commit=" not in version: fail("release artifact is not qualified and bound")

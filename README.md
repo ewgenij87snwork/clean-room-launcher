@@ -52,6 +52,10 @@ clroom codex --skill-set=my-skill,@my-skill-set
 clroom codex exec --skill-set=my-skill,@my-skill-set --approve-for-me
 
 clroom claude --skill-set=my-skill,@my-skill-set
+
+# Provider drop-in entrypoints for external launchers
+clroom-codex --skill-set=my-skill --pass-env=NAME
+clroom-claude --skill-set=my-skill --pass-env=NAME
 ```
 
 Use skill names installed in your own setup.
@@ -147,8 +151,9 @@ curl --proto '=https' --tlsv1.2 -fsSL \
 ```
 
 The installer downloads the latest published stable macOS Apple Silicon release
-from GitHub Releases, verifies the exact archive against `SHA256SUMS`, extracts
-only the `clroom` binary, and installs it to `~/.local/bin/clroom`. It does not
+from GitHub Releases, verifies the exact archive against `SHA256SUMS`, stages
+and installs `clroom`, `clroom-codex`, and `clroom-claude` to `~/.local/bin`.
+It does not
 use `sudo`, edit shell startup files, install a service, or change provider
 state.
 
@@ -413,7 +418,7 @@ that the clean-room restrictions blocked the read. Review other errors normally.
 For an archive or one-line installation:
 
 ```sh
-rm "$HOME/.local/bin/clroom"
+rm "$HOME/.local/bin/clroom" "$HOME/.local/bin/clroom-codex" "$HOME/.local/bin/clroom-claude"
 ```
 
 For a Cargo installation:
@@ -433,6 +438,9 @@ artifacts are unsigned and unnotarized.
 It supports the documented Codex interactive and exec paths and the interactive
 Claude Code path through the focused clean-room restrictions. The qualification
 is limited to the documented macOS Apple Silicon path.
+
+External launchers can use `clroom-codex` or `clroom-claude` as their provider
+executable override. See the [agent runner guide](docs/agent-runners.md).
 
 After publication, see the
 [v0.2.0 GitHub release](https://github.com/ewgenij87snwork/clean-room-launcher/releases/tag/v0.2.0)

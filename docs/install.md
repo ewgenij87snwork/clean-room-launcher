@@ -24,7 +24,8 @@ curl --proto '=https' --tlsv1.2 -fsSL \
 
 The installer downloads the latest published stable macOS Apple Silicon release
 from GitHub Releases, verifies the exact archive against `SHA256SUMS`, extracts
-only the `clroom` binary, and installs it to `~/.local/bin/clroom`. It does not
+the `clroom`, `clroom-codex`, and `clroom-claude` binaries, and installs them to
+`~/.local/bin`. It does not
 use `sudo`, edit shell startup files, install a service, or change provider
 state.
 
@@ -45,10 +46,12 @@ curl -fLO "https://github.com/ewgenij87snwork/clean-room-launcher/releases/downl
 EXPECTED=$(awk -v asset="$ASSET" '$2 == asset {print $1}' SHA256SUMS)
 ACTUAL=$(shasum -a 256 "$ASSET" | awk '{print $1}')
 test -n "$EXPECTED" && test "$ACTUAL" = "$EXPECTED"
-tar -xOzf "$ASSET" "${ASSET%.tar.gz}/bin/clroom" > clroom
 mkdir -p "$HOME/.local/bin"
-install -m 0755 clroom "$HOME/.local/bin/clroom"
-rm clroom
+for name in clroom clroom-codex clroom-claude; do
+  tar -xOzf "$ASSET" "${ASSET%.tar.gz}/bin/$name" > "$name"
+  install -m 0755 "$name" "$HOME/.local/bin/$name"
+  rm "$name"
+done
 ```
 
 This verifies only the archive you downloaded; `SHA256SUMS` also covers the
@@ -75,8 +78,11 @@ cd your-project
 clroom codex --help       # if Codex is installed
 clroom codex --version
 clroom claude --version   # if Claude Code is installed
+clroom-codex --help       # executable override for external launchers
+clroom-claude --help      # executable override for external launchers
 ```
 
-To remove an archive or one-line installation, delete
-`$HOME/.local/bin/clroom`. For Cargo, run `cargo uninstall clean-room-launcher`.
+To remove an archive or one-line installation, delete the three files under
+`$HOME/.local/bin` (`clroom`, `clroom-codex`, and `clroom-claude`). For Cargo,
+run `cargo uninstall clean-room-launcher`.
 No service or system setting is created.
