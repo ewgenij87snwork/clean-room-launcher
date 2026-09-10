@@ -20,8 +20,6 @@ Semantic Versioning after the first public release.
 - Drop-in `clroom-codex` and `clroom-claude` provider executables preserve native
   provider arguments, interactive process behavior, and exact `--pass-env=NAME`
   admission (with Claude parity and duplicate/invalid-name refusal).
-- Runner v0.8.5 integration is qualified on macOS Apple Silicon for the tested
-  Codex and Claude interactive direct, mission, and native resume paths.
 - Canonical release readiness and SCA verification with SHA256SUMS, CycloneDX
   SBOM, provenance, and GitHub attestations.
 - Checksum-verified one-line macOS Apple Silicon installation from GitHub
