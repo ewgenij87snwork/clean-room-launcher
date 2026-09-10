@@ -139,26 +139,29 @@ flag is an exec-only enhancement.
 You need macOS on Apple Silicon and at least one already working provider:
 Codex CLI `0.147.0+` or Claude Code CLI `2.1.223+`.
 
+After the `v0.2.0` GitHub Release is published, install it with:
+
 ```sh
 curl --proto '=https' --tlsv1.2 -fsSL \
   https://github.com/ewgenij87snwork/clean-room-launcher/releases/latest/download/install.sh | sh
 ```
 
-The installer downloads the current stable macOS Apple Silicon release from
-GitHub Releases, verifies the exact archive against `SHA256SUMS`, extracts only
-the `clroom` binary, and installs it to `~/.local/bin/clroom`. It does not use
-`sudo`, edit shell startup files, install a service, or change provider state.
+The installer downloads the latest published stable macOS Apple Silicon release
+from GitHub Releases, verifies the exact archive against `SHA256SUMS`, extracts
+only the `clroom` binary, and installs it to `~/.local/bin/clroom`. It does not
+use `sudo`, edit shell startup files, install a service, or change provider
+state.
 
 If `~/.local/bin` is not already in `PATH`, the installer prints the directory
 to add. The archive is unsigned and unnotarized. If local macOS policy refuses
 it, prefer the Cargo installation below. Do not disable Gatekeeper globally.
 
-For the checksum-verified manual archive path, see
+For the checksum-verified manual archive path after publication, see
 [Install v0.2.0](docs/install.md).
 
 ## Install with Cargo
 
-Rust users can build the same release from the public tag:
+After the `v0.2.0` tag is published, Rust users can build that release with:
 
 ```sh
 cargo install --git https://github.com/ewgenij87snwork/clean-room-launcher \
@@ -257,7 +260,6 @@ If cleanup is interrupted, a later Claude launch retries only recognized
 `clroom` state whose recorded consumer process is confirmed dead. Live,
 unknown, malformed, and legacy state is left untouched. Cleanup removes
 projection links, not your installed skill sources.
-
 </details>
 
 Clean Room Launcher makes no model request and performs no provider login before
@@ -320,7 +322,7 @@ See the official [Claude Code CLI reference][claude-cli-reference] and
 
 ## Coding-agent support
 
-The v0.2.0 release supports these macOS provider paths:
+`v0.2.0` qualifies these macOS provider paths:
 
 | Coding agent and launch path | Platform | Status |
 |---|---|---|
@@ -330,7 +332,7 @@ The v0.2.0 release supports these macOS provider paths:
 | Claude Code CLI `-p` response-output semantics | macOS / Apple Silicon | Not independently qualified |
 
 Linux and Windows are `NOT_QUALIFIED`. Intel macOS, Homebrew, crates.io,
-signing, and notarization are not supported by this release.
+signing, and notarization are not qualified by `v0.2.0`.
 
 Additional coding agents and platforms may be considered later, but this README
 makes no support claim for them.
@@ -387,7 +389,6 @@ container.
 
 Yes. The launch plaque shows the active restriction categories, admitted global
 skills, and—when present—the project-local skill count before the provider starts.
-
 This release does not provide a per-file review interface or compiled-context
 manifest.
 
@@ -424,16 +425,15 @@ Removing Clean Room Launcher does not modify either provider or its authenticati
 
 ## Project status
 
-`v0.2.0` is the supported public release for macOS on Apple Silicon.
-Its artifacts are unsigned and unnotarized.
+`v0.2.0` is qualified for macOS on Apple Silicon. When published, its release
+artifacts are unsigned and unnotarized.
 
 It supports the documented Codex interactive and exec paths and the interactive
 Claude Code path through the focused clean-room restrictions. The qualification
-is limited to the documented
-macOS Apple Silicon path.
+is limited to the documented macOS Apple Silicon path.
 
-See the
-[GitHub release](https://github.com/ewgenij87snwork/clean-room-launcher/releases/tag/v0.2.0)
+After publication, see the
+[v0.2.0 GitHub release](https://github.com/ewgenij87snwork/clean-room-launcher/releases/tag/v0.2.0)
 for the archive and `SHA256SUMS`.
 
 ## Help improve Clean Room Launcher

@@ -9,23 +9,32 @@ Prerequisites:
 - macOS on Apple Silicon;
 - Codex CLI `0.147.0+` or Claude Code CLI `2.1.223+` already working on its own.
 
+Release-download commands below become available after the `v0.2.0` GitHub
+Release is published. The Cargo command becomes available after the `v0.2.0`
+tag exists.
+
 ## One-line install
+
+After the GitHub Release is published:
 
 ```sh
 curl --proto '=https' --tlsv1.2 -fsSL \
   https://github.com/ewgenij87snwork/clean-room-launcher/releases/latest/download/install.sh | sh
 ```
 
-The installer downloads the current stable macOS Apple Silicon release from
-GitHub Releases, verifies the exact archive against `SHA256SUMS`, extracts only
-the `clroom` binary, and installs it to `~/.local/bin/clroom`. It does not use
-`sudo`, edit shell startup files, install a service, or change provider state.
+The installer downloads the latest published stable macOS Apple Silicon release
+from GitHub Releases, verifies the exact archive against `SHA256SUMS`, extracts
+only the `clroom` binary, and installs it to `~/.local/bin/clroom`. It does not
+use `sudo`, edit shell startup files, install a service, or change provider
+state.
 
 If `~/.local/bin` is not already in `PATH`, the installer prints the directory
 to add. The release archive is unsigned and unnotarized; do not disable
 Gatekeeper globally if local macOS policy refuses it.
 
 ## Manual release archive
+
+After the `v0.2.0` GitHub Release is published:
 
 ```sh
 VERSION=v0.2.0
@@ -46,6 +55,8 @@ This verifies only the archive you downloaded; `SHA256SUMS` also covers the
 other release assets.
 
 ## Cargo from the release tag
+
+After the `v0.2.0` tag is published:
 
 ```sh
 cargo install --git https://github.com/ewgenij87snwork/clean-room-launcher \

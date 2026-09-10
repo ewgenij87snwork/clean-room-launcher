@@ -7,7 +7,7 @@ Semantic Versioning after the first public release.
 
 ## [Unreleased]
 
-## [0.2.0] - 2026-09-09
+## [0.2.0] - 2026-09-10
 
 ### Added
 
@@ -19,8 +19,8 @@ Semantic Versioning after the first public release.
   selected-skill inventory, and fail-closed filesystem restrictions.
 - Canonical release readiness and SCA verification with SHA256SUMS, CycloneDX
   SBOM, provenance, and GitHub attestations.
-- Checksum-verified one-line macOS Apple Silicon installation from the current
-  stable GitHub Release, without `sudo` or shell-configuration mutation.
+- Checksum-verified one-line macOS Apple Silicon installation from GitHub
+  Releases, without `sudo` or shell-configuration mutation.
 
 ### Security
 
