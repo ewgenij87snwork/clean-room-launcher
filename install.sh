@@ -83,7 +83,10 @@ self_test() {
   asset="$root.tar.gz"
   /bin/mkdir -p "$test_root/$root/bin"
   for name in clroom clroom-codex clroom-claude; do
-    printf '#!/bin/sh\n[ "$#" -eq 1 ] && [ "$1" = "--clroom-installer-smoke" ] || exit 42\nprintf "%s fixture\\n"\n' "$name" > "$test_root/$root/bin/$name"
+    {
+      printf '%s\n' '#!/bin/sh' '[ "$#" -eq 1 ] && [ "$1" = "--clroom-installer-smoke" ] || exit 42'
+      printf 'printf "%s fixture\\n"\n' "$name"
+    } > "$test_root/$root/bin/$name"
     /bin/chmod 0755 "$test_root/$root/bin/$name"
   done
   /usr/bin/tar -czf "$test_root/$asset" -C "$test_root" "$root"
@@ -130,14 +133,12 @@ self_test() {
   /bin/mkdir "$test_root/single-provider"
   printf '#!/bin/sh\nexit 0\n' > "$test_root/single-provider/codex"
   /bin/chmod 0755 "$test_root/single-provider/codex"
-  PATH="$test_root/single-provider"
-  export PATH
-  [ -x "$(command -v codex)" ] || fail "SELF_TEST_SINGLE_PROVIDER_CODEX"
-  if command -v claude >/dev/null 2>&1; then
+  [ -x "$test_root/single-provider/codex" ] || fail "SELF_TEST_SINGLE_PROVIDER_CODEX"
+  if [ -e "$test_root/single-provider/claude" ]; then
     fail "SELF_TEST_SINGLE_PROVIDER_CLAUDE_PRESENT"
   fi
   for name in clroom clroom-codex clroom-claude; do
-    [ "$("$test_root/bin-out/$name" --clroom-installer-smoke)" = "$name fixture" ] || fail "SELF_TEST_BINARY"
+    [ "$(/usr/bin/env PATH="$test_root/single-provider" "$test_root/bin-out/$name" --clroom-installer-smoke)" = "$name fixture" ] || fail "SELF_TEST_BINARY"
   done
 
   /bin/cp "$test_root/SHA256SUMS" "$test_root/SHA256SUMS.duplicate"
