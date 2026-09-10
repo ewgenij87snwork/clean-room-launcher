@@ -260,6 +260,7 @@ If cleanup is interrupted, a later Claude launch retries only recognized
 `clroom` state whose recorded consumer process is confirmed dead. Live,
 unknown, malformed, and legacy state is left untouched. Cleanup removes
 projection links, not your installed skill sources.
+
 </details>
 
 Clean Room Launcher makes no model request and performs no provider login before
@@ -389,6 +390,7 @@ container.
 
 Yes. The launch plaque shows the active restriction categories, admitted global
 skills, and—when present—the project-local skill count before the provider starts.
+
 This release does not provide a per-file review interface or compiled-context
 manifest.
 
