@@ -10,7 +10,7 @@ This table is deliberately conservative.
 
 | Provider | Input / scope | Current CLROOM direction | Confidence |
 | --- | --- | --- | --- |
-| Claude Code | interactive top-level launch | Isolated and qualified | v0.2.0 qualification canary |
+| Claude Code | interactive top-level launch | Isolated; exact qualification target is 2.1.263 | v0.2.0 qualification canary |
 | Claude Code | `-p` non-interactive launch | Launch path exercised; response-output semantics not claimed as qualified | Provider exited 0, but the expected textual canary was not observed |
 | Claude Code | ordinary user settings source | Omitted through `--setting-sources project,local`, with additional controls for known personal-global roots | Confirmed from current CLROOM source |
 | Claude Code | project settings source | Retained | Confirmed from current CLROOM source |

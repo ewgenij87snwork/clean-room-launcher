@@ -43,6 +43,7 @@ fn interactive_enter_launches_through_the_existing_clean_isolation_path() {
     fs::create_dir_all(&bin).unwrap();
     fs::write(project.join("canaries/PROJECT.md"), b"project\n").unwrap();
     fs::write(codex_home.join("AGENTS.md"), b"global\n").unwrap();
+    fs::write(codex_home.join("auth.json"), b"synthetic auth state\n").unwrap();
     fs::write(
         home.join(".agents/skills/ambient/SKILL.md"),
         b"ambient skill\n",

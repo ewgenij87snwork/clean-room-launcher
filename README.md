@@ -136,12 +136,15 @@ context and explicit Codex arguments remain available.
 Codex `exec` starts immediately with the native
 `--ignore-user-config` enhancement. Interactive `clroom codex` is also a
 qualified path through the same CLROOM isolation path; the native suppression
-flag is an exec-only enhancement.
+flag is an exec-only enhancement; the interactive clean-state projection is
+covered by the separate runtime tests.
 
 ## Install in sixty seconds
 
 You need macOS on Apple Silicon and at least one already working provider:
-Codex CLI `0.147.0+` or Claude Code CLI `2.1.223+`.
+Codex CLI `0.147.0+` or Claude Code CLI `2.1.223+` is the minimum accepted
+parser/runtime range. The v0.2.0 real-provider qualification targets are
+Codex `0.154.0` and Claude Code `2.1.263` only.
 
 After the `v0.2.0` GitHub Release is published, install it with:
 
@@ -211,7 +214,7 @@ clroom codex --help
 clroom codex --version
 ```
 
-Interactive `clroom codex` uses the same clean isolation path as the qualified
+Interactive `clroom codex` uses the same clean isolation path as the
 exec launch. The native `--ignore-user-config` enhancement is exec-only.
 
 ### Claude Code
@@ -332,9 +335,9 @@ See the official [Claude Code CLI reference][claude-cli-reference] and
 
 | Coding agent and launch path | Platform | Status |
 |---|---|---|
-| Codex CLI 0.147.0+ — interactive `clroom codex` | macOS / Apple Silicon | Qualified |
-| Codex CLI 0.147.0+ — `clroom codex exec` | macOS / Apple Silicon | Qualified |
-| Claude Code CLI 2.1.223+ — interactive `clroom claude` | macOS / Apple Silicon | Qualified |
+| Codex CLI 0.154.0 — interactive `clroom codex` | macOS / Apple Silicon | Exact qualification target |
+| Codex CLI 0.154.0 — `clroom codex exec` | macOS / Apple Silicon | Exact qualification target |
+| Claude Code CLI 2.1.263 — interactive `clroom claude` | macOS / Apple Silicon | Exact qualification target |
 | Claude Code CLI `-p` response-output semantics | macOS / Apple Silicon | Not independently qualified |
 
 Linux and Windows are `NOT_QUALIFIED`. Intel macOS, Homebrew, crates.io,
@@ -432,7 +435,9 @@ Removing Clean Room Launcher does not modify either provider or its authenticati
 
 ## Project status
 
-`v0.2.0` is qualified for macOS on Apple Silicon. When published, its release
+`v0.2.0` is an integrity-verified candidate for macOS on Apple Silicon. Its
+real-provider qualification is bound to the exact provider versions above.
+When published, its release
 artifacts are unsigned and unnotarized.
 
 It supports the documented Codex interactive and exec paths and the interactive

@@ -4,9 +4,10 @@ use std::{
     path::{Path, PathBuf},
 };
 
-const APP_SUPPORT_DIR: &str = "Library/Application Support/Clean Room Launcher/Codex";
+const APP_SUPPORT_DIR: &str = ".clroom-clean-state-v1";
 const STATE_MARKER: &str = ".clroom-state-v1";
 const STATE_MARKER_BYTES: &[u8] = b"clroom-state-v1\n";
+const PROVIDER_AUTH_FILES: &[&str] = &["auth.json", ".credentials.json"];
 const EXPECTED_PROVIDER_FILES: &[&str] = &[
     ".sandbox_migration",
     "config.toml",
@@ -37,17 +38,22 @@ pub(super) fn prepare(
     ambient_codex_home: &Path,
     selected_global_skill_paths: &[(String, PathBuf)],
 ) -> Result<CodexState, String> {
-    let ambient_auth = ambient_codex_home.join("auth.json");
-    if !fs::metadata(&ambient_auth).is_ok_and(|metadata| metadata.is_file()) {
+    let auth_files = PROVIDER_AUTH_FILES
+        .iter()
+        .map(|name| (name, ambient_codex_home.join(name)))
+        .filter(|(_, path)| fs::metadata(path).is_ok_and(|metadata| metadata.is_file()))
+        .collect::<Vec<_>>();
+    if auth_files.is_empty() {
         return Err("CLROOM_CODEX_AUTH_UNAVAILABLE".to_owned());
     }
 
-    let root = home.join(APP_SUPPORT_DIR);
+    let root = ambient_codex_home.join(APP_SUPPORT_DIR);
     let shadow_home = root.join("home");
-    let sqlite_home = root.join("sqlite");
+    // Keep Codex's durable SQLite state in the existing provider home while
+    // projecting only a clean configuration view into shadow_home.
+    let sqlite_home = ambient_codex_home.to_owned();
     ensure_private_directory(&root)?;
     ensure_private_directory(&shadow_home)?;
-    ensure_private_directory(&sqlite_home)?;
     let initialized = read_state_marker(&shadow_home)?;
     validate_shadow_entries(&shadow_home, initialized)?;
     if !initialized {
@@ -60,19 +66,21 @@ pub(super) fn prepare(
         selected_global_skill_paths,
     )?;
 
-    let auth_link = shadow_home.join("auth.json");
-    match fs::symlink_metadata(&auth_link) {
-        Ok(metadata) if metadata.file_type().is_symlink() => {
-            if fs::read_link(&auth_link).ok().as_deref() != Some(ambient_auth.as_path()) {
-                return Err("CLROOM_CODEX_AUTH_REFERENCE_INVALID".to_owned());
+    for (name, ambient_auth) in auth_files {
+        let auth_link = shadow_home.join(name);
+        match fs::symlink_metadata(&auth_link) {
+            Ok(metadata) if metadata.file_type().is_symlink() => {
+                if fs::read_link(&auth_link).ok().as_deref() != Some(ambient_auth.as_path()) {
+                    return Err("CLROOM_CODEX_AUTH_REFERENCE_INVALID".to_owned());
+                }
             }
+            Ok(_) => return Err("CLROOM_CODEX_STATE_DIRTY".to_owned()),
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                symlink(&ambient_auth, &auth_link)
+                    .map_err(|_| "CLROOM_CODEX_AUTH_REFERENCE_FAILED".to_owned())?;
+            }
+            Err(_) => return Err("CLROOM_CODEX_AUTH_REFERENCE_INVALID".to_owned()),
         }
-        Ok(_) => return Err("CLROOM_CODEX_STATE_DIRTY".to_owned()),
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
-            symlink(&ambient_auth, &auth_link)
-                .map_err(|_| "CLROOM_CODEX_AUTH_REFERENCE_FAILED".to_owned())?;
-        }
-        Err(_) => return Err("CLROOM_CODEX_AUTH_REFERENCE_INVALID".to_owned()),
     }
 
     Ok(CodexState {
@@ -151,7 +159,7 @@ fn validate_shadow_entries(shadow_home: &Path, initialized: bool) -> Result<(), 
             .to_str()
             .map(str::to_owned)
             .ok_or_else(|| "CLROOM_CODEX_STATE_DIRTY".to_owned())?;
-        if matches!(name.as_str(), STATE_MARKER | "auth.json" | "skills") {
+        if matches!(name.as_str(), STATE_MARKER | "auth.json" | ".credentials.json" | "skills") {
             continue;
         }
         let expected_directory = if EXPECTED_PROVIDER_FILES.contains(&name.as_str()) {
@@ -294,7 +302,7 @@ mod tests {
         fs::create_dir_all(&home).unwrap();
         let ambient_codex_home = home.join(".codex");
         fs::create_dir_all(&ambient_codex_home).unwrap();
-        fs::write(ambient_codex_home.join("auth.json"), b"credential bytes").unwrap();
+        fs::write(ambient_codex_home.join("auth.json"), b"synthetic auth state").unwrap();
         assert!(fs::metadata(ambient_codex_home.join("auth.json")).is_ok());
 
         let first = prepare(&home, &ambient_codex_home, &[]).unwrap();
@@ -324,9 +332,7 @@ mod tests {
 
         assert_eq!(error, "CLROOM_CODEX_AUTH_UNAVAILABLE");
         assert!(
-            !home
-                .join("Library/Application Support/Clean Room Launcher/Codex")
-                .exists()
+            !ambient_codex_home.join(".clroom-clean-state-v1").exists()
         );
     }
 
@@ -337,8 +343,8 @@ mod tests {
         fs::create_dir_all(&home).unwrap();
         let ambient_codex_home = home.join(".codex");
         fs::create_dir_all(&ambient_codex_home).unwrap();
-        fs::write(ambient_codex_home.join("auth.json"), b"credential bytes").unwrap();
-        let shadow_home = home.join("Library/Application Support/Clean Room Launcher/Codex/home");
+        fs::write(ambient_codex_home.join("auth.json"), b"synthetic auth state").unwrap();
+        let shadow_home = ambient_codex_home.join(".clroom-clean-state-v1/home");
         fs::create_dir_all(&shadow_home).unwrap();
         fs::write(shadow_home.join("config.toml"), b"owner state").unwrap();
 
@@ -360,7 +366,7 @@ mod tests {
         let source = home.join(".agents/skills/arrow");
         fs::create_dir_all(&ambient_codex_home).unwrap();
         fs::create_dir_all(&source).unwrap();
-        fs::write(ambient_codex_home.join("auth.json"), b"credential bytes").unwrap();
+        fs::write(ambient_codex_home.join("auth.json"), b"synthetic auth state").unwrap();
         fs::write(source.join("SKILL.md"), b"selected").unwrap();
 
         let selected = [("arrow".to_owned(), source.clone())];
@@ -380,7 +386,7 @@ mod tests {
         fs::create_dir_all(&home).unwrap();
         let ambient_codex_home = home.join(".codex");
         fs::create_dir_all(&ambient_codex_home).unwrap();
-        fs::write(ambient_codex_home.join("auth.json"), b"credential bytes").unwrap();
+        fs::write(ambient_codex_home.join("auth.json"), b"synthetic auth state").unwrap();
 
         let state = prepare(&home, &ambient_codex_home, &[]).unwrap();
         fs::write(state.shadow_home.join("config.toml"), b"provider state").unwrap();
@@ -398,7 +404,7 @@ mod tests {
         fs::create_dir_all(&home).unwrap();
         let ambient_codex_home = home.join(".codex");
         fs::create_dir_all(&ambient_codex_home).unwrap();
-        fs::write(ambient_codex_home.join("auth.json"), b"credential bytes").unwrap();
+        fs::write(ambient_codex_home.join("auth.json"), b"synthetic auth state").unwrap();
 
         let state = prepare(&home, &ambient_codex_home, &[]).unwrap();
         fs::create_dir_all(state.shadow_home.join("skills/.system")).unwrap();
@@ -437,7 +443,7 @@ mod tests {
         fs::create_dir_all(&home).unwrap();
         let ambient_codex_home = home.join(".codex");
         fs::create_dir_all(&ambient_codex_home).unwrap();
-        fs::write(ambient_codex_home.join("auth.json"), b"credential bytes").unwrap();
+        fs::write(ambient_codex_home.join("auth.json"), b"synthetic auth state").unwrap();
 
         let state = prepare(&home, &ambient_codex_home, &[]).unwrap();
         fs::write(state.shadow_home.join("foreign.txt"), b"unexpected").unwrap();

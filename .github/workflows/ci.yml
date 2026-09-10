@@ -26,7 +26,7 @@ jobs:
           qualified=$(sed -n 's/^qualified_targets = \[\(.*\)\]/\1/p' packaging/targets.toml | tr -d '"' | tr ',' ' ')
           for target_name in $qualified; do
             entry=$(grep -A8 "name = \"$target_name\"" packaging/targets.toml)
-            printf '%s\n' "$entry" | grep -q 'qualification_status = "QUALIFIED"'
+            printf '%s\n' "$entry" | grep -q 'qualification_status = "INTEGRITY_VERIFIED"'
             printf '%s\n' "$entry" | grep -q 'rust_target = "[^"]\+"'
             printf '%s\n' "$entry" | grep -q 'runner = "[^"]\+"'
           done

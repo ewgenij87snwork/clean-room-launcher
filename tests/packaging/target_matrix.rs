@@ -45,7 +45,7 @@ fn matrix_is_honest(source: &str) -> bool {
     let targets = target_blocks(source);
     advertised.iter().all(|name| targets.iter().any(|target| {
         target.get("name") == Some(name)
-            && target.get("qualification_status") == Some(&"QUALIFIED".to_owned())
+            && target.get("qualification_status") == Some(&"INTEGRITY_VERIFIED".to_owned())
             && target.get("runner").is_some_and(|runner| runner != "unsupported" && runner != "missing-runner")
             && target.get("artifact_name").is_some_and(|artifact| !artifact.is_empty())
     }))
@@ -206,7 +206,7 @@ fn matrix_advertised_targets_exactly_equal_qualified_lanes() {
 fn matrix_mutations_refuse_false_claims_and_mismatched_lists() {
     let matrix = read("packaging/targets.toml");
     let advertised_false = matrix.replacen(
-        "qualification_status = \"QUALIFIED\"",
+        "qualification_status = \"INTEGRITY_VERIFIED\"",
         "qualification_status = \"NOT_QUALIFIED\"",
         1,
     );

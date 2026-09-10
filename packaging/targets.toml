@@ -1,5 +1,6 @@
 # CLROOM v0.2 target matrix.
-# Exact-subject macOS acceptance qualifies the single advertised release lane.
+# The build lane is integrity-verified; real-provider qualification is a
+# separate evidence-bound release gate.
 # Unsupported and missing-runner fixtures remain excluded from release claims.
 schema_version = "clroom.packaging-targets.v2"
 advertised_targets = ["alpha-macos-aarch64"]
@@ -18,7 +19,7 @@ target_entry_policy = "CI selects only names listed in qualified_targets and ver
 name = "alpha-macos-aarch64"
 rust_target = "aarch64-apple-darwin"
 runner = "macos-14"
-qualification_status = "QUALIFIED"
+qualification_status = "INTEGRITY_VERIFIED"
 artifact_name = "clean-room-launcher-v0.2.0-aarch64-apple-darwin"
 required_checks = "fmt, clippy, test, schema, target-matrix"
 signing_policy = "unsigned"

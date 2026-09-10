@@ -7,7 +7,7 @@ nav_title: Codex
 ---
 CLROOM does not replace Codex. It launches the installed `codex` CLI.
 
-The qualified clean launch supports both interactive `clroom codex ...` and
+The clean launch supports both interactive `clroom codex ...` and
 non-interactive `clroom codex exec ...` through the existing CLROOM isolation
 path. The native `--ignore-user-config` capability is specifically preflighted
 and injected for `exec`; its absence on the TUI path is not an interactive

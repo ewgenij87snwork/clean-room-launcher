@@ -74,7 +74,7 @@ def main() -> int:
             raise SystemExit("CLROOM_RELEASE_PUBLIC_SURFACE_REFUSED:LIMITATIONS:" + pattern)
 
     readiness = body("scripts/release/readiness.sh")
-    for needle in ("CLROOM_RELEASE_VERSION", "CLROOM_ARTIFACT_QUALIFICATION=QUALIFIED", "RELEASE_READINESS_BLOCKED"):
+    for needle in ("CLROOM_RELEASE_VERSION", "CLROOM_QUALIFICATION_EVIDENCE_DIR", "RELEASE_READINESS_BLOCKED"):
         if needle not in readiness:
             raise SystemExit("CLROOM_RELEASE_PUBLIC_SURFACE_REFUSED:READINESS:" + needle)
 
@@ -91,7 +91,7 @@ def main() -> int:
         if needle not in release_workflow:
             raise SystemExit("CLROOM_RELEASE_PUBLIC_SURFACE_REFUSED:DEFAULT_BRANCH_CONTRACT:" + needle)
     for needle in (
-        "CLROOM_ARTIFACT_QUALIFICATION: QUALIFIED",
+        "qualification=CANDIDATE",
         'tarfile.open(sys.argv[1], "r:gz")',
     ):
         if needle not in release_workflow:

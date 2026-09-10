@@ -47,9 +47,10 @@ declares, for example:
 ```
 
 Missing names remain missing and unrelated parent variables are not admitted.
-Runner v0.8.5 is qualified on macOS Apple Silicon with CLROOM v0.2.0 for the
-tested Codex and Claude Code interactive, mission, and native resume paths.
-Other Runner versions are not independently qualified by this release.
+Runner v0.8.5 is the documented compatibility target for the exact Codex
+`0.154.0` and Claude Code `2.1.263` canaries. The broad interactive, mission,
+and native-resume claim remains subject to authenticated manual acceptance;
+other Runner versions are not independently qualified.
 
 For headless automation, this release qualifies `clroom codex exec`. Claude Code
 `-p` can be passed through the launch path, but this release does not

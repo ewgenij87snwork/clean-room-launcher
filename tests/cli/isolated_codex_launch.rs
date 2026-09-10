@@ -64,7 +64,8 @@ fn isolated_fixture() -> (Scratch, PathBuf, PathBuf, PathBuf, PathBuf) {
     fs::create_dir_all(&bin).unwrap();
     fs::write(project.join("canaries/PROJECT.md"), b"project\n").unwrap();
     fs::write(codex_home.join("AGENTS.md"), b"global\n").unwrap();
-    fs::write(codex_home.join("auth.json"), b"credential bytes\n").unwrap();
+    fs::write(codex_home.join("config.toml"), b"not valid TOML\n").unwrap();
+    fs::write(codex_home.join("auth.json"), b"synthetic auth state\n").unwrap();
     fs::write(
         home.join(".agents/skills/ambient/SKILL.md"),
         b"ambient skill\n",
@@ -288,9 +289,9 @@ fn codex_handoff_launches_interactive_provider_with_persistent_clean_state() {
         String::from_utf8_lossy(&output.stderr)
     );
     assert!(capture.exists());
-    let state_root = home.join("Library/Application Support/Clean Room Launcher/Codex");
+    let state_root = codex_home.join(".clroom-clean-state-v1");
     assert!(state_root.join("home/auth.json").is_symlink());
-    assert!(state_root.join("sqlite").is_dir());
+    assert_eq!(state_root.parent(), Some(codex_home.as_path()));
 
     let second = command(&project, &home, &codex_home, &bin, &capture)
         .args(["codex", "resume", "--last"])

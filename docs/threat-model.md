@@ -11,7 +11,7 @@ context, release artifacts and evidence. Protected assets are provider
 authentication state, user and project files, Git state, source skills,
 generated runtime state, artifact identity and release receipts.
 
-## Trust model and attacker-controlled inputs
+## Trust model, trust boundaries, and attacker-controlled inputs
 
 Trust relationships exist between the parent environment and the isolated runtime,
 between source skills and generated context, between Clean Room Launcher and a provider
