@@ -171,8 +171,8 @@ platform_supported "$(/usr/bin/uname -s)" "$(/usr/bin/uname -m)" || fail "MACOS_
 
 install_dir="$HOME/.local/bin"
 tmp=$(/usr/bin/mktemp -d "${TMPDIR:-/tmp}/clroom-install.XXXXXX") || fail "TMPDIR"
-target_tmp=""
-trap '[ -z "${target_tmp:-}" ] || /bin/rm -f "$target_tmp"; /bin/rm -rf "$tmp"' EXIT HUP INT TERM
+stage_dir=""
+trap '[ -z "${stage_dir:-}" ] || /bin/rm -rf "$stage_dir"; /bin/rm -rf "$tmp"' EXIT HUP INT TERM
 
 manifest="$tmp/SHA256SUMS"
 /usr/bin/curl --proto '=https' --tlsv1.2 --fail --location --silent --show-error --retry 3 \
@@ -188,15 +188,18 @@ for name in clroom clroom-codex clroom-claude; do "$tmp/bin/$name" --help >/dev/
 
 preflight_install_targets || fail "INSTALL_TARGET_PREFLIGHT"
 /bin/mkdir -p "$install_dir" || fail "INSTALL_DIR"
+stage_dir="$install_dir/.clroom-install-stage.$$"
+[ ! -e "$stage_dir" ] && [ ! -L "$stage_dir" ] || fail "INSTALL_STAGE_COLLISION"
+/bin/mkdir "$stage_dir" || fail "INSTALL_STAGE_DIR"
 for name in clroom clroom-codex clroom-claude; do
-  target="$install_dir/$name"
-  install_target_safe "$target" || fail "INSTALL_TARGET_UNSAFE"
-  target_tmp=$(/usr/bin/mktemp "$install_dir/.$name-install.XXXXXX") || fail "INSTALL_TEMP"
-  /usr/bin/install -m 0755 "$tmp/bin/$name" "$target_tmp" || fail "INSTALL_STAGE"
-  "$target_tmp" --help >/dev/null 2>&1 || fail "INSTALL_STAGE_CHECK"
-  /bin/mv -f "$target_tmp" "$target" || fail "INSTALL_BINARY"
-  target_tmp=""
+  /usr/bin/install -m 0755 "$tmp/bin/$name" "$stage_dir/$name" || fail "INSTALL_STAGE"
+  "$stage_dir/$name" --help >/dev/null 2>&1 || fail "INSTALL_STAGE_CHECK"
 done
+for name in clroom clroom-codex clroom-claude; do
+  /bin/mv -f "$stage_dir/$name" "$install_dir/$name" || fail "INSTALL_BINARY"
+done
+/bin/rmdir "$stage_dir" || fail "INSTALL_STAGE_CLEANUP"
+stage_dir=""
 
 printf 'Installed CLROOM to %s\n' "$target"
 case ":${PATH:-}:" in
