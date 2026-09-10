@@ -54,3 +54,11 @@ path = "tests/contracts/trace_metadata.rs"
 [[test]]
 name = "gate_contract"
 path = "tests/contracts/gate_contract.rs"
+
+[[bin]]
+name = "clroom-codex"
+path = "src/bin/clroom-codex.rs"
+
+[[bin]]
+name = "clroom-claude"
+path = "src/bin/clroom-claude.rs"

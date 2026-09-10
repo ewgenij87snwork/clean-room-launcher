@@ -34,16 +34,20 @@ build_cargo_home=$(cd "$build_cargo_home" && pwd -P)
 export CARGO_ENCODED_RUSTFLAGS="--remap-path-prefix=$root=/workspace/clean-room-launcher"$'\x1f'"--remap-path-prefix=$build_cargo_home=/cargo"
 export CARGO_NET_OFFLINE=${CARGO_NET_OFFLINE:-true} LC_ALL=C TZ=UTC SOURCE_DATE_EPOCH=0
 if [[ -n "$target" ]]; then
-  cargo build --locked --release --bin clroom --target "$target"
+  cargo build --locked --release --bins --target "$target"
 else
-  cargo build --locked --release --bin clroom
+  cargo build --locked --release --bins
 fi
-[[ -x "$binary" ]] || { echo "built clroom binary not found" >&2; exit 2; }
+codex_binary="$target_dir/${target:+$target/}release/clroom-codex"
+claude_binary="$target_dir/${target:+$target/}release/clroom-claude"
+[[ -x "$binary" && -x "$codex_binary" && -x "$claude_binary" ]] || { echo "required binaries not found" >&2; exit 2; }
 mkdir -p "$out_dir"
 tmp=$(mktemp -d "${TMPDIR:-/tmp}/clean-room-launcher-artifact.XXXXXX"); trap 'rm -rf "$tmp"' EXIT
 stage="$tmp/clean-room-launcher-v$version-$target_label"
 mkdir -p "$stage/bin" "$stage/share/doc/clean-room-launcher"
 install -m 0755 "$binary" "$stage/bin/clroom"
+install -m 0755 "$codex_binary" "$stage/bin/clroom-codex"
+install -m 0755 "$claude_binary" "$stage/bin/clroom-claude"
 install -m 0644 "$root/LICENSE" "$stage/LICENSE"
 python3 "$root/packaging/generate-notice.py" --output "$stage/NOTICE"
 script_sha=$(shasum -a 256 "$root/packaging/build-artifacts.sh" | awk '{print $1}')
@@ -74,7 +78,7 @@ with open(archive, "wb") as raw:
             for rel, path in entries:
                 info = tar.gettarinfo(path, arcname=rel)
                 info.uid = info.gid = 0; info.uname = info.gname = ""; info.mtime = 0
-                info.mode = 0o755 if info.isdir() or rel.endswith("/bin/clroom") else 0o644
+                info.mode = 0o755 if info.isdir() or rel.endswith(("/bin/clroom", "/bin/clroom-codex", "/bin/clroom-claude")) else 0o644
                 if info.isfile():
                     with open(path, "rb") as data: tar.addfile(info, data)
                 else: tar.addfile(info)

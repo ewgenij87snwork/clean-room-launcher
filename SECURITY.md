@@ -4,16 +4,16 @@
 
 | Version | Status |
 | --- | --- |
-| `0.2.0` | Current supported release |
-| `0.1.0-alpha.4.2` | Superseded historical release |
+| `0.2.0` | Qualified |
+| `0.1.0-alpha.4.2` | Prior published prerelease |
 | `0.1.0-alpha.4.1` | Superseded by `0.1.0-alpha.4.2` |
 | `0.1.0-alpha.4` | Superseded by `0.1.0-alpha.4.1` |
 | `0.1.0-alpha.3` | Superseded by `0.1.0-alpha.4` |
 | `0.1.0-alpha.2` | Superseded by `0.1.0-alpha.3` |
 | `0.1.0-alpha.1` | Superseded by `0.1.0-alpha.2` |
 
-The current release is unsigned and unnotarized, and is qualified only for
-macOS on Apple Silicon.
+The v0.2.0 qualification is limited to macOS on Apple Silicon. When published,
+its release artifacts are unsigned and unnotarized.
 
 ## Reporting a vulnerability
 

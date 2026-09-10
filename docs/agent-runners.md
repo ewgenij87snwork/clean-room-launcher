@@ -29,6 +29,28 @@ clroom claude --skill-set=@review
 clroom codex exec --skill-set=@review "Review the current change."
 ```
 
+For a launcher with executable overrides, keep its runtime/provider set to
+Codex or Claude Code and point the executable at `clroom-codex` or
+`clroom-claude`. These are drop-in provider commands; no runner source change,
+SDK, daemon, or fork is required. The equivalent direct forms are
+`clroom codex ...` and `clroom claude ...`.
+
+When a Runner template needs its own context, pass only the exact names it
+declares, for example:
+
+```text
+--pass-env=RUNNER_CREW_ID
+--pass-env=RUNNER_MISSION_ID
+--pass-env=RUNNER_HANDLE
+--pass-env=RUNNER_EVENT_LOG
+--pass-env=MISSION_CWD
+```
+
+Missing names remain missing and unrelated parent variables are not admitted.
+Runner v0.8.5 is qualified on macOS Apple Silicon with CLROOM v0.2.0 for the
+tested Codex and Claude Code interactive, mission, and native resume paths.
+Other Runner versions are not independently qualified by this release.
+
 For headless automation, this release qualifies `clroom codex exec`. Claude Code
 `-p` can be passed through the launch path, but this release does not
 independently qualify its response-output semantics. Verify that provider path

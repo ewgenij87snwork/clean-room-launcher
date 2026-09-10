@@ -25,7 +25,31 @@ use clroom::adapters::claude::projection::{ProjectionError, project};
 use clroom::adapters::codex::isolation::{IsolationError, IsolationInputs, plan_with_skills};
 
 pub fn run(invoked_as: &str, args: impl IntoIterator<Item = String>) -> ExitCode {
-    let mut source = args.into_iter();
+    if std::env::var_os(process::INTERNAL_PROVIDER_CHAIN_GUARD).is_some() {
+        eprintln!(
+            "CLROOM_PROVIDER_RECURSION_REFUSED: provider resolution returned to CLROOM; remove the CLROOM executable from the provider PATH"
+        );
+        return ExitCode::from(2);
+    }
+    let mut source = args.into_iter().peekable();
+    if source
+        .peek()
+        .is_some_and(|argument| argument == "--clroom-installer-smoke")
+    {
+        source.next();
+        return if source.next().is_none() {
+            ExitCode::SUCCESS
+        } else {
+            eprintln!("CLROOM_INSTALLER_SMOKE_INVALID: unexpected arguments");
+            ExitCode::from(2)
+        };
+    }
+    if invoked_as == "clroom-codex" {
+        return run_codex(&mut source);
+    }
+    if invoked_as == "clroom-claude" {
+        return run_claude(&mut source);
+    }
     let Some(first) = (match next_argument(&mut source) {
         Ok(argument) => argument,
         Err(exit) => return exit,
@@ -124,7 +148,14 @@ fn run_claude(source: &mut impl Iterator<Item = String>) -> ExitCode {
     } {
         args.push(argument);
     }
-    match launch_isolated_claude(&args) {
+    let (selection_terms, provider_args, pass_env) = match select_provider_options(&args) {
+        Ok(options) => options,
+        Err(message) => {
+            eprintln!("{message}");
+            return ExitCode::from(2);
+        }
+    };
+    match launch_isolated_claude(&selection_terms, &provider_args, &pass_env) {
         Ok(exit) => exit,
         Err(message) => {
             eprintln!("{message}");
@@ -231,8 +262,11 @@ fn launch_isolated_codex(
     process::launch_isolated_codex(&plan, &executable, &contract, &identity, pass_env)
 }
 
-fn launch_isolated_claude(args: &[String]) -> Result<ExitCode, String> {
-    let (selection_terms, provider_args) = select_global_skills(args)?;
+fn launch_isolated_claude(
+    selection_terms: &[String],
+    provider_args: &[String],
+    pass_env: &[String],
+) -> Result<ExitCode, String> {
     let home = std::env::var_os("HOME").map(PathBuf::from).ok_or_else(|| {
         "CLROOM_CLAUDE_ISOLATION_INVALID: HOME is unavailable; continue locally".to_owned()
     })?;
@@ -242,10 +276,11 @@ fn launch_isolated_claude(args: &[String]) -> Result<ExitCode, String> {
             .to_owned()
     })?;
     let mut projection = project(&home, &selectors).map_err(projection_error_message)?;
-    let mut contract = launch_contract::LaunchContract::claude(
+    let mut contract = launch_contract::LaunchContract::claude_with_pass_env(
         &provider_args,
         &projection.add_dir,
         clroom::adapters::claude::managed::probe(),
+        pass_env,
     );
     let executable = match process::resolve_claude_executable() {
         Ok(executable) => executable,
@@ -328,7 +363,41 @@ fn launch_isolated_claude(args: &[String]) -> Result<ExitCode, String> {
         &executable,
         &contract,
         &identity,
+        pass_env,
     )
+}
+
+fn select_provider_options(
+    args: &[String],
+) -> Result<(Vec<String>, Vec<String>, Vec<String>), String> {
+    let mut pass_env = Vec::new();
+    let mut provider_selection_args = Vec::with_capacity(args.len());
+    let mut launcher_options = true;
+    for argument in args {
+        if launcher_options && argument == "--" {
+            launcher_options = false;
+            provider_selection_args.push(argument.clone());
+        } else if launcher_options && argument == "--pass-env" {
+            return Err(
+                "CLROOM_ENV_SELECTOR_INVALID: invalid environment name; use --pass-env=NAME"
+                    .to_owned(),
+            );
+        } else if launcher_options && let Some(name) = argument.strip_prefix("--pass-env=") {
+            if !valid_pass_env_name(name) {
+                return Err(
+                    "CLROOM_ENV_SELECTOR_INVALID: invalid environment name; use --pass-env=NAME"
+                        .to_owned(),
+                );
+            }
+            if !pass_env.iter().any(|selected| selected == name) {
+                pass_env.push(name.to_owned());
+            }
+        } else {
+            provider_selection_args.push(argument.clone());
+        }
+    }
+    let (selectors, provider_args) = select_global_skills(&provider_selection_args)?;
+    Ok((selectors, provider_args, pass_env))
 }
 
 fn select_global_skills(args: &[String]) -> Result<(Vec<String>, Vec<String>), String> {

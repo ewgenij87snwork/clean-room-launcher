@@ -58,6 +58,17 @@ while IFS= read -r file; do
     echo "TRANSCRIPT_FRAGMENT" >&2
     exit 15
   fi
+  case "$relative" in
+    # Historical traceability and the release gate's negative detector are the
+    # only accepted legacy-identity surfaces.
+    scripts/release/readiness.sh|controls/v0.1-execution-map.tsv) ;;
+    *)
+      if LC_ALL=C grep -E -i -q 'task[[:space:]]*seal' "$file"; then
+        echo "LEGACY_PRODUCT_IDENTITY" >&2
+        exit 16
+      fi
+      ;;
+  esac
 done < "$inventory"
 
 cleanup

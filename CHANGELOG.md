@@ -7,16 +7,25 @@ Semantic Versioning after the first public release.
 
 ## [Unreleased]
 
-## [0.2.0] - 2026-09-07
+## [0.2.0] - 2026-09-10
 
 ### Added
 
+- Qualified interactive `clroom codex` alongside the qualified `codex exec`
+  path; native `--ignore-user-config` remains an exec-only enhancement.
+- Selected symlinked global skills now preserve canonical-target isolation and
+  duplicate-source safety across the qualified provider paths.
 - Qualified Codex exec launches with clean user configuration, provider-aware
   selected-skill inventory, and fail-closed filesystem restrictions.
+- Drop-in `clroom-codex` and `clroom-claude` provider executables preserve native
+  provider arguments, interactive process behavior, and exact `--pass-env=NAME`
+  admission (with Claude parity and duplicate/invalid-name refusal).
+- Runner v0.8.5 is qualified on macOS Apple Silicon for the tested Codex and
+  Claude Code interactive, mission, and native resume paths.
 - Canonical release readiness and SCA verification with SHA256SUMS, CycloneDX
-  SBOM, and GitHub attestations.
-- Checksum-verified one-line macOS Apple Silicon installation from the current
-  stable GitHub Release, without `sudo` or shell-configuration mutation.
+  SBOM, provenance, and GitHub attestations.
+- Checksum-verified one-line macOS Apple Silicon installation from GitHub
+  Releases, without `sudo` or shell-configuration mutation.
 
 ### Security
 

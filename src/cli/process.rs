@@ -24,6 +24,8 @@ enum ProviderEnvironment {
     Claude,
 }
 
+pub const INTERNAL_PROVIDER_CHAIN_GUARD: &str = "CLROOM_INTERNAL_PROVIDER_CHAIN";
+
 fn parent_environment(
     provider: ProviderEnvironment,
     requested_names: &[String],
@@ -262,10 +264,40 @@ fn resolve_executable(executable: &str, unavailable: fn() -> String) -> Result<P
         }
         let candidate = directory.join(executable);
         if fs::metadata(&candidate).is_ok_and(|metadata| metadata.is_file()) {
+            if executable_is_current_clroom(&candidate) {
+                return Err("CLROOM_PROVIDER_RECURSION_REFUSED: provider resolution returned to CLROOM; remove the CLROOM executable from the provider PATH".to_owned());
+            }
             return Ok(candidate);
         }
     }
     Err(unavailable())
+}
+
+fn executable_is_current_clroom(candidate: &Path) -> bool {
+    let Ok(current) = std::env::current_exe() else {
+        return false;
+    };
+    let Ok(candidate_real) = fs::canonicalize(candidate) else {
+        return false;
+    };
+    let Ok(current_real) = fs::canonicalize(current) else {
+        return false;
+    };
+    if candidate_real == current_real {
+        return true;
+    }
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::MetadataExt;
+        return fs::metadata(candidate_real)
+            .ok()
+            .zip(fs::metadata(current_real).ok())
+            .is_some_and(|(left, right)| left.dev() == right.dev() && left.ino() == right.ino());
+    }
+    #[cfg(not(unix))]
+    {
+        false
+    }
 }
 
 pub fn launch_isolated_codex(
@@ -289,6 +321,7 @@ pub fn launch_isolated_codex(
         .arg(&plan.profile)
         .arg("--")
         .arg(&identity.real_executable)
+        .env(INTERNAL_PROVIDER_CHAIN_GUARD, "1")
         .args(&contract.argv);
     #[cfg(unix)]
     {
@@ -309,6 +342,7 @@ pub fn launch_claude(
     _executable: &Path,
     contract: &LaunchContract,
     identity: &ProviderIdentity,
+    requested_names: &[String],
 ) -> Result<ExitCode, String> {
     let sandbox = Path::new("/usr/bin/sandbox-exec");
     if !fs::metadata(sandbox).is_ok_and(|metadata| metadata.is_file()) {
@@ -321,7 +355,7 @@ pub fn launch_claude(
     {
         let session_name = projection.session_name().ok_or_else(claude_launch_error)?;
         let mut command = Command::new("/bin/sh");
-        apply_parent_environment(&mut command, ProviderEnvironment::Claude, &[]);
+        apply_parent_environment(&mut command, ProviderEnvironment::Claude, requested_names);
         command
             .arg("-c")
             .arg(CLAUDE_GATE_SCRIPT)
@@ -334,6 +368,7 @@ pub fn launch_claude(
             .arg(&plan.profile)
             .arg("--")
             .arg(&identity.real_executable)
+            .env(INTERNAL_PROVIDER_CHAIN_GUARD, "1")
             .env("CLAUDE_CODE_DISABLE_AUTO_MEMORY", "1")
             .env("CLAUDE_CODE_DISABLE_ALTERNATE_SCREEN", "1")
             .env("CLAUDE_CODE_SUBPROCESS_ENV_SCRUB", "1")
@@ -369,12 +404,13 @@ pub fn launch_claude(
     #[cfg(not(unix))]
     {
         let mut command = Command::new(sandbox);
-        apply_parent_environment(&mut command, ProviderEnvironment::Claude, &[]);
+        apply_parent_environment(&mut command, ProviderEnvironment::Claude, requested_names);
         let status = command
             .arg("-p")
             .arg(&plan.profile)
             .arg("--")
             .arg(&identity.real_executable)
+            .env(INTERNAL_PROVIDER_CHAIN_GUARD, "1")
             .env("CLAUDE_CODE_DISABLE_AUTO_MEMORY", "1")
             .env("CLAUDE_CODE_DISABLE_ALTERNATE_SCREEN", "1")
             .env("CLAUDE_CODE_SUBPROCESS_ENV_SCRUB", "1")

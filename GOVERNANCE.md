@@ -1,8 +1,9 @@
 # Governance
 
-TaskSeal is developed in public after its initial security boundary is proven.
+Clean Room Launcher (CLROOM) is developed in public after its initial security
+controls are verified.
 Changes require a reviewable branch, tests tied to explicit acceptance evidence
-and a clean public-boundary check.
+and a clean public-output safety check.
 
 Maintainers may accept, request changes to or reject contributions. Security,
 privacy, deterministic behavior and truthful provider support claims take

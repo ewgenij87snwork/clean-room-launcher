@@ -10,7 +10,7 @@ This table is deliberately conservative.
 
 | Provider | Input / scope | Current CLROOM direction | Confidence |
 | --- | --- | --- | --- |
-| Claude Code | interactive top-level launch | Isolated and qualified | Current release-candidate canary |
+| Claude Code | interactive top-level launch | Isolated and qualified | v0.2.0 qualification canary |
 | Claude Code | `-p` non-interactive launch | Launch path exercised; response-output semantics not claimed as qualified | Provider exited 0, but the expected textual canary was not observed |
 | Claude Code | ordinary user settings source | Omitted through `--setting-sources project,local`, with additional controls for known personal-global roots | Confirmed from current CLROOM source |
 | Claude Code | project settings source | Retained | Confirmed from current CLROOM source |
@@ -19,8 +19,8 @@ This table is deliberately conservative.
 | Claude Code | managed / organization policy | Must remain authoritative | Product invariant; detailed combinations continue to require tests |
 | Claude Code | selected personal-global skill | Admitted through a private temporary projection | Confirmed from current CLROOM source |
 | Codex | global `AGENTS.md` / `AGENTS.override.md` | Known global instruction inputs blocked for the CLROOM launch | Confirmed from current CLROOM source |
-| Codex | interactive top-level launch | Existing isolation path retained | Current release-candidate canary |
-| Codex | `exec` non-interactive launch | Existing isolation plus exec-only `--ignore-user-config` | Current release-candidate canary |
+| Codex | interactive top-level launch | Existing isolation path retained | v0.2.0 qualification canary |
+| Codex | `exec` non-interactive launch | Existing isolation plus exec-only `--ignore-user-config` | v0.2.0 qualification canary |
 | Codex | project instruction chain | Retained | Confirmed from current CLROOM source |
 | Codex | unselected personal-global skill contents | Known personal-global skill roots restricted | Confirmed from current CLROOM source |
 | Codex | selected personal-global skills | Admitted for the launch | Confirmed from current CLROOM source |

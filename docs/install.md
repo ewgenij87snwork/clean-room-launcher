@@ -9,17 +9,25 @@ Prerequisites:
 - macOS on Apple Silicon;
 - Codex CLI `0.147.0+` or Claude Code CLI `2.1.223+` already working on its own.
 
+Release-download commands below become available after the `v0.2.0` GitHub
+Release is published. The Cargo command becomes available after the `v0.2.0`
+tag exists.
+
 ## One-line install
+
+After the GitHub Release is published:
 
 ```sh
 curl --proto '=https' --tlsv1.2 -fsSL \
   https://github.com/ewgenij87snwork/clean-room-launcher/releases/latest/download/install.sh | sh
 ```
 
-The installer downloads the current stable macOS Apple Silicon release from
-GitHub Releases, verifies the exact archive against `SHA256SUMS`, extracts only
-the `clroom` binary, and installs it to `~/.local/bin/clroom`. It does not use
-`sudo`, edit shell startup files, install a service, or change provider state.
+The installer downloads the latest published stable macOS Apple Silicon release
+from GitHub Releases, verifies the exact archive against `SHA256SUMS`, extracts
+the `clroom`, `clroom-codex`, and `clroom-claude` binaries, and installs them to
+`~/.local/bin`. It does not
+use `sudo`, edit shell startup files, install a service, or change provider
+state.
 
 If `~/.local/bin` is not already in `PATH`, the installer prints the directory
 to add. The release archive is unsigned and unnotarized; do not disable
@@ -27,25 +35,42 @@ Gatekeeper globally if local macOS policy refuses it.
 
 ## Manual release archive
 
+After the `v0.2.0` GitHub Release is published:
+
 ```sh
 VERSION=v0.2.0
 ASSET=clean-room-launcher-v0.2.0-aarch64-apple-darwin.tar.gz
+STAGE=$(mktemp -d "${TMPDIR:-/tmp}/clroom-archive.XXXXXX")
+trap 'rm -rf -- "$STAGE"' EXIT
 
 curl -fLO "https://github.com/ewgenij87snwork/clean-room-launcher/releases/download/$VERSION/$ASSET"
 curl -fLO "https://github.com/ewgenij87snwork/clean-room-launcher/releases/download/$VERSION/SHA256SUMS"
 EXPECTED=$(awk -v asset="$ASSET" '$2 == asset {print $1}' SHA256SUMS)
 ACTUAL=$(shasum -a 256 "$ASSET" | awk '{print $1}')
 test -n "$EXPECTED" && test "$ACTUAL" = "$EXPECTED"
-tar -xOzf "$ASSET" "${ASSET%.tar.gz}/bin/clroom" > clroom
-mkdir -p "$HOME/.local/bin"
-install -m 0755 clroom "$HOME/.local/bin/clroom"
-rm clroom
+tar -xzf "$ASSET" -C "$STAGE"
+BIN="$STAGE/${ASSET%.tar.gz}/bin"
+DEST="$HOME/.local/bin"
+test -d "$BIN"
+test ! -L "$DEST"
+test ! -e "$DEST" || test -d "$DEST"
+for name in clroom clroom-codex clroom-claude; do
+  target="$DEST/$name"
+  test ! -L "$target"
+  test ! -e "$target" || test -f "$target"
+done
+mkdir -p "$DEST"
+for name in clroom clroom-codex clroom-claude; do
+  install -m 0755 "$BIN/$name" "$DEST/$name"
+done
 ```
 
 This verifies only the archive you downloaded; `SHA256SUMS` also covers the
 other release assets.
 
 ## Cargo from the release tag
+
+After the `v0.2.0` tag is published:
 
 ```sh
 cargo install --git https://github.com/ewgenij87snwork/clean-room-launcher \
@@ -64,8 +89,11 @@ cd your-project
 clroom codex --help       # if Codex is installed
 clroom codex --version
 clroom claude --version   # if Claude Code is installed
+clroom-codex --help       # executable override for external launchers
+clroom-claude --help      # executable override for external launchers
 ```
 
-To remove an archive or one-line installation, delete
-`$HOME/.local/bin/clroom`. For Cargo, run `cargo uninstall clean-room-launcher`.
+To remove an archive or one-line installation, delete the three files under
+`$HOME/.local/bin` (`clroom`, `clroom-codex`, and `clroom-claude`). For Cargo,
+run `cargo uninstall clean-room-launcher`.
 No service or system setting is created.
