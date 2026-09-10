@@ -68,3 +68,5 @@ jobs:
         with:
           persist-credentials: false
       - run: cargo test --locked --all-targets --target "${{ matrix.rust_target }}"
+      - name: Build shipped binaries without warnings
+        run: RUSTFLAGS='-D warnings' cargo build --locked --release --bins --target "${{ matrix.rust_target }}"

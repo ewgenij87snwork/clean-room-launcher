@@ -129,6 +129,7 @@ impl LaunchContract {
         }
     }
 
+    #[cfg(test)]
     pub fn claude(user_args: &[String], add_dir: &Path, managed: Presence) -> Self {
         Self::claude_with_pass_env(user_args, add_dir, managed, &[])
     }
