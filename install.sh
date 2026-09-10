@@ -201,7 +201,7 @@ done
 /bin/rmdir "$stage_dir" || fail "INSTALL_STAGE_CLEANUP"
 stage_dir=""
 
-printf 'Installed CLROOM to %s\n' "$target"
+printf 'Installed CLROOM to %s\n' "$install_dir"
 case ":${PATH:-}:" in
   *":$install_dir:"*) ;;
   *) printf 'Add %s to PATH to run clroom from any directory.\n' "$install_dir" ;;
