@@ -26,10 +26,24 @@ use clroom::adapters::codex::isolation::{IsolationError, IsolationInputs, plan_w
 
 pub fn run(invoked_as: &str, args: impl IntoIterator<Item = String>) -> ExitCode {
     if std::env::var_os(process::INTERNAL_PROVIDER_CHAIN_GUARD).is_some() {
-        eprintln!("CLROOM_PROVIDER_RECURSION_REFUSED: provider resolution returned to CLROOM; remove the CLROOM executable from the provider PATH");
+        eprintln!(
+            "CLROOM_PROVIDER_RECURSION_REFUSED: provider resolution returned to CLROOM; remove the CLROOM executable from the provider PATH"
+        );
         return ExitCode::from(2);
     }
-    let mut source = args.into_iter();
+    let mut source = args.into_iter().peekable();
+    if source
+        .peek()
+        .is_some_and(|argument| argument == "--clroom-installer-smoke")
+    {
+        source.next();
+        return if source.next().is_none() {
+            ExitCode::SUCCESS
+        } else {
+            eprintln!("CLROOM_INSTALLER_SMOKE_INVALID: unexpected arguments");
+            ExitCode::from(2)
+        };
+    }
     if invoked_as == "clroom-codex" {
         return run_codex(&mut source);
     }

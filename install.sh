@@ -83,7 +83,7 @@ self_test() {
   asset="$root.tar.gz"
   /bin/mkdir -p "$test_root/$root/bin"
   for name in clroom clroom-codex clroom-claude; do
-    printf '#!/bin/sh\nprintf "%s fixture\\n"\n' "$name" > "$test_root/$root/bin/$name"
+    printf '#!/bin/sh\n[ "$#" -eq 1 ] && [ "$1" = "--clroom-installer-smoke" ] || exit 42\nprintf "%s fixture\\n"\n' "$name" > "$test_root/$root/bin/$name"
     /bin/chmod 0755 "$test_root/$root/bin/$name"
   done
   /usr/bin/tar -czf "$test_root/$asset" -C "$test_root" "$root"
@@ -127,8 +127,17 @@ self_test() {
   load_subject "$test_root/SHA256SUMS" || fail "SELF_TEST_SUBJECT"
   verify_archive "$test_root/$asset" || fail "SELF_TEST_DIGEST"
   extract_binary "$test_root/$asset" "$test_root/bin-out" || fail "SELF_TEST_EXTRACT"
+  /bin/mkdir "$test_root/single-provider"
+  printf '#!/bin/sh\nexit 0\n' > "$test_root/single-provider/codex"
+  /bin/chmod 0755 "$test_root/single-provider/codex"
+  PATH="$test_root/single-provider"
+  export PATH
+  [ -x "$(command -v codex)" ] || fail "SELF_TEST_SINGLE_PROVIDER_CODEX"
+  if command -v claude >/dev/null 2>&1; then
+    fail "SELF_TEST_SINGLE_PROVIDER_CLAUDE_PRESENT"
+  fi
   for name in clroom clroom-codex clroom-claude; do
-    [ "$("$test_root/bin-out/$name")" = "$name fixture" ] || fail "SELF_TEST_BINARY"
+    [ "$("$test_root/bin-out/$name" --clroom-installer-smoke)" = "$name fixture" ] || fail "SELF_TEST_BINARY"
   done
 
   /bin/cp "$test_root/SHA256SUMS" "$test_root/SHA256SUMS.duplicate"
@@ -184,7 +193,9 @@ archive="$tmp/$ASSET"
   --output "$archive" "$RELEASE_BASE/$ASSET" || fail "ARCHIVE_DOWNLOAD"
 verify_archive "$archive" || fail "ARCHIVE_CHECKSUM"
 extract_binary "$archive" "$tmp/bin" || fail "ARCHIVE_LAYOUT"
-for name in clroom clroom-codex clroom-claude; do "$tmp/bin/$name" --help >/dev/null 2>&1 || fail "STAGED_BINARY_CHECK"; done
+for name in clroom clroom-codex clroom-claude; do
+  "$tmp/bin/$name" --clroom-installer-smoke >/dev/null 2>&1 || fail "STAGED_BINARY_CHECK"
+done
 
 preflight_install_targets || fail "INSTALL_TARGET_PREFLIGHT"
 /bin/mkdir -p "$install_dir" || fail "INSTALL_DIR"
@@ -193,7 +204,7 @@ stage_dir="$install_dir/.clroom-install-stage.$$"
 /bin/mkdir "$stage_dir" || fail "INSTALL_STAGE_DIR"
 for name in clroom clroom-codex clroom-claude; do
   /usr/bin/install -m 0755 "$tmp/bin/$name" "$stage_dir/$name" || fail "INSTALL_STAGE"
-  "$stage_dir/$name" --help >/dev/null 2>&1 || fail "INSTALL_STAGE_CHECK"
+  "$stage_dir/$name" --clroom-installer-smoke >/dev/null 2>&1 || fail "INSTALL_STAGE_CHECK"
 done
 for name in clroom clroom-codex clroom-claude; do
   /bin/mv -f "$stage_dir/$name" "$install_dir/$name" || fail "INSTALL_BINARY"

@@ -40,17 +40,28 @@ After the `v0.2.0` GitHub Release is published:
 ```sh
 VERSION=v0.2.0
 ASSET=clean-room-launcher-v0.2.0-aarch64-apple-darwin.tar.gz
+STAGE=$(mktemp -d "${TMPDIR:-/tmp}/clroom-archive.XXXXXX")
+trap 'rm -rf -- "$STAGE"' EXIT
 
 curl -fLO "https://github.com/ewgenij87snwork/clean-room-launcher/releases/download/$VERSION/$ASSET"
 curl -fLO "https://github.com/ewgenij87snwork/clean-room-launcher/releases/download/$VERSION/SHA256SUMS"
 EXPECTED=$(awk -v asset="$ASSET" '$2 == asset {print $1}' SHA256SUMS)
 ACTUAL=$(shasum -a 256 "$ASSET" | awk '{print $1}')
 test -n "$EXPECTED" && test "$ACTUAL" = "$EXPECTED"
-mkdir -p "$HOME/.local/bin"
+tar -xzf "$ASSET" -C "$STAGE"
+BIN="$STAGE/${ASSET%.tar.gz}/bin"
+DEST="$HOME/.local/bin"
+test -d "$BIN"
+test ! -L "$DEST"
+test ! -e "$DEST" || test -d "$DEST"
 for name in clroom clroom-codex clroom-claude; do
-  tar -xOzf "$ASSET" "${ASSET%.tar.gz}/bin/$name" > "$name"
-  install -m 0755 "$name" "$HOME/.local/bin/$name"
-  rm "$name"
+  target="$DEST/$name"
+  test ! -L "$target"
+  test ! -e "$target" || test -f "$target"
+done
+mkdir -p "$DEST"
+for name in clroom clroom-codex clroom-claude; do
+  install -m 0755 "$BIN/$name" "$DEST/$name"
 done
 ```
 
