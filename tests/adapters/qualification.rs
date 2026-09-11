@@ -129,3 +129,43 @@ fn portable_receipt_is_canonical_bound_and_rejects_tampering() {
         Err(QualificationReason::InvalidClaim)
     );
 }
+#[cfg(target_os = "macos")]
+#[test]
+fn sleeping_candidate_cannot_qualify_as_real_codex() {
+    use std::fs;
+    use std::os::unix::fs::PermissionsExt;
+    use std::process::Command;
+
+    let root = std::env::temp_dir().join(format!("clroom-qualification-{}", std::process::id()));
+    fs::create_dir(&root).expect("temporary qualification directory");
+    let candidate = root.join("sleeping-candidate");
+    fs::write(&candidate, "#!/bin/sh\n/bin/sleep 8\n").expect("candidate script");
+    fs::set_permissions(&candidate, fs::Permissions::from_mode(0o700)).expect("candidate mode");
+    let evidence = root.join("evidence.json");
+    let executable = ["/opt/homebrew/bin/codex", "/usr/local/bin/codex", "/usr/bin/codex"]
+        .into_iter()
+        .find(|path| std::path::Path::new(path).is_file())
+        .unwrap_or("");
+    if executable.is_empty() {
+        return;
+    }
+    let script = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("scripts/release/qualify-real-provider.sh");
+    let result = Command::new("/bin/bash")
+        .args([
+            script.to_str().expect("script path"),
+            "--provider", "codex",
+            "--executable", executable,
+            "--candidate", candidate.to_str().expect("candidate path"),
+            "--source-head", "0000000000000000000000000000000000000000",
+            "--version", "0.2.0",
+            "--output", evidence.to_str().expect("evidence path"),
+        ])
+        .output()
+        .expect("qualification harness");
+
+    assert!(!result.status.success());
+    assert_eq!(result.status.code(), Some(1));
+    assert!(result.status.code() == Some(1) || result.status.code() == Some(2));
+    fs::remove_dir_all(root).expect("temporary qualification cleanup");
+}
