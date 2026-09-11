@@ -76,7 +76,7 @@ fn isolated_preview_renders_the_accepted_plain_launch_receipt() {
     assert_eq!(
         output,
         "\n\n\n\
-╓──○──╖ ╭─ CLEAN ROOM ─ v0.2.0 ─╮\n\
+╓──○──╖ ╭─ CLEAN ROOM ─ v0.2.0 ─────────╮\n\
 ║░░░░░║⠒│                               │\n\
 ║░░░░░║⠒│     Global AGENTS.md  off     │\n\
 ║░░░░░║⠒│     Global skills     off     │\n\
@@ -105,12 +105,36 @@ fn isolated_preview_styles_only_the_visual_hierarchy() {
     .join("\n");
 
     assert!(output.starts_with("\n\n\n\u{1b}[2m╓──○──╖\u{1b}[0m "));
-    assert!(output.contains("\u{1b}[1;36mCLEAN ROOM\u{1b}[0m\u{1b}[2m ─ v0.2.0 ─╮\u{1b}[0m"));
+    assert!(
+        output.contains("\u{1b}[1;36mCLEAN ROOM\u{1b}[0m\u{1b}[2m ─ v0.2.0 ─────────╮\u{1b}[0m")
+    );
     assert!(output.contains("\u{1b}[2m╙──○──╜ ╰───────────────────────────────╯\u{1b}[0m"));
     assert!(
         output.contains("\u{1b}[2m║░░░░░║⠒│\u{1b}[0m     \u{1b}[1mGlobal AGENTS.md\u{1b}[0m  off")
     );
     assert!(!output.contains("/tmp/project"));
+}
+
+#[test]
+fn isolated_preview_top_frame_reaches_the_same_visible_width_at_narrow_and_wide_sizes() {
+    let render = |width| {
+        screen::render_isolated_preview_for(
+            Path::new("/tmp/project"),
+            0,
+            screen::PlaqueFeatureState::default(),
+            screen::RenderContext {
+                width,
+                interactive: true,
+                plain: true,
+            },
+        )
+        .into_iter()
+        .find(|line| line.contains("CLEAN ROOM"))
+        .unwrap()
+    };
+
+    assert_eq!(render(40).chars().count(), render(100).chars().count());
+    assert_eq!(render(40).chars().count(), 41);
 }
 
 #[test]
@@ -226,7 +250,7 @@ fn isolated_preview_keeps_the_version_top_right_and_project_supports_symmetric()
     )
     .join("\n");
 
-    assert!(output.contains("╓──○──╖ ╭─ CLEAN ROOM ─ v0.2.0 ─╮"));
+    assert!(output.contains("╓──○──╖ ╭─ CLEAN ROOM ─ v0.2.0 ─────────╮"));
     let expected_attachment = [
         "╙──○──╜ ╰───────────╥───────╥───────────╯",
         "        ╭───────────╨───────╨───────────╮",

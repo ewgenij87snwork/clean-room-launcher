@@ -42,13 +42,13 @@ clroom claude --skill-set=@debugging
 
 ## Cross-provider review workflow
 
-The same runner can qualify one task through both supported interactive provider
+The same runner can exercise one task through both supported interactive provider
 paths while keeping each provider's native environment and lifecycle rules.
 
 ## Clean worker launched from a script or CI
 
-For headless automation, the qualified path in this release is `clroom codex
-exec ...`. A runner that provides a terminal can also start the qualified
+For headless automation, the integrity-verified path in this release is `clroom codex
+exec ...`. A runner that provides a terminal can also start the interactive
 interactive Codex or Claude Code path. Keep provider authentication, queues,
 worktrees, and session reuse in the system that owns those responsibilities;
 CLROOM supplies the per-launch clean/selective layer.

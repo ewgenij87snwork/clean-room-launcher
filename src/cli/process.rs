@@ -17,6 +17,16 @@ use clroom::adapters::{
 use clroom::contracts::adapter::parse_declaration;
 
 use super::launch_contract::{CodexInvocation, LaunchContract, classify_codex_invocation};
+mod codex_state;
+pub(super) use codex_state::CodexState;
+
+pub(super) fn prepare_codex_state(
+    home: &Path,
+    ambient_codex_home: &Path,
+    selected_global_skill_paths: &[(String, PathBuf)],
+) -> Result<CodexState, String> {
+    codex_state::prepare(home, ambient_codex_home, selected_global_skill_paths)
+}
 
 #[derive(Clone, Copy)]
 enum ProviderEnvironment {
@@ -306,6 +316,7 @@ pub fn launch_isolated_codex(
     contract: &LaunchContract,
     identity: &ProviderIdentity,
     requested_names: &[String],
+    state: Option<&CodexState>,
 ) -> Result<ExitCode, String> {
     let sandbox = Path::new("/usr/bin/sandbox-exec");
     if !fs::metadata(sandbox).is_ok_and(|metadata| metadata.is_file()) {
@@ -323,6 +334,11 @@ pub fn launch_isolated_codex(
         .arg(&identity.real_executable)
         .env(INTERNAL_PROVIDER_CHAIN_GUARD, "1")
         .args(&contract.argv);
+    if let Some(state) = state {
+        command
+            .env("CODEX_HOME", &state.shadow_home)
+            .env("CODEX_SQLITE_HOME", &state.sqlite_home);
+    }
     #[cfg(unix)]
     {
         revalidate_launch_identity(identity)?;

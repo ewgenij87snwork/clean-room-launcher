@@ -9,6 +9,7 @@ pub struct IsolationPlan {
     pub profile: String,
     pub project: PathBuf,
     pub selected_global_skills: usize,
+    pub selected_global_skill_paths: Vec<(String, PathBuf)>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -229,6 +230,14 @@ pub fn plan_with_skills(
         profile,
         project,
         selected_global_skills: selection.logical_skills.len(),
+        selected_global_skill_paths: selection
+            .canonical_paths
+            .into_iter()
+            .filter_map(|path| {
+                let name = path.file_name()?.to_str()?.to_owned();
+                Some((name, path))
+            })
+            .collect(),
     })
 }
 

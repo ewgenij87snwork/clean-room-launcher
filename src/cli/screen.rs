@@ -223,6 +223,22 @@ fn render_preflight_command(width: usize, styled: bool) -> Vec<String> {
     }
 }
 
+fn plaque_top_fill(title: &str, version: &str, panel_width: usize) -> String {
+    let visible_prefix = format!("╭─ {title} ─ {version} ");
+    "─".repeat(panel_width.saturating_sub(visible_prefix.chars().count() + 1))
+}
+
+fn render_plaque_top(title: &str, version: &str, panel_width: usize, styled: bool) -> String {
+    let fill = plaque_top_fill(title, version, panel_width);
+    if styled {
+        format!(
+            "\u{1b}[2m╭─ \u{1b}[0m\u{1b}[1;36m{title}\u{1b}[0m\u{1b}[2m ─ {version} {fill}╮\u{1b}[0m"
+        )
+    } else {
+        format!("╭─ {title} ─ {version} {fill}╮")
+    }
+}
+
 pub fn render_isolated_preview(
     project: &Path,
     selected_global_skills: usize,
@@ -269,13 +285,15 @@ pub fn render_isolated_preview_for(
     let mounting_rail_fill = "║░░░░░║";
     let standoff_marker = "⠒";
     let mut lines = vec![String::new(), String::new(), String::new()];
-    lines.push(if styled {
-        format!(
-            "\u{1b}[2m{mounting_rail_top}\u{1b}[0m \u{1b}[2m╭─ \u{1b}[0m\u{1b}[1;36m{title}\u{1b}[0m\u{1b}[2m ─ {version} ─╮\u{1b}[0m"
-        )
+    let styled_mounting_rail_top = if styled {
+        format!("\u{1b}[2m{mounting_rail_top}\u{1b}[0m")
     } else {
-        format!("{mounting_rail_top} ╭─ {title} ─ {version} ─╮")
-    });
+        mounting_rail_top.to_owned()
+    };
+    lines.push(format!(
+        "{styled_mounting_rail_top} {}",
+        render_plaque_top(title, version, panel_width, styled)
+    ));
     let skill_state = if selected_global_skills == 0 {
         "off".to_owned()
     } else {
@@ -402,13 +420,15 @@ pub fn render_claude_preview_for(
     let mounting_rail_fill = "║░░░░░║";
     let standoff_marker = "⠒";
     let mut lines = vec![String::new(), String::new(), String::new()];
-    lines.push(if styled {
-        format!(
-            "\u{1b}[2m{mounting_rail_top}\u{1b}[0m \u{1b}[2m╭─ \u{1b}[0m\u{1b}[1;36m{title}\u{1b}[0m\u{1b}[2m ─ {version} ─╮\u{1b}[0m"
-        )
+    let styled_mounting_rail_top = if styled {
+        format!("\u{1b}[2m{mounting_rail_top}\u{1b}[0m")
     } else {
-        format!("{mounting_rail_top} ╭─ {title} ─ {version} ─╮")
-    });
+        mounting_rail_top.to_owned()
+    };
+    lines.push(format!(
+        "{styled_mounting_rail_top} {}",
+        render_plaque_top(title, version, panel_width, styled)
+    ));
 
     let skill_state = if selected_global_skills == 0 {
         "off".to_owned()

@@ -9,9 +9,9 @@ New to the project? Start with [Why Clean Room Launcher (CLROOM) exists](why-clr
 
 ## Can an app or CI job launch CLROOM?
 
-Yes. For headless automation, the qualified path in this release is
+Yes. For headless automation, the integrity-verified path in this release is
 `clroom codex exec ...`. A runner that provides a terminal can also start the
-qualified interactive Codex or Claude Code path. Claude Code `-p` response
+interactive Codex or Claude Code path. Claude Code `-p` response
 semantics are not independently qualified in this release.
 
 ## Can different workers get different skill sets?
@@ -120,8 +120,8 @@ No. Do not infer that from the product name. Read the existing threat model and 
 
 ## What platforms are supported?
 
-The current v0.2.0 documentation covers macOS on Apple Silicon with qualified
-Codex and Claude Code versions. Linux, Windows, and Intel macOS are not
+The current v0.2.0 documentation covers macOS on Apple Silicon and names exact
+provider qualification targets. Linux, Windows, and Intel macOS are not
 qualified by this release.
 
 ## Where should I verify provider behavior?

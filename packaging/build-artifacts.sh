@@ -3,11 +3,13 @@ set -euo pipefail
 root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)
 out_dir=${1:-"$root/target/artifacts"}
 target=${CLROOM_TARGET:-}
-qualification=${CLROOM_ARTIFACT_QUALIFICATION:-NOT_QUALIFIED}
-case "$qualification" in
-  QUALIFIED|NOT_QUALIFIED) ;;
-  *) echo "invalid artifact qualification" >&2; exit 2 ;;
-esac
+if [[ -n ${CLROOM_ARTIFACT_QUALIFICATION:-} ]]; then
+  case "$CLROOM_ARTIFACT_QUALIFICATION" in
+    QUALIFIED) echo "caller-controlled qualification is forbidden" >&2; exit 2 ;;
+    *) echo "artifact qualification is build-owned and cannot be overridden" >&2; exit 2 ;;
+  esac
+fi
+qualification=CANDIDATE
 version=$(sed -n 's/^version = "\([^"]*\)"/\1/p' "$root/Cargo.toml" | head -1)
 commit=${CLROOM_SOURCE_COMMIT:-}
 if [[ -z "$commit" ]] && git -C "$root" rev-parse --is-inside-work-tree >/dev/null 2>&1; then commit=$(git -C "$root" rev-parse HEAD); fi

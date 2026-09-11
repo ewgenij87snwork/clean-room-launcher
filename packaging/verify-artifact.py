@@ -31,8 +31,8 @@ try:
         for binary in ("clroom", "clroom-codex", "clroom-claude"):
             if PRIVATE_HOME.search(tar.extractfile(root + "/bin/" + binary).read()): fail("binary contains a private HOME path")
         version = tar.extractfile(root + "/VERSION").read().decode("utf-8")
-        qualification = re.findall(r"^qualification=(QUALIFIED)$", version, re.MULTILINE)
-        if len(qualification) != 1 or "source_commit=" not in version: fail("release artifact is not qualified and bound")
+        qualification = re.findall(r"^qualification=(CANDIDATE|INTEGRITY_VERIFIED)$", version, re.MULTILINE)
+        if len(qualification) != 1 or "source_commit=" not in version: fail("release artifact is not integrity-bound")
         if not re.search(r"^signing=unsigned$", version, re.MULTILINE): fail("signing policy is not canonical")
         predecessor_upper = "TASK" + "SEAL"
         predecessor_lower = "task" + "seal"

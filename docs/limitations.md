@@ -6,8 +6,9 @@ permalink: /limitations.html
 
 - `v0.2.0` is unsigned and unnotarized; qualification is limited to the
   documented macOS Apple Silicon release path.
-- Only macOS on Apple Silicon with Codex CLI `0.147.0+` or Claude Code CLI
-  `2.1.223+` is supported.
+- Only macOS on Apple Silicon is supported. The minimum accepted versions are
+  Codex CLI `0.147.0` and Claude Code CLI `2.1.223`; independent v0.2.0
+  qualification is limited to Codex `0.154.0` and Claude Code `2.1.263`.
 - The protection is a narrow macOS filesystem denylist, not a VM, container,
   network sandbox or complete home-directory isolation.
 - A provider may visibly warn that reading a blocked global instruction is not

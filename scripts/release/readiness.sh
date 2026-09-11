@@ -55,13 +55,28 @@ cargo deny --config deny.toml --locked check || fail "DEPENDENCY_SCA_REVIEW"
 
 rm -rf "$artifact_dir"
 mkdir -p "$artifact_dir"
-CLROOM_ARTIFACT_QUALIFICATION=QUALIFIED \
 CLROOM_SOURCE_COMMIT=$(git rev-parse HEAD) \
 CLROOM_TARGET='' \
   ./packaging/build-artifacts.sh "$artifact_dir" >/tmp/clroom-release-build.log
 artifact=$(sed -n 's/^ARTIFACT=//p' /tmp/clroom-release-build.log)
 [[ -n "$artifact" && -f "$artifact" ]] || fail "ARTIFACT_MISSING"
+if [[ -n ${CLROOM_PROVIDER_CODEX:-} && -n ${CLROOM_PROVIDER_CLAUDE:-} && -n ${CLROOM_QUALIFICATION_EVIDENCE_DIR:-} ]]; then
+  candidate_dir="$root/target/${CLROOM_TARGET:+$CLROOM_TARGET/}release"
+  mkdir -p "$CLROOM_QUALIFICATION_EVIDENCE_DIR"
+  scripts/release/qualify-real-provider.sh --provider codex --executable "$CLROOM_PROVIDER_CODEX" --candidate "$candidate_dir/clroom-codex" --source-head "$(git rev-parse HEAD)" --version "$version" --output "$CLROOM_QUALIFICATION_EVIDENCE_DIR/codex.json" || fail "REAL_PROVIDER_CODEX"
+  scripts/release/qualify-real-provider.sh --provider claude --executable "$CLROOM_PROVIDER_CLAUDE" --candidate "$candidate_dir/clroom-claude" --source-head "$(git rev-parse HEAD)" --version "$version" --output "$CLROOM_QUALIFICATION_EVIDENCE_DIR/claude.json" || fail "REAL_PROVIDER_CLAUDE"
+fi
 python3 packaging/verify-artifact.py "$artifact" || fail "ARTIFACT_METADATA"
+if [[ -n ${CLROOM_QUALIFICATION_EVIDENCE_DIR:-} ]]; then
+  for provider in codex claude; do
+    evidence="$CLROOM_QUALIFICATION_EVIDENCE_DIR/$provider.json"
+    [[ -f "$evidence" ]] || fail "REAL_PROVIDER_EVIDENCE_MISSING_$provider"
+    python3 scripts/release/verify-qualification.py "$artifact" "$evidence" \
+      "$(git rev-parse HEAD)" "$version" "$provider" || fail "REAL_PROVIDER_EVIDENCE_$provider"
+  done
+else
+  [[ ${CLROOM_ARTIFACT_QUALIFICATION:-} != QUALIFIED ]] || fail "CALLER_QUALIFICATION_FORBIDDEN"
+fi
 python3 - "$artifact" <<'PY' || fail "ARTIFACT_METADATA"
 import sys
 import tarfile
@@ -71,8 +86,8 @@ with tarfile.open(sys.argv[1], "r:gz") as archive:
     if len(versions) != 1:
         raise SystemExit("expected exactly one VERSION")
     body = archive.extractfile(versions[0]).read().decode("utf-8")
-    if "qualification=QUALIFIED\n" not in body:
-        raise SystemExit("archive is not qualified")
+    if "qualification=CANDIDATE\n" not in body:
+        raise SystemExit("archive is not an unqualified candidate")
     if "signing=unsigned\n" not in body:
         raise SystemExit("archive signing metadata is unexpected")
 PY

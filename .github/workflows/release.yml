@@ -97,7 +97,6 @@ jobs:
         env:
           CLROOM_TARGET: aarch64-apple-darwin
           CLROOM_SOURCE_COMMIT: ${{ github.sha }}
-          CLROOM_ARTIFACT_QUALIFICATION: QUALIFIED
         run: |
           set -euo pipefail
           rm -rf target/release-artifacts
@@ -121,8 +120,8 @@ jobs:
               if len(versions) != 1:
                   raise SystemExit("expected exactly one VERSION")
               body = archive.extractfile(versions[0]).read().decode("utf-8")
-              if "qualification=QUALIFIED\n" not in body:
-                  raise SystemExit("archive is not qualified")
+              if "qualification=CANDIDATE\n" not in body:
+                  raise SystemExit("archive is not an unqualified candidate")
           PY
           python3 packaging/generate-release-sbom.py \
             --artifact "$artifact" \

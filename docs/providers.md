@@ -8,8 +8,8 @@ The release has two supported provider paths:
 
 | Coding-agent CLI | Platform | Status |
 | --- | --- | --- |
-| Codex CLI 0.147.0+ | macOS / Apple Silicon | Interactive and `exec` qualified |
-| Claude Code CLI 2.1.223+ | macOS / Apple Silicon | Interactive qualified |
+| Codex CLI 0.147.0+ | macOS / Apple Silicon | Minimum accepted range; 0.154.0 is the exact qualification target |
+| Claude Code CLI 2.1.223+ | macOS / Apple Silicon | Minimum accepted range; 2.1.263 is the exact qualification target |
 
 Qualified examples:
 
@@ -36,7 +36,8 @@ exec-only enhancement.
 For Claude, the launcher creates one private session-scoped skill projection,
 binds it to the real Claude consumer process, and removes it on normal exit or
 after a later launch proves the owner dead. Live or unknown sessions are kept.
-The v0.2.0 release qualifies the interactive Claude path. A Claude Code `-p`
+The v0.2.0 release targets the interactive Claude path only for the exact
+version listed above. A Claude Code `-p`
 launch reached the provider and exited successfully during v0.2.0 release
 qualification, but its response-output semantics are not independently qualified here.
 

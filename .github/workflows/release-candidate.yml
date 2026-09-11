@@ -63,6 +63,31 @@ jobs:
           install -m 0755 "$tool" "$tool_dir/cargo-deny"
           echo "$tool_dir" >> "$GITHUB_PATH"
           test "$("$tool_dir/cargo-deny" --version)" = "cargo-deny 0.20.2"
+      - name: Provision pinned real provider canaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          provider_root="$RUNNER_TEMP/clroom-providers"
+          mkdir -p "$provider_root"
+          npm pack --ignore-scripts --silent --pack-destination "$provider_root" @openai/codex@0.154.0
+          npm pack --ignore-scripts --silent --pack-destination "$provider_root" @anthropic-ai/claude-code@2.1.263
+          expected_codex='FV/x1OHXYv/ifjf3mXj9ThTTAWcUZN6cGIRQRhRxkKNOPuImu1WW0c8ev1vUkE9XGH90dEnYG1tBjIkxRikg0w=='
+          expected_claude='kvvBK6/69iTRYnq0TKVyxVZs1CxYCJGojshQSP+2qaDb66A2xtI4zbCuqkZUWLkFGmHSRqhFf/ATpzH2UNKcwg=='
+          for item in "$provider_root"/*.tgz; do
+            actual="$(openssl dgst -sha512 -binary "$item" | base64)"
+            case "$(basename "$item")" in
+              openai-codex-0.154.0.tgz) test "$actual" = "$expected_codex" ;;
+              anthropic-ai-claude-code-2.1.263.tgz) test "$actual" = "$expected_claude" ;;
+              *) exit 1 ;;
+            esac
+          done
+          npm install --prefix "$provider_root" --no-save @openai/codex@0.154.0 @anthropic-ai/claude-code@2.1.263
+          codex_bin="$(find "$provider_root" -type f -perm -111 -name codex -print -quit)"
+          claude_bin="$(find "$provider_root" -type f -perm -111 -name claude -print -quit)"
+          test -n "$codex_bin" -a -n "$claude_bin"
+          echo "CLROOM_PROVIDER_CODEX=$codex_bin" >> "$GITHUB_ENV"
+          echo "CLROOM_PROVIDER_CLAUDE=$claude_bin" >> "$GITHUB_ENV"
+          echo "CLROOM_QUALIFICATION_EVIDENCE_DIR=$RUNNER_TEMP/clroom-qualification" >> "$GITHUB_ENV"
       - name: Run canonical fail-closed gate
         env:
           CLROOM_RELEASE_VERSION: 0.2.0
