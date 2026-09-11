@@ -169,3 +169,47 @@ fn sleeping_candidate_cannot_qualify_as_real_codex() {
     assert!(result.status.code() == Some(1) || result.status.code() == Some(2));
     fs::remove_dir_all(root).expect("temporary qualification cleanup");
 }
+
+#[cfg(target_os = "macos")]
+#[test]
+fn sandbox_wrapper_argv_cannot_qualify_without_codex_image() {
+    use std::fs;
+    use std::os::unix::fs::PermissionsExt;
+    use std::process::Command;
+
+    let root = std::env::temp_dir().join(format!("clroom-qualification-wrapper-{}", std::process::id()));
+    fs::create_dir(&root).expect("temporary qualification directory");
+    let executable = ["/opt/homebrew/bin/codex", "/usr/local/bin/codex", "/usr/bin/codex"]
+        .into_iter()
+        .find(|path| std::path::Path::new(path).is_file())
+        .unwrap_or("");
+    if executable.is_empty() {
+        fs::remove_dir_all(root).expect("temporary qualification cleanup");
+        return;
+    }
+    let candidate = root.join("sandbox-wrapper-candidate");
+    let wrapper = format!(
+        "#!/bin/sh\nexec /bin/sh -c 'exec /bin/sleep 8' sandbox-exec '{}' \"$@\"\n",
+        executable
+    );
+    fs::write(&candidate, wrapper).expect("candidate script");
+    fs::set_permissions(&candidate, fs::Permissions::from_mode(0o700)).expect("candidate mode");
+    let evidence = root.join("evidence.json");
+    let script = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("scripts/release/qualify-real-provider.sh");
+    let result = Command::new("/bin/bash")
+        .args([
+            script.to_str().expect("script path"),
+            "--provider", "codex",
+            "--executable", executable,
+            "--candidate", candidate.to_str().expect("candidate path"),
+            "--source-head", "0000000000000000000000000000000000000000",
+            "--version", "0.2.0",
+            "--output", evidence.to_str().expect("evidence path"),
+        ])
+        .output()
+        .expect("qualification harness");
+
+    assert_eq!(result.status.code(), Some(1));
+    fs::remove_dir_all(root).expect("temporary qualification cleanup");
+}

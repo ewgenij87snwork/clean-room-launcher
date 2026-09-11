@@ -42,7 +42,6 @@ if [[ $provider == codex ]]; then
   python3 - "$candidate" "$root/project" "$user_home" "$(dirname "$executable")" "$executable" "$observation" <<'PY'
 import ctypes, os, pty, signal, subprocess, sys, time
 candidate, project, home, provider_dir, provider, observation_file = sys.argv[1:]
-provider_launch_path = os.path.normpath(provider)
 provider = os.path.realpath(provider)
 def process_path(pid):
     if sys.platform != "darwin":
@@ -53,14 +52,6 @@ def process_path(pid):
     if library.proc_pidpath(int(pid), buffer, len(buffer)) <= 0:
         return None
     return os.path.realpath(os.fsdecode(buffer.value))
-def process_command(pid):
-    try:
-        return subprocess.check_output(
-            ["/bin/ps", "-p", str(pid), "-o", "command="],
-            text=True,
-        ).strip()
-    except (OSError, subprocess.SubprocessError):
-        return ""
 def provider_in_tree(root_pid):
     try:
         rows = subprocess.check_output(["/bin/ps", "-axo", "pid=,ppid=,pgid="], text=True)
@@ -90,19 +81,7 @@ def provider_in_tree(root_pid):
             if process_group == group
         )
     for pid in descendants:
-        command_tokens = process_command(pid).split()
-        command_paths = {
-            os.path.realpath(token)
-            for token in command_tokens
-            if os.path.isabs(token) and os.path.exists(token)
-        }
-        if (
-            process_path(pid) == provider
-            or provider in command_paths
-            or provider in command_tokens
-            or provider_launch_path in command_tokens
-            or any(provider in token or provider_launch_path in token for token in command_tokens)
-        ):
+        if process_path(pid) == provider:
             return True
     return False
 pid, fd = pty.fork()
