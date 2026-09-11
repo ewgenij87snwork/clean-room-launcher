@@ -130,6 +130,38 @@ fn portable_receipt_is_canonical_bound_and_rejects_tampering() {
     );
 }
 #[cfg(target_os = "macos")]
+fn codex_executable_for_negative_test() -> Option<std::path::PathBuf> {
+    use std::os::unix::fs::PermissionsExt;
+
+    if let Some(configured) = std::env::var_os("CLROOM_PROVIDER_CODEX") {
+        let path = std::path::PathBuf::from(configured);
+        let metadata = std::fs::metadata(&path).expect("CLROOM_PROVIDER_CODEX must exist");
+        assert!(metadata.is_file(), "CLROOM_PROVIDER_CODEX must be a file");
+        assert!(
+            metadata.permissions().mode() & 0o111 != 0,
+            "CLROOM_PROVIDER_CODEX must be executable"
+        );
+        return Some(path);
+    }
+
+    ["/opt/homebrew/bin/codex", "/usr/local/bin/codex", "/usr/bin/codex"]
+        .into_iter()
+        .map(std::path::PathBuf::from)
+        .find(|path| path.is_file())
+}
+
+#[cfg(target_os = "macos")]
+fn assert_failed_without_real_provider(evidence: &std::path::Path, result: &std::process::Output) {
+    assert!(!result.status.success(), "qualification must fail");
+    assert!(evidence.is_file(), "qualification evidence must exist");
+    let record: serde_json::Value =
+        serde_json::from_slice(&std::fs::read(evidence).expect("qualification evidence read"))
+            .expect("qualification evidence JSON");
+    assert_eq!(record["qualification"], "FAIL");
+    assert_eq!(record["real_provider_executed"], false);
+}
+
+#[cfg(target_os = "macos")]
 #[test]
 fn sleeping_candidate_cannot_qualify_as_real_codex() {
     use std::fs;
@@ -142,20 +174,16 @@ fn sleeping_candidate_cannot_qualify_as_real_codex() {
     fs::write(&candidate, "#!/bin/sh\n/bin/sleep 8\n").expect("candidate script");
     fs::set_permissions(&candidate, fs::Permissions::from_mode(0o700)).expect("candidate mode");
     let evidence = root.join("evidence.json");
-    let executable = ["/opt/homebrew/bin/codex", "/usr/local/bin/codex", "/usr/bin/codex"]
-        .into_iter()
-        .find(|path| std::path::Path::new(path).is_file())
-        .unwrap_or("");
-    if executable.is_empty() {
+    let Some(executable) = codex_executable_for_negative_test() else {
         return;
-    }
+    };
     let script = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("scripts/release/qualify-real-provider.sh");
     let result = Command::new("/bin/bash")
         .args([
             script.to_str().expect("script path"),
             "--provider", "codex",
-            "--executable", executable,
+            "--executable", executable.to_str().expect("Codex executable path"),
             "--candidate", candidate.to_str().expect("candidate path"),
             "--source-head", "0000000000000000000000000000000000000000",
             "--version", "0.2.0",
@@ -164,9 +192,7 @@ fn sleeping_candidate_cannot_qualify_as_real_codex() {
         .output()
         .expect("qualification harness");
 
-    assert!(!result.status.success());
-    assert_eq!(result.status.code(), Some(1));
-    assert!(result.status.code() == Some(1) || result.status.code() == Some(2));
+    assert_failed_without_real_provider(&evidence, &result);
     fs::remove_dir_all(root).expect("temporary qualification cleanup");
 }
 
@@ -179,18 +205,14 @@ fn sandbox_wrapper_argv_cannot_qualify_without_codex_image() {
 
     let root = std::env::temp_dir().join(format!("clroom-qualification-wrapper-{}", std::process::id()));
     fs::create_dir(&root).expect("temporary qualification directory");
-    let executable = ["/opt/homebrew/bin/codex", "/usr/local/bin/codex", "/usr/bin/codex"]
-        .into_iter()
-        .find(|path| std::path::Path::new(path).is_file())
-        .unwrap_or("");
-    if executable.is_empty() {
+    let Some(executable) = codex_executable_for_negative_test() else {
         fs::remove_dir_all(root).expect("temporary qualification cleanup");
         return;
-    }
+    };
     let candidate = root.join("sandbox-wrapper-candidate");
     let wrapper = format!(
-        "#!/bin/sh\nexec /bin/sh -c 'exec /bin/sleep 8' sandbox-exec '{}' \"$@\"\n",
-        executable
+        "#!/bin/sh\nexec /bin/sh -c 'sleep 8' sandbox-exec '{}' \"$@\"\n",
+        executable.display()
     );
     fs::write(&candidate, wrapper).expect("candidate script");
     fs::set_permissions(&candidate, fs::Permissions::from_mode(0o700)).expect("candidate mode");
@@ -201,7 +223,7 @@ fn sandbox_wrapper_argv_cannot_qualify_without_codex_image() {
         .args([
             script.to_str().expect("script path"),
             "--provider", "codex",
-            "--executable", executable,
+            "--executable", executable.to_str().expect("Codex executable path"),
             "--candidate", candidate.to_str().expect("candidate path"),
             "--source-head", "0000000000000000000000000000000000000000",
             "--version", "0.2.0",
@@ -210,6 +232,6 @@ fn sandbox_wrapper_argv_cannot_qualify_without_codex_image() {
         .output()
         .expect("qualification harness");
 
-    assert_eq!(result.status.code(), Some(1));
+    assert_failed_without_real_provider(&evidence, &result);
     fs::remove_dir_all(root).expect("temporary qualification cleanup");
 }
