@@ -41,6 +41,15 @@ pub fn plan(
     if !projection_view.starts_with(&projection_root) {
         return Err(IsolationError::InvalidAllowedPath);
     }
+    let projection_session_root = projection_view
+        .parent()
+        .ok_or(IsolationError::InvalidAllowedPath)?;
+    let projection_active_root = projection_session_root
+        .parent()
+        .ok_or(IsolationError::InvalidAllowedPath)?;
+    if projection_active_root.parent() != Some(projection_root.as_path()) {
+        return Err(IsolationError::InvalidAllowedPath);
+    }
     let allowed_source_paths = allowed_source_paths
         .iter()
         .map(|path| safe_allowed_path(path, &project))
@@ -51,7 +60,6 @@ pub fn plan(
         home.join(".agents/skills"),
         home.join(".codex/skills"),
         home.join(".codex/plugins/cache"),
-        projection_root.clone(),
         home.join(".ssh"),
         home.join(".aws"),
         home.join(".config/gcloud"),
@@ -63,7 +71,7 @@ pub fn plan(
         home.join(".codex/skills"),
         home.join(".codex/plugins/cache"),
         home.join(".claude/plugins/cache"),
-        projection_root,
+        projection_root.clone(),
         home.join(".ssh"),
         home.join(".aws"),
         home.join(".config/gcloud"),
@@ -86,6 +94,14 @@ pub fn plan(
         push_subpath(&mut profile, path)?;
     }
     profile.push_str(")\n");
+    // Claude 2.1.257+ validates --add-dir ancestry with metadata reads. Keep
+    // projection contents denied at the shared root, then reopen metadata only
+    // for the storage/active entries and this session's subtree.
+    for operation in ["file-read-data", "file-read-xattr", "file-read-metadata"] {
+        profile.push_str(&format!("(deny {operation}"));
+        push_subpath(&mut profile, &projection_root)?;
+        profile.push_str(")\n");
+    }
     profile.push_str("(deny file-write*");
     for path in &denied_write_files {
         push_literal(&mut profile, path)?;
@@ -111,6 +127,12 @@ pub fn plan(
             push_subpath(&mut profile, path)?;
         }
     }
+    profile.push_str(")\n");
+
+    profile.push_str("(allow file-read-metadata");
+    push_literal(&mut profile, &projection_root)?;
+    push_literal(&mut profile, &projection_active_root)?;
+    push_subpath(&mut profile, projection_session_root)?;
     profile.push_str(")\n");
 
     Ok(IsolationPlan { profile, project })

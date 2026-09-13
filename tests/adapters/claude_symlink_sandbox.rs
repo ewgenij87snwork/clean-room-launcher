@@ -43,6 +43,15 @@ fn plan_for(
 }
 
 #[cfg(target_os = "macos")]
+fn sandbox_probe(profile: &str, script: &str, paths: &[&Path]) -> std::process::Output {
+    let mut command = Command::new("/usr/bin/sandbox-exec");
+    command
+        .args(["-p", profile, "--", "/bin/sh", "-c", script, "fixture"])
+        .args(paths);
+    command.output().unwrap()
+}
+
+#[cfg(target_os = "macos")]
 #[test]
 fn claude_symlink_canonical_target_policy_is_enforced_by_sandbox() {
     let root = scratch();
@@ -109,5 +118,123 @@ fn claude_symlink_canonical_target_policy_is_enforced_by_sandbox() {
     );
 
     drop(selected);
+    let _ = fs::remove_dir_all(root);
+}
+
+#[cfg(target_os = "macos")]
+#[test]
+fn claude_projection_metadata_seam_preserves_read_and_write_isolation() {
+    let root = scratch();
+    let project = root.join("project");
+    let home = root.join("home");
+    let selected_root = home.join(".claude/skills/review");
+    let hidden_root = home.join(".claude/skills/hidden");
+    let selected_skill = selected_root.join("SKILL.md");
+    let hidden_skill = hidden_root.join("SKILL.md");
+    fs::create_dir_all(&project).unwrap();
+    fs::create_dir_all(&selected_root).unwrap();
+    fs::create_dir_all(&hidden_root).unwrap();
+    fs::write(&selected_skill, b"selected synthetic skill\n").unwrap();
+    fs::write(&hidden_skill, b"unselected synthetic skill\n").unwrap();
+
+    let projection =
+        clroom::adapters::claude::projection::project(&home, &["review".to_owned()]).unwrap();
+    let sibling = projection
+        .storage_root()
+        .join("active/session-sibling-fixture");
+    fs::create_dir_all(&sibling).unwrap();
+    let sibling_secret = sibling.join("sibling-secret");
+    fs::write(&sibling_secret, b"synthetic sibling content\n").unwrap();
+    let owner_marker = projection.owner_marker_path();
+    let release_marker = projection.release_marker_path();
+    fs::write(&owner_marker, b"synthetic owner marker\n").unwrap();
+    fs::write(&release_marker, b"synthetic release marker\n").unwrap();
+
+    let provider_settings = home.join(".claude/settings.json");
+    let ambient_agent_skill = home.join(".agents/skills/ambient/SKILL.md");
+    let codex_skill = home.join(".codex/skills/ambient/SKILL.md");
+    let codex_plugin = home.join(".codex/plugins/cache/ambient/plugin.json");
+    let ssh_key = home.join(".ssh/identity");
+    let aws_credentials = home.join(".aws/credentials");
+    let gcloud_credentials = home.join(".config/gcloud/application_default_credentials.json");
+    let azure_profile = home.join(".azure/profile.json");
+    for path in [
+        &provider_settings,
+        &ambient_agent_skill,
+        &codex_skill,
+        &codex_plugin,
+        &ssh_key,
+        &aws_credentials,
+        &gcloud_credentials,
+        &azure_profile,
+    ] {
+        fs::create_dir_all(path.parent().unwrap()).unwrap();
+        fs::write(path, b"synthetic isolation canary\n").unwrap();
+    }
+
+    let plan = plan_for(&project, &home, &projection);
+    let projected_skill = projection.add_dir.join(".claude/skills/review/SKILL.md");
+    let readable = sandbox_probe(
+        &plan.profile,
+        "/bin/cat \"$1\" >/dev/null && /bin/cat \"$2\" >/dev/null",
+        &[&selected_skill, &projected_skill],
+    );
+    assert!(
+        readable.status.success(),
+        "selected canonical and projected skills must remain readable"
+    );
+
+    let denied_reads: [&Path; 12] = [
+        &hidden_skill,
+        &sibling_secret,
+        &owner_marker,
+        &release_marker,
+        &provider_settings,
+        &ambient_agent_skill,
+        &codex_skill,
+        &codex_plugin,
+        &ssh_key,
+        &aws_credentials,
+        &gcloud_credentials,
+        &azure_profile,
+    ];
+    let unreadable = sandbox_probe(
+        &plan.profile,
+        "for path do if /bin/cat \"$path\" >/dev/null 2>&1; then exit 81; fi; done; exit 0",
+        &denied_reads,
+    );
+    assert!(
+        unreadable.status.success(),
+        "unselected, sibling, provider-state, and credential canaries must remain unreadable"
+    );
+
+    let session_root = projection.add_dir.parent().unwrap();
+    let active_root = projection.storage_root().join("active");
+    let listing_denied = sandbox_probe(
+        &plan.profile,
+        "for path do if /bin/ls \"$path\" >/dev/null 2>&1; then exit 82; fi; done; exit 0",
+        &[
+            session_root,
+            &sibling,
+            &active_root,
+            projection.storage_root(),
+        ],
+    );
+    assert!(
+        listing_denied.status.success(),
+        "session, sibling, active, and shared storage listings must remain denied"
+    );
+
+    let writes_denied = sandbox_probe(
+        &plan.profile,
+        "for path do if /bin/sh -c 'printf x >> \"$1\"' fixture \"$path\" 2>/dev/null; then exit 83; fi; done; exit 0",
+        &[&projected_skill, &selected_skill],
+    );
+    assert!(
+        writes_denied.status.success(),
+        "projection and selected source writes must remain denied"
+    );
+
+    drop(projection);
     let _ = fs::remove_dir_all(root);
 }
