@@ -145,6 +145,8 @@ fn claude_projection_metadata_seam_preserves_read_and_write_isolation() {
     fs::create_dir_all(&sibling).unwrap();
     let sibling_secret = sibling.join("sibling-secret");
     fs::write(&sibling_secret, b"synthetic sibling content\n").unwrap();
+    let storage_canary = projection.storage_root().join("storage-canary");
+    fs::write(&storage_canary, b"synthetic shared storage content\n").unwrap();
     let owner_marker = projection.owner_marker_path();
     let release_marker = projection.release_marker_path();
     fs::write(&owner_marker, b"synthetic owner marker\n").unwrap();
@@ -184,9 +186,10 @@ fn claude_projection_metadata_seam_preserves_read_and_write_isolation() {
         "selected canonical and projected skills must remain readable"
     );
 
-    let denied_reads: [&Path; 12] = [
+    let denied_reads: [&Path; 13] = [
         &hidden_skill,
         &sibling_secret,
+        &storage_canary,
         &owner_marker,
         &release_marker,
         &provider_settings,
