@@ -101,7 +101,7 @@ feature-planning:
 
 ## See the clean launch as Codex starts
 
-Run `clroom codex exec --skill-set=my-skill,@my-skill-set` from the directory where
+Run `clroom codex --skill-set=my-skill,@my-skill-set` from the directory where
 you want to work.
 
 Before Codex takes over the terminal, Clean Room Launcher shows a compact
@@ -133,11 +133,10 @@ When project-local skills are present in `.agents/skills`, the separate card
 shows how many remain available; with none, the card is omitted. Project
 context and explicit Codex arguments remain available.
 
-Codex `exec` starts immediately with the native
-`--ignore-user-config` enhancement. Interactive `clroom codex` is also a
-qualified path through the same CLROOM isolation path; the native suppression
-flag is an exec-only enhancement; the interactive clean-state projection is
-covered by the separate runtime tests.
+Interactive `clroom codex` starts the normal Codex TUI through the qualified
+CLROOM isolation path. The non-interactive `clroom codex exec ...` path uses the
+same CLROOM restrictions and also injects Codex's native
+`--ignore-user-config` enhancement, which is exec-only.
 
 ## Install
 
@@ -165,11 +164,23 @@ installation, removal, and provider checks.
 
 ### Codex
 
+Start Codex normally:
+
+```sh
+cd your-project
+clroom codex
+```
+
+Add selected global skills for the same interactive launch:
+
+```sh
+clroom codex --skill-set=my-skill,@my-skill-set
+```
+
 For a non-interactive Codex task with eligible approval requests handled by
 Codex Auto-review:
 
 ```sh
-cd your-project
 clroom codex exec --approve-for-me
 ```
 
@@ -265,12 +276,12 @@ the selected CLI starts.
 | Unselected global skill contents are unavailable | Existing skills remain untouched on disk |
 | Selected global skills are readable for one launch | No skill is copied, installed, or enabled permanently |
 | Apps, hooks, and plugins are off by default | Explicit user arguments can re-enable them |
-| Provider-specific ambient settings are disabled by default | Provider configuration is not rewritten |
+| Codex apps, hooks, and plugins are off by default; Claude global user settings and auto memory are not loaded | Provider configuration is not rewritten |
 | The selected project remains available | Project files, Git history, and project instructions remain untouched |
 | The provider starts with the launcher's filesystem restrictions | Installation, login, and provider state remain provider-owned |
 
-Clean Room Launcher does not need to copy authentication data into its own
-configuration. It does not open a browser or ask you to sign in.
+Clean Room Launcher does not perform a separate provider login. Authentication
+remains provider-owned.
 
 ## Trust and limitations
 
@@ -368,8 +379,9 @@ own its account, subscription, authentication, and provider connection.
 
 ### Does Clean Room Launcher read or copy my credentials?
 
-No. It does not request, inspect, or copy provider credentials. The selected CLI
-accesses its existing provider state itself after launch.
+No. Clean Room Launcher does not ask for provider credentials or store a
+separate credential copy. The selected CLI continues to use its existing
+provider authentication.
 
 ### Is this a complete operating-system sandbox?
 
@@ -413,8 +425,10 @@ For a Cargo installation:
 cargo uninstall clean-room-launcher
 ```
 
+These commands remove the installed binaries. They do not remove CLROOM-owned
+provider support state such as Codex's `.clroom-clean-state-v1` directory.
 There is no daemon, service, account, or system-wide configuration to remove.
-Removing Clean Room Launcher does not modify either provider or its authentication.
+Removing the binaries does not modify provider authentication.
 
 ## Project status
 
