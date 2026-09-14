@@ -14,7 +14,7 @@
     href="#use-the-global-skills-you-need-without-loading-the-rest"
   >Choose skills</a> ·
   <a href="#see-the-clean-launch-as-codex-starts">See the clean launch</a> ·
-  <a href="#install-in-sixty-seconds">Install</a> ·
+  <a href="#install">Install</a> ·
   <a href="#launch">Launch</a> ·
   <a href="#how-it-works">How it works</a> ·
   <a href="#trust-and-limitations">Trust and limitations</a> ·
@@ -139,27 +139,27 @@ qualified path through the same CLROOM isolation path; the native suppression
 flag is an exec-only enhancement; the interactive clean-state projection is
 covered by the separate runtime tests.
 
-## Install in sixty seconds
+## Install
 
-Requires macOS on Apple Silicon and at least one already working provider:
+Current release: macOS on Apple Silicon. Minimum accepted provider runtime:
 Codex CLI `0.147.0+` or Claude Code CLI `2.1.223+`.
 
 ```sh
 curl --proto '=https' --tlsv1.2 -fsSL https://github.com/ewgenij87snwork/clean-room-launcher/releases/latest/download/install.sh | sh
 ```
 
-The installer verifies the release archive against `SHA256SUMS` and installs
-`clroom`, `clroom-codex`, and `clroom-claude` to `~/.local/bin`. It does not
-use `sudo`, edit shell startup files, install a service, or change provider state.
+The installer verifies the downloaded release archive against `SHA256SUMS` and
+installs `clroom`, `clroom-codex`, and `clroom-claude` to `~/.local/bin`. It does
+not use `sudo`, edit shell startup files, install a service, or modify provider
+state.
 
-If `~/.local/bin` is not already in `PATH`, the installer prints the directory
-to add.
+If `~/.local/bin` is not in `PATH`, the installer tells you what to add.
 
-The release archive is unsigned and unnotarized. If local macOS policy refuses
-it, do not disable Gatekeeper globally.
+The macOS release archive is unsigned and unnotarized. Do not disable Gatekeeper
+globally to run it.
 
-For manual archive verification, Cargo installation, removal, and provider
-checks, see [Install v0.2.0](docs/install.md).
+See the [install guide](docs/install.md) for manual archive verification, Cargo
+installation, removal, and provider checks.
 
 ## Launch
 
@@ -418,10 +418,9 @@ Removing Clean Room Launcher does not modify either provider or its authenticati
 
 ## Project status
 
-`v0.2.0` is an integrity-verified candidate for macOS on Apple Silicon. Its
-real-provider qualification is bound to the exact provider versions above.
-When published, its release
-artifacts are unsigned and unnotarized.
+`v0.2.0` is published for macOS on Apple Silicon. Its release artifacts are
+integrity-verified, and its real-provider qualification is bound to the exact
+provider versions above. The macOS archive is unsigned and unnotarized.
 
 It supports the documented Codex interactive and exec paths and the interactive
 Claude Code path through the focused clean-room restrictions. The qualification
@@ -430,7 +429,7 @@ is limited to the documented macOS Apple Silicon path.
 External launchers can use `clroom-codex` or `clroom-claude` as their provider
 executable override. See the [agent runner guide](docs/agent-runners.md).
 
-After publication, see the
+See the
 [v0.2.0 GitHub release](https://github.com/ewgenij87snwork/clean-room-launcher/releases/tag/v0.2.0)
 for the archive and `SHA256SUMS`.
 
