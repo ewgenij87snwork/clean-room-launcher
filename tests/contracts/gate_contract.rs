@@ -60,9 +60,13 @@ fn tag_release_qualifies_the_exact_archive_before_upload() {
         package < provision && provision < qualify && qualify < upload,
         "exact-byte provider qualification must happen after packaging and before upload"
     );
+    let release_version_guard = format!(
+        "test \"$CLROOM_RELEASE_VERSION\" = \"{}\"",
+        env!("CARGO_PKG_VERSION")
+    );
     assert!(
-        source.contains("test \"$CLROOM_RELEASE_VERSION\" = \"0.2.0\""),
-        "v0.2.0 provider pins must fail closed for an unreviewed release version"
+        source.contains(&release_version_guard),
+        "provider qualification pins must fail closed unless explicitly reviewed for the packaged release version"
     );
     assert!(source.contains("@openai/codex@0.154.0"));
     assert!(source.contains("@anthropic-ai/claude-code@2.1.263"));
