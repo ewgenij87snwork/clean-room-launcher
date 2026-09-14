@@ -93,6 +93,11 @@ jobs:
           cargo test --locked --all-targets --target aarch64-apple-darwin
           sh install.sh --self-test
           git diff --check
+      - name: Prime full locked dependency graph for offline NOTICE
+        run: |
+          set -euo pipefail
+          cargo fetch --locked
+          cargo metadata --locked --offline --format-version 1 >/dev/null
       - name: Build deterministic release bundle
         env:
           CLROOM_TARGET: aarch64-apple-darwin
