@@ -24,6 +24,8 @@ A simplified view:
 
 Current CLROOM source launches Claude with `--setting-sources project,local`, `--strict-mcp-config`, fail-closed sandbox settings, disabled auto-memory, and additional filesystem controls for known personal-global roots.
 
+The `--strict-mcp-config` flag is intentionally stricter than the project-settings row above. For the default v0.2.0 CLROOM launch, ordinary project, user, and other ambient MCP configurations are not loaded. CLROOM does not synthesize an `--mcp-config`; Claude considers MCP servers only when you explicitly supply its own `--mcp-config` argument for that launch. This is an explicit v0.2.0 limitation, not a claim that project MCP configuration is preserved.
+
 Selected personal-global skills are exposed through a private temporary projection and `--add-dir`.
 
 Individual symlinked skill entries from a shared library are supported when
@@ -108,4 +110,4 @@ This is also why managed-policy interactions around selected skills require care
 - [Claude Code skills](https://code.claude.com/docs/en/skills)
 - [Claude Code documentation index](https://code.claude.com/docs/llms.txt)
 
-Last verified against current Anthropic documentation: **2026-09-07**.
+Last verified against current Anthropic documentation: **2026-09-14**.
