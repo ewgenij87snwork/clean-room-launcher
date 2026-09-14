@@ -9,17 +9,10 @@ Prerequisites:
 - macOS on Apple Silicon;
 - Codex CLI `0.147.0+` or Claude Code CLI `2.1.223+` already working on its own.
 
-Release-download commands below become available after the `v0.2.0` GitHub
-Release is published. The Cargo command becomes available after the `v0.2.0`
-tag exists.
-
 ## One-line install
 
-After the GitHub Release is published:
-
 ```sh
-curl --proto '=https' --tlsv1.2 -fsSL \
-  https://github.com/ewgenij87snwork/clean-room-launcher/releases/latest/download/install.sh | sh
+curl --proto '=https' --tlsv1.2 -fsSL https://github.com/ewgenij87snwork/clean-room-launcher/releases/latest/download/install.sh | sh
 ```
 
 The installer downloads the latest published stable macOS Apple Silicon release
@@ -34,8 +27,6 @@ to add. The release archive is unsigned and unnotarized; do not disable
 Gatekeeper globally if local macOS policy refuses it.
 
 ## Manual release archive
-
-After the `v0.2.0` GitHub Release is published:
 
 ```sh
 VERSION=v0.2.0
@@ -70,8 +61,6 @@ other release assets.
 
 ## Cargo from the release tag
 
-After the `v0.2.0` tag is published:
-
 ```sh
 cargo install --git https://github.com/ewgenij87snwork/clean-room-launcher \
   --tag v0.2.0 --locked
@@ -96,4 +85,7 @@ clroom-claude --help      # executable override for external launchers
 To remove an archive or one-line installation, delete the three files under
 `$HOME/.local/bin` (`clroom`, `clroom-codex`, and `clroom-claude`). For Cargo,
 run `cargo uninstall clean-room-launcher`.
+
+These commands remove the installed binaries. They do not remove CLROOM-owned
+provider support state such as Codex's `.clroom-clean-state-v1` directory.
 No service or system setting is created.
