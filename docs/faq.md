@@ -1,7 +1,7 @@
 ---
 layout: page
-title: CLROOM FAQ
-description: Direct answers about Clean Room Launcher (CLROOM), clean coding-agent sessions, global instructions, Agent Skills, Claude safe mode and bare mode, Codex AGENTS.md, CODEX_HOME, and current limitations.
+title: Clean Room Launcher (CLROOM) FAQ — Codex, Claude Code, Agent Skills, clean sessions
+description: Direct answers about CLROOM, clean Codex and Claude Code sessions, global vs project instructions and skills, Agent Skills, Claude safe mode and bare mode, Codex AGENTS.md, CODEX_HOME, skill sets, and current limitations.
 permalink: /faq/
 nav_title: FAQ
 ---
@@ -53,6 +53,12 @@ No. Do not assume every installed skill body is fully loaded into the model cont
 ## Can I test one Agent Skill without my other personal-global skills?
 
 That is one of CLROOM's core use cases. Select the global skill or named skill set for the launch while unselected personal-global skill contents stay outside CLROOM's known clean-launch path. See [Use cases](use-cases.md) for the complete skill-author testing workflow.
+
+## Why does Codex show more skills than the CLROOM `Global skills` count?
+
+The CLROOM count is the number of **selected personal-global skills** for that launch. Provider-owned/system skills and project-local skills are separate scopes and can still appear by design.
+
+For example, `Global skills: 1` can correctly coexist with one selected personal-global skill, Codex's own bundled skills, and a repository-local skill. If you need to distinguish a project skill from a global one, launch the same command from a sterile temporary directory: project-local skills should disappear there, while selected personal-global and provider-owned skills can remain. See [Codex skill scopes](problem-index.md#codex-built-in-and-project-skills).
 
 ## How can I tell whether a new skill actually improved the result?
 
@@ -128,7 +134,6 @@ qualified by this release.
 
 Use the official Anthropic and OpenAI links on the provider pages. Provider behavior changes, so consequential technical claims should be rechecked when upstream documentation or tested provider versions change.
 
-
 ## I do not know the right term for my problem. Where should I start?
 
-Use the [coding-agent configuration problem index](problem-index.md). It starts from symptoms and common search language — old instructions, too many skills, context noise, safe mode, bare mode, CODEX_HOME, AGENTS.md, CLAUDE.md, hooks, MCP, reproducibility — and routes to the relevant answer.
+Use the [coding-agent configuration problem index](problem-index.md). It starts from symptoms and common search language — old instructions, too many skills, project skills that still appear, context noise, safe mode, bare mode, restricted mode, CODEX_HOME, AGENTS.md, CLAUDE.md, hooks, MCP, runners, reproducibility — and routes to the relevant answer.

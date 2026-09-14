@@ -42,14 +42,39 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
-      - name: Validate sitemap and robots contract
+      - name: Validate discovery asset contract
         run: |
+          set -euo pipefail
+
           test -s docs/sitemap.xml
           grep -Fq 'permalink: /sitemap.xml' docs/sitemap.xml
           grep -Fq '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' docs/sitemap.xml
+
+          test -s docs/robots.txt
+          grep -Fq 'current GitHub Pages site is a project site' docs/robots.txt
+          grep -Fq 'User-agent: OAI-SearchBot' docs/robots.txt
+          grep -Fq 'User-agent: Claude-SearchBot' docs/robots.txt
+          grep -Fq 'User-agent: Claude-User' docs/robots.txt
+          grep -Fq 'User-agent: PerplexityBot' docs/robots.txt
           grep -Fq 'Sitemap: https://ewgenij87snwork.github.io/clean-room-launcher/sitemap.xml' docs/robots.txt
+
+          test -s docs/llms.txt
+          grep -Fq 'permalink: /llms.txt' docs/llms.txt
+          grep -Fq 'https://ewgenij87snwork.github.io/clean-room-launcher/problem-index/' docs/llms.txt
+          grep -Fq 'https://ewgenij87snwork.github.io/clean-room-launcher/sitemap.xml' docs/llms.txt
+          grep -Fq 'Provider-owned/system skills and project-local skills are separate scopes' docs/llms.txt
+
+          test -s docs/problem-index.md
+          grep -Fq '<a id="codex-built-in-and-project-skills"></a>' docs/problem-index.md
+          grep -Fq '<a id="create-edit-and-combine-skill-sets"></a>' docs/problem-index.md
+          test "$(grep -Fc '<summary>More related wording and searches</summary>' docs/problem-index.md)" -ge 20
+          test "$(grep -Ec '^- `[^`]+`$' docs/problem-index.md)" -ge 319
+
+          grep -Fq 'Why does Codex show more skills than the CLROOM `Global skills` count?' docs/faq.md
+
           grep -Fq 'url: "https://ewgenij87snwork.github.io"' docs/_config.yml
           grep -Fq 'baseurl: "/clean-room-launcher"' docs/_config.yml
+          grep -Fq 'parse_block_html: true' docs/_config.yml
           ! grep -Eq '^[[:space:]]*-[[:space:]]+jekyll-sitemap[[:space:]]*$' docs/_config.yml
 
   qualified-target-lanes:
