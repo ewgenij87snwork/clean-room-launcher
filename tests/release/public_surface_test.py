@@ -68,10 +68,21 @@ def main() -> int:
         r"Linux and Windows are `NOT_QUALIFIED`",
         r"not a VM, container, network sandbox or complete home-directory isolation",
         r"Explicit overrides can re-enable .* reduce the clean defaults",
+        r"project, user, or other ambient MCP configurations.*not loaded by default",
+        r"`--strict-mcp-config`",
         r"No bounty program exists",
     ):
         if not re.search(pattern, limitations, re.IGNORECASE):
             raise SystemExit("CLROOM_RELEASE_PUBLIC_SURFACE_REFUSED:LIMITATIONS:" + pattern)
+
+    claude_doc = " ".join(body("docs/claude-code.md").split())
+    for pattern in (
+        r"ordinary project, user, and other ambient MCP configurations are not loaded",
+        r"`--strict-mcp-config`",
+        r"explicit v0\.2\.0 limitation",
+    ):
+        if not re.search(pattern, claude_doc, re.IGNORECASE):
+            raise SystemExit("CLROOM_RELEASE_PUBLIC_SURFACE_REFUSED:CLAUDE_MCP:" + pattern)
 
     readiness = body("scripts/release/readiness.sh")
     for needle in ("CLROOM_RELEASE_VERSION", "CLROOM_QUALIFICATION_EVIDENCE_DIR", "RELEASE_READINESS_BLOCKED"):
