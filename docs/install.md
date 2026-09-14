@@ -12,8 +12,7 @@ Prerequisites:
 ## One-line install
 
 ```sh
-curl --proto '=https' --tlsv1.2 -fsSL \
-  https://github.com/ewgenij87snwork/clean-room-launcher/releases/latest/download/install.sh | sh
+curl --proto '=https' --tlsv1.2 -fsSL https://github.com/ewgenij87snwork/clean-room-launcher/releases/latest/download/install.sh | sh
 ```
 
 The installer downloads the latest published stable macOS Apple Silicon release
