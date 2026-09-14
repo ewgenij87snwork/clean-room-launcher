@@ -276,7 +276,7 @@ the selected CLI starts.
 | Unselected global skill contents are unavailable | Existing skills remain untouched on disk |
 | Selected global skills are readable for one launch | No skill is copied, installed, or enabled permanently |
 | Apps, hooks, and plugins are off by default | Explicit user arguments can re-enable them |
-| Codex apps, hooks, and plugins are off by default; Claude global user settings and auto memory are not loaded | Provider configuration is not rewritten |
+| Codex developer instructions and notifications are cleared by default; Claude global user settings and auto memory are not loaded | Provider configuration is not rewritten |
 | The selected project remains available | Project files, Git history, and project instructions remain untouched |
 | The provider starts with the launcher's filesystem restrictions | Installation, login, and provider state remain provider-owned |
 
