@@ -25,6 +25,7 @@ const EXPECTED_PROVIDER_DIRECTORIES: &[&str] = &[
     "thread-writer-locks",
     "tmp",
 ];
+const INITIALIZED_CAPABILITY_PROVIDER_DIRECTORIES: &[&str] = &["cache", "plugins"];
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct CodexState {
@@ -162,9 +163,13 @@ fn validate_shadow_entries(shadow_home: &Path, initialized: bool) -> Result<(), 
         if matches!(name.as_str(), STATE_MARKER | "auth.json" | ".credentials.json" | "skills") {
             continue;
         }
+        let initialized_capability_directory =
+            INITIALIZED_CAPABILITY_PROVIDER_DIRECTORIES.contains(&name.as_str());
         let expected_directory = if EXPECTED_PROVIDER_FILES.contains(&name.as_str()) {
             Some(false)
-        } else if EXPECTED_PROVIDER_DIRECTORIES.contains(&name.as_str()) {
+        } else if EXPECTED_PROVIDER_DIRECTORIES.contains(&name.as_str())
+            || initialized_capability_directory
+        {
             Some(true)
         } else {
             None
@@ -172,7 +177,7 @@ fn validate_shadow_entries(shadow_home: &Path, initialized: bool) -> Result<(), 
         let Some(expected_directory) = expected_directory else {
             return Err("CLROOM_CODEX_STATE_DIRTY".to_owned());
         };
-        if !initialized && !legacy_state {
+        if !initialized && (initialized_capability_directory || !legacy_state) {
             return Err("CLROOM_CODEX_STATE_DIRTY".to_owned());
         }
         let metadata = fs::symlink_metadata(entry.path())
@@ -266,7 +271,7 @@ fn project_selected_skills(
 mod tests {
     use std::{
         fs,
-        os::unix::fs::PermissionsExt,
+        os::unix::fs::{PermissionsExt, symlink},
         path::PathBuf,
         sync::atomic::{AtomicU64, Ordering},
     };
@@ -398,13 +403,127 @@ mod tests {
     }
 
     #[test]
-    fn accepts_normal_codex_legacy_entries_with_exact_types() {
+    fn initialized_shadow_accepts_codex_plugin_capability_state() {
         let scratch = Scratch::new();
         let home = scratch.0.join("home");
         fs::create_dir_all(&home).unwrap();
         let ambient_codex_home = home.join(".codex");
         fs::create_dir_all(&ambient_codex_home).unwrap();
         fs::write(ambient_codex_home.join("auth.json"), b"synthetic auth state").unwrap();
+
+        let state = prepare(&home, &ambient_codex_home, &[]).unwrap();
+        let cache_catalog = state.shadow_home.join("cache/remote_plugin_catalog");
+        let plugin_cache = state.shadow_home.join("plugins/cache");
+        let plugin_data = state.shadow_home.join("plugins/data");
+        let install_staging = state
+            .shadow_home
+            .join("plugins/.remote-plugin-install-staging");
+        for directory in [
+            &cache_catalog,
+            &plugin_cache,
+            &plugin_data,
+            &install_staging,
+        ] {
+            fs::create_dir_all(directory).unwrap();
+        }
+        fs::write(cache_catalog.join("catalog.json"), b"provider-owned cache").unwrap();
+        fs::write(
+            plugin_data.join("state.json"),
+            b"provider-owned plugin state",
+        )
+        .unwrap();
+
+        let resumed = prepare(&home, &ambient_codex_home, &[]).unwrap();
+
+        assert_eq!(resumed, state);
+        assert_eq!(
+            fs::read(cache_catalog.join("catalog.json")).unwrap(),
+            b"provider-owned cache"
+        );
+        assert_eq!(
+            fs::read(plugin_data.join("state.json")).unwrap(),
+            b"provider-owned plugin state"
+        );
+    }
+
+    #[test]
+    fn uninitialized_shadow_rejects_plugin_capability_state() {
+        let scratch = Scratch::new();
+        let home = scratch.0.join("home");
+        fs::create_dir_all(&home).unwrap();
+        let ambient_codex_home = home.join(".codex");
+        let shadow_home = ambient_codex_home.join(".clroom-clean-state-v1/home");
+        fs::create_dir_all(shadow_home.join("cache")).unwrap();
+        fs::create_dir_all(shadow_home.join("plugins")).unwrap();
+        fs::write(shadow_home.join(".sandbox_migration"), b"legacy marker").unwrap();
+        fs::create_dir_all(&ambient_codex_home).unwrap();
+        fs::write(
+            ambient_codex_home.join("auth.json"),
+            b"synthetic auth state",
+        )
+        .unwrap();
+
+        let error = prepare(&home, &ambient_codex_home, &[]).unwrap_err();
+
+        assert_eq!(error, "CLROOM_CODEX_STATE_DIRTY");
+    }
+
+    #[test]
+    fn initialized_shadow_rejects_plugin_root_symlink() {
+        let scratch = Scratch::new();
+        let home = scratch.0.join("home");
+        let plugin_source = scratch.0.join("provider-plugins");
+        fs::create_dir_all(&home).unwrap();
+        fs::create_dir_all(plugin_source.join("cache")).unwrap();
+        let ambient_codex_home = home.join(".codex");
+        fs::create_dir_all(&ambient_codex_home).unwrap();
+        fs::write(
+            ambient_codex_home.join("auth.json"),
+            b"synthetic auth state",
+        )
+        .unwrap();
+
+        let state = prepare(&home, &ambient_codex_home, &[]).unwrap();
+        symlink(&plugin_source, state.shadow_home.join("plugins")).unwrap();
+
+        let error = prepare(&home, &ambient_codex_home, &[]).unwrap_err();
+
+        assert_eq!(error, "CLROOM_CODEX_STATE_DIRTY");
+    }
+
+    #[test]
+    fn initialized_shadow_rejects_cache_root_wrong_type() {
+        let scratch = Scratch::new();
+        let home = scratch.0.join("home");
+        fs::create_dir_all(&home).unwrap();
+        let ambient_codex_home = home.join(".codex");
+        fs::create_dir_all(&ambient_codex_home).unwrap();
+        fs::write(
+            ambient_codex_home.join("auth.json"),
+            b"synthetic auth state",
+        )
+        .unwrap();
+
+        let state = prepare(&home, &ambient_codex_home, &[]).unwrap();
+        fs::write(state.shadow_home.join("cache"), b"not a directory").unwrap();
+
+        let error = prepare(&home, &ambient_codex_home, &[]).unwrap_err();
+
+        assert_eq!(error, "CLROOM_CODEX_STATE_DIRTY");
+    }
+
+    #[test]
+    fn accepts_normal_codex_legacy_entries_with_exact_types() {
+        let scratch = Scratch::new();
+        let home = scratch.0.join("home");
+        fs::create_dir_all(&home).unwrap();
+        let ambient_codex_home = home.join(".codex");
+        fs::create_dir_all(&ambient_codex_home).unwrap();
+        fs::write(
+            ambient_codex_home.join("auth.json"),
+            b"synthetic auth state",
+        )
+        .unwrap();
 
         let state = prepare(&home, &ambient_codex_home, &[]).unwrap();
         fs::create_dir_all(state.shadow_home.join("skills/.system")).unwrap();
@@ -443,7 +562,11 @@ mod tests {
         fs::create_dir_all(&home).unwrap();
         let ambient_codex_home = home.join(".codex");
         fs::create_dir_all(&ambient_codex_home).unwrap();
-        fs::write(ambient_codex_home.join("auth.json"), b"synthetic auth state").unwrap();
+        fs::write(
+            ambient_codex_home.join("auth.json"),
+            b"synthetic auth state",
+        )
+        .unwrap();
 
         let state = prepare(&home, &ambient_codex_home, &[]).unwrap();
         fs::write(state.shadow_home.join("foreign.txt"), b"unexpected").unwrap();

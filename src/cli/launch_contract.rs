@@ -318,8 +318,51 @@ fn analyze(
 
 #[cfg(test)]
 mod tests {
-    use super::{BoundaryState, LaunchContract, Presence};
+    use super::{BoundaryState, CODEX_CLEAN_DEFAULTS, LaunchContract, Presence};
     use std::path::Path;
+
+    #[test]
+    fn normal_codex_launch_keeps_plugins_apps_and_hooks_disabled() {
+        let contract = LaunchContract::codex(&[]);
+
+        for feature in [
+            "features.plugins=false",
+            "features.apps=false",
+            "features.hooks=false",
+        ] {
+            assert!(
+                contract
+                    .argv
+                    .windows(2)
+                    .any(|pair| { pair[0] == "-c" && pair[1] == feature })
+            );
+        }
+        assert_eq!(contract.boundary, BoundaryState::Clean);
+    }
+
+    #[test]
+    fn explicit_plugin_enable_is_boundary_expanded_without_changing_clean_defaults() {
+        let user_args = ["--enable".to_owned(), "plugins".to_owned()];
+        let contract = LaunchContract::codex(&user_args);
+
+        assert_eq!(contract.boundary, BoundaryState::Expanded);
+        assert_eq!(contract.boundary_controls, vec!["feature"]);
+        assert_eq!(contract.boundary_label(), "boundary expanded");
+        assert_eq!(
+            &contract.argv[..CODEX_CLEAN_DEFAULTS.len()],
+            CODEX_CLEAN_DEFAULTS
+                .iter()
+                .map(|argument| (*argument).to_owned())
+                .collect::<Vec<_>>()
+        );
+        assert_eq!(&contract.argv[CODEX_CLEAN_DEFAULTS.len()..], user_args);
+        assert!(
+            contract
+                .argv
+                .windows(2)
+                .any(|pair| { pair[0] == "-c" && pair[1] == "features.plugins=false" })
+        );
+    }
 
     #[test]
     fn claude_context_and_tool_flags_are_unknown() {
