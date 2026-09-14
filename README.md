@@ -141,7 +141,7 @@ covered by the separate runtime tests.
 
 ## Install in sixty seconds
 
-macOS on Apple Silicon. Have at least one provider already working:
+Requires macOS on Apple Silicon and at least one already working provider:
 Codex CLI `0.147.0+` or Claude Code CLI `2.1.223+`.
 
 ```sh
@@ -162,6 +162,7 @@ For manual archive verification, Cargo installation, removal, and provider
 checks, see [Install v0.2.0](docs/install.md).
 
 ## Launch
+
 ### Codex
 
 For a non-interactive Codex task with eligible approval requests handled by
