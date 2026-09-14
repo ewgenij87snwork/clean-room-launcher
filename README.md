@@ -141,42 +141,25 @@ covered by the separate runtime tests.
 
 ## Install in sixty seconds
 
-You need macOS on Apple Silicon and at least one already working provider:
-Codex CLI `0.147.0+` or Claude Code CLI `2.1.223+` is the minimum accepted
-parser/runtime range. The v0.2.0 real-provider qualification targets are
-Codex `0.154.0` and Claude Code `2.1.263` only.
-
-After the `v0.2.0` GitHub Release is published, install it with:
+Requires macOS on Apple Silicon and at least one already working provider:
+Codex CLI `0.147.0+` or Claude Code CLI `2.1.223+`.
 
 ```sh
-curl --proto '=https' --tlsv1.2 -fsSL \
-  https://github.com/ewgenij87snwork/clean-room-launcher/releases/latest/download/install.sh | sh
+curl --proto '=https' --tlsv1.2 -fsSL https://github.com/ewgenij87snwork/clean-room-launcher/releases/latest/download/install.sh | sh
 ```
 
-The installer downloads the latest published stable macOS Apple Silicon release
-from GitHub Releases, verifies the exact archive against `SHA256SUMS`, stages
-and installs `clroom`, `clroom-codex`, and `clroom-claude` to `~/.local/bin`.
-It does not
-use `sudo`, edit shell startup files, install a service, or change provider
-state.
+The installer verifies the release archive against `SHA256SUMS` and installs
+`clroom`, `clroom-codex`, and `clroom-claude` to `~/.local/bin`. It does not
+use `sudo`, edit shell startup files, install a service, or change provider state.
 
 If `~/.local/bin` is not already in `PATH`, the installer prints the directory
-to add. The archive is unsigned and unnotarized. If local macOS policy refuses
-it, prefer the Cargo installation below. Do not disable Gatekeeper globally.
+to add.
 
-For the checksum-verified manual archive path after publication, see
-[Install v0.2.0](docs/install.md).
+The release archive is unsigned and unnotarized. If local macOS policy refuses
+it, do not disable Gatekeeper globally.
 
-## Install with Cargo
-
-After the `v0.2.0` tag is published, Rust users can build that release with:
-
-```sh
-cargo install --git https://github.com/ewgenij87snwork/clean-room-launcher \
-  --tag v0.2.0 --locked
-```
-
-No crates.io package is published for this release.
+For manual archive verification, Cargo installation, removal, and provider
+checks, see [Install v0.2.0](docs/install.md).
 
 ## Launch
 
