@@ -1,11 +1,11 @@
 ---
 layout: home
 title: Clean Room Launcher (CLROOM)
-description: Clean Room Launcher (CLROOM) is an open-source developer tool for launching Codex and Claude Code with a clean/selective session setup on macOS.
+description: Open-source macOS launcher for cleaner, selective Codex and Claude Code sessions: keep project context, leave unrelated personal-global instructions and unselected personal-global skills out, and add back the skills you need.
 permalink: /
 ---
 
-Clean Room Launcher (CLROOM) is an open-source developer tool for launching the installed Codex or Claude Code CLI with a session-specific clean/selective setup on supported macOS systems. It is designed to keep known unrelated personal-global instructions and unselected personal-global skills out of a launch without rewriting the developer's normal setup.
+Clean Room Launcher (CLROOM) launches the installed Codex or Claude Code CLI with a session-specific clean/selective setup on supported macOS systems. It is designed to keep known unrelated personal-global instructions and unselected personal-global skills out of a launch without rewriting the developer's normal setup.
 
 ## Start here
 
@@ -25,7 +25,9 @@ Clean Room Launcher (CLROOM) is an open-source developer tool for launching the 
 
 ## Start from the problem, not the product name
 
-If you only remember a symptom — old instructions, too many skills, `--safe-mode`, `--bare`, `CODEX_HOME`, a hook firing, a wrong implementation path, or a clean baseline — use the [coding-agent configuration problem index](problem-index.md). It maps common Claude Code and Codex problems to the shortest correct answer and shows where CLROOM fits.
+If you only remember a symptom — old instructions, too many skills, a project skill that still appears, `--safe-mode`, `--bare`, `--restricted`, `CODEX_HOME`, `AGENTS.md`, `CLAUDE.md`, a hook firing, a runner spawning the provider, a wrong implementation path, or a clean baseline — use the [coding-agent configuration problem index](problem-index.md).
+
+The problem index groups real-world wording under canonical answers. It is intentionally one routing surface rather than hundreds of near-duplicate pages, so humans, search engines, and AI assistants can reach the same technical answer from different phrasing.
 
 ## How these docs are written
 
@@ -36,6 +38,9 @@ These pages separate:
 3. what CLROOM does **not** claim;
 4. what still needs runtime verification.
 
-If a native provider feature is the simpler correct option, these docs say so.
+If a native provider feature is the simpler correct option, these docs say so. Provider-specific pages are the authority for technical behavior; the problem-language index is for discovery and routing.
 
-Last structured provider-doc review: **2026-09-07**.
+Machine-readable discovery surfaces are available at [`/llms.txt`](llms.txt) and [`/sitemap.xml`](sitemap.xml). The Markdown source remains public in the [CLROOM repository](https://github.com/ewgenij87snwork/clean-room-launcher).
+
+Last structured provider-doc review: **2026-09-07**.  
+Last discovery architecture review: **2026-09-14**.

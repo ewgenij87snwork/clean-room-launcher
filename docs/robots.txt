@@ -2,6 +2,15 @@
 layout: null
 permalink: /robots.txt
 ---
+# CLROOM does not opt out of search or AI-search retrieval.
+#
+# Hosting note: the current GitHub Pages site is a project site under
+# /clean-room-launcher/. Standard crawlers normally consult /robots.txt at the
+# host root, which this project repository cannot control. These directives
+# therefore document the intended crawler policy. If the site is later served
+# at a host root or custom domain, the same policy can be exposed at the
+# standard host-root robots.txt location.
+
 User-agent: OAI-SearchBot
 Allow: /
 
