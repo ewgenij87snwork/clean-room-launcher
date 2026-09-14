@@ -7,31 +7,56 @@ Semantic Versioning after the first public release.
 
 ## [Unreleased]
 
-## [0.2.0] - 2026-09-10
+## [0.2.0] - 2026-09-14
 
 ### Added
 
-- Added a persistent clean configuration view for interactive `clroom codex`
-  path; native `--ignore-user-config` remains an exec-only enhancement.
-- Selected symlinked global skills now preserve canonical-target isolation and
+- Added a persistent clean configuration view for interactive `clroom codex`;
+  native `--ignore-user-config` remains an exec-only enhancement.
+- Selected symlinked global skills preserve canonical-target isolation and
   duplicate-source safety across the qualified provider paths.
 - Codex exec launches with clean user configuration, provider-aware
   selected-skill inventory, and fail-closed filesystem restrictions.
 - Drop-in `clroom-codex` and `clroom-claude` provider executables preserve native
   provider arguments, interactive process behavior, and exact `--pass-env=NAME`
-  admission (with Claude parity and duplicate/invalid-name refusal).
-- Real-provider qualification is now evidence-bound to Codex `0.154.0` and
-  Claude Code `2.1.263`; until those records exist, the artifact remains a
-  candidate. Runner compatibility remains a manual acceptance boundary.
-- Canonical release readiness and SCA verification with SHA256SUMS, CycloneDX
-  SBOM, provenance, and GitHub attestations.
-- Checksum-verified one-line macOS Apple Silicon installation from GitHub
-  Releases, without `sudo` or shell-configuration mutation.
+  admission, with Claude parity and duplicate/invalid-name refusal.
+- The release process binds sanitized real-provider startup evidence to Codex
+  `0.154.0` and Claude Code `2.1.263`, alongside canonical release readiness,
+  SCA verification, `SHA256SUMS`, a CycloneDX SBOM, provenance, and GitHub
+  attestations.
+- Added checksum-verified one-line macOS Apple Silicon installation from GitHub
+  Releases without `sudo` or shell-configuration mutation.
+- Strengthened documentation discovery assets for search engines and AI-facing
+  documentation discovery without changing the supported runtime surface.
+
+### Fixed
+
+- Claude Code `2.1.257+` no longer rejects CLROOM's local selected-skill
+  projection as a network path when the outer macOS Seatbelt policy is active.
+  The fix preserves denial of sibling projection contents, unselected skills,
+  provider state, credential roots, and writes to protected skill sources.
+
+### Compatibility
+
+- macOS on Apple Silicon is the qualified platform for `v0.2.0`.
+- The exact real-provider qualification targets are Codex `0.154.0` and Claude
+  Code `2.1.263`. The documented minimum accepted parser/runtime ranges remain
+  Codex `0.147.0+` and Claude Code `2.1.223+`.
+- Claude Code project and other ambient MCP configurations are not loaded by the
+  default `v0.2.0` Claude launch. CLROOM starts Claude with
+  `--strict-mcp-config`; MCP servers are considered only when explicitly
+  supplied through Claude's own `--mcp-config` argument.
+- Claude Code `-p` response-output semantics are not independently qualified by
+  this release.
 
 ### Security
 
-- Candidate for macOS on Apple Silicon; release artifacts remain unsigned and
-  unnotarized.
+- The distributed macOS archive is unsigned and unnotarized.
+- The archive records `qualification=CANDIDATE`; runtime qualification is kept
+  as separately verified evidence bound to the exact candidate bytes rather
+  than being self-asserted by the archive itself.
+- Linux, Windows, Intel macOS, Homebrew, crates.io distribution, signing, and
+  notarization are not claimed by `v0.2.0`.
 
 ## [0.1.0-alpha.4.2] - 2026-08-24
 

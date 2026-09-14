@@ -15,6 +15,8 @@ This table is deliberately conservative.
 | Claude Code | ordinary user settings source | Omitted through `--setting-sources project,local`, with additional controls for known personal-global roots | Confirmed from current CLROOM source |
 | Claude Code | project settings source | Retained | Confirmed from current CLROOM source |
 | Claude Code | project-local settings source | Retained | Confirmed from current CLROOM source |
+| Claude Code | project/user/ambient MCP configuration | Not loaded by default; v0.2.0 uses `--strict-mcp-config` and supplies no default `--mcp-config` | Confirmed from current CLROOM source and Claude Code CLI contract |
+| Claude Code | explicit `--mcp-config` provider argument | Passed through for that launch; Claude's own strict MCP rules apply | Confirmed from current CLROOM source and Claude Code CLI contract |
 | Claude Code | `~/.claude.json` | Not blanket-blocked | Known limitation |
 | Claude Code | managed / organization policy | Must remain authoritative | Product invariant; detailed combinations continue to require tests |
 | Claude Code | selected personal-global skill | Admitted through a private temporary projection | Confirmed from current CLROOM source |

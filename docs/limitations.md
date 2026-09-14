@@ -17,6 +17,10 @@ permalink: /limitations.html
   hooks or plugins and therefore reduce the clean defaults.
 - The project directory and other host paths remain available unless macOS or
   the selected provider applies an additional restriction.
+- Ordinary project, user, or other ambient MCP configurations are not loaded by
+  default in the v0.2.0 Claude launch. CLROOM passes `--strict-mcp-config` and
+  does not synthesize an `--mcp-config`; MCP servers are considered only when
+  you explicitly supply Claude's own `--mcp-config` argument for that launch.
 - CLROOM controls each top-level launch. Provider-owned Claude Code teammates
   and subagents follow Claude's own inheritance and scoping rules.
 - Claude Code `-p` reached the provider and exited successfully in the v0.2.0
