@@ -1,3 +1,7 @@
+use clroom::catalog::resource::{
+    DiscoveryState, EnablementState, InstallationState, QualificationState, ResourceInfo,
+    SelectionState,
+};
 use serde::Serialize;
 
 use super::{output, process};
@@ -44,34 +48,39 @@ impl Provider {
 }
 
 #[derive(Serialize)]
-struct InventoryLayer {
-    status: &'static str,
-    resources: Vec<String>,
+struct ProviderSummary {
+    id: &'static str,
+    installed: bool,
+    version: Option<String>,
+    os: &'static str,
+    arch: &'static str,
 }
 
 #[derive(Serialize)]
-struct InventoryLayers {
-    declared: InventoryLayer,
-    effective: InventoryLayer,
-    qualified: InventoryLayer,
-}
-
-#[derive(Serialize)]
-struct Qualification {
-    status: &'static str,
+struct CleanLaunchSummary {
+    qualification: QualificationState,
     exact_target: String,
-    platform_target: &'static str,
-    reason: Option<String>,
+    reason_code: Option<&'static str>,
+}
+
+#[derive(Serialize)]
+struct CapabilityInfo {
+    id: &'static str,
+    discovery: DiscoveryState,
+    installation: InstallationState,
+    provider_enablement: EnablementState,
+    selection: SelectionState,
+    qualification: QualificationState,
+    reason_code: &'static str,
 }
 
 #[derive(Serialize)]
 struct ProviderInfo {
     schema_version: &'static str,
-    provider: &'static str,
-    installed: bool,
-    version: Option<String>,
-    qualification: Qualification,
-    inventory: InventoryLayers,
+    provider: ProviderSummary,
+    clean_launch: CleanLaunchSummary,
+    capabilities: Vec<CapabilityInfo>,
+    resources: Vec<ResourceInfo>,
 }
 
 pub fn run(args: &[String], mode: output::Mode) -> Result<String, String> {
@@ -95,14 +104,23 @@ pub fn run(args: &[String], mode: output::Mode) -> Result<String, String> {
 
 fn inspect(provider: Provider) -> ProviderInfo {
     let exact = provider.exact_version();
-    let exact_target = version_string(exact);
+    let exact_target = format!(
+        "{} / macOS / Apple Silicon",
+        version_string(exact)
+    );
     let resolved = match provider {
         Provider::Codex => process::resolve_codex_executable(),
         Provider::Claude => process::resolve_claude_executable(),
     };
 
-    let (installed, version, qualification_status, reason) = match resolved {
-        Err(_) => (false, None, "absent", None),
+    let (installed, version, clean_qualification, clean_reason, exact_tuple) = match resolved {
+        Err(_) => (
+            false,
+            None,
+            QualificationState::Unqualified,
+            Some("PROVIDER_NOT_INSTALLED"),
+            false,
+        ),
         Ok(executable) => {
             let identity = match provider {
                 Provider::Codex => process::preflight_codex(&executable, &[]),
@@ -111,75 +129,179 @@ fn inspect(provider: Provider) -> ProviderInfo {
             match identity {
                 Ok(identity) => {
                     let version = version_string(identity.version);
-                    let exact_platform = identity.os == "macos" && identity.arch == "aarch64";
-                    let status = if exact_platform && identity.version == exact {
-                        "exact_qualified"
+                    let platform_supported = identity.os == "macos" && identity.arch == "aarch64";
+                    if !platform_supported {
+                        (
+                            true,
+                            Some(version),
+                            QualificationState::Unsupported,
+                            Some("PLATFORM_NOT_QUALIFIED"),
+                            false,
+                        )
+                    } else if identity.version == exact {
+                        (
+                            true,
+                            Some(version),
+                            QualificationState::Qualified,
+                            None,
+                            true,
+                        )
                     } else {
-                        "unqualified"
-                    };
-                    let reason = (status == "unqualified").then(|| {
-                        "installed provider tuple does not match the exact qualified target"
-                            .to_owned()
-                    });
-                    (true, Some(version), status, reason)
+                        (
+                            true,
+                            Some(version),
+                            QualificationState::Unqualified,
+                            Some("PROVIDER_VERSION_NOT_EXACT_TARGET"),
+                            false,
+                        )
+                    }
                 }
-                Err(message) => (true, None, "unqualified", Some(message)),
+                Err(_) => (
+                    true,
+                    None,
+                    QualificationState::Unqualified,
+                    Some("PROVIDER_IDENTITY_PROBE_FAILED"),
+                    false,
+                ),
             }
         }
     };
 
+    let known_discovery = if exact_tuple {
+        DiscoveryState::Discoverable
+    } else {
+        DiscoveryState::Unknown
+    };
+    let unavailable_reason = if exact_tuple {
+        None
+    } else {
+        Some("PROVIDER_TUPLE_NOT_QUALIFIED")
+    };
+
     ProviderInfo {
         schema_version: SCHEMA_VERSION,
-        provider: provider.id(),
-        installed,
-        version,
-        qualification: Qualification {
-            status: qualification_status,
+        provider: ProviderSummary {
+            id: provider.id(),
+            installed,
+            version,
+            os: std::env::consts::OS,
+            arch: std::env::consts::ARCH,
+        },
+        clean_launch: CleanLaunchSummary {
+            qualification: clean_qualification,
             exact_target,
-            platform_target: "macOS / Apple Silicon",
-            reason,
+            reason_code: clean_reason,
         },
-        inventory: InventoryLayers {
-            declared: InventoryLayer {
-                status: "not_inspected",
-                resources: Vec::new(),
-            },
-            effective: InventoryLayer {
-                status: "not_inspected",
-                resources: Vec::new(),
-            },
-            qualified: InventoryLayer {
-                status: "not_inspected",
-                resources: Vec::new(),
-            },
-        },
+        capabilities: vec![
+            capability(
+                "browser",
+                known_discovery,
+                if exact_tuple {
+                    "BROWSER_E2E_NOT_QUALIFIED"
+                } else {
+                    unavailable_reason.unwrap_or("PROVIDER_TUPLE_NOT_QUALIFIED")
+                },
+            ),
+            capability(
+                "plugins",
+                known_discovery,
+                if exact_tuple {
+                    "PLUGIN_ACTIVATION_V04"
+                } else {
+                    unavailable_reason.unwrap_or("PROVIDER_TUPLE_NOT_QUALIFIED")
+                },
+            ),
+            capability(
+                "mcp",
+                known_discovery,
+                if exact_tuple {
+                    "MCP_ACTIVATION_V04"
+                } else {
+                    unavailable_reason.unwrap_or("PROVIDER_TUPLE_NOT_QUALIFIED")
+                },
+            ),
+        ],
+        resources: Vec::new(),
+    }
+}
+
+fn capability(
+    id: &'static str,
+    discovery: DiscoveryState,
+    reason_code: &'static str,
+) -> CapabilityInfo {
+    CapabilityInfo {
+        id,
+        discovery,
+        installation: InstallationState::Unknown,
+        provider_enablement: EnablementState::Unknown,
+        selection: SelectionState::NotSelectable,
+        qualification: QualificationState::Unqualified,
+        reason_code,
     }
 }
 
 fn render_human(provider: Provider, report: &ProviderInfo) -> String {
-    let version = report.version.as_deref().unwrap_or("unknown");
-    let installed = if report.installed { "yes" } else { "no" };
+    let provider_line = match report.provider.version.as_deref() {
+        Some(version) => format!("Provider: {} {version}", provider.display()),
+        None if report.provider.installed => format!("Provider: {} (version unknown)", provider.display()),
+        None => format!("Provider: {} (not installed)", provider.display()),
+    };
+    let clean = state_name(report.clean_launch.qualification);
     let mut lines = vec![
-        format!("Provider: {}", provider.display()),
-        format!("Installed: {installed}"),
-        format!("Version: {version}"),
-        format!("CLROOM qualification: {}", report.qualification.status),
-        format!(
-            "Exact target: {} ({})",
-            report.qualification.exact_target, report.qualification.platform_target
-        ),
+        provider_line,
+        format!("Clean launch: {clean}"),
+        format!("Exact target: {}", report.clean_launch.exact_target),
     ];
-    if let Some(reason) = &report.qualification.reason {
-        lines.push(format!("Qualification detail: {reason}"));
+    if let Some(reason) = report.clean_launch.reason_code {
+        lines.push(format!("Clean launch reason: {reason}"));
     }
-    lines.extend([
-        "Resource inventory:".to_owned(),
-        "  declared: not inspected".to_owned(),
-        "  effective: not inspected".to_owned(),
-        "  qualified: not inspected".to_owned(),
-        format!("Schema: {}", report.schema_version),
-    ]);
+    for capability in &report.capabilities {
+        lines.push(format!(
+            "{}: {} / {} / {} ({})",
+            capability_label(capability.id),
+            discovery_name(capability.discovery),
+            selection_name(capability.selection),
+            state_name(capability.qualification),
+            capability.reason_code,
+        ));
+    }
+    lines.push("Resources: provider-level report only; detailed inventory not inspected".to_owned());
+    lines.push(format!("Schema: {}", report.schema_version));
     lines.join("\n")
+}
+
+fn capability_label(id: &str) -> &str {
+    match id {
+        "browser" => "Browser",
+        "plugins" => "Plugins",
+        "mcp" => "MCP",
+        _ => id,
+    }
+}
+
+fn state_name(state: QualificationState) -> &'static str {
+    match state {
+        QualificationState::Qualified => "qualified",
+        QualificationState::Unqualified => "unqualified",
+        QualificationState::Unsupported => "unsupported",
+    }
+}
+
+fn discovery_name(state: DiscoveryState) -> &'static str {
+    match state {
+        DiscoveryState::Discoverable => "discoverable",
+        DiscoveryState::NotDiscoverable => "not discoverable",
+        DiscoveryState::Unknown => "unknown",
+    }
+}
+
+fn selection_name(state: SelectionState) -> &'static str {
+    match state {
+        SelectionState::Selectable => "selectable",
+        SelectionState::NotSelectable => "not selectable",
+        SelectionState::Unknown => "unknown",
+    }
 }
 
 fn version_string(version: (u64, u64, u64)) -> String {
@@ -188,42 +310,16 @@ fn version_string(version: (u64, u64, u64)) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{
-        InventoryLayer, InventoryLayers, ProviderInfo, Qualification, SCHEMA_VERSION,
-    };
+    use super::{Provider, inspect};
 
     #[test]
-    fn json_keeps_declared_effective_and_qualified_separate() {
-        let report = ProviderInfo {
-            schema_version: SCHEMA_VERSION,
-            provider: "codex",
-            installed: true,
-            version: Some("0.154.0".to_owned()),
-            qualification: Qualification {
-                status: "exact_qualified",
-                exact_target: "0.154.0".to_owned(),
-                platform_target: "macOS / Apple Silicon",
-                reason: None,
-            },
-            inventory: InventoryLayers {
-                declared: InventoryLayer {
-                    status: "not_inspected",
-                    resources: vec![],
-                },
-                effective: InventoryLayer {
-                    status: "not_inspected",
-                    resources: vec![],
-                },
-                qualified: InventoryLayer {
-                    status: "not_inspected",
-                    resources: vec![],
-                },
-            },
-        };
+    fn provider_info_keeps_provider_state_and_clroom_qualification_orthogonal() {
+        let report = inspect(Provider::Codex);
         let value = serde_json::to_value(report).unwrap();
         assert_eq!(value["schema_version"], "clroom.provider-info.v1");
-        assert_eq!(value["inventory"]["declared"]["status"], "not_inspected");
-        assert_eq!(value["inventory"]["effective"]["status"], "not_inspected");
-        assert_eq!(value["inventory"]["qualified"]["status"], "not_inspected");
+        assert!(value["provider"].get("installed").is_some());
+        assert!(value["clean_launch"].get("qualification").is_some());
+        assert!(value["capabilities"].is_array());
+        assert!(value["resources"].is_array());
     }
 }
