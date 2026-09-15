@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   release-readiness:
-    name: CLROOM v0.2.1 release readiness
+    name: CLROOM release readiness
     runs-on: macos-14
     steps:
       - name: Check out exact PR HEAD
