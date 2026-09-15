@@ -14,12 +14,13 @@ fn provider_info_reports_absent_provider_without_launching_it() {
     assert_eq!(output.status.code(), Some(0));
     assert!(output.stderr.is_empty());
     let stdout = String::from_utf8(output.stdout).unwrap();
-    assert!(stdout.contains("Provider: Codex\n"));
-    assert!(stdout.contains("Installed: no\n"));
-    assert!(stdout.contains("CLROOM qualification: absent\n"));
-    assert!(stdout.contains("declared: not inspected\n"));
-    assert!(stdout.contains("effective: not inspected\n"));
-    assert!(stdout.contains("qualified: not inspected\n"));
+    assert!(stdout.contains("Provider: Codex (not installed)\n"));
+    assert!(stdout.contains("Clean launch: unqualified\n"));
+    assert!(stdout.contains("Clean launch reason: PROVIDER_NOT_INSTALLED\n"));
+    assert!(stdout.contains("Browser: unknown / not selectable / unqualified"));
+    assert!(stdout.contains("Plugins: unknown / not selectable / unqualified"));
+    assert!(stdout.contains("MCP: unknown / not selectable / unqualified"));
+    assert!(stdout.contains("Resources: provider-level report only; detailed inventory not inspected\n"));
     assert!(stdout.contains("Schema: clroom.provider-info.v1\n"));
 }
 
@@ -30,12 +31,15 @@ fn provider_info_json_is_one_versioned_document_on_stdout() {
     assert!(output.stderr.is_empty());
     let value: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
     assert_eq!(value["schema_version"], "clroom.provider-info.v1");
-    assert_eq!(value["provider"], "claude");
-    assert_eq!(value["installed"], false);
-    assert_eq!(value["qualification"]["status"], "absent");
-    assert_eq!(value["inventory"]["declared"]["status"], "not_inspected");
-    assert_eq!(value["inventory"]["effective"]["status"], "not_inspected");
-    assert_eq!(value["inventory"]["qualified"]["status"], "not_inspected");
+    assert_eq!(value["provider"]["id"], "claude");
+    assert_eq!(value["provider"]["installed"], false);
+    assert_eq!(value["clean_launch"]["qualification"], "unqualified");
+    assert_eq!(
+        value["clean_launch"]["reason_code"],
+        "PROVIDER_NOT_INSTALLED"
+    );
+    assert_eq!(value["capabilities"].as_array().unwrap().len(), 3);
+    assert!(value["resources"].as_array().unwrap().is_empty());
 }
 
 #[test]
