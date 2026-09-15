@@ -394,7 +394,7 @@ fn launch_isolated_claude(
         }
     };
     if browser_qualification_required
-        && (identity.version != (2, 1, 263)
+        && (identity.version != (2, 1, 272)
             || identity.os != "macos"
             || identity.arch != "aarch64")
     {
@@ -418,7 +418,7 @@ fn launch_isolated_claude(
             );
         }
         return Err(
-            "CLROOM_RESOURCE_UNQUALIFIED: claude:browser:browser requires Claude Code 2.1.263 on macOS Apple Silicon in v0.3; continue locally"
+            "CLROOM_RESOURCE_UNQUALIFIED: claude:browser:browser requires Claude Code 2.1.272 on macOS Apple Silicon in v0.3; continue locally"
                 .to_owned(),
         );
     }
