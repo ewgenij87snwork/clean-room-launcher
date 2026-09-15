@@ -37,11 +37,16 @@ fi
 
 ./scripts/check-public-boundary.sh --root "$root" || fail "PUBLIC_BOUNDARY"
 if command -v shellcheck >/dev/null 2>&1; then
-  shellcheck packaging/build-artifacts.sh scripts/release/readiness.sh scripts/release/check-browser-interface.sh install.sh || fail "SHELLCHECK"
+  shellcheck packaging/build-artifacts.sh scripts/release/readiness.sh scripts/release/check-browser-interface.sh scripts/release/qualify-claude-browser-e2e.sh install.sh || fail "SHELLCHECK"
 else
-  bash -n packaging/build-artifacts.sh scripts/release/readiness.sh scripts/release/check-browser-interface.sh || fail "SHELL_SYNTAX"
+  bash -n packaging/build-artifacts.sh scripts/release/readiness.sh scripts/release/check-browser-interface.sh scripts/release/qualify-claude-browser-e2e.sh || fail "SHELL_SYNTAX"
   sh -n install.sh || fail "INSTALLER_SHELL_SYNTAX"
 fi
+python3 - <<'PY' || fail "BROWSER_E2E_FIXTURE_SYNTAX"
+from pathlib import Path
+source = Path("scripts/release/browser-e2e-fixture.py").read_text(encoding="utf-8")
+compile(source, "scripts/release/browser-e2e-fixture.py", "exec")
+PY
 sh install.sh --self-test || fail "INSTALLER_CONTRACT"
 canonical_install_url='https://github.com/ewgenij87snwork/clean-room-launcher/releases/latest/download/install.sh'
 grep -Fq "$canonical_install_url" README.md || fail "README_INSTALLER_CONTRACT"
