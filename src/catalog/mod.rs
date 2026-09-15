@@ -8,6 +8,7 @@ pub mod pipeline;
 pub mod projection;
 pub mod protection;
 pub mod resource;
+pub mod selection;
 pub mod sources;
 
 #[cfg(test)]
