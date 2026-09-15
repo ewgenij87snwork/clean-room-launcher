@@ -40,9 +40,10 @@ pub fn prepare(provider: Provider, args: &[String]) -> Result<Vec<String>, Strin
         .chain(request.excludes.iter())
         .any(|target| matches!(target, SelectionTarget::All))
     {
-        return Err(selection_error_message(
-            SelectionError::AllUnavailableInV03,
-        ));
+        return Err(
+            "CLROOM_RESOURCE_ALL_UNAVAILABLE_IN_V0_3: --with=all/--without=all is unavailable in v0.3"
+                .to_owned(),
+        );
     }
 
     if request
@@ -98,14 +99,8 @@ fn invalid_selector() -> String {
         .to_owned()
 }
 
-fn selection_error_message(error: SelectionError) -> String {
-    match error {
-        SelectionError::AllUnavailableInV03 => {
-            "CLROOM_RESOURCE_ALL_UNAVAILABLE_IN_V0_3: --with=all/--without=all is unavailable in v0.3"
-                .to_owned()
-        }
-        _ => invalid_selector(),
-    }
+fn selection_error_message(_error: SelectionError) -> String {
+    invalid_selector()
 }
 
 #[cfg(test)]
