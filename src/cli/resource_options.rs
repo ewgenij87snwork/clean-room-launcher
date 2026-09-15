@@ -10,6 +10,7 @@ pub fn prepare(provider: Provider, args: &[String]) -> Result<Vec<String>, Strin
     let mut request = SelectionRequest::default();
     let mut provider_args = Vec::with_capacity(args.len() + 1);
     let mut launcher_options = true;
+    let mut raw_browser_override = false;
 
     for argument in args {
         if launcher_options && argument == "--" {
@@ -26,6 +27,9 @@ pub fn prepare(provider: Provider, args: &[String]) -> Result<Vec<String>, Strin
                 .exclude_value(value)
                 .map_err(selection_error_message)?;
         } else {
+            if launcher_options && matches!(argument.as_str(), "--chrome" | "--no-chrome") {
+                raw_browser_override = true;
+            }
             provider_args.push(argument.clone());
         }
     }
@@ -63,20 +67,30 @@ pub fn prepare(provider: Provider, args: &[String]) -> Result<Vec<String>, Strin
                         .to_owned(),
                 );
             }
-            Provider::Claude => {
-                provider_args.push(
-                    if exclude_browser {
-                        "--no-chrome"
-                    } else {
-                        "--chrome"
-                    }
-                    .to_owned(),
-                );
-            }
+            Provider::Claude => insert_provider_flag(
+                &mut provider_args,
+                if exclude_browser {
+                    "--no-chrome"
+                } else {
+                    "--chrome"
+                },
+            ),
         }
+    } else if provider == Provider::Claude && !raw_browser_override {
+        // Chrome can be enabled by persistent provider state. A clean launch must
+        // explicitly close that ambient capability unless this invocation opts in.
+        insert_provider_flag(&mut provider_args, "--no-chrome");
     }
 
     Ok(provider_args)
+}
+
+fn insert_provider_flag(args: &mut Vec<String>, flag: &str) {
+    let index = args
+        .iter()
+        .position(|argument| argument == "--")
+        .unwrap_or(args.len());
+    args.insert(index, flag.to_owned());
 }
 
 fn invalid_selector() -> String {
@@ -103,6 +117,22 @@ mod tests {
     }
 
     #[test]
+    fn claude_clean_default_disables_ambient_browser_state() {
+        assert_eq!(
+            prepare(Provider::Claude, &strings(&["--model", "sonnet"])).unwrap(),
+            strings(&["--model", "sonnet", "--no-chrome"])
+        );
+    }
+
+    #[test]
+    fn raw_claude_browser_override_is_not_shadowed_by_clean_default() {
+        for flag in ["--chrome", "--no-chrome"] {
+            let args = strings(&[flag, "--model", "sonnet"]);
+            assert_eq!(prepare(Provider::Claude, &args).unwrap(), args);
+        }
+    }
+
+    #[test]
     fn claude_browser_selector_maps_to_native_flag() {
         let args = strings(&["--model", "sonnet", "--with=browser"]);
         assert_eq!(
@@ -112,7 +142,7 @@ mod tests {
     }
 
     #[test]
-    fn exclusion_wins_and_is_appended_after_raw_provider_flags() {
+    fn exclusion_wins_and_is_inserted_after_raw_provider_flags() {
         let args = strings(&[
             "--with=browser",
             "--without=browser",
@@ -125,9 +155,30 @@ mod tests {
     }
 
     #[test]
+    fn generated_browser_flag_stays_before_provider_terminator() {
+        let args = strings(&["--with=browser", "--", "literal"]);
+        assert_eq!(
+            prepare(Provider::Claude, &args).unwrap(),
+            strings(&["--chrome", "--", "literal"])
+        );
+    }
+
+    #[test]
     fn selector_after_terminator_is_literal_provider_input() {
         let args = strings(&["--", "--with=browser"]);
-        assert_eq!(prepare(Provider::Claude, &args).unwrap(), args);
+        assert_eq!(
+            prepare(Provider::Claude, &args).unwrap(),
+            strings(&["--no-chrome", "--", "--with=browser"])
+        );
+    }
+
+    #[test]
+    fn raw_browser_flag_after_terminator_does_not_override_clean_default() {
+        let args = strings(&["--", "--chrome"]);
+        assert_eq!(
+            prepare(Provider::Claude, &args).unwrap(),
+            strings(&["--no-chrome", "--", "--chrome"])
+        );
     }
 
     #[test]
