@@ -18,6 +18,8 @@ mod first_screen;
 mod foreground_process;
 #[path = "cli/help.rs"]
 mod help;
+#[path = "cli/info.rs"]
+mod info;
 #[path = "cli/isolated_codex_launch.rs"]
 mod isolated_codex_launch;
 #[path = "cli/isolated_launch_screen.rs"]
