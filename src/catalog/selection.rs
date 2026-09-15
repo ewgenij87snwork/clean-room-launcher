@@ -17,6 +17,7 @@ pub enum SelectionTarget {
 pub struct SelectionRequest {
     pub includes: BTreeSet<SelectionTarget>,
     pub excludes: BTreeSet<SelectionTarget>,
+    global_skill_ids: Option<BTreeSet<String>>,
 }
 
 impl SelectionRequest {
@@ -30,8 +31,12 @@ impl SelectionRequest {
         Ok(())
     }
 
+    pub fn narrow_global_skills(&mut self, ids: impl IntoIterator<Item = String>) {
+        self.global_skill_ids = Some(ids.into_iter().collect());
+    }
+
     pub fn is_empty(&self) -> bool {
-        self.includes.is_empty() && self.excludes.is_empty()
+        self.includes.is_empty() && self.excludes.is_empty() && self.global_skill_ids.is_none()
     }
 }
 
@@ -54,6 +59,7 @@ pub enum SelectionError {
     DuplicateResource(String),
     NotSelectable(String),
     AllEffectiveMemberUnqualified(String),
+    AtomicExclusionConflict(String),
     InvalidGraph(DependencyError),
     RequiredDependencyRefused(String),
 }
@@ -66,6 +72,7 @@ impl SelectionError {
             Self::DuplicateResource(_) | Self::InvalidGraph(_) => "CLROOM_RESOURCE_GRAPH_INVALID",
             Self::NotSelectable(_) => "CLROOM_RESOURCE_NOT_SELECTABLE",
             Self::AllEffectiveMemberUnqualified(_) => "CLROOM_RESOURCE_ALL_INCOMPLETE",
+            Self::AtomicExclusionConflict(_) => "CLROOM_RESOURCE_EXCLUSION_CONFLICT",
             Self::RequiredDependencyRefused(_) => "CLROOM_RESOURCE_DEPENDENCY_REFUSED",
         }
     }
@@ -93,8 +100,31 @@ pub fn plan_selection(
         &by_id,
         false,
         &BTreeSet::new(),
+        request.global_skill_ids.as_ref(),
     )?;
-    let includes = resolve_targets(provider, &request.includes, &by_id, true, &excludes)?;
+    let includes = resolve_targets(
+        provider,
+        &request.includes,
+        &by_id,
+        true,
+        &excludes,
+        request.global_skill_ids.as_ref(),
+    )?;
+
+    for included in &includes {
+        let resource = by_id
+            .get(included)
+            .expect("resolved selection must reference known resource");
+        if resource.activation_policy == ActivationPolicy::AtomicBundle {
+            for dependency in &resource.required_dependencies {
+                if excludes.contains(dependency) {
+                    return Err(SelectionError::AtomicExclusionConflict(
+                        dependency.clone(),
+                    ));
+                }
+            }
+        }
+    }
 
     let mut decisions = Vec::with_capacity(by_id.len());
     for (id, resource) in &by_id {
@@ -165,12 +195,15 @@ fn resolve_targets(
     resources: &BTreeMap<String, &ResourceInfo>,
     validate_all_qualification: bool,
     skipped: &BTreeSet<String>,
+    global_skill_ids: Option<&BTreeSet<String>>,
 ) -> Result<BTreeSet<String>, SelectionError> {
     let mut resolved = BTreeSet::new();
     for target in targets {
         if matches!(target, SelectionTarget::All) {
             for (canonical, resource) in resources {
-                if skipped.contains(canonical) || !all_effective_member(resource) {
+                if skipped.contains(canonical)
+                    || !all_effective_member(resource, global_skill_ids)
+                {
                     continue;
                 }
                 if validate_all_qualification
@@ -203,10 +236,21 @@ fn resolve_targets(
     Ok(resolved)
 }
 
-fn all_effective_member(resource: &ResourceInfo) -> bool {
+fn all_effective_member(
+    resource: &ResourceInfo,
+    global_skill_ids: Option<&BTreeSet<String>>,
+) -> bool {
     if resource.installation != InstallationState::Installed
         || resource.provider_enablement != EnablementState::Enabled
         || matches!(resource.origin, ResourceOrigin::Project | ResourceOrigin::Managed)
+    {
+        return false;
+    }
+
+    if resource.resource.kind == ResourceKind::Skill
+        && resource.origin == ResourceOrigin::User
+        && global_skill_ids
+            .is_some_and(|ids| !ids.contains(&resource.resource.id))
     {
         return false;
     }
@@ -355,6 +399,30 @@ mod tests {
     }
 
     #[test]
+    fn atomic_bundle_internal_exclusion_refuses_instead_of_rewriting_bundle() {
+        let hook = "codex:hook:session-start";
+        let mut plugin = resource(ResourceKind::Plugin, "compound@market", &[hook], true);
+        plugin.activation_policy = ActivationPolicy::AtomicBundle;
+        let hook_resource = resource(ResourceKind::HookSet, "session-start", &[], true);
+        let resources = vec![plugin, hook_resource];
+
+        let mut request = SelectionRequest::default();
+        request.includes.insert(SelectionTarget::Exact {
+            kind: ResourceKind::Plugin,
+            id: "compound@market".to_owned(),
+        });
+        request.excludes.insert(SelectionTarget::Exact {
+            kind: ResourceKind::HookSet,
+            id: "session-start".to_owned(),
+        });
+
+        assert_eq!(
+            plan_selection("codex", &request, &resources),
+            Err(SelectionError::AtomicExclusionConflict(hook.to_owned()))
+        );
+    }
+
+    #[test]
     fn unqualified_requested_resource_never_degrades_to_launch() {
         let resources = vec![resource(ResourceKind::Browser, "browser", &[], false)];
         let mut request = SelectionRequest::default();
@@ -398,6 +466,43 @@ mod tests {
                 .map(|resource| resource.id.as_str())
                 .collect::<Vec<_>>(),
             vec!["codex:browser:browser"]
+        );
+    }
+
+    #[test]
+    fn all_skill_narrowing_affects_only_standalone_global_skills() {
+        let mut arrow = resource(ResourceKind::Skill, "arrow", &[], true);
+        arrow.origin = ResourceOrigin::User;
+        arrow.activation_policy = ActivationPolicy::Standalone;
+
+        let mut other = resource(ResourceKind::Skill, "other", &[], true);
+        other.origin = ResourceOrigin::User;
+        other.activation_policy = ActivationPolicy::Standalone;
+
+        let mut plugin_skill = resource(ResourceKind::Skill, "plugin-skill", &[], true);
+        plugin_skill.origin = ResourceOrigin::Plugin;
+        plugin_skill.activation_policy = ActivationPolicy::AtomicBundle;
+
+        let mut project_skill = resource(ResourceKind::Skill, "project-skill", &[], true);
+        project_skill.origin = ResourceOrigin::Project;
+        project_skill.activation_policy = ActivationPolicy::Standalone;
+
+        let mut request = SelectionRequest::default();
+        request.include_value("all").unwrap();
+        request.narrow_global_skills(["arrow".to_owned()]);
+
+        let plan = plan_selection(
+            "codex",
+            &request,
+            &[arrow, other, plugin_skill, project_skill],
+        )
+        .unwrap();
+        assert_eq!(
+            plan.selected
+                .iter()
+                .map(|resource| resource.id.as_str())
+                .collect::<Vec<_>>(),
+            vec!["codex:skill:arrow", "codex:skill:plugin-skill"]
         );
     }
 
