@@ -18,6 +18,15 @@ impl DependencyGraph {
             edges: ids.into_iter().map(|id| (id, Vec::new())).collect(),
         }
     }
+    pub fn from_edges(items: impl IntoIterator<Item = (String, Vec<String>)>) -> Self {
+        let mut edges = BTreeMap::new();
+        for (id, mut dependencies) in items {
+            dependencies.sort();
+            dependencies.dedup();
+            edges.insert(id, dependencies);
+        }
+        Self { edges }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

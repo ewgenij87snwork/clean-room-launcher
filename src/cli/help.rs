@@ -5,6 +5,7 @@ pub enum Command {
     Guided,
     Provider,
     Generic,
+    Info,
     Status,
     Starts,
     Scan,
@@ -50,6 +51,14 @@ const COMMANDS: &[CommandSpec] = &[
         description: "Launch the installed Claude Code CLI with unchanged arguments",
         usage: "claude [CLAUDE_ARGS...]",
         example: "claude --help",
+    },
+    CommandSpec {
+        command: Command::Info,
+        canonical: "info",
+        aliases: &[],
+        description: "Inspect provider state without launching a model",
+        usage: "info <codex|claude> [RESOURCE...]",
+        example: "info codex",
     },
     CommandSpec {
         command: Command::Generic,
@@ -226,6 +235,12 @@ fn render_top(invoked_as: &str, skill_sets_path: &str, width: usize, styled: boo
     lines.extend(usage(
         &format!("{invoked_as} claude [CLAUDE_ARGS...]"),
         "Launch Claude Code",
+        width,
+        styled,
+    ));
+    lines.extend(usage(
+        &format!("{invoked_as} info codex"),
+        "Inspect provider state",
         width,
         styled,
     ));

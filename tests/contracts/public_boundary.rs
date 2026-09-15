@@ -39,12 +39,18 @@ fn poisoned_public_inventory_fails_with_a_stable_reason() {
         ("home-path", "ABSOLUTE_HOME_PATH"),
         ("credential", "CREDENTIAL_TOKEN"),
         ("transcript", "TRANSCRIPT_FRAGMENT"),
+        ("legacy-identity", "LEGACY_PRODUCT_IDENTITY"),
     ];
     let fixtures_root =
         Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/public-boundary");
     if fixtures_root.exists() {
+        let mut exercised = 0;
         for (fixture, reason) in fixtures {
             let root = fixtures_root.join(fixture);
+            if !root.exists() {
+                continue;
+            }
+            exercised += 1;
             let output = guard(&root);
             assert!(!output.status.success(), "{fixture} unexpectedly passed");
             assert_eq!(
@@ -53,6 +59,7 @@ fn poisoned_public_inventory_fails_with_a_stable_reason() {
                 "{fixture}"
             );
         }
+        assert!(exercised > 0, "tracked negative fixture root was empty");
     } else {
         assert_negative_fixtures_are_excluded();
     }
