@@ -79,13 +79,13 @@ fn normalized_browser_selector_refuses_unqualified_claude_before_provider_birth(
     assert_eq!(output.status.code(), Some(2));
     let stderr = String::from_utf8(output.stderr).unwrap();
     assert!(stderr.contains("CLROOM_RESOURCE_UNQUALIFIED"));
-    assert!(stderr.contains("Claude Code 2.1.263"));
+    assert!(stderr.contains("Claude Code 2.1.272"));
     assert!(!capture.exists(), "unqualified Claude reached provider launch");
 }
 
 #[test]
 fn normalized_browser_selector_reaches_exact_qualified_claude_tuple() {
-    let (_root, home, project, bin) = fixture("2.1.263");
+    let (_root, home, project, bin) = fixture("2.1.272");
     let capture = project.join("provider-argv");
 
     let output = command(&home, &project, &bin)
