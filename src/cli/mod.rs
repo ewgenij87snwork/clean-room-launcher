@@ -87,12 +87,15 @@ pub fn run(invoked_as: &str, args: impl IntoIterator<Item = String>) -> ExitCode
             if let Some(exit) = external_prefix(&command) {
                 return exit;
             }
+            let collect_tail = command == "info";
             local_args.push(command);
-            while let Some(argument) = match next_argument(&mut source) {
-                Ok(argument) => argument,
-                Err(exit) => return exit,
-            } {
-                local_args.push(argument);
+            if collect_tail {
+                while let Some(argument) = match next_argument(&mut source) {
+                    Ok(argument) => argument,
+                    Err(exit) => return exit,
+                } {
+                    local_args.push(argument);
+                }
             }
         }
         return run_local(invoked_as, local_args);
