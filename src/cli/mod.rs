@@ -8,6 +8,7 @@ mod launch_contract;
 mod output;
 mod parser;
 mod process;
+mod resource_options;
 mod screen;
 mod skill_sets;
 mod starts;
@@ -125,6 +126,13 @@ fn run_codex(source: &mut impl Iterator<Item = String>) -> ExitCode {
     } {
         args.push(argument);
     }
+    let args = match resource_options::prepare(resource_options::Provider::Codex, &args) {
+        Ok(args) => args,
+        Err(message) => {
+            eprintln!("{message}");
+            return ExitCode::from(2);
+        }
+    };
     let (selection_terms, provider_args, pass_env) = match select_codex_options(&args) {
         Ok(options) => options,
         Err(message) => {
@@ -159,6 +167,13 @@ fn run_claude(source: &mut impl Iterator<Item = String>) -> ExitCode {
     } {
         args.push(argument);
     }
+    let args = match resource_options::prepare(resource_options::Provider::Claude, &args) {
+        Ok(args) => args,
+        Err(message) => {
+            eprintln!("{message}");
+            return ExitCode::from(2);
+        }
+    };
     let (selection_terms, provider_args, pass_env) = match select_provider_options(&args) {
         Ok(options) => options,
         Err(message) => {
