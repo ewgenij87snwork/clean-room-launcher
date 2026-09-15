@@ -35,6 +35,7 @@ enum ProviderEnvironment {
 }
 
 pub const INTERNAL_PROVIDER_CHAIN_GUARD: &str = "CLROOM_INTERNAL_PROVIDER_CHAIN";
+const CODEX_WORKSPACE_CONFLICT: &str = "CLROOM_WORKSPACE_CONFLICT: this directory makes the ambient Codex home look like project config; cd to the project you want to work in and rerun CLROOM";
 
 fn parent_environment(
     provider: ProviderEnvironment,
@@ -146,7 +147,38 @@ pub fn refuse_external_execution() -> Result<ExitCode, String> {
 }
 
 pub fn resolve_codex_executable() -> Result<PathBuf, String> {
+    refuse_codex_workspace_conflict()?;
     resolve_executable("codex", local_codex_unavailable)
+}
+
+fn refuse_codex_workspace_conflict() -> Result<(), String> {
+    let project = env::current_dir().map_err(|_| {
+        "CLROOM_ISOLATION_INVALID: current project is unavailable; continue locally".to_owned()
+    })?;
+    let Some(home) = env::var_os("HOME").map(PathBuf::from) else {
+        return Ok(());
+    };
+    let codex_home = env::var_os("CODEX_HOME")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| home.join(".codex"));
+    if !codex_home.is_absolute() {
+        return Ok(());
+    }
+    if codex_workspace_conflicts(&project, &codex_home) {
+        return Err(CODEX_WORKSPACE_CONFLICT.to_owned());
+    }
+    Ok(())
+}
+
+fn codex_workspace_conflicts(project: &Path, codex_home: &Path) -> bool {
+    let project_codex_home = project.join(".codex");
+    if project_codex_home == codex_home {
+        return true;
+    }
+    fs::canonicalize(project_codex_home)
+        .ok()
+        .zip(fs::canonicalize(codex_home).ok())
+        .is_some_and(|(project_codex_home, codex_home)| project_codex_home == codex_home)
 }
 
 pub fn resolve_claude_executable() -> Result<PathBuf, String> {
@@ -485,13 +517,40 @@ fn local_claude_unavailable() -> String {
 
 #[cfg(all(test, unix))]
 mod tests {
-    use super::CLAUDE_GATE_SCRIPT;
+    use super::{CLAUDE_GATE_SCRIPT, codex_workspace_conflicts};
     use std::{
         fs,
+        os::unix::fs::symlink,
         process::{Command, Stdio},
         thread,
         time::{Duration, Instant},
     };
+
+    #[test]
+    fn codex_workspace_conflict_detects_direct_and_symlink_aliases() {
+        let root = std::env::temp_dir().join(format!(
+            "clroom-codex-workspace-test-{}",
+            std::process::id()
+        ));
+        let _ = fs::remove_dir_all(&root);
+        let project = root.join("project");
+        let ambient = root.join("ambient-codex-home");
+        fs::create_dir_all(&project).unwrap();
+        fs::create_dir_all(&ambient).unwrap();
+
+        assert!(!codex_workspace_conflicts(&project, &ambient));
+
+        fs::remove_dir_all(&ambient).unwrap();
+        fs::create_dir_all(project.join(".codex")).unwrap();
+        assert!(codex_workspace_conflicts(&project, &project.join(".codex")));
+
+        fs::remove_dir_all(project.join(".codex")).unwrap();
+        fs::create_dir_all(&ambient).unwrap();
+        symlink(&ambient, project.join(".codex")).unwrap();
+        assert!(codex_workspace_conflicts(&project, &ambient));
+
+        let _ = fs::remove_dir_all(&root);
+    }
 
     #[test]
     fn claude_gate_rejects_release_with_different_process_start_identity() {
