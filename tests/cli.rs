@@ -30,6 +30,8 @@ mod local_codex_launch;
 mod minimum_real_launch;
 #[path = "cli/non_tty_json.rs"]
 mod non_tty_json;
+#[path = "cli/readme_plaque.rs"]
+mod readme_plaque;
 #[path = "cli/saved_start_call_path.rs"]
 mod saved_start_call_path;
 #[path = "cli/saved_starts.rs"]
