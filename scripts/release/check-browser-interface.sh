@@ -20,8 +20,8 @@ done
 executable="$(cd "$(dirname "$executable")" && pwd -P)/$(basename "$executable")"
 candidate="$(cd "$(dirname "$candidate")" && pwd -P)/$(basename "$candidate")"
 provider_version=$($executable --version 2>/dev/null | sed -nE 's/.*([0-9]+\.[0-9]+\.[0-9]+).*/\1/p' | head -1)
-[[ $provider_version == 2.1.263 ]] || {
-  echo "BROWSER_INTERFACE_CANARY_BLOCKED: expected Claude Code 2.1.263" >&2
+[[ $provider_version == 2.1.272 ]] || {
+  echo "BROWSER_INTERFACE_CANARY_BLOCKED: expected Claude Code 2.1.272; found ${provider_version:-unknown}" >&2
   exit 1
 }
 
