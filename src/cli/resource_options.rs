@@ -79,7 +79,7 @@ pub fn prepare(provider: Provider, args: &[String]) -> Result<Vec<String>, Strin
     } else if provider == Provider::Claude && !raw_browser_override {
         // Chrome can be enabled by persistent provider state. A clean launch must
         // explicitly close that ambient capability unless this invocation opts in.
-        insert_provider_flag(&mut provider_args, "--no-chrome");
+        provider_args.insert(0, "--no-chrome".to_owned());
     }
 
     Ok(provider_args)
@@ -120,7 +120,7 @@ mod tests {
     fn claude_clean_default_disables_ambient_browser_state() {
         assert_eq!(
             prepare(Provider::Claude, &strings(&["--model", "sonnet"])).unwrap(),
-            strings(&["--model", "sonnet", "--no-chrome"])
+            strings(&["--no-chrome", "--model", "sonnet"])
         );
     }
 
