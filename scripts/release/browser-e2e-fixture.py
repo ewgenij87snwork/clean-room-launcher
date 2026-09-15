@@ -4,6 +4,7 @@ import json
 import os
 import re
 import stat
+import sys
 from email.message import Message
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -42,12 +43,14 @@ def boundary_from(content_type: str) -> bytes | None:
 def multipart_fields(body: bytes, boundary: bytes) -> dict[str, tuple[str | None, bytes]]:
     fields: dict[str, tuple[str | None, bytes]] = {}
     delimiter = b"--" + boundary
-    for raw_part in body.split(delimiter):
-        part = raw_part.strip(b"\r\n")
-        if not part or part == b"--":
+    for raw_part in body.split(delimiter)[1:]:
+        if raw_part.startswith(b"--"):
+            break
+        if not raw_part.startswith(b"\r\n") or not raw_part.endswith(b"\r\n"):
             continue
-        if part.endswith(b"--"):
-            part = part[:-2].rstrip(b"\r\n")
+        # Remove only the multipart framing CRLF. Payload bytes, including a
+        # legitimate trailing newline in an uploaded file, must remain exact.
+        part = raw_part[2:-2]
         header_blob, separator, payload = part.partition(b"\r\n\r\n")
         if not separator:
             continue
@@ -62,9 +65,42 @@ def multipart_fields(body: bytes, boundary: bytes) -> dict[str, tuple[str | None
         filename_match = re.search(r'(?:^|;)\s*filename="([^"]*)"', disposition)
         fields[name_match.group(1)] = (
             filename_match.group(1) if filename_match else None,
-            payload.rstrip(b"\r\n"),
+            payload,
         )
     return fields
+
+
+def self_test() -> None:
+    boundary = b"clroom-browser-self-test"
+    resume = b"CLROOM SYNTHETIC RESUME\n"
+    body = b"".join(
+        [
+            b"--" + boundary + b"\r\n",
+            b'Content-Disposition: form-data; name="full_name"\r\n\r\n',
+            EXPECTED_NAME.encode("utf-8") + b"\r\n",
+            b"--" + boundary + b"\r\n",
+            b'Content-Disposition: form-data; name="email"\r\n\r\n',
+            EXPECTED_EMAIL.encode("utf-8") + b"\r\n",
+            b"--" + boundary + b"\r\n",
+            b'Content-Disposition: form-data; name="resume"; filename="resume.txt"\r\n',
+            b"Content-Type: text/plain\r\n\r\n",
+            resume + b"\r\n",
+            b"--" + boundary + b"--\r\n",
+        ]
+    )
+    fields = multipart_fields(body, boundary)
+    expected = {
+        "full_name": (None, EXPECTED_NAME.encode("utf-8")),
+        "email": (None, EXPECTED_EMAIL.encode("utf-8")),
+        "resume": ("resume.txt", resume),
+    }
+    if fields != expected:
+        fail("browser fixture multipart self-test failed")
+    if boundary_from('multipart/form-data; boundary="clroom-browser-self-test"') != boundary:
+        fail("browser fixture boundary self-test failed")
+    if multipart_fields(b"not-multipart", boundary):
+        fail("browser fixture malformed-body self-test failed")
+    print("BROWSER_E2E_FIXTURE_SELF_TEST_PASS")
 
 
 def application_page() -> bytes:
@@ -149,6 +185,10 @@ def handler_class(result_path: Path, resume_bytes: bytes):
 
 
 def main() -> None:
+    if sys.argv[1:] == ["--self-test"]:
+        self_test()
+        return
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--port-file", required=True, type=Path)
     parser.add_argument("--result-file", required=True, type=Path)
