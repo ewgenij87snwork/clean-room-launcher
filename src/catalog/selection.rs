@@ -87,8 +87,14 @@ pub fn plan_selection(
         }
     }
 
-    let includes = resolve_targets(provider, &request.includes, &by_id, true)?;
-    let excludes = resolve_targets(provider, &request.excludes, &by_id, false)?;
+    let excludes = resolve_targets(
+        provider,
+        &request.excludes,
+        &by_id,
+        false,
+        &BTreeSet::new(),
+    )?;
+    let includes = resolve_targets(provider, &request.includes, &by_id, true, &excludes)?;
 
     let mut decisions = Vec::with_capacity(by_id.len());
     for (id, resource) in &by_id {
@@ -158,12 +164,13 @@ fn resolve_targets(
     targets: &BTreeSet<SelectionTarget>,
     resources: &BTreeMap<String, &ResourceInfo>,
     validate_all_qualification: bool,
+    skipped: &BTreeSet<String>,
 ) -> Result<BTreeSet<String>, SelectionError> {
     let mut resolved = BTreeSet::new();
     for target in targets {
         if matches!(target, SelectionTarget::All) {
             for (canonical, resource) in resources {
-                if !all_effective_member(resource) {
+                if skipped.contains(canonical) || !all_effective_member(resource) {
                     continue;
                 }
                 if validate_all_qualification
@@ -412,10 +419,10 @@ mod tests {
     }
 
     #[test]
-    fn without_wins_over_all() {
+    fn without_wins_over_all_including_unqualified_members() {
         let resources = vec![
             resource(ResourceKind::Browser, "browser", &[], true),
-            resource(ResourceKind::Plugin, "ambient", &[], true),
+            resource(ResourceKind::Plugin, "ambient", &[], false),
         ];
         let mut request = SelectionRequest::default();
         request.include_value("all").unwrap();
