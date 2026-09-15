@@ -121,9 +121,9 @@ pub struct ResourceInfo {
 fn valid_component(value: &str) -> bool {
     !value.is_empty()
         && value.len() <= 256
-        && value
-            .chars()
-            .all(|character| character.is_ascii_graphic() && character != ',')
+        && value.chars().all(|character| {
+            character.is_ascii_graphic() && !matches!(character, ',' | ':')
+        })
 }
 
 fn kind_name(kind: ResourceKind) -> &'static str {
@@ -159,7 +159,7 @@ mod tests {
 
     #[test]
     fn ids_refuse_whitespace_control_and_selector_delimiters() {
-        for invalid in ["", "two words", "bad,member", "line\nbreak"] {
+        for invalid in ["", "two words", "bad,member", "bad:member", "line\nbreak"] {
             assert!(ResourceId::new("codex", ResourceKind::Plugin, invalid).is_err());
         }
     }
