@@ -19,7 +19,7 @@ done
 executable="$(cd "$(dirname "$executable")" && pwd -P)/$(basename "$executable")"
 candidate="$(cd "$(dirname "$candidate")" && pwd -P)/$(basename "$candidate")"
 provider_version=$($executable --version 2>/dev/null | sed -nE 's/.*([0-9]+\.[0-9]+\.[0-9]+).*/\1/p' | head -1)
-expected_provider_version=$([[ $provider == codex ]] && echo 0.154.0 || echo 2.1.263)
+expected_provider_version=$([[ $provider == codex ]] && echo 0.154.0 || echo 2.1.272)
 candidate_digest=$(shasum -a 256 "$candidate" | awk '{print $1}')
 provider_digest=$(shasum -a 256 "$executable" | awk '{print $1}')
 target=$(rustc -vV | sed -n 's/^host: //p')
@@ -27,7 +27,6 @@ root=$(mktemp -d "${TMPDIR:-/tmp}/clroom-provider-qualification.XXXXXX")
 trap 'rm -rf "$root"' EXIT
 user_home="$root/user-home"
 mkdir -p "$user_home/.codex" "$user_home/.claude" "$root/project"
-# Synthetic invalid ambient settings must not be parsed by the clean launch.
 printf '%s\n' 'not valid provider configuration' > "$user_home/.codex/config.toml"
 printf '%s\n' '{"synthetic_global_context":"must-not-apply"}' > "$user_home/.claude/settings.json"
 printf '%s\n' '{}' > "$user_home/.codex/auth.json"
