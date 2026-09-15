@@ -10,6 +10,7 @@ pub mod projection;
 pub mod protection;
 pub mod resource;
 pub mod selection;
+pub mod selection_receipt;
 pub mod sources;
 
 #[cfg(test)]
