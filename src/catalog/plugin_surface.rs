@@ -1,7 +1,11 @@
 use super::resource::ResourceKind;
 use serde::Serialize;
 use serde_json::Value;
-use std::{collections::BTreeSet, fs, path::{Path, PathBuf}};
+use std::{
+    collections::BTreeSet,
+    fs,
+    path::{Path, PathBuf},
+};
 
 const MAX_MANIFEST_BYTES: u64 = 128 * 1024;
 const MAX_COMPONENT_FILE_BYTES: u64 = 1024 * 1024;
@@ -45,7 +49,7 @@ pub fn inspect_plugin_surface(
 }
 
 fn inspect_codex(root: &Path) -> Result<PluginSurface, PluginSurfaceError> {
-    let (manifest_path, mut manifest) = codex_manifest(root)?;
+    let (_manifest_path, manifest) = codex_manifest(root)?;
     let mut declared = BTreeSet::new();
     let mut effective = BTreeSet::new();
 
@@ -59,7 +63,7 @@ fn inspect_codex(root: &Path) -> Result<PluginSurface, PluginSurfaceError> {
         effective.insert(skill);
     }
 
-    match manifest.remove("hooks") {
+    match manifest.get("hooks").cloned() {
         Some(Value::Object(object)) => {
             for event in hook_events_from_value(&Value::Object(object)) {
                 let component = component(ResourceKind::HookSet, &event);
@@ -85,7 +89,6 @@ fn inspect_codex(root: &Path) -> Result<PluginSurface, PluginSurfaceError> {
     add_mcp_components(root, manifest.get("mcpServers"), &mut declared, &mut effective);
     add_app_components(root, manifest.get("apps"), &mut declared, &mut effective);
 
-    let _ = manifest_path;
     Ok(surface(declared, effective))
 }
 
@@ -339,7 +342,10 @@ fn canonical_nonsymlink_directory(path: &Path) -> Option<PathBuf> {
 }
 
 fn component(kind: ResourceKind, id: &str) -> PluginComponent {
-    PluginComponent { kind, id: id.to_owned() }
+    PluginComponent {
+        kind,
+        id: id.to_owned(),
+    }
 }
 
 fn surface(
@@ -362,9 +368,13 @@ fn valid_public_id(value: &str) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::{inspect_plugin_surface, PluginComponent, ProviderPluginSemantics};
+    use super::{PluginComponent, ProviderPluginSemantics, inspect_plugin_surface};
     use crate::catalog::resource::ResourceKind;
-    use std::{fs, path::PathBuf, sync::atomic::{AtomicU64, Ordering}};
+    use std::{
+        fs,
+        path::PathBuf,
+        sync::atomic::{AtomicU64, Ordering},
+    };
 
     static SEQUENCE: AtomicU64 = AtomicU64::new(0);
 
@@ -399,7 +409,9 @@ mod tests {
     }
 
     fn has(surface: &[PluginComponent], kind: ResourceKind, id: &str) -> bool {
-        surface.iter().any(|component| component.kind == kind && component.id == id)
+        surface
+            .iter()
+            .any(|component| component.kind == kind && component.id == id)
     }
 
     #[test]
@@ -409,11 +421,29 @@ mod tests {
         let claude = inspect_plugin_surface(ProviderPluginSemantics::Claude, &root).unwrap();
 
         assert!(has(&codex.effective, ResourceKind::Skill, "brainstorming"));
-        assert!(!has(&codex.effective, ResourceKind::HookSet, "SessionStart"));
-        assert!(has(&claude.effective, ResourceKind::Skill, "brainstorming"));
-        assert!(has(&claude.effective, ResourceKind::HookSet, "SessionStart"));
-        assert!(!codex.effective.iter().any(|item| matches!(item.kind, ResourceKind::McpServer | ResourceKind::AppConnector)));
-        assert!(!claude.effective.iter().any(|item| matches!(item.kind, ResourceKind::McpServer | ResourceKind::AppConnector)));
+        assert!(!has(
+            &codex.effective,
+            ResourceKind::HookSet,
+            "SessionStart"
+        ));
+        assert!(has(
+            &claude.effective,
+            ResourceKind::Skill,
+            "brainstorming"
+        ));
+        assert!(has(
+            &claude.effective,
+            ResourceKind::HookSet,
+            "SessionStart"
+        ));
+        assert!(!codex.effective.iter().any(|item| matches!(
+            item.kind,
+            ResourceKind::McpServer | ResourceKind::AppConnector
+        )));
+        assert!(!claude.effective.iter().any(|item| matches!(
+            item.kind,
+            ResourceKind::McpServer | ResourceKind::AppConnector
+        )));
         let _ = fs::remove_dir_all(root);
     }
 
@@ -426,7 +456,11 @@ mod tests {
         )
         .unwrap();
         let codex = inspect_plugin_surface(ProviderPluginSemantics::Codex, &root).unwrap();
-        assert!(has(&codex.effective, ResourceKind::HookSet, "SessionStart"));
+        assert!(has(
+            &codex.effective,
+            ResourceKind::HookSet,
+            "SessionStart"
+        ));
         let _ = fs::remove_dir_all(root);
     }
 }
