@@ -7,6 +7,7 @@ pub mod manifest;
 pub mod pipeline;
 pub mod projection;
 pub mod protection;
+pub mod resource;
 pub mod sources;
 
 #[cfg(test)]
