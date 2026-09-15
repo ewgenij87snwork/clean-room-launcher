@@ -1,6 +1,9 @@
-use super::dependency::{DependencyError, DependencyGraph, close_dependencies};
+use super::dependency::{close_dependencies, DependencyError, DependencyGraph};
 use super::level_b::{BodyDecision, DecisionRecord};
-use super::resource::{QualificationState, ResourceId, ResourceInfo, ResourceKind, SelectionState};
+use super::resource::{
+    ActivationPolicy, EnablementState, InstallationState, QualificationState, ResourceId,
+    ResourceInfo, ResourceKind, ResourceOrigin, SelectionState,
+};
 use std::collections::{BTreeMap, BTreeSet};
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
@@ -47,10 +50,10 @@ pub struct SelectionPlan {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SelectionError {
     InvalidSelector,
-    AllUnavailableInV03,
     UnknownTarget(String),
     DuplicateResource(String),
     NotSelectable(String),
+    AllEffectiveMemberUnqualified(String),
     InvalidGraph(DependencyError),
     RequiredDependencyRefused(String),
 }
@@ -59,10 +62,10 @@ impl SelectionError {
     pub fn code(&self) -> &'static str {
         match self {
             Self::InvalidSelector => "CLROOM_RESOURCE_SELECTOR_INVALID",
-            Self::AllUnavailableInV03 => "CLROOM_RESOURCE_ALL_UNAVAILABLE_IN_V0_3",
             Self::UnknownTarget(_) => "CLROOM_RESOURCE_SELECTOR_UNKNOWN",
             Self::DuplicateResource(_) | Self::InvalidGraph(_) => "CLROOM_RESOURCE_GRAPH_INVALID",
             Self::NotSelectable(_) => "CLROOM_RESOURCE_NOT_SELECTABLE",
+            Self::AllEffectiveMemberUnqualified(_) => "CLROOM_RESOURCE_ALL_INCOMPLETE",
             Self::RequiredDependencyRefused(_) => "CLROOM_RESOURCE_DEPENDENCY_REFUSED",
         }
     }
@@ -73,15 +76,6 @@ pub fn plan_selection(
     request: &SelectionRequest,
     resources: &[ResourceInfo],
 ) -> Result<SelectionPlan, SelectionError> {
-    if request
-        .includes
-        .iter()
-        .chain(request.excludes.iter())
-        .any(|target| matches!(target, SelectionTarget::All))
-    {
-        return Err(SelectionError::AllUnavailableInV03);
-    }
-
     let mut by_id = BTreeMap::new();
     for resource in resources
         .iter()
@@ -93,8 +87,8 @@ pub fn plan_selection(
         }
     }
 
-    let includes = resolve_targets(provider, &request.includes, &by_id)?;
-    let excludes = resolve_targets(provider, &request.excludes, &by_id)?;
+    let includes = resolve_targets(provider, &request.includes, &by_id, true)?;
+    let excludes = resolve_targets(provider, &request.excludes, &by_id, false)?;
 
     let mut decisions = Vec::with_capacity(by_id.len());
     for (id, resource) in &by_id {
@@ -132,9 +126,11 @@ pub fn plan_selection(
         });
     }
 
-    let graph = DependencyGraph::from_edges(by_id.iter().map(|(id, resource)| {
-        (id.clone(), resource.required_dependencies.clone())
-    }));
+    let graph = DependencyGraph::from_edges(
+        by_id
+            .iter()
+            .map(|(id, resource)| (id.clone(), resource.required_dependencies.clone())),
+    );
     let closed = close_dependencies(&decisions, &graph).map_err(|error| match error {
         DependencyError::RequiredDependencyRefused(id) => {
             SelectionError::RequiredDependencyRefused(id)
@@ -161,9 +157,28 @@ fn resolve_targets(
     provider: &str,
     targets: &BTreeSet<SelectionTarget>,
     resources: &BTreeMap<String, &ResourceInfo>,
+    validate_all_qualification: bool,
 ) -> Result<BTreeSet<String>, SelectionError> {
     let mut resolved = BTreeSet::new();
     for target in targets {
+        if matches!(target, SelectionTarget::All) {
+            for (canonical, resource) in resources {
+                if !all_effective_member(resource) {
+                    continue;
+                }
+                if validate_all_qualification
+                    && (resource.selection != SelectionState::Selectable
+                        || resource.qualification != QualificationState::Qualified)
+                {
+                    return Err(SelectionError::AllEffectiveMemberUnqualified(
+                        canonical.clone(),
+                    ));
+                }
+                resolved.insert(canonical.clone());
+            }
+            continue;
+        }
+
         let canonical = match target {
             SelectionTarget::Browser => ResourceId::new(provider, ResourceKind::Browser, "browser")
                 .map_err(|_| SelectionError::InvalidSelector)?
@@ -171,7 +186,7 @@ fn resolve_targets(
             SelectionTarget::Exact { kind, id } => ResourceId::new(provider, *kind, id)
                 .map_err(|_| SelectionError::InvalidSelector)?
                 .canonical(),
-            SelectionTarget::All => return Err(SelectionError::AllUnavailableInV03),
+            SelectionTarget::All => unreachable!(),
         };
         if !resources.contains_key(&canonical) {
             return Err(SelectionError::UnknownTarget(canonical));
@@ -179,6 +194,22 @@ fn resolve_targets(
         resolved.insert(canonical);
     }
     Ok(resolved)
+}
+
+fn all_effective_member(resource: &ResourceInfo) -> bool {
+    if resource.installation != InstallationState::Installed
+        || resource.provider_enablement != EnablementState::Enabled
+        || matches!(resource.origin, ResourceOrigin::Project | ResourceOrigin::Managed)
+    {
+        return false;
+    }
+
+    matches!(
+        resource.activation_policy,
+        ActivationPolicy::Standalone
+            | ActivationPolicy::AtomicBundle
+            | ActivationPolicy::ProviderNative
+    )
 }
 
 fn parse_value(value: &str) -> Result<Vec<SelectionTarget>, SelectionError> {
@@ -214,9 +245,7 @@ fn parse_value(value: &str) -> Result<Vec<SelectionTarget>, SelectionError> {
 
 #[cfg(test)]
 mod tests {
-    use super::{
-        SelectionError, SelectionRequest, SelectionTarget, plan_selection,
-    };
+    use super::{plan_selection, SelectionError, SelectionRequest, SelectionTarget};
     use crate::catalog::resource::{
         ActivationPolicy, DiscoveryState, EnablementState, InstallationState,
         QualificationState, ResourceId, ResourceInfo, ResourceKind, ResourceOrigin,
@@ -255,7 +284,9 @@ mod tests {
     fn grammar_parses_portable_and_exact_targets_deterministically() {
         let mut request = SelectionRequest::default();
         request.include_value("browser").unwrap();
-        request.include_value("plugin:chrome@bundled,computer-use@bundled").unwrap();
+        request
+            .include_value("plugin:chrome@bundled,computer-use@bundled")
+            .unwrap();
         request.exclude_value("mcp:ambient").unwrap();
         assert!(request.includes.contains(&SelectionTarget::Browser));
         assert_eq!(request.includes.len(), 3);
@@ -331,12 +362,73 @@ mod tests {
     }
 
     #[test]
-    fn all_is_modeled_but_not_activated_in_v03() {
+    fn all_expands_only_effective_installed_global_activation_resources() {
+        let mut global = resource(ResourceKind::Browser, "browser", &[], true);
+        global.activation_policy = ActivationPolicy::ProviderNative;
+
+        let mut disabled = resource(ResourceKind::Plugin, "disabled", &[], true);
+        disabled.provider_enablement = EnablementState::Disabled;
+
+        let mut project = resource(ResourceKind::Skill, "project", &[], true);
+        project.origin = ResourceOrigin::Project;
+        project.activation_policy = ActivationPolicy::Standalone;
+
+        let mut observation = resource(ResourceKind::HookSet, "observed", &[], true);
+        observation.activation_policy = ActivationPolicy::ObservationOnly;
+
         let mut request = SelectionRequest::default();
         request.include_value("all").unwrap();
+        let plan = plan_selection(
+            "codex",
+            &request,
+            &[global, disabled, project, observation],
+        )
+        .unwrap();
+
         assert_eq!(
-            plan_selection("codex", &request, &[]),
-            Err(SelectionError::AllUnavailableInV03)
+            plan.selected
+                .iter()
+                .map(|resource| resource.id.as_str())
+                .collect::<Vec<_>>(),
+            vec!["codex:browser:browser"]
         );
+    }
+
+    #[test]
+    fn all_fails_closed_on_effective_unqualified_member() {
+        let resources = vec![
+            resource(ResourceKind::Browser, "browser", &[], true),
+            resource(ResourceKind::Plugin, "ambient", &[], false),
+        ];
+        let mut request = SelectionRequest::default();
+        request.include_value("all").unwrap();
+
+        assert_eq!(
+            plan_selection("codex", &request, &resources),
+            Err(SelectionError::AllEffectiveMemberUnqualified(
+                "codex:plugin:ambient".to_owned()
+            ))
+        );
+    }
+
+    #[test]
+    fn without_wins_over_all() {
+        let resources = vec![
+            resource(ResourceKind::Browser, "browser", &[], true),
+            resource(ResourceKind::Plugin, "ambient", &[], true),
+        ];
+        let mut request = SelectionRequest::default();
+        request.include_value("all").unwrap();
+        request.exclude_value("plugin:ambient").unwrap();
+
+        let plan = plan_selection("codex", &request, &resources).unwrap();
+        assert_eq!(
+            plan.selected
+                .iter()
+                .map(|resource| resource.id.as_str())
+                .collect::<Vec<_>>(),
+            vec!["codex:browser:browser"]
+        );
+        assert_eq!(plan.excluded, vec!["codex:plugin:ambient"]);
     }
 }
