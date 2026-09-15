@@ -20,8 +20,8 @@ done
 provider_executable="$(cd "$(dirname "$provider_executable")" && pwd -P)/$(basename "$provider_executable")"
 candidate="$(cd "$(dirname "$candidate")" && pwd -P)/$(basename "$candidate")"
 provider_version=$($provider_executable --version 2>/dev/null | sed -nE 's/.*([0-9]+\.[0-9]+\.[0-9]+).*/\1/p' | head -1)
-[[ $provider_version == 2.1.263 ]] || {
-  echo "BROWSER_E2E_BLOCKED: expected Claude Code 2.1.263" >&2
+[[ $provider_version == 2.1.272 ]] || {
+  echo "BROWSER_E2E_BLOCKED: expected Claude Code 2.1.272; found ${provider_version:-unknown}" >&2
   exit 1
 }
 command -v python3 >/dev/null 2>&1 || {
