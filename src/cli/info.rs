@@ -13,7 +13,7 @@ use super::{output, process};
 
 const SCHEMA_VERSION: &str = "clroom.provider-info.v1";
 const CODEX_EXACT: (u64, u64, u64) = (0, 154, 0);
-const CLAUDE_EXACT: (u64, u64, u64) = (2, 1, 263);
+const CLAUDE_EXACT: (u64, u64, u64) = (2, 1, 272);
 
 #[derive(Clone, Copy)]
 enum Provider {
