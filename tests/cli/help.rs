@@ -29,6 +29,7 @@ fn strip_ansi(value: &str) -> String {
 
 fn top_fixture() -> String {
     format!("{}\n", include_str!("../../fixtures/cli/help/top.txt"))
+        .replace("{VERSION}", env!("CARGO_PKG_VERSION"))
 }
 
 #[test]
@@ -89,10 +90,11 @@ fn tty_help_uses_hierarchy_without_changing_redirected_output() {
         .expect("clroom must run");
     assert_eq!(styled.status.code(), Some(0));
     let styled = String::from_utf8(styled.stdout).unwrap();
-    assert!(
-        styled
-            .starts_with("\n\n\u{1b}[1;36mClean Room Launcher\u{1b}[0m \u{1b}[2mv0.2.0\u{1b}[0m\n")
+    let expected_prefix = format!(
+        "\n\n\u{1b}[1;36mClean Room Launcher\u{1b}[0m \u{1b}[2mv{}\u{1b}[0m\n",
+        env!("CARGO_PKG_VERSION")
     );
+    assert!(styled.starts_with(&expected_prefix));
     assert!(styled.contains(
         "\u{1b}[2mLaunch Codex or Claude Code without\u{1b}[0m\n\u{1b}[2munrelated global instructions and skills.\u{1b}[0m"
     ));

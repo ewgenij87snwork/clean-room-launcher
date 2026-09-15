@@ -1,6 +1,6 @@
 
 
-Clean Room Launcher v0.2.0
+Clean Room Launcher v{VERSION}
 Launch Codex or Claude Code without
 unrelated global instructions and skills.
 

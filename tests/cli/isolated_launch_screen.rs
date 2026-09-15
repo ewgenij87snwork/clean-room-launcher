@@ -36,6 +36,14 @@ impl Drop for TempProject {
     }
 }
 
+fn package_version_label() -> String {
+    format!("v{}", env!("CARGO_PKG_VERSION"))
+}
+
+fn with_package_version(value: &str) -> String {
+    value.replace("{VERSION}", env!("CARGO_PKG_VERSION"))
+}
+
 fn assert_project_supports_centered(output: &str) {
     let support_columns = |line: &str, support: char| {
         line.chars()
@@ -73,10 +81,9 @@ fn isolated_preview_renders_the_accepted_plain_launch_receipt() {
     )
     .join("\n");
 
-    assert_eq!(
-        output,
+    let expected = with_package_version(
         "\n\n\n\
-╓──○──╖ ╭─ CLEAN ROOM ─ v0.2.0 ─────────╮\n\
+╓──○──╖ ╭─ CLEAN ROOM ─ v{VERSION} ─────────╮\n\
 ║░░░░░║⠒│                               │\n\
 ║░░░░░║⠒│     Global AGENTS.md  off     │\n\
 ║░░░░░║⠒│     Global skills     off     │\n\
@@ -85,8 +92,9 @@ fn isolated_preview_renders_the_accepted_plain_launch_receipt() {
 ║░░░░░║⠒│     Dev prompt        off     │\n\
 ║░░░░░║⠒│     Notifications     off     │\n\
 ║░░░░░║⠒│                               │\n\
-╙──○──╜ ╰───────────────────────────────╯\n"
+╙──○──╜ ╰───────────────────────────────╯\n",
     );
+    assert_eq!(output, expected);
 }
 
 #[test]
@@ -105,9 +113,9 @@ fn isolated_preview_styles_only_the_visual_hierarchy() {
     .join("\n");
 
     assert!(output.starts_with("\n\n\n\u{1b}[2m╓──○──╖\u{1b}[0m "));
-    assert!(
-        output.contains("\u{1b}[1;36mCLEAN ROOM\u{1b}[0m\u{1b}[2m ─ v0.2.0 ─────────╮\u{1b}[0m")
-    );
+    assert!(output.contains(&with_package_version(
+        "\u{1b}[1;36mCLEAN ROOM\u{1b}[0m\u{1b}[2m ─ v{VERSION} ─────────╮\u{1b}[0m"
+    )));
     assert!(output.contains("\u{1b}[2m╙──○──╜ ╰───────────────────────────────╯\u{1b}[0m"));
     assert!(
         output.contains("\u{1b}[2m║░░░░░║⠒│\u{1b}[0m     \u{1b}[1mGlobal AGENTS.md\u{1b}[0m  off")
@@ -189,7 +197,7 @@ fn claude_preview_reports_only_proven_claude_boundaries() {
     assert!(output.contains("Auto memory"));
     assert!(output.contains("Project skills   2 on"));
     assert_project_supports_centered(&output);
-    assert_eq!(output.matches("v0.2.0").count(), 1);
+    assert_eq!(output.matches(&package_version_label()).count(), 1);
     for codex_only in [
         "Global AGENTS.md",
         "Apps",
@@ -250,7 +258,9 @@ fn isolated_preview_keeps_the_version_top_right_and_project_supports_symmetric()
     )
     .join("\n");
 
-    assert!(output.contains("╓──○──╖ ╭─ CLEAN ROOM ─ v0.2.0 ─────────╮"));
+    assert!(output.contains(&with_package_version(
+        "╓──○──╖ ╭─ CLEAN ROOM ─ v{VERSION} ─────────╮"
+    )));
     let expected_attachment = [
         "╙──○──╜ ╰───────────╥───────╥───────────╯",
         "        ╭───────────╨───────╨───────────╮",
@@ -264,7 +274,7 @@ fn isolated_preview_keeps_the_version_top_right_and_project_supports_symmetric()
     );
 
     assert_project_supports_centered(&output);
-    assert_eq!(output.matches("v0.2.0").count(), 1);
+    assert_eq!(output.matches(&package_version_label()).count(), 1);
     assert!(!output.contains("╭─ Project"));
 }
 

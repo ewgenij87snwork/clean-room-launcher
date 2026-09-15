@@ -7,6 +7,36 @@ Semantic Versioning after the first public release.
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-09-15
+
+### Changed
+
+- Updated the README, demo, and install guidance to present interactive
+  `clroom codex` as the primary Codex launch path and the published GitHub
+  installer as the normal installation path.
+
+### Fixed
+
+- Repeated Codex launches no longer fail with `CLROOM_CODEX_STATE_DIRTY` after
+  supported Codex `0.154.0` creates legitimate provider-owned `cache` or
+  `plugins` state inside an initialized CLROOM shadow home.
+
+### Compatibility
+
+- Exact real-provider qualification remains Codex `0.154.0` and Claude Code
+  `2.1.263`; documented minimum accepted ranges remain Codex `0.147.0+` and
+  Claude Code `2.1.223+`.
+- This patch adds no platform expansion: macOS on Apple Silicon remains the
+  qualified release platform.
+
+### Security
+
+- Capability-owned Codex state is accepted only inside a valid initialized
+  CLROOM shadow home and only as real top-level directories; unknown roots,
+  symlinks, and invalid entry types remain fail-closed.
+- Apps, hooks, and plugins remain disabled by default. The distributed macOS
+  archive remains unsigned and unnotarized.
+
 ## [0.2.0] - 2026-09-14
 
 ### Added
