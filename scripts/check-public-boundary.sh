@@ -58,10 +58,17 @@ while IFS= read -r file; do
     echo "TRANSCRIPT_FRAGMENT" >&2
     exit 15
   fi
-  if LC_ALL=C grep -E -i -q 'task[[:space:]-]*seal' "$file"; then
-    echo "LEGACY_PRODUCT_IDENTITY" >&2
-    exit 16
-  fi
+  case "$relative" in
+    # The release readiness gate contains a split legacy-name detector by design;
+    # no product/control artifact is grandfathered by this exception.
+    scripts/release/readiness.sh) ;;
+    *)
+      if LC_ALL=C grep -E -i -q 'task[[:space:]-]*seal' "$file"; then
+        echo "LEGACY_PRODUCT_IDENTITY" >&2
+        exit 16
+      fi
+      ;;
+  esac
 done < "$inventory"
 
 cleanup
