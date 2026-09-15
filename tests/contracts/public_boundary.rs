@@ -39,6 +39,7 @@ fn poisoned_public_inventory_fails_with_a_stable_reason() {
         ("home-path", "ABSOLUTE_HOME_PATH"),
         ("credential", "CREDENTIAL_TOKEN"),
         ("transcript", "TRANSCRIPT_FRAGMENT"),
+        ("legacy-identity", "LEGACY_PRODUCT_IDENTITY"),
     ];
     let fixtures_root =
         Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/public-boundary");
