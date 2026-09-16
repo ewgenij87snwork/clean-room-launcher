@@ -51,7 +51,7 @@ else
   sh -n install.sh || fail "INSTALLER_SHELL_SYNTAX"
 fi
 sh install.sh --self-test || fail "INSTALLER_CONTRACT"
-canonical_install_url='https://github.com/ewgenij87snwork/clean-room-launcher/releases/latest/download/install.sh'
+canonical_install_url='https://github.com/y-sor/clean-room-launcher/releases/latest/download/install.sh'
 grep -Fq "$canonical_install_url" README.md || fail "README_INSTALLER_CONTRACT"
 grep -Fq "$canonical_install_url" docs/install.md || fail "DOCS_INSTALLER_CONTRACT"
 cargo test --locked --all-targets || fail "FULL_LOCKED_TESTS"

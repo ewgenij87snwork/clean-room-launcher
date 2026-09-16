@@ -13,7 +13,7 @@ Prerequisites:
 ## One-line install
 
 ```sh
-curl --proto '=https' --tlsv1.2 -fsSL https://github.com/ewgenij87snwork/clean-room-launcher/releases/latest/download/install.sh | sh
+curl --proto '=https' --tlsv1.2 -fsSL https://github.com/y-sor/clean-room-launcher/releases/latest/download/install.sh | sh
 ```
 
 The installer downloads the latest published stable macOS Apple Silicon release
@@ -35,8 +35,8 @@ ASSET=clean-room-launcher-v0.2.1-aarch64-apple-darwin.tar.gz
 STAGE=$(mktemp -d "${TMPDIR:-/tmp}/clroom-archive.XXXXXX")
 trap 'rm -rf -- "$STAGE"' EXIT
 
-curl -fLO "https://github.com/ewgenij87snwork/clean-room-launcher/releases/download/$VERSION/$ASSET"
-curl -fLO "https://github.com/ewgenij87snwork/clean-room-launcher/releases/download/$VERSION/SHA256SUMS"
+curl -fLO "https://github.com/y-sor/clean-room-launcher/releases/download/$VERSION/$ASSET"
+curl -fLO "https://github.com/y-sor/clean-room-launcher/releases/download/$VERSION/SHA256SUMS"
 EXPECTED=$(awk -v asset="$ASSET" '$2 == asset {print $1}' SHA256SUMS)
 ACTUAL=$(shasum -a 256 "$ASSET" | awk '{print $1}')
 test -n "$EXPECTED" && test "$ACTUAL" = "$EXPECTED"
@@ -63,7 +63,7 @@ other release assets.
 ## Cargo from the release tag
 
 ```sh
-cargo install --git https://github.com/ewgenij87snwork/clean-room-launcher \
+cargo install --git https://github.com/y-sor/clean-room-launcher \
   --tag v0.2.1 --locked
 ```
 

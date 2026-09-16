@@ -1,8 +1,8 @@
 title: Clean Room Launcher (CLROOM)
 description: Clean/selective Codex and Claude Code launches on macOS with project context preserved and unrelated personal-global instructions and unselected personal-global skills left out per launch.
-url: "https://ewgenij87snwork.github.io"
+url: "https://y-sor.github.io"
 baseurl: "/clean-room-launcher"
-repository: ewgenij87snwork/clean-room-launcher
+repository: y-sor/clean-room-launcher
 theme: minima
 
 plugins:

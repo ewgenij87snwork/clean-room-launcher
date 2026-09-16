@@ -43,7 +43,7 @@ These pages separate:
 
 If a native provider feature is the simpler correct option, these docs say so. Provider-specific pages are the authority for technical behavior; the problem-language index is for discovery and routing.
 
-Machine-readable discovery surfaces are available at [`/llms.txt`](llms.txt) and [`/sitemap.xml`](sitemap.xml). The Markdown source remains public in the [CLROOM repository](https://github.com/ewgenij87snwork/clean-room-launcher).
+Machine-readable discovery surfaces are available at [`/llms.txt`](llms.txt) and [`/sitemap.xml`](sitemap.xml). The Markdown source remains public in the [CLROOM repository](https://github.com/y-sor/clean-room-launcher).
 
 Last structured provider-doc review: **2026-09-07**.  
 Last discovery architecture review: **2026-09-16**.

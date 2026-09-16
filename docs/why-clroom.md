@@ -109,6 +109,6 @@ Silicon. For current provider/version details, use the repository and
 installation/limitations pages rather than copying a version number from an
 old article.
 
-- [GitHub repository](https://github.com/ewgenij87snwork/clean-room-launcher)
+- [GitHub repository](https://github.com/y-sor/clean-room-launcher)
 - [Installation](install.md)
 - [Find your problem in the configuration problem index](problem-index.md)

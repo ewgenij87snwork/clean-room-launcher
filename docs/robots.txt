@@ -26,4 +26,4 @@ Allow: /
 User-agent: *
 Allow: /
 
-Sitemap: https://ewgenij87snwork.github.io/clean-room-launcher/sitemap.xml
+Sitemap: https://y-sor.github.io/clean-room-launcher/sitemap.xml

@@ -24,7 +24,7 @@ Run only the documented public command:
 
 ```sh
 curl --proto '=https' --tlsv1.2 -fsSL \
-  https://github.com/ewgenij87snwork/clean-room-launcher/releases/latest/download/install.sh | sh
+  https://github.com/y-sor/clean-room-launcher/releases/latest/download/install.sh | sh
 ```
 
 A PASS requires:

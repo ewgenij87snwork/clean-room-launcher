@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-REPO="ewgenij87snwork/clean-room-launcher"
+REPO="y-sor/clean-room-launcher"
 RELEASE_BASE="https://github.com/$REPO/releases/latest/download"
 
 fail() {
