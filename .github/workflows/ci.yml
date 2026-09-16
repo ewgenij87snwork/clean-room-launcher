@@ -56,12 +56,12 @@ jobs:
           grep -Fq 'User-agent: Claude-SearchBot' docs/robots.txt
           grep -Fq 'User-agent: Claude-User' docs/robots.txt
           grep -Fq 'User-agent: PerplexityBot' docs/robots.txt
-          grep -Fq 'Sitemap: https://ewgenij87snwork.github.io/clean-room-launcher/sitemap.xml' docs/robots.txt
+          grep -Fq 'Sitemap: https://y-sor.github.io/clean-room-launcher/sitemap.xml' docs/robots.txt
 
           test -s docs/llms.txt
           grep -Fq 'permalink: /llms.txt' docs/llms.txt
-          grep -Fq 'https://ewgenij87snwork.github.io/clean-room-launcher/problem-index/' docs/llms.txt
-          grep -Fq 'https://ewgenij87snwork.github.io/clean-room-launcher/sitemap.xml' docs/llms.txt
+          grep -Fq 'https://y-sor.github.io/clean-room-launcher/problem-index/' docs/llms.txt
+          grep -Fq 'https://y-sor.github.io/clean-room-launcher/sitemap.xml' docs/llms.txt
           grep -Fq 'Provider-owned/system skills and project-local skills are separate scopes' docs/llms.txt
 
           test -s docs/problem-index.md
@@ -72,7 +72,8 @@ jobs:
 
           grep -Fq 'Why does Codex show more skills than the CLROOM `Global skills` count?' docs/faq.md
 
-          grep -Fq 'url: "https://ewgenij87snwork.github.io"' docs/_config.yml
+          grep -Fq 'url: "https://y-sor.github.io"' docs/_config.yml
+          grep -Fq 'repository: y-sor/clean-room-launcher' docs/_config.yml
           grep -Fq 'baseurl: "/clean-room-launcher"' docs/_config.yml
           grep -Fq 'parse_block_html: true' docs/_config.yml
           ! grep -Eq '^[[:space:]]*-[[:space:]]+jekyll-sitemap[[:space:]]*$' docs/_config.yml
