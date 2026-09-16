@@ -11,6 +11,8 @@ pub fn prepare(provider: Provider, args: &[String]) -> Result<Vec<String>, Strin
     let mut provider_args = Vec::with_capacity(args.len() + 1);
     let mut launcher_options = true;
     let mut raw_browser_override = false;
+    let mut include_browser = false;
+    let mut exclude_browser = false;
 
     for argument in args {
         if launcher_options && argument == "--" {
@@ -19,13 +21,21 @@ pub fn prepare(provider: Provider, args: &[String]) -> Result<Vec<String>, Strin
         } else if launcher_options && matches!(argument.as_str(), "--with" | "--without") {
             return Err(invalid_selector());
         } else if launcher_options && let Some(value) = argument.strip_prefix("--with=") {
-            request
-                .include_value(value)
-                .map_err(selection_error_message)?;
+            if value == "browser" {
+                include_browser = true;
+            } else {
+                request
+                    .include_value(value)
+                    .map_err(selection_error_message)?;
+            }
         } else if launcher_options && let Some(value) = argument.strip_prefix("--without=") {
-            request
-                .exclude_value(value)
-                .map_err(selection_error_message)?;
+            if value == "browser" {
+                exclude_browser = true;
+            } else {
+                request
+                    .exclude_value(value)
+                    .map_err(selection_error_message)?;
+            }
         } else {
             if launcher_options && matches!(argument.as_str(), "--chrome" | "--no-chrome") {
                 raw_browser_override = true;
@@ -58,13 +68,11 @@ pub fn prepare(provider: Provider, args: &[String]) -> Result<Vec<String>, Strin
         );
     }
 
-    let include_browser = request.includes.contains(&SelectionTarget::Browser);
-    let exclude_browser = request.excludes.contains(&SelectionTarget::Browser);
     if include_browser || exclude_browser {
         match provider {
             Provider::Codex => {
                 return Err(
-                    "CLROOM_RESOURCE_NOT_SELECTABLE: codex:browser:browser is not qualified in v0.3; continue locally"
+                    "CLROOM_CAPABILITY_NOT_SELECTABLE: browser alias is not qualified for Codex in v0.3; use a provider-native browser integration only when intentionally configured and qualified"
                         .to_owned(),
                 );
             }
@@ -128,7 +136,7 @@ mod tests {
     }
 
     #[test]
-    fn claude_browser_selector_maps_to_native_flag() {
+    fn claude_browser_alias_maps_to_native_flag() {
         let args = strings(&["--model", "sonnet", "--with=browser"]);
         assert_eq!(
             prepare(Provider::Claude, &args).unwrap(),
@@ -137,7 +145,7 @@ mod tests {
     }
 
     #[test]
-    fn exclusion_wins_and_is_inserted_after_raw_provider_flags() {
+    fn browser_alias_exclusion_wins_and_is_inserted_after_raw_provider_flags() {
         let args = strings(&[
             "--with=browser",
             "--without=browser",
@@ -177,10 +185,10 @@ mod tests {
     }
 
     #[test]
-    fn codex_browser_selection_fails_closed() {
+    fn codex_browser_alias_fails_closed_without_a_qualified_adapter_resolution() {
         for selector in ["--with=browser", "--without=browser"] {
             let error = prepare(Provider::Codex, &strings(&[selector])).unwrap_err();
-            assert!(error.starts_with("CLROOM_RESOURCE_NOT_SELECTABLE:"));
+            assert!(error.starts_with("CLROOM_CAPABILITY_NOT_SELECTABLE:"));
         }
     }
 
