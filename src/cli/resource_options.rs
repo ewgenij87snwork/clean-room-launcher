@@ -65,18 +65,10 @@ pub fn prepare(provider: Provider, args: &[String]) -> Result<Vec<String>, Strin
         // Claude can persist its native Chrome integration in provider-owned state.
         // A clean launch closes that ambient input unless the caller explicitly
         // supplies the provider-native override for this invocation.
-        insert_provider_flag(&mut provider_args, "--no-chrome");
+        provider_args.insert(0, "--no-chrome".to_owned());
     }
 
     Ok(provider_args)
-}
-
-fn insert_provider_flag(args: &mut Vec<String>, flag: &str) {
-    let index = args
-        .iter()
-        .position(|argument| argument == "--")
-        .unwrap_or(args.len());
-    args.insert(index, flag.to_owned());
 }
 
 fn invalid_selector() -> String {
@@ -99,7 +91,7 @@ mod tests {
     fn claude_clean_default_disables_ambient_native_chrome_state() {
         assert_eq!(
             prepare(Provider::Claude, &strings(&["--model", "sonnet"])).unwrap(),
-            strings(&["--model", "sonnet", "--no-chrome"])
+            strings(&["--no-chrome", "--model", "sonnet"])
         );
     }
 
