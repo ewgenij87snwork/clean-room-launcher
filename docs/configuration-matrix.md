@@ -10,19 +10,19 @@ This table is deliberately conservative.
 
 | Provider | Input / scope | Current CLROOM direction | Confidence |
 | --- | --- | --- | --- |
-| Claude Code | interactive top-level launch | Isolated; exact qualification target is 2.1.263 | v0.2.0 qualification canary |
+| Claude Code | interactive top-level launch | Isolated; exact qualification target is 2.1.263 | Current-release qualification canary |
 | Claude Code | `-p` non-interactive launch | Launch path exercised; response-output semantics not claimed as qualified | Provider exited 0, but the expected textual canary was not observed |
 | Claude Code | ordinary user settings source | Omitted through `--setting-sources project,local`, with additional controls for known personal-global roots | Confirmed from current CLROOM source |
 | Claude Code | project settings source | Retained | Confirmed from current CLROOM source |
 | Claude Code | project-local settings source | Retained | Confirmed from current CLROOM source |
-| Claude Code | project/user/ambient MCP configuration | Not loaded by default; v0.2.0 uses `--strict-mcp-config` and supplies no default `--mcp-config` | Confirmed from current CLROOM source and Claude Code CLI contract |
+| Claude Code | project/user/ambient MCP configuration | Not loaded by default; current release uses `--strict-mcp-config` and supplies no default `--mcp-config` | Confirmed from current CLROOM source and Claude Code CLI contract |
 | Claude Code | explicit `--mcp-config` provider argument | Passed through for that launch; Claude's own strict MCP rules apply | Confirmed from current CLROOM source and Claude Code CLI contract |
 | Claude Code | `~/.claude.json` | Not blanket-blocked | Known limitation |
 | Claude Code | managed / organization policy | Must remain authoritative | Product invariant; detailed combinations continue to require tests |
 | Claude Code | selected personal-global skill | Admitted through a private temporary projection | Confirmed from current CLROOM source |
 | Codex | global `AGENTS.md` / `AGENTS.override.md` | Known global instruction inputs blocked for the CLROOM launch | Confirmed from current CLROOM source |
-| Codex | interactive top-level launch | Existing isolation path retained | v0.2.0 qualification canary |
-| Codex | `exec` non-interactive launch | Existing isolation plus exec-only `--ignore-user-config` | v0.2.0 qualification canary |
+| Codex | interactive top-level launch | Existing isolation path retained | Current-release qualification canary |
+| Codex | `exec` non-interactive launch | Existing isolation plus exec-only `--ignore-user-config` | Current-release qualification canary |
 | Codex | project instruction chain | Retained | Confirmed from current CLROOM source |
 | Codex | unselected personal-global skill contents | Known personal-global skill roots restricted | Confirmed from current CLROOM source |
 | Codex | selected personal-global skills | Admitted for the launch | Confirmed from current CLROOM source |
