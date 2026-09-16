@@ -114,6 +114,7 @@ fn selection_error_message(_error: SelectionError) -> String {
 #[cfg(test)]
 mod tests {
     use super::{prepare, Provider};
+    use clroom::catalog::selection::{SelectionError, SelectionRequest};
 
     fn strings(values: &[&str]) -> Vec<String> {
         values.iter().map(|value| (*value).to_owned()).collect()
@@ -141,6 +142,19 @@ mod tests {
         assert_eq!(
             prepare(Provider::Claude, &args).unwrap(),
             strings(&["--model", "sonnet", "--chrome"])
+        );
+    }
+
+    #[test]
+    fn browser_alias_is_not_a_catalog_selector() {
+        let mut request = SelectionRequest::default();
+        assert_eq!(
+            request.include_value("browser"),
+            Err(SelectionError::InvalidSelector)
+        );
+        assert_eq!(
+            prepare(Provider::Claude, &strings(&["--with=browser"])).unwrap(),
+            strings(&["--chrome"])
         );
     }
 
