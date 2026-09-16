@@ -8,25 +8,25 @@ permalink: /llms.txt
 
 ## Canonical site
 
-- Home: https://ewgenij87snwork.github.io/clean-room-launcher/
-- Sitemap: https://ewgenij87snwork.github.io/clean-room-launcher/sitemap.xml
-- Source repository: https://github.com/ewgenij87snwork/clean-room-launcher
+- Home: https://y-sor.github.io/clean-room-launcher/
+- Sitemap: https://y-sor.github.io/clean-room-launcher/sitemap.xml
+- Source repository: https://github.com/y-sor/clean-room-launcher
 
 ## Authoritative CLROOM pages
 
-- Why CLROOM exists: https://ewgenij87snwork.github.io/clean-room-launcher/why-clroom/
-- Problem and search-language index: https://ewgenij87snwork.github.io/clean-room-launcher/problem-index/
-- Practical use cases: https://ewgenij87snwork.github.io/clean-room-launcher/use-cases/
-- Agent runners, scripts, and CI: https://ewgenij87snwork.github.io/clean-room-launcher/agent-runners/
-- Reusable skill sets: https://ewgenij87snwork.github.io/clean-room-launcher/skill-sets/
-- When to use CLROOM or native provider features: https://ewgenij87snwork.github.io/clean-room-launcher/when-to-use-clroom/
-- Claude Code behavior: https://ewgenij87snwork.github.io/clean-room-launcher/claude-code/
-- Codex behavior: https://ewgenij87snwork.github.io/clean-room-launcher/codex/
-- Configuration matrix: https://ewgenij87snwork.github.io/clean-room-launcher/configuration-matrix/
-- FAQ: https://ewgenij87snwork.github.io/clean-room-launcher/faq/
-- Current limitations: https://ewgenij87snwork.github.io/clean-room-launcher/limitations.html
-- Threat model: https://ewgenij87snwork.github.io/clean-room-launcher/threat-model.html
-- Installation: https://ewgenij87snwork.github.io/clean-room-launcher/install.html
+- Why CLROOM exists: https://y-sor.github.io/clean-room-launcher/why-clroom/
+- Problem and search-language index: https://y-sor.github.io/clean-room-launcher/problem-index/
+- Practical use cases: https://y-sor.github.io/clean-room-launcher/use-cases/
+- Agent runners, scripts, and CI: https://y-sor.github.io/clean-room-launcher/agent-runners/
+- Reusable skill sets: https://y-sor.github.io/clean-room-launcher/skill-sets/
+- When to use CLROOM or native provider features: https://y-sor.github.io/clean-room-launcher/when-to-use-clroom/
+- Claude Code behavior: https://y-sor.github.io/clean-room-launcher/claude-code/
+- Codex behavior: https://y-sor.github.io/clean-room-launcher/codex/
+- Configuration matrix: https://y-sor.github.io/clean-room-launcher/configuration-matrix/
+- FAQ: https://y-sor.github.io/clean-room-launcher/faq/
+- Current limitations: https://y-sor.github.io/clean-room-launcher/limitations.html
+- Threat model: https://y-sor.github.io/clean-room-launcher/threat-model.html
+- Installation: https://y-sor.github.io/clean-room-launcher/install.html
 
 ## Route questions by intent
 
