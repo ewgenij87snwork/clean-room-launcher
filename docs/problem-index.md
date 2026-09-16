@@ -824,7 +824,7 @@ You do not need to know the provider's exact terminology before using these docs
 
 Search engines and AI systems can connect synonyms and related meanings. The related-wording lists above are there for recognition and routing; the technical answer stays singular and canonical.
 
-If the problem is still not answered, open an issue in the [CLROOM repository](https://github.com/ewgenij87snwork/clean-room-launcher). A real unanswered question is more useful than another synthetic keyword page.
+If the problem is still not answered, open an issue in the [CLROOM repository](https://github.com/y-sor/clean-room-launcher). A real unanswered question is more useful than another synthetic keyword page.
 
 ---
 
