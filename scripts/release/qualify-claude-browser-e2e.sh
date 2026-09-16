@@ -56,7 +56,7 @@ python3 "$fixture" \
   --resume-file "$resume" &
 server_pid=$!
 
-for _ in {1..100}; do
+for _ in {1..400}; do
   [[ -s $port_file ]] && break
   kill -0 "$server_pid" 2>/dev/null || {
     echo "BROWSER_E2E_BLOCKED: synthetic ATS fixture exited" >&2
@@ -83,13 +83,14 @@ Prerequisites owned by Claude Code must already be satisfied:
 - Claude in Chrome extension 1.0.36+ installed and connected;
 - a supported Chromium browser running;
 - organization policy permits Claude in Chrome.
+If Claude reports API-key/token billing instead of a direct Anthropic plan, exit the session; Chrome integration will remain off.
 The following session will use a local synthetic form and synthetic resume only.
 Approve only the normal provider/browser permissions needed for this test.
 After the success marker is visible and Claude reports completion, exit the Claude session so qualification can finish.
 EOF
 
 set +e
-"$candidate" --with=browser "$prompt"
+"$candidate" --with=browser -- "$prompt"
 status=$?
 set -e
 [[ $status -eq 0 ]] || {
