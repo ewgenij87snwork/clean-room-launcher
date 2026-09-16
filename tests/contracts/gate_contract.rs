@@ -69,7 +69,7 @@ fn tag_release_qualifies_the_exact_archive_before_upload() {
         "provider qualification pins must fail closed unless explicitly reviewed for the packaged release version"
     );
     assert!(source.contains("@openai/codex@0.154.0"));
-    assert!(source.contains("@anthropic-ai/claude-code@2.1.263"));
+    assert!(source.contains("@anthropic-ai/claude-code@2.1.272"));
     assert!(source.contains("target/aarch64-apple-darwin/release/clroom-codex"));
     assert!(source.contains("target/aarch64-apple-darwin/release/clroom-claude"));
     assert_eq!(
