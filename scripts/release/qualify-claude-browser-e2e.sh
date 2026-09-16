@@ -143,7 +143,7 @@ After the success marker is visible and Claude reports completion, exit the Clau
 EOF
 
 set +e
-PATH="$provider_bin:${PATH:-/usr/bin:/bin}" "$candidate" --with=browser -- "$prompt"
+PATH="$provider_bin:${PATH:-/usr/bin:/bin}" "$candidate" claude --with=browser -- "$prompt"
 status=$?
 set -e
 [[ $status -eq 0 ]] || {
