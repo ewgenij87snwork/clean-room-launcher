@@ -7,6 +7,7 @@ fn read(path: &str) -> String {
 #[test]
 fn discovery_surfaces_keep_the_canonical_namespace_and_crawler_access() {
     let config = read("docs/_config.yml");
+    assert!(config.contains("title: Clean Room Launcher (CLROOM)"));
     assert!(config.contains("url: \"https://y-sor.github.io\""));
     assert!(config.contains("baseurl: \"/clean-room-launcher\""));
     assert!(config.contains("repository: y-sor/clean-room-launcher"));
@@ -44,4 +45,5 @@ fn homepage_metadata_exposes_analytics_preview_and_free_app_facts() {
     let home = read("docs/index.md");
     assert!(home.contains("title: Clean Room Launcher (CLROOM)"));
     assert!(home.contains("path: /assets/clean-room-launcher-hero.png"));
+    assert!(home.contains("the intended public identity is **Clean Room Launcher (CLROOM)**"));
 }
