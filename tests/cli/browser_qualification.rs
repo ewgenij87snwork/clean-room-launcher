@@ -78,7 +78,7 @@ fn portable_browser_alias_refuses_unqualified_claude_before_provider_birth() {
 
     assert_eq!(output.status.code(), Some(2));
     let stderr = String::from_utf8(output.stderr).unwrap();
-    assert!(stderr.contains("CLROOM_RESOURCE_UNQUALIFIED"));
+    assert!(stderr.contains("CLROOM_CAPABILITY_UNQUALIFIED"));
     assert!(stderr.contains("Claude Code 2.1.272"));
     assert!(!capture.exists(), "unqualified Claude reached provider launch");
 }
@@ -109,7 +109,7 @@ fn provider_native_chrome_flag_keeps_direct_passthrough_semantics() {
         .unwrap();
 
     assert_eq!(output.status.code(), Some(42));
-    assert!(!String::from_utf8_lossy(&output.stderr).contains("CLROOM_RESOURCE_UNQUALIFIED"));
+    assert!(!String::from_utf8_lossy(&output.stderr).contains("CLROOM_CAPABILITY_UNQUALIFIED"));
     let argv = fs::read(&capture).unwrap();
     assert!(argv.windows(b"--chrome\0".len()).any(|window| window == b"--chrome\0"));
 }
