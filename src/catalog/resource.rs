@@ -163,7 +163,7 @@ mod tests {
     }
 
     #[test]
-    fn catalog_does_not_model_capabilities_as_resource_kinds() {
+    fn catalog_does_not_model_browser_capability_as_a_resource_kind() {
         let kinds = [
             ResourceKind::Skill,
             ResourceKind::Plugin,
