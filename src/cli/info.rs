@@ -273,7 +273,6 @@ fn inspect(provider: Provider, targets: &[NativeTarget]) -> ProviderInfo {
             reason_code: clean_reason,
         },
         capabilities: vec![
-            browser_capability(provider, exact_tuple, known_discovery, unavailable_reason),
             capability(
                 "plugins",
                 known_discovery,
@@ -298,38 +297,6 @@ fn inspect(provider: Provider, targets: &[NativeTarget]) -> ProviderInfo {
             qualified_closure: Vec::new(),
             conflicts,
         },
-    }
-}
-
-fn browser_capability(
-    provider: Provider,
-    exact_tuple: bool,
-    discovery: DiscoveryState,
-    unavailable_reason: Option<&'static str>,
-) -> CapabilityInfo {
-    if !exact_tuple {
-        return capability(
-            "browser",
-            discovery,
-            unavailable_reason.unwrap_or("PROVIDER_TUPLE_NOT_QUALIFIED"),
-        );
-    }
-
-    match provider {
-        Provider::Claude => CapabilityInfo {
-            id: "browser",
-            discovery: DiscoveryState::Discoverable,
-            installation: InstallationState::Unknown,
-            provider_enablement: EnablementState::Unknown,
-            selection: SelectionState::Selectable,
-            qualification: QualificationState::Qualified,
-            reason_code: "CLAUDE_NATIVE_CHROME_EXACT_TUPLE",
-        },
-        Provider::Codex => capability(
-            "browser",
-            DiscoveryState::Discoverable,
-            "CODEX_BROWSER_ACTIVATION_NOT_QUALIFIED",
-        ),
     }
 }
 
@@ -557,7 +524,6 @@ fn component_summary(components: &[PluginComponent]) -> String {
 
 fn capability_label(id: &str) -> &str {
     match id {
-        "browser" => "Browser",
         "plugins" => "Plugins",
         "mcp" => "MCP",
         _ => id,
@@ -623,5 +589,10 @@ mod tests {
         assert!(value["native_entries"].is_array());
         assert!(value["combined"]["qualified_closure"].is_array());
         assert!(value["combined"]["conflicts"].is_array());
+        assert!(value["capabilities"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .all(|capability| capability["id"] != "browser"));
     }
 }
