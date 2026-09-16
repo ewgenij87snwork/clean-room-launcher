@@ -1,7 +1,5 @@
 #[path = "cli/argv_passthrough.rs"]
 mod argv_passthrough;
-#[path = "cli/browser_qualification.rs"]
-mod browser_qualification;
 #[path = "cli/claude_launch.rs"]
 mod claude_launch;
 #[allow(clippy::duplicate_mod)] // Real cli::run is imported to test lazy argv consumption.
