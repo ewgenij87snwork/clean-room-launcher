@@ -11,7 +11,6 @@ pub enum SideEffectClass {
     ExternalToolServer,
     LifecycleAutomation,
     DelegatedAgent,
-    BrowserSession,
     AuthorizedConnector,
     LanguageServerProcess,
     BackgroundProcess,
@@ -76,7 +75,6 @@ fn side_effect_class(kind: ResourceKind) -> SideEffectClass {
         ResourceKind::McpServer => SideEffectClass::ExternalToolServer,
         ResourceKind::HookSet => SideEffectClass::LifecycleAutomation,
         ResourceKind::Agent => SideEffectClass::DelegatedAgent,
-        ResourceKind::Browser => SideEffectClass::BrowserSession,
         ResourceKind::AppConnector => SideEffectClass::AuthorizedConnector,
         ResourceKind::LspServer => SideEffectClass::LanguageServerProcess,
         ResourceKind::Monitor => SideEffectClass::BackgroundProcess,
@@ -149,27 +147,27 @@ mod tests {
 
     #[test]
     fn receipt_is_stable_across_input_and_plan_order() {
-        let browser = resource(ResourceKind::Browser, "browser");
+        let mcp = resource(ResourceKind::McpServer, "browser-bridge");
         let plugin = resource(ResourceKind::Plugin, "demo@market");
         let first = build_selection_receipt(
-            &plan(&["codex:plugin:demo@market", "codex:browser:browser"]),
-            &[browser.clone(), plugin.clone()],
+            &plan(&["codex:plugin:demo@market", "codex:mcp:browser-bridge"]),
+            &[mcp.clone(), plugin.clone()],
         )
         .unwrap();
         let second = build_selection_receipt(
-            &plan(&["codex:browser:browser", "codex:plugin:demo@market"]),
-            &[plugin, browser],
+            &plan(&["codex:mcp:browser-bridge", "codex:plugin:demo@market"]),
+            &[plugin, mcp],
         )
         .unwrap();
 
         assert_eq!(first, second);
         assert_eq!(
             first.selected_ids,
-            vec!["codex:browser:browser", "codex:plugin:demo@market"]
+            vec!["codex:mcp:browser-bridge", "codex:plugin:demo@market"]
         );
         assert_eq!(
             first.side_effect_classes,
-            vec![SideEffectClass::ProviderExtension, SideEffectClass::BrowserSession]
+            vec![SideEffectClass::ProviderExtension, SideEffectClass::ExternalToolServer]
         );
         assert!(first.digest.starts_with("fnv1a64-v1:"));
         assert_eq!(first.digest.len(), "fnv1a64-v1:".len() + 16);
@@ -177,10 +175,10 @@ mod tests {
 
     #[test]
     fn receipt_refuses_selected_ids_without_inventory_evidence() {
-        let error = build_selection_receipt(&plan(&["codex:browser:browser"]), &[]).unwrap_err();
+        let error = build_selection_receipt(&plan(&["codex:mcp:missing"]), &[]).unwrap_err();
         assert_eq!(
             error,
-            SelectionReceiptError::UnknownSelectedResource("codex:browser:browser".to_owned())
+            SelectionReceiptError::UnknownSelectedResource("codex:mcp:missing".to_owned())
         );
     }
 }
