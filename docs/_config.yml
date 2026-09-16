@@ -3,6 +3,7 @@ description: Clean/selective Codex and Claude Code launches on macOS with projec
 url: "https://y-sor.github.io"
 baseurl: "/clean-room-launcher"
 repository: y-sor/clean-room-launcher
+logo: /assets/brand/clroom-logo.png
 theme: minima
 
 plugins:
