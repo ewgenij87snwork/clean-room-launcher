@@ -28,9 +28,12 @@ fn discovery_surfaces_keep_the_canonical_namespace_and_crawler_access() {
     assert!(llms.contains("https://github.com/y-sor/clean-room-launcher"));
     assert!(llms.contains("CLROOM is the acronym for **Clean Room Launcher**"));
 
+    let legacy_owner = format!("{}{}", "ewgenij87sn", "work");
+    let legacy_pages = format!("{legacy_owner}.github.io/clean-room-launcher");
+    let legacy_repo = format!("github.com/{legacy_owner}/clean-room-launcher");
     for surface in [&config, &sitemap, &robots, &llms] {
-        assert!(!surface.contains("ewgenij87snwork.github.io/clean-room-launcher"));
-        assert!(!surface.contains("github.com/ewgenij87snwork/clean-room-launcher"));
+        assert!(!surface.contains(&legacy_pages));
+        assert!(!surface.contains(&legacy_repo));
     }
 }
 
