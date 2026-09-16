@@ -149,18 +149,18 @@ jobs:
           provider_root="$RUNNER_TEMP/clroom-providers"
           mkdir -p "$provider_root"
           npm pack --ignore-scripts --silent --pack-destination "$provider_root" @openai/codex@0.154.0
-          npm pack --ignore-scripts --silent --pack-destination "$provider_root" @anthropic-ai/claude-code@2.1.263
+          npm pack --ignore-scripts --silent --pack-destination "$provider_root" @anthropic-ai/claude-code@2.1.272
           expected_codex='FV/x1OHXYv/ifjf3mXj9ThTTAWcUZN6cGIRQRhRxkKNOPuImu1WW0c8ev1vUkE9XGH90dEnYG1tBjIkxRikg0w=='
-          expected_claude='kvvBK6/69iTRYnq0TKVyxVZs1CxYCJGojshQSP+2qaDb66A2xtI4zbCuqkZUWLkFGmHSRqhFf/ATpzH2UNKcwg=='
+          expected_claude='sOwHBM69H8Zka3/D3rc2VNNemPYNlgfYTdhsoqPoXZdK5KcKQlzoue4asJ2RVc+tGb/Pz1qxjVV9nVJQ87W7Ng=='
           for item in "$provider_root"/*.tgz; do
             actual="$(openssl dgst -sha512 -binary "$item" | base64)"
             case "$(basename "$item")" in
               openai-codex-0.154.0.tgz) test "$actual" = "$expected_codex" ;;
-              anthropic-ai-claude-code-2.1.263.tgz) test "$actual" = "$expected_claude" ;;
+              anthropic-ai-claude-code-2.1.272.tgz) test "$actual" = "$expected_claude" ;;
               *) exit 1 ;;
             esac
           done
-          npm install --prefix "$provider_root" --no-save @openai/codex@0.154.0 @anthropic-ai/claude-code@2.1.263
+          npm install --prefix "$provider_root" --no-save @openai/codex@0.154.0 @anthropic-ai/claude-code@2.1.272
           codex_bin="$(find "$provider_root" -type f -perm -111 -name codex -print -quit)"
           claude_bin="$(find "$provider_root" -type f -perm -111 -name claude -print -quit)"
           test -n "$codex_bin" -a -n "$claude_bin"
@@ -337,7 +337,7 @@ jobs:
         run: |
           set -euo pipefail
           tag="$GITHUB_REF_NAME"
-          title="Clean Room Launcher $VERSION"
+          title="$GITHUB_REF_NAME — Clean Room Launcher"
           if gh release view "$tag" --json isDraft,isPrerelease,tagName >/tmp/clroom-release.json 2>/dev/null; then
             test "$(jq -r .isDraft /tmp/clroom-release.json)" = true || {
               echo "refusing to modify an already-published release" >&2

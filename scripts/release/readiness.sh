@@ -36,6 +36,14 @@ else
 fi
 
 ./scripts/check-public-boundary.sh --root "$root" || fail "PUBLIC_BOUNDARY"
+release_workflow=.github/workflows/release.yml
+release_candidate_workflow=.github/workflows/release-candidate.yml
+grep -Fq '@anthropic-ai/claude-code@2.1.272' "$release_workflow" || fail "RELEASE_CLAUDE_PIN"
+grep -Fq '@anthropic-ai/claude-code@2.1.272' "$release_candidate_workflow" || fail "READINESS_CLAUDE_PIN"
+if grep -Fq '@anthropic-ai/claude-code@2.1.263' "$release_workflow"; then
+  fail "STALE_RELEASE_CLAUDE_PIN"
+fi
+grep -Fq 'title="$GITHUB_REF_NAME — Clean Room Launcher"' "$release_workflow" || fail "RELEASE_TITLE_CONTRACT"
 if command -v shellcheck >/dev/null 2>&1; then
   shellcheck packaging/build-artifacts.sh scripts/release/readiness.sh scripts/release/check-browser-interface.sh scripts/release/qualify-claude-browser-e2e.sh install.sh || fail "SHELLCHECK"
 else
