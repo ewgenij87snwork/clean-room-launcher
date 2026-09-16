@@ -37,7 +37,7 @@ fn homepage_metadata_exposes_analytics_preview_and_free_app_facts() {
     let head = read("docs/_includes/head.html");
     assert!(head.contains("max-image-preview:large"));
     assert!(head.contains("\"@type\": \"SoftwareApplication\""));
-    assert!(head.contains("\"price\": \"0\""));
+    assert!(head.contains("\"price\": 0"));
     assert!(head.contains("static.cloudflareinsights.com/beacon.min.js"));
     assert!(head.contains("a18fd1827d4c48d2a22277f14eade9b2"));
 
