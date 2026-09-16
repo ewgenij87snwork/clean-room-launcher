@@ -16,6 +16,7 @@ pub enum SideEffectClass {
     BackgroundProcess,
     ExecutableSurface,
     ProviderSettings,
+    OtherProviderNative,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -58,7 +59,7 @@ pub fn build_selection_receipt(
         let resource = by_id
             .get(selected)
             .ok_or_else(|| SelectionReceiptError::UnknownSelectedResource(selected.clone()))?;
-        side_effect_classes.insert(side_effect_class(resource.resource.kind));
+        side_effect_classes.insert(side_effect_class(&resource.resource.kind));
     }
 
     Ok(SelectionReceipt {
@@ -68,18 +69,22 @@ pub fn build_selection_receipt(
     })
 }
 
-fn side_effect_class(kind: ResourceKind) -> SideEffectClass {
-    match kind {
-        ResourceKind::Skill => SideEffectClass::InstructionContext,
-        ResourceKind::Plugin => SideEffectClass::ProviderExtension,
-        ResourceKind::McpServer => SideEffectClass::ExternalToolServer,
-        ResourceKind::HookSet => SideEffectClass::LifecycleAutomation,
-        ResourceKind::Agent => SideEffectClass::DelegatedAgent,
-        ResourceKind::AppConnector => SideEffectClass::AuthorizedConnector,
-        ResourceKind::LspServer => SideEffectClass::LanguageServerProcess,
-        ResourceKind::Monitor => SideEffectClass::BackgroundProcess,
-        ResourceKind::PluginExecutable => SideEffectClass::ExecutableSurface,
-        ResourceKind::SettingsOverlay => SideEffectClass::ProviderSettings,
+/// Side-effect class is CLROOM-owned risk metadata. It is deliberately not a
+/// closed provider taxonomy: unknown/future provider-native kinds remain valid
+/// kernel data and are conservatively classified as `other_provider_native`.
+fn side_effect_class(kind: &ResourceKind) -> SideEffectClass {
+    match kind.as_str() {
+        "skill" => SideEffectClass::InstructionContext,
+        "plugin" => SideEffectClass::ProviderExtension,
+        "mcp" => SideEffectClass::ExternalToolServer,
+        "hook" => SideEffectClass::LifecycleAutomation,
+        "agent" => SideEffectClass::DelegatedAgent,
+        "app" => SideEffectClass::AuthorizedConnector,
+        "lsp" => SideEffectClass::LanguageServerProcess,
+        "monitor" => SideEffectClass::BackgroundProcess,
+        "bin" => SideEffectClass::ExecutableSurface,
+        "settings" => SideEffectClass::ProviderSettings,
+        _ => SideEffectClass::OtherProviderNative,
     }
 }
 
@@ -111,7 +116,7 @@ fn resolved_set_digest(selected_ids: &[String]) -> String {
 mod tests {
     use super::{build_selection_receipt, SelectionReceiptError, SideEffectClass};
     use crate::catalog::resource::{
-        ActivationPolicy, DiscoveryState, EnablementState, InstallationState,
+        ActivationPolicy, DiscoveryState, EnablementState, InstallationState, NativeKind,
         QualificationState, ResourceId, ResourceInfo, ResourceKind, ResourceOrigin,
         SelectionState,
     };
@@ -171,6 +176,20 @@ mod tests {
         );
         assert!(first.digest.starts_with("fnv1a64-v1:"));
         assert_eq!(first.digest.len(), "fnv1a64-v1:".len() + 16);
+    }
+
+    #[test]
+    fn receipt_classifies_future_native_kind_without_refusing_it() {
+        let future = resource(NativeKind::new("future_widget").unwrap(), "alpha");
+        let receipt = build_selection_receipt(
+            &plan(&["codex:future_widget:alpha"]),
+            &[future],
+        )
+        .unwrap();
+        assert_eq!(
+            receipt.side_effect_classes,
+            vec![SideEffectClass::OtherProviderNative]
+        );
     }
 
     #[test]

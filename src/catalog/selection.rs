@@ -219,7 +219,7 @@ fn resolve_targets(
         }
 
         let canonical = match target {
-            SelectionTarget::Exact { kind, id } => ResourceId::new(provider, *kind, id)
+            SelectionTarget::Exact { kind, id } => ResourceId::new(provider, kind.clone(), id)
                 .map_err(|_| SelectionError::InvalidSelector)?
                 .canonical(),
             SelectionTarget::All => unreachable!(),
@@ -243,7 +243,7 @@ fn all_effective_member(
         return false;
     }
 
-    if resource.resource.kind == ResourceKind::Skill
+    if resource.resource.kind.as_str() == "skill"
         && resource.origin == ResourceOrigin::User
         && global_skill_ids
             .is_some_and(|ids| !ids.contains(&resource.resource.id))
@@ -278,10 +278,10 @@ fn parse_value(value: &str) -> Result<Vec<SelectionTarget>, SelectionError> {
     members
         .split(',')
         .map(|member| {
-            ResourceId::new("selector", kind, member)
+            ResourceId::new("selector", kind.clone(), member)
                 .map_err(|_| SelectionError::InvalidSelector)?;
             Ok(SelectionTarget::Exact {
-                kind,
+                kind: kind.clone(),
                 id: member.to_owned(),
             })
         })
@@ -292,7 +292,7 @@ fn parse_value(value: &str) -> Result<Vec<SelectionTarget>, SelectionError> {
 mod tests {
     use super::{plan_selection, SelectionError, SelectionRequest, SelectionTarget};
     use crate::catalog::resource::{
-        ActivationPolicy, DiscoveryState, EnablementState, InstallationState,
+        ActivationPolicy, DiscoveryState, EnablementState, InstallationState, NativeKind,
         QualificationState, ResourceId, ResourceInfo, ResourceKind, ResourceOrigin,
         SelectionState,
     };
@@ -417,6 +417,20 @@ mod tests {
             plan_selection("codex", &request, &resources),
             Err(SelectionError::AtomicExclusionConflict(hook.to_owned()))
         );
+    }
+
+    #[test]
+    fn arbitrary_native_kind_is_kernel_data_not_an_enum_case() {
+        let kind = NativeKind::new("future_widget").unwrap();
+        let resources = vec![resource(kind.clone(), "alpha", &[], true)];
+        let mut request = SelectionRequest::default();
+        request.includes.insert(SelectionTarget::Exact {
+            kind,
+            id: "alpha".to_owned(),
+        });
+
+        let plan = plan_selection("codex", &request, &resources).unwrap();
+        assert_eq!(plan.selected[0].id, "codex:future_widget:alpha");
     }
 
     #[test]

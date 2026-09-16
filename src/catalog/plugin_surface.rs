@@ -20,6 +20,8 @@ pub enum ProviderPluginSemantics {
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
 pub struct PluginComponent {
+    /// Provider/manifest-owned component kind. This is open native data, not a
+    /// closed CLROOM ontology.
     pub kind: ResourceKind,
     pub id: String,
 }
@@ -368,7 +370,7 @@ fn valid_public_id(value: &str) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::{PluginComponent, ProviderPluginSemantics, inspect_plugin_surface};
+    use super::{inspect_plugin_surface, PluginComponent, ProviderPluginSemantics};
     use crate::catalog::resource::ResourceKind;
     use std::{
         fs,
@@ -436,14 +438,14 @@ mod tests {
             ResourceKind::HookSet,
             "SessionStart"
         ));
-        assert!(!codex.effective.iter().any(|item| matches!(
-            item.kind,
-            ResourceKind::McpServer | ResourceKind::AppConnector
-        )));
-        assert!(!claude.effective.iter().any(|item| matches!(
-            item.kind,
-            ResourceKind::McpServer | ResourceKind::AppConnector
-        )));
+        assert!(!codex
+            .effective
+            .iter()
+            .any(|item| matches!(item.kind.as_str(), "mcp" | "app")));
+        assert!(!claude
+            .effective
+            .iter()
+            .any(|item| matches!(item.kind.as_str(), "mcp" | "app")));
         let _ = fs::remove_dir_all(root);
     }
 
