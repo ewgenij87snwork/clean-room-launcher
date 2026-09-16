@@ -12,8 +12,8 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-BASE_URL = "https://ewgenij87snwork.github.io/clean-room-launcher"
-HOST = "ewgenij87snwork.github.io"
+BASE_URL = "https://y-sor.github.io/clean-room-launcher"
+HOST = "y-sor.github.io"
 INDEXNOW_ENDPOINT = "https://api.indexnow.org/indexnow"
 EXCLUDED = {"llms.txt"}
 SITE_WIDE_PREFIXES = ("docs/_config.yml", "docs/_includes/", "docs/_layouts/", "docs/_sass/")
