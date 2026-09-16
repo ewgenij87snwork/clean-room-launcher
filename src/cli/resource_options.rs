@@ -99,7 +99,7 @@ mod tests {
     fn claude_clean_default_disables_ambient_native_chrome_state() {
         assert_eq!(
             prepare(Provider::Claude, &strings(&["--model", "sonnet"])).unwrap(),
-            strings(&["--no-chrome", "--model", "sonnet"])
+            strings(&["--model", "sonnet", "--no-chrome"])
         );
     }
 
