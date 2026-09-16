@@ -2,21 +2,50 @@
 set -euo pipefail
 
 usage() {
-  echo "usage: $0 --provider-executable PATH --candidate PATH" >&2
+  echo "usage: $0 --provider-executable PATH --candidate PATH --source-head SHA --output PATH" >&2
   exit 2
 }
 
 provider_executable=
 candidate=
+source_head=
+output=
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --provider-executable) provider_executable=${2:-}; shift 2 ;;
     --candidate) candidate=${2:-}; shift 2 ;;
+    --source-head) source_head=${2:-}; shift 2 ;;
+    --output) output=${2:-}; shift 2 ;;
     *) usage ;;
   esac
 done
 
 [[ -x $provider_executable && -x $candidate ]] || usage
+[[ $source_head =~ ^[0-9a-f]{40,64}$ && -n $output ]] || usage
+command -v python3 >/dev/null 2>&1 || {
+  echo "BROWSER_E2E_BLOCKED: python3 unavailable" >&2
+  exit 1
+}
+command -v cargo >/dev/null 2>&1 || {
+  echo "BROWSER_E2E_BLOCKED: cargo unavailable" >&2
+  exit 1
+}
+command -v git >/dev/null 2>&1 || {
+  echo "BROWSER_E2E_BLOCKED: git unavailable" >&2
+  exit 1
+}
+
+repo_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)
+actual_head=$(git -C "$repo_root" rev-parse HEAD 2>/dev/null || true)
+[[ $actual_head == "$source_head" ]] || {
+  echo "BROWSER_E2E_BLOCKED: source HEAD does not match requested qualification head" >&2
+  exit 1
+}
+[[ -z $(git -C "$repo_root" status --porcelain --untracked-files=no) ]] || {
+  echo "BROWSER_E2E_BLOCKED: tracked source tree is not clean" >&2
+  exit 1
+}
+
 provider_executable="$(cd "$(dirname "$provider_executable")" && pwd -P)/$(basename "$provider_executable")"
 candidate="$(cd "$(dirname "$candidate")" && pwd -P)/$(basename "$candidate")"
 provider_version=$($provider_executable --version 2>/dev/null | sed -nE 's/.*([0-9]+\.[0-9]+\.[0-9]+).*/\1/p' | head -1)
@@ -24,10 +53,23 @@ provider_version=$($provider_executable --version 2>/dev/null | sed -nE 's/.*([0
   echo "BROWSER_E2E_BLOCKED: expected Claude Code 2.1.272; found ${provider_version:-unknown}" >&2
   exit 1
 }
-command -v python3 >/dev/null 2>&1 || {
-  echo "BROWSER_E2E_BLOCKED: python3 unavailable" >&2
+
+(
+  cd "$repo_root"
+  cargo build --locked --release --bin clroom >/dev/null
+)
+built_candidate="$repo_root/target/release/clroom"
+[[ -x $built_candidate ]] || {
+  echo "BROWSER_E2E_BLOCKED: exact-source candidate build is missing" >&2
   exit 1
 }
+candidate_digest=$(shasum -a 256 "$candidate" | awk '{print $1}')
+built_digest=$(shasum -a 256 "$built_candidate" | awk '{print $1}')
+[[ $candidate_digest == "$built_digest" ]] || {
+  echo "BROWSER_E2E_BLOCKED: candidate bytes do not match the exact clean source build" >&2
+  exit 1
+}
+provider_digest=$(shasum -a 256 "$provider_executable" | awk '{print $1}')
 
 root=$(mktemp -d "${TMPDIR:-/tmp}/clroom-browser-e2e.XXXXXX")
 server_pid=
@@ -49,7 +91,7 @@ result_file="$root/result.json"
 printf '%s\n' 'CLROOM SYNTHETIC RESUME' > "$resume"
 chmod 600 "$resume"
 
-fixture="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)/browser-e2e-fixture.py"
+fixture="$repo_root/scripts/release/browser-e2e-fixture.py"
 python3 "$fixture" \
   --port-file "$port_file" \
   --result-file "$result_file" \
@@ -121,4 +163,35 @@ if record != expected:
     raise SystemExit("unexpected synthetic qualification record")
 PY
 
-printf 'BROWSER_E2E_QUALIFICATION_PASS provider=claude version=%s scope=synthetic-local-form-upload\n' "$provider_version"
+mkdir -p "$(dirname "$output")"
+python3 - "$output" "$source_head" "$provider_version" "$provider_digest" "$candidate_digest" <<'PY'
+import json
+import os
+import sys
+from pathlib import Path
+
+out, source_head, provider_version, provider_digest, candidate_digest = sys.argv[1:]
+record = {
+    "schema_version": "clroom.browser-e2e-qualification.v1",
+    "qualification": "PASS",
+    "scope": "synthetic-local-form-upload",
+    "provider": "claude",
+    "provider_version": provider_version,
+    "provider_digest": provider_digest,
+    "clroom_source_head": source_head,
+    "candidate_digest": candidate_digest,
+    "browser_route": "portable-alias-to-claude-native-chrome",
+    "real_browser_interaction_observed": True,
+    "fixture_schema": "clroom.browser-e2e-fixture.v1",
+    "fixture_fields": ["email", "full_name", "resume"],
+    "fixture_resume_bytes": len(b"CLROOM SYNTHETIC RESUME\n"),
+}
+path = Path(out)
+temporary = path.with_name(path.name + f".tmp.{os.getpid()}")
+temporary.write_text(json.dumps(record, sort_keys=True, separators=(",", ":")) + "\n", encoding="utf-8")
+os.chmod(temporary, 0o600)
+os.replace(temporary, path)
+PY
+
+printf 'BROWSER_E2E_QUALIFICATION_PASS provider=claude version=%s scope=synthetic-local-form-upload source_head=%s candidate_sha256=%s\n' \
+  "$provider_version" "$source_head" "$candidate_digest"
