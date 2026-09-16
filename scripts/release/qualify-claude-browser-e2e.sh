@@ -78,6 +78,9 @@ prompt="Use the browser only for this local synthetic CLROOM qualification. Open
 
 cat >&2 <<'EOF'
 CLROOM_BROWSER_E2E_MANUAL_GATE
+This qualifies the portable CLROOM --with=browser alias as one provider-adapter resolution.
+For this exact Claude path, the alias resolves to Claude Code's native --chrome integration.
+The provider-native `clroom claude --chrome` route remains independently available and is not renamed by CLROOM.
 Prerequisites owned by Claude Code must already be satisfied:
 - direct Anthropic Pro/Max/Team/Enterprise authentication via /login;
 - Claude in Chrome extension 1.0.36+ installed and connected;
@@ -118,4 +121,4 @@ if record != expected:
     raise SystemExit("unexpected synthetic qualification record")
 PY
 
-printf 'BROWSER_E2E_QUALIFICATION_PASS provider=claude version=%s scope=synthetic-local-form-upload\n' "$provider_version"
+printf 'BROWSER_E2E_QUALIFICATION_PASS provider=claude version=%s surface=portable-alias resolution=native-chrome scope=synthetic-local-form-upload\n' "$provider_version"
