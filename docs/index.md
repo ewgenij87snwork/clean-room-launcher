@@ -26,4 +26,27 @@ Clean Room Launcher (CLROOM) launches the installed Codex or Claude Code CLI wit
 - [Frequently asked questions](faq.md)
 - [Current limitations](limitations.md)
 - [Threat model](threat-model.md)
-- [Install CLROOM](install.md)
+- [Installation](install.md)
+- [Upgrade, roll back, and remove](upgrade-rollback.md)
+
+## Start from the problem, not the product name
+
+If you only remember a symptom — old instructions, too many skills, a project skill that still appears, `--safe-mode`, `--bare`, `--restricted`, `CODEX_HOME`, `AGENTS.md`, `CLAUDE.md`, a hook firing, a runner spawning the provider, a wrong implementation path, or a clean baseline — use the [coding-agent configuration problem index](problem-index.md).
+
+The problem index groups real-world wording under canonical answers. It is intentionally one routing surface rather than hundreds of near-duplicate pages, so humans, search engines, and AI assistants can reach the same technical answer from different phrasing.
+
+## How these docs are written
+
+These pages separate:
+
+1. what Codex or Claude Code does natively;
+2. what current CLROOM source and tests establish;
+3. what CLROOM does **not** claim;
+4. what still needs runtime verification.
+
+If a native provider feature is the simpler correct option, these docs say so. Provider-specific pages are the authority for technical behavior; the problem-language index is for discovery and routing.
+
+Machine-readable discovery surfaces are available at [`/llms.txt`](llms.txt) and [`/sitemap.xml`](sitemap.xml). The Markdown source remains public in the [CLROOM repository](https://github.com/y-sor/clean-room-launcher).
+
+Last structured provider-doc review: **2026-09-07**.  
+Last discovery architecture review: **2026-09-16**.
