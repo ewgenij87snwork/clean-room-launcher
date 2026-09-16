@@ -234,6 +234,8 @@ fn analyze(
                 | "--dangerously-skip-permissions"
                 | "--allow-dangerously-skip-permissions" => Some("permissions/sandbox"),
                 "--plugin-dir" | "--agents" | "--hooks" => Some("plugin/hook/agent"),
+                "--chrome" => Some("browser"),
+                "--no-chrome" => None,
                 "--model" => {
                     model_choice = true;
                     None
@@ -374,6 +376,25 @@ mod tests {
             );
             assert_eq!(contract.boundary, BoundaryState::Unknown, "flag={flag}");
         }
+    }
+
+    #[test]
+    fn claude_browser_flag_expands_boundary_and_disable_is_clean() {
+        let enabled = LaunchContract::claude(
+            &["--chrome".to_owned()],
+            Path::new("/tmp/view"),
+            Presence::Absent,
+        );
+        assert_eq!(enabled.boundary, BoundaryState::Expanded);
+        assert_eq!(enabled.boundary_controls, vec!["browser"]);
+
+        let disabled = LaunchContract::claude(
+            &["--no-chrome".to_owned()],
+            Path::new("/tmp/view"),
+            Presence::Absent,
+        );
+        assert_eq!(disabled.boundary, BoundaryState::Clean);
+        assert!(disabled.boundary_controls.is_empty());
     }
 
     #[test]

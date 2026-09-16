@@ -29,7 +29,7 @@ while IFS= read -r file; do
   relative=${file#"$root"/}
   case "$relative" in
     AGENTS.md|README.md|Cargo.toml|Cargo.lock|rust-toolchain.toml|LICENSE|SECURITY.md|GOVERNANCE.md|CHANGELOG.md|deny.toml|install.sh|.gitignore|.github/CODEOWNERS|.github/FUNDING.yml|.github/workflows/ci.yml|.github/workflows/release.yml|.github/workflows/release-candidate.yml|.github/workflows/indexnow.yml|schemas/canonical-json-profile.md) ;;
-    src/*|docs/*|packaging/*|qualification/*|schemas/contracts/*|schemas/release/*|fixtures/contracts/*|fixtures/core/*|fixtures/catalog/*|fixtures/cli/*|fixtures/adapters/*|adapters/declarations/*|tests/contracts/*|tests/core/*|tests/catalog/*|tests/cli.rs|tests/cli/*|tests/fixtures/*|tests/public_identity.rs|tests/release_system.rs|tests/adapters.rs|tests/adapters/*|tests/packaging/*|tests/release/*|controls/*|scripts/check-public-boundary.sh|scripts/check-control-coverage.rb|scripts/indexnow_changed_urls.py|scripts/probe/*|scripts/release/*|scripts/release-build/*|reports/contracts/*|reports/release/*|site/*) ;;
+    src/*|docs/*|packaging/*|qualification/*|schemas/contracts/*|schemas/release/*|fixtures/contracts/*|fixtures/core/*|fixtures/catalog/*|fixtures/cli/*|fixtures/adapters/*|adapters/declarations/*|tests/contracts/*|tests/core/*|tests/catalog/*|tests/cli.rs|tests/cli/*|tests/fixtures/*|tests/public_identity.rs|tests/readme_plaque.rs|tests/release_system.rs|tests/adapters.rs|tests/adapters/*|tests/packaging/*|tests/release/*|scripts/check-public-boundary.sh|scripts/indexnow_changed_urls.py|scripts/probe/*|scripts/release/*|scripts/release-build/*|reports/contracts/*|reports/release/*|site/*) ;;
     *) echo "UNALLOWLISTED_PUBLIC_PATH:$relative" >&2; exit 11 ;;
   esac
 
@@ -59,11 +59,11 @@ while IFS= read -r file; do
     exit 15
   fi
   case "$relative" in
-    # Historical traceability and the release gate's negative detector are the
-    # only accepted legacy-identity surfaces.
-    scripts/release/readiness.sh|controls/v0.1-execution-map.tsv) ;;
+    # The release readiness gate contains a split legacy-name detector by design;
+    # no product/control artifact is grandfathered by this exception.
+    scripts/release/readiness.sh) ;;
     *)
-      if LC_ALL=C grep -E -i -q 'task[[:space:]]*seal' "$file"; then
+      if LC_ALL=C grep -E -i -q 'task[[:space:]-]*seal' "$file"; then
         echo "LEGACY_PRODUCT_IDENTITY" >&2
         exit 16
       fi

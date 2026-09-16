@@ -5,6 +5,8 @@ mod claude_launch;
 #[allow(clippy::duplicate_mod)] // Real cli::run is imported to test lazy argv consumption.
 #[path = "../src/cli/mod.rs"]
 mod cli_entry;
+#[path = "cli/codex_workspace_conflict.rs"]
+mod codex_workspace_conflict;
 #[allow(clippy::duplicate_mod)] // consent.rs is also nested under the real CLI module above.
 #[path = "cli/consent_security.rs"]
 mod consent_security;
@@ -18,6 +20,8 @@ mod first_screen;
 mod foreground_process;
 #[path = "cli/help.rs"]
 mod help;
+#[path = "cli/info.rs"]
+mod info;
 #[path = "cli/isolated_codex_launch.rs"]
 mod isolated_codex_launch;
 #[path = "cli/isolated_launch_screen.rs"]

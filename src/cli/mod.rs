@@ -3,10 +3,12 @@ pub(crate) mod consent;
 mod dispatch;
 mod doctor;
 mod help;
+mod info;
 mod launch_contract;
 mod output;
 mod parser;
 mod process;
+mod resource_options;
 mod screen;
 mod skill_sets;
 mod starts;
@@ -78,6 +80,7 @@ pub fn run(invoked_as: &str, args: impl IntoIterator<Item = String>) -> ExitCode
         if format != "json" {
             return run_local(invoked_as, vec![first, format]);
         }
+        let mut local_args = vec![first, format];
         if let Some(command) = match next_argument(&mut source) {
             Ok(argument) => argument,
             Err(exit) => return exit,
@@ -85,9 +88,18 @@ pub fn run(invoked_as: &str, args: impl IntoIterator<Item = String>) -> ExitCode
             if let Some(exit) = external_prefix(&command) {
                 return exit;
             }
-            return run_local(invoked_as, vec![first, format, command]);
+            let collect_tail = command == "info";
+            local_args.push(command);
+            if collect_tail {
+                while let Some(argument) = match next_argument(&mut source) {
+                    Ok(argument) => argument,
+                    Err(exit) => return exit,
+                } {
+                    local_args.push(argument);
+                }
+            }
         }
-        return run_local(invoked_as, vec![first, format]);
+        return run_local(invoked_as, local_args);
     }
 
     match local_prefix(first, &mut source) {
@@ -114,6 +126,13 @@ fn run_codex(source: &mut impl Iterator<Item = String>) -> ExitCode {
     } {
         args.push(argument);
     }
+    let args = match resource_options::prepare(resource_options::Provider::Codex, &args) {
+        Ok(args) => args,
+        Err(message) => {
+            eprintln!("{message}");
+            return ExitCode::from(2);
+        }
+    };
     let (selection_terms, provider_args, pass_env) = match select_codex_options(&args) {
         Ok(options) => options,
         Err(message) => {
@@ -148,6 +167,13 @@ fn run_claude(source: &mut impl Iterator<Item = String>) -> ExitCode {
     } {
         args.push(argument);
     }
+    let args = match resource_options::prepare(resource_options::Provider::Claude, &args) {
+        Ok(args) => args,
+        Err(message) => {
+            eprintln!("{message}");
+            return ExitCode::from(2);
+        }
+    };
     let (selection_terms, provider_args, pass_env) = match select_provider_options(&args) {
         Ok(options) => options,
         Err(message) => {
@@ -529,6 +555,13 @@ fn local_prefix(
     first: String,
     source: &mut impl Iterator<Item = String>,
 ) -> Result<Vec<String>, ExitCode> {
+    if first == "info" {
+        let mut args = vec![first];
+        while let Some(argument) = next_argument(source)? {
+            args.push(argument);
+        }
+        return Ok(args);
+    }
     let additional = match first.as_str() {
         "help" | "--help" | "-h" | "explain" | "inspect" => 1,
         "doctor" | "start" => 2,
@@ -580,6 +613,18 @@ fn run_local(invoked_as: &str, args: Vec<String>) -> ExitCode {
             println!("{}", output::guided_json());
             return ExitCode::SUCCESS;
         }
+        if args.first().is_some_and(|argument| argument == "info") {
+            return match info::run(&args[1..], output::Mode::Json) {
+                Ok(report) => {
+                    println!("{report}");
+                    ExitCode::SUCCESS
+                }
+                Err(message) => {
+                    eprintln!("{message}");
+                    ExitCode::from(2)
+                }
+            };
+        }
         eprintln!(
             "OUTPUT_UNSUPPORTED_FOR_COMMAND: {}; use human output",
             args[0]
@@ -627,6 +672,13 @@ fn run_local(invoked_as: &str, args: Vec<String>) -> ExitCode {
                 }
             }
         }
+        parser::Command::Info => match info::run(&args[1..], output::Mode::Human) {
+            Ok(report) => println!("{report}"),
+            Err(message) => {
+                eprintln!("{message}");
+                return ExitCode::from(2);
+            }
+        },
         parser::Command::Doctor => match doctor::run(&args[1..]) {
             Ok(report) => println!("{report}"),
             Err(message) => {

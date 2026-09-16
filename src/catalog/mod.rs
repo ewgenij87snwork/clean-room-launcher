@@ -5,8 +5,12 @@ pub mod level_a;
 pub mod level_b;
 pub mod manifest;
 pub mod pipeline;
+pub mod plugin_surface;
 pub mod projection;
 pub mod protection;
+pub mod resource;
+pub mod selection;
+pub mod selection_receipt;
 pub mod sources;
 
 #[cfg(test)]

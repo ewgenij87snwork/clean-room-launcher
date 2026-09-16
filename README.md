@@ -120,7 +120,7 @@ summary of the active filesystem restrictions:
 - developer instructions and notifications are cleared by default.
 
 ```text
-╓──○──╖ ╭─ CLEAN ROOM ─ v0.2.0 ─╮
+╓──○──╖ ╭─ CLEAN ROOM ─ v0.2.1 ─────────╮
 ║░░░░░║⠒│                               │
 ║░░░░░║⠒│     Global AGENTS.md  off     │
 ║░░░░░║⠒│     Global skills    3 on     │
