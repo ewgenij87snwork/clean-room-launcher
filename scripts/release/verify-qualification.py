@@ -16,7 +16,7 @@ expected_scope = "real-provider-interactive-startup-no-model" if provider == "co
 if record["scope"] != expected_scope or not record["real_provider_executed"] or record["fake_provider"] or record["synthetic_ambient_config_applied"] is not False: fail("provider-evidence")
 if provider == "codex" and record["launch_path"] != "clroom codex --no-alt-screen (PTY)": fail("interactive-path")
 if provider == "codex" and record["exit_class"] != "interactive-provider-observed": fail("provider-observation")
-if record["provider"] != provider or record["provider_version"] not in {"0.154.0", "2.1.263"}: fail("provider-version")
+if record["provider"] != provider or record["provider_version"] not in {"0.154.0", "2.1.272"}: fail("provider-version")
 if record["clroom_source_head"] != source or record["release_version"] != version: fail("source-version")
 if not record["synthetic_ambient_config_present"] or record["synthetic_ambient_config_applied"]: fail("ambient-config")
 if not re.fullmatch(r"[0-9a-f]{64}", record["candidate_digest"]): fail("candidate-digest")
