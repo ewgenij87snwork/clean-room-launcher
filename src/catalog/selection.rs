@@ -8,7 +8,6 @@ use std::collections::{BTreeMap, BTreeSet};
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum SelectionTarget {
-    Browser,
     All,
     Exact { kind: ResourceKind, id: String },
 }
@@ -220,9 +219,6 @@ fn resolve_targets(
         }
 
         let canonical = match target {
-            SelectionTarget::Browser => ResourceId::new(provider, ResourceKind::Browser, "browser")
-                .map_err(|_| SelectionError::InvalidSelector)?
-                .canonical(),
             SelectionTarget::Exact { kind, id } => ResourceId::new(provider, *kind, id)
                 .map_err(|_| SelectionError::InvalidSelector)?
                 .canonical(),
@@ -264,10 +260,8 @@ fn all_effective_member(
 }
 
 fn parse_value(value: &str) -> Result<Vec<SelectionTarget>, SelectionError> {
-    match value {
-        "browser" => return Ok(vec![SelectionTarget::Browser]),
-        "all" => return Ok(vec![SelectionTarget::All]),
-        _ => {}
+    if value == "all" {
+        return Ok(vec![SelectionTarget::All]);
     }
 
     let (kind, members) = if let Some(members) = value.strip_prefix("plugin:") {
@@ -332,21 +326,26 @@ mod tests {
     }
 
     #[test]
-    fn grammar_parses_portable_and_exact_targets_deterministically() {
+    fn grammar_parses_exact_targets_deterministically() {
         let mut request = SelectionRequest::default();
-        request.include_value("browser").unwrap();
         request
-            .include_value("plugin:chrome@bundled,computer-use@bundled")
+            .include_value("plugin:alpha@bundled,beta@bundled")
             .unwrap();
         request.exclude_value("mcp:ambient").unwrap();
-        assert!(request.includes.contains(&SelectionTarget::Browser));
-        assert_eq!(request.includes.len(), 3);
+        assert_eq!(request.includes.len(), 2);
         assert_eq!(request.excludes.len(), 1);
     }
 
     #[test]
-    fn grammar_rejects_empty_unknown_and_whitespace_members() {
-        for value in ["", "plugin:", "mcp:a,,b", "plugin:two words", "hook:x"] {
+    fn grammar_rejects_capability_aliases_and_malformed_members() {
+        for value in [
+            "",
+            "browser",
+            "plugin:",
+            "mcp:a,,b",
+            "plugin:two words",
+            "hook:x",
+        ] {
             let mut request = SelectionRequest::default();
             assert_eq!(
                 request.include_value(value),
@@ -357,44 +356,49 @@ mod tests {
 
     #[test]
     fn dependency_closure_reuses_existing_resolver() {
-        let plugin = "codex:plugin:chrome@openai-bundled";
+        let dependency = "codex:mcp:helper";
         let resources = vec![
-            resource(ResourceKind::Plugin, "chrome@openai-bundled", &[], true),
-            resource(ResourceKind::Browser, "browser", &[plugin], true),
+            resource(ResourceKind::McpServer, "helper", &[], true),
+            resource(ResourceKind::Plugin, "compound@market", &[dependency], true),
         ];
         let mut request = SelectionRequest::default();
-        request.include_value("browser").unwrap();
+        request.include_value("plugin:compound@market").unwrap();
 
         let plan = plan_selection("codex", &request, &resources).unwrap();
+        let ids = plan
+            .selected
+            .iter()
+            .map(|resource| resource.id.as_str())
+            .collect::<Vec<_>>();
+        assert!(ids.contains(&"codex:plugin:compound@market"));
+        assert!(ids.contains(&dependency));
+        let dependency_record = plan
+            .selected
+            .iter()
+            .find(|resource| resource.id == dependency)
+            .unwrap();
         assert_eq!(
-            plan.selected
-                .iter()
-                .map(|resource| resource.id.as_str())
-                .collect::<Vec<_>>(),
-            vec!["codex:browser:browser", plugin]
-        );
-        assert_eq!(
-            plan.selected[1].reason_chain,
-            vec!["codex:browser:browser", plugin]
+            dependency_record.reason_chain,
+            vec!["codex:plugin:compound@market", dependency]
         );
     }
 
     #[test]
     fn exclusion_wins_but_required_exclusion_fails_closed() {
-        let plugin = "codex:plugin:chrome@openai-bundled";
+        let dependency = "codex:mcp:helper";
         let resources = vec![
-            resource(ResourceKind::Plugin, "chrome@openai-bundled", &[], true),
-            resource(ResourceKind::Browser, "browser", &[plugin], true),
+            resource(ResourceKind::McpServer, "helper", &[], true),
+            resource(ResourceKind::Plugin, "compound@market", &[dependency], true),
         ];
         let mut request = SelectionRequest::default();
-        request.include_value("browser").unwrap();
-        request
-            .exclude_value("plugin:chrome@openai-bundled")
-            .unwrap();
+        request.include_value("plugin:compound@market").unwrap();
+        request.exclude_value("mcp:helper").unwrap();
 
         assert_eq!(
             plan_selection("codex", &request, &resources),
-            Err(SelectionError::RequiredDependencyRefused(plugin.to_owned()))
+            Err(SelectionError::RequiredDependencyRefused(
+                dependency.to_owned()
+            ))
         );
     }
 
@@ -424,24 +428,24 @@ mod tests {
 
     #[test]
     fn unqualified_requested_resource_never_degrades_to_launch() {
-        let resources = vec![resource(ResourceKind::Browser, "browser", &[], false)];
+        let resources = vec![resource(ResourceKind::Plugin, "demo@market", &[], false)];
         let mut request = SelectionRequest::default();
-        request.include_value("browser").unwrap();
+        request.include_value("plugin:demo@market").unwrap();
 
         assert_eq!(
             plan_selection("codex", &request, &resources),
             Err(SelectionError::NotSelectable(
-                "codex:browser:browser".to_owned()
+                "codex:plugin:demo@market".to_owned()
             ))
         );
     }
 
     #[test]
     fn all_expands_only_effective_installed_global_activation_resources() {
-        let mut global = resource(ResourceKind::Browser, "browser", &[], true);
+        let mut global = resource(ResourceKind::Plugin, "active@market", &[], true);
         global.activation_policy = ActivationPolicy::ProviderNative;
 
-        let mut disabled = resource(ResourceKind::Plugin, "disabled", &[], true);
+        let mut disabled = resource(ResourceKind::Plugin, "disabled@market", &[], true);
         disabled.provider_enablement = EnablementState::Disabled;
 
         let mut project = resource(ResourceKind::Skill, "project", &[], true);
@@ -465,7 +469,7 @@ mod tests {
                 .iter()
                 .map(|resource| resource.id.as_str())
                 .collect::<Vec<_>>(),
-            vec!["codex:browser:browser"]
+            vec!["codex:plugin:active@market"]
         );
     }
 
@@ -509,8 +513,8 @@ mod tests {
     #[test]
     fn all_fails_closed_on_effective_unqualified_member() {
         let resources = vec![
-            resource(ResourceKind::Browser, "browser", &[], true),
-            resource(ResourceKind::Plugin, "ambient", &[], false),
+            resource(ResourceKind::Plugin, "active@market", &[], true),
+            resource(ResourceKind::Plugin, "ambient@market", &[], false),
         ];
         let mut request = SelectionRequest::default();
         request.include_value("all").unwrap();
@@ -518,7 +522,7 @@ mod tests {
         assert_eq!(
             plan_selection("codex", &request, &resources),
             Err(SelectionError::AllEffectiveMemberUnqualified(
-                "codex:plugin:ambient".to_owned()
+                "codex:plugin:ambient@market".to_owned()
             ))
         );
     }
@@ -526,12 +530,12 @@ mod tests {
     #[test]
     fn without_wins_over_all_including_unqualified_members() {
         let resources = vec![
-            resource(ResourceKind::Browser, "browser", &[], true),
-            resource(ResourceKind::Plugin, "ambient", &[], false),
+            resource(ResourceKind::Plugin, "active@market", &[], true),
+            resource(ResourceKind::Plugin, "ambient@market", &[], false),
         ];
         let mut request = SelectionRequest::default();
         request.include_value("all").unwrap();
-        request.exclude_value("plugin:ambient").unwrap();
+        request.exclude_value("plugin:ambient@market").unwrap();
 
         let plan = plan_selection("codex", &request, &resources).unwrap();
         assert_eq!(
@@ -539,8 +543,8 @@ mod tests {
                 .iter()
                 .map(|resource| resource.id.as_str())
                 .collect::<Vec<_>>(),
-            vec!["codex:browser:browser"]
+            vec!["codex:plugin:active@market"]
         );
-        assert_eq!(plan.excluded, vec!["codex:plugin:ambient"]);
+        assert_eq!(plan.excluded, vec!["codex:plugin:ambient@market"]);
     }
 }
