@@ -67,7 +67,7 @@ fn command(home: &Path, project: &Path, bin: &Path) -> Command {
 }
 
 #[test]
-fn normalized_browser_selector_refuses_unqualified_claude_before_provider_birth() {
+fn portable_browser_alias_refuses_unqualified_claude_before_provider_birth() {
     let (_root, home, project, bin) = fixture("2.1.223");
     let capture = project.join("provider-argv");
 
@@ -84,7 +84,7 @@ fn normalized_browser_selector_refuses_unqualified_claude_before_provider_birth(
 }
 
 #[test]
-fn normalized_browser_selector_reaches_exact_qualified_claude_tuple() {
+fn portable_browser_alias_reaches_exact_qualified_claude_tuple() {
     let (_root, home, project, bin) = fixture("2.1.272");
     let capture = project.join("provider-argv");
 
@@ -99,7 +99,7 @@ fn normalized_browser_selector_reaches_exact_qualified_claude_tuple() {
 }
 
 #[test]
-fn raw_provider_chrome_flag_keeps_existing_passthrough_semantics() {
+fn provider_native_chrome_flag_keeps_direct_passthrough_semantics() {
     let (_root, home, project, bin) = fixture("2.1.223");
     let capture = project.join("provider-argv");
 
