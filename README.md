@@ -5,6 +5,13 @@
 <h1 align="center">Clean Room Launcher (CLROOM)</h1>
 
 <p align="center">
+  <a href="https://github.com/ewgenij87snwork/clean-room-launcher/actions/workflows/ci.yml"><img src="https://github.com/ewgenij87snwork/clean-room-launcher/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"></a>
+  <a href="https://github.com/ewgenij87snwork/clean-room-launcher/releases/latest"><img src="https://img.shields.io/github/v/release/ewgenij87snwork/clean-room-launcher?display_name=tag&sort=semver" alt="Latest release"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/ewgenij87snwork/clean-room-launcher" alt="License"></a>
+  <a href="docs/install.md"><img src="https://img.shields.io/badge/platform-macOS%20Apple%20Silicon-lightgrey?logo=apple" alt="macOS Apple Silicon"></a>
+</p>
+
+<p align="center">
   <a href="https://ewgenij87snwork.github.io/clean-room-launcher/">Documentation →</a> ·
   <a href="docs/demo.md">Read the clean-launch walkthrough →</a>
 </p>
