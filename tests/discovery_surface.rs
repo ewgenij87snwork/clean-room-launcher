@@ -15,6 +15,7 @@ fn discovery_surfaces_keep_the_canonical_namespace_and_crawler_access() {
     let sitemap = read("docs/sitemap.xml");
     assert!(sitemap.contains("permalink: /sitemap.xml"));
     assert!(sitemap.contains("page.url | absolute_url"));
+    assert!(sitemap.contains("page.sitemap == false"));
 
     let robots = read("docs/robots.txt");
     for agent in ["Googlebot", "Bingbot", "OAI-SearchBot", "Claude-SearchBot", "Claude-User"] {
