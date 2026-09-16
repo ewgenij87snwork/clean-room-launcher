@@ -104,7 +104,7 @@ Those limits are documented openly:
 
 CLROOM is open source under MPL-2.0.
 
-The v0.2.0 release supports Codex and Claude Code on macOS / Apple
+The current release supports Codex and Claude Code on macOS / Apple
 Silicon. For current provider/version details, use the repository and
 installation/limitations pages rather than copying a version number from an
 old article.

@@ -1,6 +1,7 @@
 ---
 layout: page
 title: Clean-launch walkthrough
+description: Step-by-step CLROOM walkthrough for starting Codex cleanly, selecting a global skill for one launch, and using non-interactive exec.
 permalink: /demo.html
 ---
 

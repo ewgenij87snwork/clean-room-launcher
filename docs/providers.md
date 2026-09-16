@@ -1,10 +1,11 @@
 ---
 layout: page
-title: Provider support in v0.2.0
+title: Provider support
+description: Current CLROOM provider support on macOS Apple Silicon for Codex and Claude Code, including minimum accepted versions and exact qualification targets.
 permalink: /providers.html
 ---
 
-The release has two supported provider paths:
+The current release has two supported provider paths:
 
 | Coding-agent CLI | Platform | Status |
 | --- | --- | --- |
@@ -36,9 +37,9 @@ exec-only enhancement.
 For Claude, the launcher creates one private session-scoped skill projection,
 binds it to the real Claude consumer process, and removes it on normal exit or
 after a later launch proves the owner dead. Live or unknown sessions are kept.
-The v0.2.0 release targets the interactive Claude path only for the exact
+The current release targets the interactive Claude path only for the exact
 version listed above. A Claude Code `-p`
-launch reached the provider and exited successfully during v0.2.0 release
+launch reached the provider and exited successfully during current release
 qualification, but its response-output semantics are not independently qualified here.
 
 The launcher does not install either provider, create an account, perform

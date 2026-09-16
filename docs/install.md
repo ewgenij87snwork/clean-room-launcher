@@ -1,6 +1,7 @@
 ---
 layout: page
-title: Install v0.2.0
+title: Install CLROOM
+description: Install the current Clean Room Launcher release on macOS Apple Silicon, verify the release archive, or install the exact release tag with Cargo.
 permalink: /install.html
 ---
 
@@ -29,8 +30,8 @@ Gatekeeper globally if local macOS policy refuses it.
 ## Manual release archive
 
 ```sh
-VERSION=v0.2.0
-ASSET=clean-room-launcher-v0.2.0-aarch64-apple-darwin.tar.gz
+VERSION=v0.2.1
+ASSET=clean-room-launcher-v0.2.1-aarch64-apple-darwin.tar.gz
 STAGE=$(mktemp -d "${TMPDIR:-/tmp}/clroom-archive.XXXXXX")
 trap 'rm -rf -- "$STAGE"' EXIT
 
@@ -63,7 +64,7 @@ other release assets.
 
 ```sh
 cargo install --git https://github.com/ewgenij87snwork/clean-room-launcher \
-  --tag v0.2.0 --locked
+  --tag v0.2.1 --locked
 ```
 
 The release is not published to crates.io.

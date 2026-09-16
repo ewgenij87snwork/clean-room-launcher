@@ -122,11 +122,11 @@ It can be, especially when one permanent personal-global agent setup does not fi
 
 ## Is CLROOM a VM, container, or network sandbox for untrusted code?
 
-No. Do not infer that from the product name. Read the existing threat model and limitations. The v0.2.0 release uses narrow macOS filesystem controls and is not a complete machine or network isolation product.
+No. Do not infer that from the product name. Read the existing threat model and limitations. The current release uses narrow macOS filesystem controls and is not a complete machine or network isolation product.
 
 ## What platforms are supported?
 
-The current v0.2.0 documentation covers macOS on Apple Silicon and names exact
+The current release documentation covers macOS on Apple Silicon and names exact
 provider qualification targets. Linux, Windows, and Intel macOS are not
 qualified by this release.
 

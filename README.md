@@ -5,6 +5,13 @@
 <h1 align="center">Clean Room Launcher (CLROOM)</h1>
 
 <p align="center">
+  <a href="https://github.com/ewgenij87snwork/clean-room-launcher/actions/workflows/ci.yml"><img src="https://github.com/ewgenij87snwork/clean-room-launcher/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"></a>
+  <a href="https://github.com/ewgenij87snwork/clean-room-launcher/releases/latest"><img src="https://img.shields.io/github/v/release/ewgenij87snwork/clean-room-launcher?display_name=tag&sort=semver" alt="Latest release"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/ewgenij87snwork/clean-room-launcher" alt="License"></a>
+  <a href="docs/install.md"><img src="https://img.shields.io/badge/platform-macOS%20Apple%20Silicon-lightgrey?logo=apple" alt="macOS Apple Silicon"></a>
+</p>
+
+<p align="center">
   <a href="https://ewgenij87snwork.github.io/clean-room-launcher/">Documentation →</a> ·
   <a href="docs/demo.md">Read the clean-launch walkthrough →</a>
 </p>
@@ -325,7 +332,7 @@ See the official [Claude Code CLI reference][claude-cli-reference] and
 
 ## Coding-agent support
 
-`v0.2.0` qualifies these macOS provider paths:
+The current release qualifies these macOS provider paths:
 
 | Coding agent and launch path | Platform | Status |
 |---|---|---|
@@ -335,7 +342,7 @@ See the official [Claude Code CLI reference][claude-cli-reference] and
 | Claude Code CLI `-p` response-output semantics | macOS / Apple Silicon | Not independently qualified |
 
 Linux and Windows are `NOT_QUALIFIED`. Intel macOS, Homebrew, crates.io,
-signing, and notarization are not qualified by `v0.2.0`.
+signing, and notarization are not qualified by the current release.
 
 Additional coding agents and platforms may be considered later, but this README
 makes no support claim for them.
@@ -432,7 +439,7 @@ Removing the binaries does not modify provider authentication.
 
 ## Project status
 
-`v0.2.0` is published for macOS on Apple Silicon. Its release artifacts are
+`v0.2.1` is published for macOS on Apple Silicon. Its release artifacts are
 integrity-verified, and its real-provider qualification is bound to the exact
 provider versions above. The macOS archive is unsigned and unnotarized.
 
@@ -444,7 +451,7 @@ External launchers can use `clroom-codex` or `clroom-claude` as their provider
 executable override. See the [agent runner guide](docs/agent-runners.md).
 
 See the
-[v0.2.0 GitHub release](https://github.com/ewgenij87snwork/clean-room-launcher/releases/tag/v0.2.0)
+[latest GitHub release](https://github.com/ewgenij87snwork/clean-room-launcher/releases/latest)
 for the archive and `SHA256SUMS`.
 
 ## Help improve Clean Room Launcher

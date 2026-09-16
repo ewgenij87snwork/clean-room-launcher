@@ -1,6 +1,7 @@
 ---
 layout: page
 title: Threat model
+description: CLROOM threat model covering launch isolation, skills and symlinks, provider drift, private-data leakage, release evidence, and residual risks.
 permalink: /threat-model.html
 ---
 
@@ -60,8 +61,8 @@ receipts.
 
 ## Residual risks
 
-- The v0.2.0 artifacts are unsigned and unnotarized, and no independent security
-  audit has been completed.
+- The current release artifacts are unsigned and unnotarized, and no independent
+  security audit has been completed.
 - The repository contains CODEOWNERS, but this document does not claim that
   repository-side enforcement is enabled. Private security-reporting
   availability must not be inferred from the public repository.
