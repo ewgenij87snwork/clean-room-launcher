@@ -84,4 +84,17 @@ fn tag_release_qualifies_the_exact_archive_before_upload() {
     );
 }
 
+#[test]
+fn browser_e2e_uses_the_unified_claude_route() {
+    let source = std::fs::read_to_string("scripts/release/qualify-claude-browser-e2e.sh").unwrap();
+    assert!(
+        source.contains("\"$candidate\" claude --with=browser -- \"$prompt\""),
+        "manual browser qualification must enter the unified launcher through the claude subcommand"
+    );
+    assert!(
+        !source.contains("\"$candidate\" --with=browser -- \"$prompt\""),
+        "launcher-owned browser options cannot be parsed before selecting the provider"
+    );
+}
+
 use std::os::unix::fs::PermissionsExt;
