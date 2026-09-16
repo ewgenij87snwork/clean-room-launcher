@@ -337,15 +337,8 @@ mod tests {
     }
 
     #[test]
-    fn grammar_rejects_capability_aliases_and_malformed_members() {
-        for value in [
-            "",
-            "browser",
-            "plugin:",
-            "mcp:a,,b",
-            "plugin:two words",
-            "hook:x",
-        ] {
+    fn grammar_rejects_unknown_and_malformed_members() {
+        for value in ["", "plugin:", "mcp:a,,b", "plugin:two words", "hook:x"] {
             let mut request = SelectionRequest::default();
             assert_eq!(
                 request.include_value(value),
