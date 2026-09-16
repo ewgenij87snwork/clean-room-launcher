@@ -149,10 +149,10 @@ mod tests {
         let id = ResourceId::new(
             "codex",
             ResourceKind::Plugin,
-            "chrome@openai-bundled",
+            "example@openai-bundled",
         )
         .unwrap();
-        assert_eq!(id.canonical(), "codex:plugin:chrome@openai-bundled");
+        assert_eq!(id.canonical(), "codex:plugin:example@openai-bundled");
     }
 
     #[test]
@@ -163,7 +163,7 @@ mod tests {
     }
 
     #[test]
-    fn catalog_does_not_model_browser_capability_as_a_resource_kind() {
+    fn current_catalog_kinds_serialize_stably() {
         let kinds = [
             ResourceKind::Skill,
             ResourceKind::Plugin,
