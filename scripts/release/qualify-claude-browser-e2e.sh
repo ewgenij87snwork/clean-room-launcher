@@ -121,4 +121,4 @@ if record != expected:
     raise SystemExit("unexpected synthetic qualification record")
 PY
 
-printf 'BROWSER_E2E_QUALIFICATION_PASS provider=claude version=%s surface=portable-alias resolution=native-chrome scope=synthetic-local-form-upload\n' "$provider_version"
+printf 'BROWSER_E2E_QUALIFICATION_PASS provider=claude version=%s scope=synthetic-local-form-upload\n' "$provider_version"
