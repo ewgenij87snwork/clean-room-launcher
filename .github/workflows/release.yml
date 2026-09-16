@@ -160,7 +160,9 @@ jobs:
               *) exit 1 ;;
             esac
           done
-          npm install --prefix "$provider_root" --no-save @openai/codex@0.154.0 @anthropic-ai/claude-code@2.1.272
+          npm install --prefix "$provider_root" --no-save --ignore-scripts \
+            "$provider_root/openai-codex-0.154.0.tgz" \
+            "$provider_root/anthropic-ai-claude-code-2.1.272.tgz"
           codex_bin="$(find "$provider_root" -type f -perm -111 -name codex -print -quit)"
           claude_bin="$(find "$provider_root" -type f -perm -111 -name claude -print -quit)"
           test -n "$codex_bin" -a -n "$claude_bin"
