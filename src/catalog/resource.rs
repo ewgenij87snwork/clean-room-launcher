@@ -8,7 +8,6 @@ pub enum ResourceKind {
     McpServer,
     HookSet,
     Agent,
-    Browser,
     AppConnector,
     LspServer,
     Monitor,
@@ -133,7 +132,6 @@ fn kind_name(kind: ResourceKind) -> &'static str {
         ResourceKind::McpServer => "mcp",
         ResourceKind::HookSet => "hook",
         ResourceKind::Agent => "agent",
-        ResourceKind::Browser => "browser",
         ResourceKind::AppConnector => "app",
         ResourceKind::LspServer => "lsp",
         ResourceKind::Monitor => "monitor",
@@ -165,14 +163,13 @@ mod tests {
     }
 
     #[test]
-    fn model_represents_every_required_resource_kind() {
+    fn catalog_does_not_model_capabilities_as_resource_kinds() {
         let kinds = [
             ResourceKind::Skill,
             ResourceKind::Plugin,
             ResourceKind::McpServer,
             ResourceKind::HookSet,
             ResourceKind::Agent,
-            ResourceKind::Browser,
             ResourceKind::AppConnector,
             ResourceKind::LspServer,
             ResourceKind::Monitor,
@@ -180,6 +177,6 @@ mod tests {
             ResourceKind::SettingsOverlay,
         ];
         let encoded = serde_json::to_value(kinds).unwrap();
-        assert_eq!(encoded.as_array().unwrap().len(), 11);
+        assert_eq!(encoded.as_array().unwrap().len(), 10);
     }
 }
