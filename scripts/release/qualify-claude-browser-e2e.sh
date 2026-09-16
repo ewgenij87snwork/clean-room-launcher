@@ -20,7 +20,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-[[ -x $provider_executable && -x $candidate ]] || usage
+[[ -x $provider_executable && -n $candidate ]] || usage
 [[ $source_head =~ ^[0-9a-f]{40,64}$ && -n $output ]] || usage
 command -v python3 >/dev/null 2>&1 || {
   echo "BROWSER_E2E_BLOCKED: python3 unavailable" >&2
@@ -47,7 +47,6 @@ actual_head=$(git -C "$repo_root" rev-parse HEAD 2>/dev/null || true)
 }
 
 provider_executable="$(cd "$(dirname "$provider_executable")" && pwd -P)/$(basename "$provider_executable")"
-candidate="$(cd "$(dirname "$candidate")" && pwd -P)/$(basename "$candidate")"
 provider_version=$($provider_executable --version 2>/dev/null | sed -nE 's/.*([0-9]+\.[0-9]+\.[0-9]+).*/\1/p' | head -1)
 [[ $provider_version == 2.1.272 ]] || {
   echo "BROWSER_E2E_BLOCKED: expected Claude Code 2.1.272; found ${provider_version:-unknown}" >&2
@@ -58,6 +57,11 @@ provider_version=$($provider_executable --version 2>/dev/null | sed -nE 's/.*([0
   cd "$repo_root"
   cargo build --locked --release --bin clroom >/dev/null
 )
+[[ -x $candidate ]] || {
+  echo "BROWSER_E2E_BLOCKED: candidate is missing after exact-source build" >&2
+  exit 1
+}
+candidate="$(cd "$(dirname "$candidate")" && pwd -P)/$(basename "$candidate")"
 built_candidate="$repo_root/target/release/clroom"
 [[ -x $built_candidate ]] || {
   echo "BROWSER_E2E_BLOCKED: exact-source candidate build is missing" >&2
@@ -84,6 +88,10 @@ cleanup() {
   esac
 }
 trap cleanup EXIT HUP INT TERM
+
+provider_bin="$root/provider-bin"
+mkdir -p "$provider_bin"
+ln -s "$provider_executable" "$provider_bin/claude"
 
 resume="$root/resume.txt"
 port_file="$root/port"
@@ -135,7 +143,7 @@ After the success marker is visible and Claude reports completion, exit the Clau
 EOF
 
 set +e
-"$candidate" --with=browser -- "$prompt"
+PATH="$provider_bin:${PATH:-/usr/bin:/bin}" "$candidate" --with=browser -- "$prompt"
 status=$?
 set -e
 [[ $status -eq 0 ]] || {
