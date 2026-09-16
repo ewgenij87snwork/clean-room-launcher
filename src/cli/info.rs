@@ -547,7 +547,6 @@ fn resource_kind_name(kind: ResourceKind) -> &'static str {
         ResourceKind::McpServer => "mcp",
         ResourceKind::HookSet => "hook",
         ResourceKind::Agent => "agent",
-        ResourceKind::Browser => "browser",
         ResourceKind::AppConnector => "app",
         ResourceKind::LspServer => "lsp",
         ResourceKind::Monitor => "monitor",
