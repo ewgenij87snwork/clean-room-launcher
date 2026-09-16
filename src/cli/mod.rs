@@ -418,7 +418,7 @@ fn launch_isolated_claude(
             );
         }
         return Err(
-            "CLROOM_RESOURCE_UNQUALIFIED: claude:browser:browser requires Claude Code 2.1.272 on macOS Apple Silicon in v0.3; continue locally"
+            "CLROOM_CAPABILITY_UNQUALIFIED: browser alias for Claude requires Claude Code 2.1.272 on macOS Apple Silicon in v0.3; continue locally"
                 .to_owned(),
         );
     }
