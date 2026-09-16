@@ -5,14 +5,14 @@
 <h1 align="center">Clean Room Launcher (CLROOM)</h1>
 
 <p align="center">
-  <a href="https://github.com/ewgenij87snwork/clean-room-launcher/actions/workflows/ci.yml"><img src="https://github.com/ewgenij87snwork/clean-room-launcher/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"></a>
-  <a href="https://github.com/ewgenij87snwork/clean-room-launcher/releases/latest"><img src="https://img.shields.io/github/v/release/ewgenij87snwork/clean-room-launcher?display_name=tag&sort=semver" alt="Latest release"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/ewgenij87snwork/clean-room-launcher" alt="License"></a>
+  <a href="https://github.com/y-sor/clean-room-launcher/actions/workflows/ci.yml"><img src="https://github.com/y-sor/clean-room-launcher/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"></a>
+  <a href="https://github.com/y-sor/clean-room-launcher/releases/latest"><img src="https://img.shields.io/github/v/release/y-sor/clean-room-launcher?display_name=tag&sort=semver" alt="Latest release"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/y-sor/clean-room-launcher" alt="License"></a>
   <a href="docs/install.md"><img src="https://img.shields.io/badge/platform-macOS%20Apple%20Silicon-lightgrey?logo=apple" alt="macOS Apple Silicon"></a>
 </p>
 
 <p align="center">
-  <a href="https://ewgenij87snwork.github.io/clean-room-launcher/">Documentation →</a> ·
+  <a href="https://y-sor.github.io/clean-room-launcher/">Documentation →</a> ·
   <a href="docs/demo.md">Read the clean-launch walkthrough →</a>
 </p>
 
@@ -151,7 +151,7 @@ Current release: macOS on Apple Silicon. Minimum accepted provider runtime:
 Codex CLI `0.147.0+` or Claude Code CLI `2.1.223+`.
 
 ```sh
-curl --proto '=https' --tlsv1.2 -fsSL https://github.com/ewgenij87snwork/clean-room-launcher/releases/latest/download/install.sh | sh
+curl --proto '=https' --tlsv1.2 -fsSL https://github.com/y-sor/clean-room-launcher/releases/latest/download/install.sh | sh
 ```
 
 The installer verifies the downloaded release archive against `SHA256SUMS` and
@@ -451,17 +451,17 @@ External launchers can use `clroom-codex` or `clroom-claude` as their provider
 executable override. See the [agent runner guide](docs/agent-runners.md).
 
 See the
-[latest GitHub release](https://github.com/ewgenij87snwork/clean-room-launcher/releases/latest)
+[latest GitHub release](https://github.com/y-sor/clean-room-launcher/releases/latest)
 for the archive and `SHA256SUMS`.
 
 ## Help improve Clean Room Launcher
 
 If Clean Room Launcher makes your coding-agent sessions easier to trust,
-[star the repository](https://github.com/ewgenij87snwork/clean-room-launcher).
+[star the repository](https://github.com/y-sor/clean-room-launcher).
 It helps other Codex and Claude Code users find it.
 
 Report bugs or request features in
-[GitHub Issues](https://github.com/ewgenij87snwork/clean-room-launcher/issues).
+[GitHub Issues](https://github.com/y-sor/clean-room-launcher/issues).
 For vulnerability reports, follow the private-reporting instructions below.
 
 ## Support CLROOM
