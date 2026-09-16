@@ -72,7 +72,7 @@ while IFS= read -r file; do
       fi
       ;;
   esac
-  if LC_ALL=C grep -F -q "$legacy_repo" "$file" || LC_ALL=C grep -F -q "$legacy_pages" "$file"; then
+  if LC_ALL=C grep -F -i -q "$legacy_repo" "$file" || LC_ALL=C grep -F -i -q "$legacy_pages" "$file"; then
     echo "LEGACY_REPOSITORY_NAMESPACE:$relative" >&2
     exit 17
   fi
