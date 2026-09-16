@@ -325,7 +325,7 @@ See the official [Claude Code CLI reference][claude-cli-reference] and
 
 ## Coding-agent support
 
-`v0.2.0` qualifies these macOS provider paths:
+The current release qualifies these macOS provider paths:
 
 | Coding agent and launch path | Platform | Status |
 |---|---|---|
@@ -335,7 +335,7 @@ See the official [Claude Code CLI reference][claude-cli-reference] and
 | Claude Code CLI `-p` response-output semantics | macOS / Apple Silicon | Not independently qualified |
 
 Linux and Windows are `NOT_QUALIFIED`. Intel macOS, Homebrew, crates.io,
-signing, and notarization are not qualified by `v0.2.0`.
+signing, and notarization are not qualified by the current release.
 
 Additional coding agents and platforms may be considered later, but this README
 makes no support claim for them.
@@ -432,7 +432,7 @@ Removing the binaries does not modify provider authentication.
 
 ## Project status
 
-`v0.2.0` is published for macOS on Apple Silicon. Its release artifacts are
+`v0.2.1` is published for macOS on Apple Silicon. Its release artifacts are
 integrity-verified, and its real-provider qualification is bound to the exact
 provider versions above. The macOS archive is unsigned and unnotarized.
 
@@ -444,7 +444,7 @@ External launchers can use `clroom-codex` or `clroom-claude` as their provider
 executable override. See the [agent runner guide](docs/agent-runners.md).
 
 See the
-[v0.2.0 GitHub release](https://github.com/ewgenij87snwork/clean-room-launcher/releases/tag/v0.2.0)
+[latest GitHub release](https://github.com/ewgenij87snwork/clean-room-launcher/releases/latest)
 for the archive and `SHA256SUMS`.
 
 ## Help improve Clean Room Launcher
