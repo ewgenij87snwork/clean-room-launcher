@@ -7,6 +7,9 @@ set -eu
 }
 
 root=$(cd "$2" && pwd -P)
+legacy_owner=$(printf '%s%s' 'ewgenij87sn' 'work')
+legacy_repo="$legacy_owner/clean-room-launcher"
+legacy_pages="$legacy_owner.github.io"
 
 if find "$root" \( -name .git -o -name target -o -name .clroom-dev -o -path "$root/reports/gates" -o -path "$root/scripts/gates" \) -prune -o -type l -print | grep -q .; then
   echo "SYMLINK_ESCAPE" >&2
@@ -69,6 +72,10 @@ while IFS= read -r file; do
       fi
       ;;
   esac
+  if LC_ALL=C grep -F -q "$legacy_repo" "$file" || LC_ALL=C grep -F -q "$legacy_pages" "$file"; then
+    echo "LEGACY_REPOSITORY_NAMESPACE:$relative" >&2
+    exit 17
+  fi
 done < "$inventory"
 
 cleanup
