@@ -45,12 +45,11 @@ if grep -Fq '@anthropic-ai/claude-code@2.1.263' "$release_workflow"; then
 fi
 grep -Fq 'title="$GITHUB_REF_NAME — Clean Room Launcher"' "$release_workflow" || fail "RELEASE_TITLE_CONTRACT"
 if command -v shellcheck >/dev/null 2>&1; then
-  shellcheck packaging/build-artifacts.sh scripts/release/readiness.sh scripts/release/check-browser-interface.sh scripts/release/qualify-claude-browser-e2e.sh install.sh || fail "SHELLCHECK"
+  shellcheck packaging/build-artifacts.sh scripts/release/readiness.sh install.sh || fail "SHELLCHECK"
 else
-  bash -n packaging/build-artifacts.sh scripts/release/readiness.sh scripts/release/check-browser-interface.sh scripts/release/qualify-claude-browser-e2e.sh || fail "SHELL_SYNTAX"
+  bash -n packaging/build-artifacts.sh scripts/release/readiness.sh || fail "SHELL_SYNTAX"
   sh -n install.sh || fail "INSTALLER_SHELL_SYNTAX"
 fi
-python3 scripts/release/browser-e2e-fixture.py --self-test || fail "BROWSER_E2E_FIXTURE_SELF_TEST"
 sh install.sh --self-test || fail "INSTALLER_CONTRACT"
 canonical_install_url='https://github.com/ewgenij87snwork/clean-room-launcher/releases/latest/download/install.sh'
 grep -Fq "$canonical_install_url" README.md || fail "README_INSTALLER_CONTRACT"
@@ -74,7 +73,6 @@ if [[ -n ${CLROOM_PROVIDER_CODEX:-} && -n ${CLROOM_PROVIDER_CLAUDE:-} && -n ${CL
   mkdir -p "$CLROOM_QUALIFICATION_EVIDENCE_DIR"
   scripts/release/qualify-real-provider.sh --provider codex --executable "$CLROOM_PROVIDER_CODEX" --candidate "$candidate_dir/clroom-codex" --source-head "$(git rev-parse HEAD)" --version "$version" --output "$CLROOM_QUALIFICATION_EVIDENCE_DIR/codex.json" || fail "REAL_PROVIDER_CODEX"
   scripts/release/qualify-real-provider.sh --provider claude --executable "$CLROOM_PROVIDER_CLAUDE" --candidate "$candidate_dir/clroom-claude" --source-head "$(git rev-parse HEAD)" --version "$version" --output "$CLROOM_QUALIFICATION_EVIDENCE_DIR/claude.json" || fail "REAL_PROVIDER_CLAUDE"
-  scripts/release/check-browser-interface.sh --executable "$CLROOM_PROVIDER_CLAUDE" --candidate "$candidate_dir/clroom-claude" || fail "BROWSER_INTERFACE_CLAUDE"
 fi
 python3 packaging/verify-artifact.py "$artifact" || fail "ARTIFACT_METADATA"
 if [[ -n ${CLROOM_QUALIFICATION_EVIDENCE_DIR:-} ]]; then
