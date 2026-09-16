@@ -167,7 +167,6 @@ fn run_claude(source: &mut impl Iterator<Item = String>) -> ExitCode {
     } {
         args.push(argument);
     }
-    let browser_qualification_required = claude_browser_qualification_required(&args);
     let args = match resource_options::prepare(resource_options::Provider::Claude, &args) {
         Ok(args) => args,
         Err(message) => {
@@ -182,12 +181,7 @@ fn run_claude(source: &mut impl Iterator<Item = String>) -> ExitCode {
             return ExitCode::from(2);
         }
     };
-    match launch_isolated_claude(
-        &selection_terms,
-        &provider_args,
-        &pass_env,
-        browser_qualification_required,
-    ) {
+    match launch_isolated_claude(&selection_terms, &provider_args, &pass_env) {
         Ok(exit) => exit,
         Err(message) => {
             eprintln!("{message}");
@@ -316,7 +310,6 @@ fn launch_isolated_claude(
     selection_terms: &[String],
     provider_args: &[String],
     pass_env: &[String],
-    browser_qualification_required: bool,
 ) -> Result<ExitCode, String> {
     let home = std::env::var_os("HOME").map(PathBuf::from).ok_or_else(|| {
         "CLROOM_CLAUDE_ISOLATION_INVALID: HOME is unavailable; continue locally".to_owned()
@@ -393,35 +386,6 @@ fn launch_isolated_claude(
             return Err(error);
         }
     };
-    if browser_qualification_required
-        && (identity.version != (2, 1, 272)
-            || identity.os != "macos"
-            || identity.arch != "aarch64")
-    {
-        contract.boundary = launch_contract::BoundaryState::NotLaunchable;
-        if std::io::stderr().is_terminal() {
-            eprintln!(
-                "{}",
-                screen::render_claude_preview(
-                    &current_project,
-                    projection.selected_global_skills,
-                )
-                .into_iter()
-                .chain(screen::render_launch_contract(
-                    contract.boundary_label(),
-                    contract.managed_label(),
-                    &contract.boundary_controls,
-                    contract.user_or_provider_model_choice,
-                ))
-                .collect::<Vec<_>>()
-                .join("\n")
-            );
-        }
-        return Err(
-            "CLROOM_CAPABILITY_UNQUALIFIED: browser alias for Claude requires Claude Code 2.1.272 on macOS Apple Silicon in v0.3; continue locally"
-                .to_owned(),
-        );
-    }
     if std::io::stderr().is_terminal() {
         eprintln!(
             "{}",
@@ -445,22 +409,6 @@ fn launch_isolated_claude(
         &identity,
         pass_env,
     )
-}
-
-fn claude_browser_qualification_required(args: &[String]) -> bool {
-    let mut launcher_options = true;
-    let mut included = false;
-    let mut excluded = false;
-    for argument in args {
-        if launcher_options && argument == "--" {
-            launcher_options = false;
-        } else if launcher_options && argument == "--with=browser" {
-            included = true;
-        } else if launcher_options && argument == "--without=browser" {
-            excluded = true;
-        }
-    }
-    included && !excluded
 }
 
 fn select_provider_options(
