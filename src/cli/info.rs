@@ -249,7 +249,7 @@ fn inspect(provider: Provider, targets: &[NativeTarget]) -> ProviderInfo {
 
     let native_entries = targets
         .iter()
-        .map(|target| inspect_plugin(provider, target, exact_tuple))
+        .map(|target| inspect_plugin(provider, target))
         .collect::<Vec<_>>();
     let conflicts = native_entries
         .iter()
@@ -333,7 +333,7 @@ fn browser_capability(
     }
 }
 
-fn inspect_plugin(provider: Provider, target: &NativeTarget, exact_tuple: bool) -> NativeEntryDetail {
+fn inspect_plugin(provider: Provider, target: &NativeTarget) -> NativeEntryDetail {
     let installation = locate_plugin(provider, &target.plugin_id);
     let (installation_state, discovery, root, mut conflicts, reason_code) = match installation {
         LocatedPlugin::Installed(root) => (
@@ -341,11 +341,7 @@ fn inspect_plugin(provider: Provider, target: &NativeTarget, exact_tuple: bool) 
             DiscoveryState::Discoverable,
             Some(root),
             Vec::new(),
-            if exact_tuple {
-                "PLUGIN_ACTIVATION_V04"
-            } else {
-                "PROVIDER_TUPLE_NOT_QUALIFIED"
-            },
+            "PLUGIN_ACTIVATION_V04",
         ),
         LocatedPlugin::NotInstalled => (
             InstallationState::NotInstalled,
@@ -370,21 +366,18 @@ fn inspect_plugin(provider: Provider, target: &NativeTarget, exact_tuple: bool) 
         ),
     };
 
-    let (declared_components, effective_components) = if exact_tuple {
-        root.as_deref()
-            .map(|root| inspect_plugin_surface(provider.plugin_semantics(), root))
-            .map(|result| match result {
-                Ok(surface) => (surface.declared, surface.effective),
-                Err(error) => {
-                    let blocker = plugin_surface_error_code(error).to_owned();
-                    conflicts.push(blocker);
-                    (Vec::new(), Vec::new())
-                }
-            })
-            .unwrap_or_default()
-    } else {
-        (Vec::new(), Vec::new())
-    };
+    let (declared_components, effective_components) = root
+        .as_deref()
+        .map(|root| inspect_plugin_surface(provider.plugin_semantics(), root))
+        .map(|result| match result {
+            Ok(surface) => (surface.declared, surface.effective),
+            Err(error) => {
+                let blocker = plugin_surface_error_code(error).to_owned();
+                conflicts.push(blocker);
+                (Vec::new(), Vec::new())
+            }
+        })
+        .unwrap_or_default();
 
     if installation_state == InstallationState::Installed && conflicts.is_empty() {
         conflicts.push(reason_code.to_owned());
