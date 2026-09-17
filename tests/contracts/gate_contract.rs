@@ -43,6 +43,8 @@ fn tag_release_primes_the_full_locked_graph_before_offline_notice_packaging() {
 #[test]
 fn tag_release_qualifies_the_exact_archive_before_upload() {
     let source = std::fs::read_to_string(".github/workflows/release.yml").unwrap();
+    let provisioner =
+        std::fs::read_to_string("scripts/release/provision-provider-canaries.sh").unwrap();
     let package = source
         .find("./packaging/build-artifacts.sh target/release-artifacts")
         .expect("release workflow must build the canonical archive");
@@ -68,8 +70,15 @@ fn tag_release_qualifies_the_exact_archive_before_upload() {
         source.contains(&release_version_guard),
         "provider qualification pins must fail closed unless explicitly reviewed for the packaged release version"
     );
-    assert!(source.contains("@openai/codex@0.154.0"));
-    assert!(source.contains("@anthropic-ai/claude-code@2.1.272"));
+    assert!(source.contains(
+        "./scripts/release/provision-provider-canaries.sh \"$RUNNER_TEMP/clroom-providers\" \"$GITHUB_ENV\""
+    ));
+    assert!(!source.contains("npm install"));
+    assert!(provisioner.contains("@openai/codex@0.154.0"));
+    assert!(provisioner.contains("@openai/codex@0.154.0-darwin-arm64"));
+    assert!(provisioner.contains("@anthropic-ai/claude-code@2.1.272"));
+    assert!(provisioner.contains("HP/vJCH/t2hB9Kg6hotN9UglClJ6/z584fal5lEP14C9gNAgAQS4/kTQC7l5V+BA3TqwDPwINSjul28cX8AYXg=="));
+    assert!(!provisioner.contains("npm install"));
     assert!(source.contains("target/aarch64-apple-darwin/release/clroom-codex"));
     assert!(source.contains("target/aarch64-apple-darwin/release/clroom-claude"));
     assert_eq!(
