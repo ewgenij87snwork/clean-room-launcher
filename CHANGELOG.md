@@ -27,8 +27,8 @@ Semantic Versioning after the first public release.
   preserving internal launch-contract classification and fail-closed behavior.
 - Refreshed vulnerability-reporting guidance without claiming a private route
   when repository configuration cannot be verified from the public policy.
-- Kept GitHub CodeQL Default Setup as the SAST path instead of introducing a
-  duplicate repository-local CodeQL workflow.
+- Replaced GitHub CodeQL Default Setup with a repository-local Advanced Setup
+  workflow covering GitHub Actions, Python, and Rust.
 
 ### Compatibility
 
