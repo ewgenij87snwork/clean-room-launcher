@@ -120,7 +120,7 @@ summary of the active filesystem restrictions:
 - developer instructions and notifications are cleared by default.
 
 ```text
-╓──○──╖ ╭─ CLEAN ROOM ─ v0.3.0 ─────────╮
+╓──○──╖ ╭─ CLEAN ROOM ─ v0.3.1 ─────────╮
 ║░░░░░║⠒│                               │
 ║░░░░░║⠒│     Global AGENTS.md  off     │
 ║░░░░░║⠒│     Global skills    3 on     │
@@ -439,7 +439,7 @@ Removing the binaries does not modify provider authentication.
 
 ## Project status
 
-The current package line is `v0.3.0` for macOS on Apple Silicon. See the
+This source tree is prepared for `v0.3.1` on macOS Apple Silicon. See the
 [latest GitHub release](https://github.com/y-sor/clean-room-launcher/releases/latest)
 for publication status and downloadable artifacts. Real-provider qualification
 is bound to the exact provider versions above. The macOS archive is unsigned
