@@ -79,11 +79,16 @@ def input_contract():
         "host": {"system": "Darwin", "machine": "arm64", "macho_arch": "arm64", "minimum_macos": "13.0", "homebrew_symbol": "ventura"},
     }
 
-def run_formula():
-    spec = importlib.util.spec_from_file_location("render_formula", ROOT / "packaging/homebrew/render_formula.py")
+def load_module(name, path):
+    spec = importlib.util.spec_from_file_location(name, path)
     if spec is None or spec.loader is None:
-        raise AssertionError("renderer missing")
-    renderer = importlib.util.module_from_spec(spec); sys.modules[spec.name] = renderer; spec.loader.exec_module(renderer)
+        raise AssertionError(f"{name} missing")
+    module = importlib.util.module_from_spec(spec); sys.modules[spec.name] = module; spec.loader.exec_module(module)
+    return module
+
+def run_formula():
+    renderer = load_module("render_formula", ROOT / "packaging/homebrew/render_formula.py")
+    lifecycle = load_module("homebrew_lifecycle", ROOT / "packaging/homebrew/lifecycle.py")
     contract = input_contract()
     url = "http://127.0.0.1:49152/clean-room-launcher-v0.1.0-aarch64-apple-darwin.tar.gz"
     with tempfile.TemporaryDirectory() as temp:
@@ -100,7 +105,9 @@ def run_formula():
         renderer.atomic_write(output, first)
         assert output.read_bytes() == first and (output.stat().st_mode & 0o777) == 0o644
         assert b"post_install" not in first and b'system "curl"' not in first
-        assert b"https://clroom-preview.invalid/" in first and b"127.0.0.1:49152" in first
+        rendered_lines = set(first.splitlines())
+        assert b'  homepage "https://clroom-preview.invalid/"' in rendered_lines
+        assert f'  url "{url}"'.encode("utf-8") in rendered_lines
         assert b"provider" not in first.lower() and b"login" not in first.lower()
         assert __import__("subprocess").run(["ruby", "-c", str(output)], stdout=__import__("subprocess").PIPE, stderr=__import__("subprocess").PIPE).returncode == 0
         for bad_url in ["https://127.0.0.1:49152/clean-room-launcher-v0.1.0-aarch64-apple-darwin.tar.gz", "http://localhost:49152/clean-room-launcher-v0.1.0-aarch64-apple-darwin.tar.gz", "http://127.0.0.1:49152/other.tar.gz", "http://user@127.0.0.1:49152/clean-room-launcher-v0.1.0-aarch64-apple-darwin.tar.gz", url + "?x=1"]:
@@ -113,6 +120,10 @@ def run_formula():
         expect_formula_refusal(lambda: renderer.render(unknown, "clroom-preview", url), renderer)
         link = Path(temp) / "link.rb"; link.symlink_to(output)
         expect_formula_refusal(lambda: renderer.atomic_write(link, first), renderer)
+    assert lifecycle.install_diagnostic("Error: fetch https://formulae.brew.sh/api/formula.json") == "install_api_access_refused"
+    assert lifecycle.install_diagnostic("Error: fetch https://github.com/example/dependency") == "install_external_dependency_refused"
+    assert lifecycle.install_diagnostic("Error: fetch https://github.com.evil.invalid/example") != "install_external_dependency_refused"
+    assert lifecycle.install_diagnostic("Error: fetch https://evil.invalid/github.com/example") != "install_external_dependency_refused"
 
 def expect_formula_refusal(fn, renderer):
     try:
