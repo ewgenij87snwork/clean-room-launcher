@@ -15,6 +15,7 @@ env_file=$2
 command -v npm >/dev/null 2>&1 || fail "NPM_REQUIRED"
 command -v openssl >/dev/null 2>&1 || fail "OPENSSL_REQUIRED"
 command -v python3 >/dev/null 2>&1 || fail "PYTHON_REQUIRED"
+command -v cmp >/dev/null 2>&1 || fail "CMP_REQUIRED"
 
 rm -rf "$provider_root"
 mkdir -p "$provider_root/packs"
@@ -129,10 +130,21 @@ codex_bin=$(resolve_bin "$codex_root" codex) || fail "CODEX_BIN_INVALID"
 claude_bin=$(resolve_bin "$claude_root" claude) || fail "CLAUDE_BIN_INVALID"
 chmod 0755 "$codex_bin" "$claude_bin"
 
+# Claude's npm package exposes a verified native binary as bin/claude.exe even on
+# macOS. CLROOM production resolution intentionally searches PATH for the command
+# name `claude`, so materialize an exact-byte command-name copy rather than using
+# npm install/link resolution or a symlink.
+mkdir -p "$provider_root/bin"
+claude_canary="$provider_root/bin/claude"
+cp "$claude_bin" "$claude_canary"
+chmod 0755 "$claude_canary"
+cmp -s "$claude_bin" "$claude_canary" || fail "CLAUDE_CANARY_COPY_MISMATCH"
+
 [[ -x "$codex_native" ]] || fail "CODEX_NATIVE_NOT_EXECUTABLE"
 [[ -x "$codex_bin" ]] || fail "CODEX_BIN_NOT_EXECUTABLE"
 [[ -x "$claude_bin" ]] || fail "CLAUDE_BIN_NOT_EXECUTABLE"
+[[ -x "$claude_canary" ]] || fail "CLAUDE_CANARY_NOT_EXECUTABLE"
 [[ -f "$env_file" || -e "$env_file" ]] || :
 printf 'CLROOM_PROVIDER_CODEX=%s\n' "$codex_native" >> "$env_file"
-printf 'CLROOM_PROVIDER_CLAUDE=%s\n' "$claude_bin" >> "$env_file"
+printf 'CLROOM_PROVIDER_CLAUDE=%s\n' "$claude_canary" >> "$env_file"
 printf 'PROVIDER_CANARY_PASS codex=0.154.0 claude=2.1.272\n'
