@@ -37,6 +37,10 @@ Changes must preserve these project invariants:
   back to a less isolated launch.
 - New or changed production behavior must include automated tests that exercise
   the behavior and important failure cases.
+- Confirmed medium-or-higher exploitable findings from static analysis, fuzzing,
+  dependency review, or other security analysis must be fixed before release;
+  false positives or non-applicable findings must be documented rather than
+  silently ignored.
 - Provider, operating-system, architecture, installation, and version support
   claims must be backed by the corresponding qualification or verification
   evidence in the repository and CI.
