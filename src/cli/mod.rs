@@ -222,14 +222,6 @@ fn launch_isolated_codex(
                 eprintln!(
                     "{}",
                     screen::render_isolated_preview(&project, selectors.len(), feature_state)
-                        .into_iter()
-                        .chain(screen::render_launch_contract(
-                            contract.boundary_label(),
-                            contract.managed_label(),
-                            &contract.boundary_controls,
-                            contract.user_or_provider_model_choice,
-                        ))
-                        .collect::<Vec<_>>()
                         .join("\n")
                 );
             }
@@ -251,14 +243,6 @@ fn launch_isolated_codex(
                         plan.selected_global_skills,
                         feature_state,
                     )
-                    .into_iter()
-                    .chain(screen::render_launch_contract(
-                        contract.boundary_label(),
-                        contract.managed_label(),
-                        &contract.boundary_controls,
-                        contract.user_or_provider_model_choice,
-                    ))
-                    .collect::<Vec<_>>()
                     .join("\n")
                 );
             }
@@ -285,14 +269,6 @@ fn launch_isolated_codex(
                 plan.selected_global_skills,
                 feature_state,
             )
-            .into_iter()
-            .chain(screen::render_launch_contract(
-                contract.boundary_label(),
-                contract.managed_label(),
-                &contract.boundary_controls,
-                contract.user_or_provider_model_choice,
-            ))
-            .collect::<Vec<_>>()
             .join("\n")
         );
     }
@@ -337,14 +313,6 @@ fn launch_isolated_claude(
                         &current_project,
                         projection.selected_global_skills,
                     )
-                    .into_iter()
-                    .chain(screen::render_launch_contract(
-                        contract.boundary_label(),
-                        contract.managed_label(),
-                        &contract.boundary_controls,
-                        contract.user_or_provider_model_choice,
-                    ))
-                    .collect::<Vec<_>>()
                     .join("\n")
                 );
             }
@@ -372,14 +340,6 @@ fn launch_isolated_claude(
                         &current_project,
                         projection.selected_global_skills,
                     )
-                    .into_iter()
-                    .chain(screen::render_launch_contract(
-                        contract.boundary_label(),
-                        contract.managed_label(),
-                        &contract.boundary_controls,
-                        contract.user_or_provider_model_choice,
-                    ))
-                    .collect::<Vec<_>>()
                     .join("\n")
                 );
             }
@@ -390,14 +350,6 @@ fn launch_isolated_claude(
         eprintln!(
             "{}",
             screen::render_claude_preview(&current_project, projection.selected_global_skills,)
-                .into_iter()
-                .chain(screen::render_launch_contract(
-                    contract.boundary_label(),
-                    contract.managed_label(),
-                    &contract.boundary_controls,
-                    contract.user_or_provider_model_choice,
-                ))
-                .collect::<Vec<_>>()
                 .join("\n")
         );
     }

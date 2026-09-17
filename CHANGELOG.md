@@ -7,6 +7,51 @@ Semantic Versioning after the first public release.
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-09-17
+
+### Added
+
+- Added a pull-request Dependency Review lane that blocks newly introduced
+  high/critical known-vulnerable dependencies while leaving existing
+  `cargo-deny` advisory/license policy authoritative.
+- Added dev/test-only `cargo-fuzz` harnesses and bounded PR smoke fuzzing for
+  deterministic schema-admission and manifest-framing boundaries.
+- Added release-visible Sigstore attestation bundles for build provenance and
+  the CycloneDX SBOM, with verification bound to the release workflow and source
+  identity.
+
+### Changed
+
+- Removed generic `Boundary`, `Boundary controls`, `Managed`, and `Model` launch
+  diagnostics from normal interactive Codex/Claude presentation while
+  preserving internal launch-contract classification and fail-closed behavior.
+- Refreshed vulnerability-reporting guidance without claiming a private route
+  when repository configuration cannot be verified from the public policy.
+- Kept GitHub CodeQL Default Setup as the SAST path instead of introducing a
+  duplicate repository-local CodeQL workflow.
+
+### Compatibility
+
+- macOS on Apple Silicon remains the qualified release platform.
+- Exact real-provider qualification targets remain Codex `0.154.0` and Claude
+  Code `2.1.272`; documented minimum accepted ranges remain Codex `0.147.0+`
+  and Claude Code `2.1.223+`.
+- This patch does not expand Browser, operating-system, provider, credential,
+  signing, or notarization support.
+
+### Security
+
+- Release readiness now carries the v0.3.1 version contract while preserving
+  locked tests, dependency SCA, public-boundary checks, installer self-test,
+  exact real-provider qualification, SBOM/provenance checks, and fail-closed
+  artifact metadata validation.
+- Release provenance is exported as verifier-consumable Sigstore bundles for
+  the exact archive/SBOM/installer subjects; no long-lived signing secret is
+  introduced.
+- Fuzzing and Dependency Review are CI/test-only controls and add no shipped
+  runtime dependency. The distributed macOS archive remains unsigned and
+  unnotarized at the Apple platform-signing layer.
+
 ## [0.3.0] - 2026-09-17
 
 ### Added

@@ -1,6 +1,6 @@
 [package]
 name = "clean-room-launcher"
-version = "0.3.0"
+version = "0.3.1"
 edition = "2024"
 publish = false
 license = "MPL-2.0"
@@ -50,6 +50,10 @@ path = "tests/contracts/adapter_registry.rs"
 [[test]]
 name = "gate_contract"
 path = "tests/contracts/gate_contract.rs"
+
+[[test]]
+name = "manifest_framing"
+path = "tests/core/manifest_framing.rs"
 
 [[bin]]
 name = "clroom-codex"

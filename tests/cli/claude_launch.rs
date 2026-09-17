@@ -955,9 +955,9 @@ fn interactive_claude_launch_keeps_the_clean_room_plaque_visible() {
 
 #[cfg(target_os = "macos")]
 #[test]
-fn invalid_claude_identity_renders_not_launchable_before_refusal() {
-    // Break caught: the Claude plaque claims a clean boundary before the
-    // closed identity probe proves that the provider cannot be launched.
+fn invalid_claude_identity_refuses_without_launch_contract_diagnostics() {
+    // Break caught: a failed preflight either launches Claude or reintroduces
+    // internal launch-contract diagnostics into the interactive transcript.
     let (_root, project, home, bin, capture) = fixture();
     let fake = bin.join("claude");
     fs::write(
@@ -989,16 +989,21 @@ fn invalid_claude_identity_renders_not_launchable_before_refusal() {
 
     assert_eq!(output.status.code(), Some(2));
     let transcript = String::from_utf8(output.stdout).unwrap().replace('\r', "");
-    assert!(transcript.contains("Boundary: not launchable"));
-    assert!(!transcript.contains("Boundary: clean"));
+    assert!(transcript.contains("CLEAN ROOM"));
+    for diagnostic in ["Boundary:", "Boundary controls:", "Managed:", "Model:"] {
+        assert!(
+            !transcript.contains(diagnostic),
+            "interactive Claude launch leaked diagnostic {diagnostic:?}:\n{transcript}"
+        );
+    }
     assert!(!capture.exists());
 }
 
 #[cfg(target_os = "macos")]
 #[test]
-fn missing_claude_executable_renders_not_launchable_before_refusal() {
-    // Break caught: executable lookup returns before the Claude launch
-    // contract can report the provider as unavailable.
+fn missing_claude_executable_refuses_without_launch_contract_diagnostics() {
+    // Break caught: missing provider resolution reintroduces internal
+    // launch-contract diagnostics instead of keeping them hidden.
     let (root, project, home, _bin, capture) = fixture();
     let empty_bin = root.join("empty-bin");
     fs::create_dir_all(&empty_bin).unwrap();
@@ -1024,8 +1029,13 @@ fn missing_claude_executable_renders_not_launchable_before_refusal() {
 
     assert_eq!(output.status.code(), Some(2));
     let transcript = String::from_utf8(output.stdout).unwrap().replace('\r', "");
-    assert!(transcript.contains("Boundary: not launchable"));
-    assert!(!transcript.contains("Boundary: clean"));
+    assert!(transcript.contains("CLEAN ROOM"));
+    for diagnostic in ["Boundary:", "Boundary controls:", "Managed:", "Model:"] {
+        assert!(
+            !transcript.contains(diagnostic),
+            "interactive Claude launch leaked diagnostic {diagnostic:?}:\n{transcript}"
+        );
+    }
     assert!(!capture.exists());
 }
 

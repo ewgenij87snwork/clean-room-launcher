@@ -174,7 +174,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$CLROOM_RELEASE_VERSION" = "0.3.0" || {
+          test "$CLROOM_RELEASE_VERSION" = "0.3.1" || {
             echo "exact release qualification pins must be reviewed for $CLROOM_RELEASE_VERSION" >&2
             exit 1
           }
@@ -246,14 +246,49 @@ jobs:
             shasum -a 256 -c SHA256SUMS
           )
       - name: Attest build provenance
+        id: provenance
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
-          subject-path: release-artifacts/${{ needs.prepare.outputs.artifact_name }}
+          subject-checksums: release-artifacts/SHA256SUMS
       - name: Attest CycloneDX SBOM
+        id: sbom_attestation
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
           subject-path: release-artifacts/${{ needs.prepare.outputs.artifact_name }}
           sbom-path: release-artifacts/sbom.cdx.json
+      - name: Export and verify release-visible attestation bundles
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARTIFACT: ${{ needs.prepare.outputs.artifact_name }}
+          PROVENANCE_BUNDLE: ${{ steps.provenance.outputs.bundle-path }}
+          SBOM_BUNDLE: ${{ steps.sbom_attestation.outputs.bundle-path }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          provenance="release-artifacts/${ARTIFACT}.provenance.sigstore.json"
+          sbom="release-artifacts/${ARTIFACT}.sbom.sigstore.json"
+          install -m 0644 "$PROVENANCE_BUNDLE" "$provenance"
+          install -m 0644 "$SBOM_BUNDLE" "$sbom"
+          test -s "$provenance"
+          test -s "$sbom"
+          for subject in "$ARTIFACT" sbom.cdx.json install.sh; do
+            gh attestation verify "release-artifacts/$subject" \
+              -R "$GITHUB_REPOSITORY" \
+              --bundle "$provenance" \
+              --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/release.yml" \
+              --source-digest "$GITHUB_SHA" \
+              --source-ref "$GITHUB_REF" \
+              --deny-self-hosted-runners
+          done
+      - name: Upload release-visible attestation bundles
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-attestations
+          path: |
+            release-artifacts/${{ needs.prepare.outputs.artifact_name }}.provenance.sigstore.json
+            release-artifacts/${{ needs.prepare.outputs.artifact_name }}.sbom.sigstore.json
+          if-no-files-found: error
+          retention-days: 7
 
   draft-release:
     name: Create guarded draft release
@@ -272,6 +307,11 @@ jobs:
         with:
           name: release-macos-aarch64
           path: release-artifacts
+      - name: Download release-visible attestation bundles
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: release-attestations
+          path: release-artifacts
       - name: Reconcile release bundle
         shell: bash
         run: |
@@ -280,7 +320,9 @@ jobs:
           test -f release-artifacts/SHA256SUMS
           test -f release-artifacts/sbom.cdx.json
           test -f release-artifacts/install.sh
-          test "$(find release-artifacts -maxdepth 1 -type f | wc -l | tr -d ' ')" = 4
+          test -s "release-artifacts/${{ needs.prepare.outputs.artifact_name }}.provenance.sigstore.json"
+          test -s "release-artifacts/${{ needs.prepare.outputs.artifact_name }}.sbom.sigstore.json"
+          test "$(find release-artifacts -maxdepth 1 -type f | wc -l | tr -d ' ')" = 6
           (
             cd release-artifacts
             shasum -a 256 -c SHA256SUMS
@@ -324,9 +366,19 @@ jobs:
           - `{artifact}` — macOS Apple Silicon archive
           - `SHA256SUMS` — SHA-256 digests for the archive, SBOM, and installer
           - `sbom.cdx.json` — CycloneDX SBOM bound to the archive digest
-          - GitHub build-provenance and SBOM attestations are generated for the exact archive bytes
+          - `{artifact}.provenance.sigstore.json` — release-visible Sigstore bundle for build provenance of the exact archive, SBOM, and installer bytes
+          - `{artifact}.sbom.sigstore.json` — release-visible Sigstore bundle for the CycloneDX SBOM attestation bound to the exact archive bytes
 
-          The distributed archive is currently unsigned at the Apple platform-signing layer. Verify the checksums and GitHub attestations before use.
+          Verify the downloaded archive against its release-visible provenance bundle:
+
+          ```sh
+          gh attestation verify "{artifact}" \
+            -R y-sor/clean-room-launcher \
+            --bundle "{artifact}.provenance.sigstore.json" \
+            --signer-workflow y-sor/clean-room-launcher/.github/workflows/release.yml
+          ```
+
+          The distributed archive is currently unsigned at the Apple platform-signing layer. Verify the checksums and release-visible GitHub attestation bundles before use.
           """.strip()
           Path("release-notes.md").write_text(text + "\n\n" + footer + "\n", encoding="utf-8")
           PY

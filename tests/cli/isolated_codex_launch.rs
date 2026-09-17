@@ -133,11 +133,20 @@ fn expected_exec_argv(user_args: &[&str]) -> Vec<u8> {
     expected_argv(&arguments)
 }
 
+fn assert_launch_contract_diagnostics_hidden(transcript: &str) {
+    for diagnostic in ["Boundary:", "Boundary controls:", "Managed:", "Model:"] {
+        assert!(
+            !transcript.contains(diagnostic),
+            "interactive launch leaked diagnostic {diagnostic:?}:\n{transcript}"
+        );
+    }
+}
+
 #[cfg(target_os = "macos")]
 #[test]
-fn invalid_codex_identity_renders_not_launchable_before_refusal() {
-    // Break caught: the plaque claims a clean boundary before the closed
-    // identity probe proves that the installed provider cannot be launched.
+fn invalid_codex_identity_refuses_without_launch_contract_diagnostics() {
+    // Break caught: a failed preflight either launches Codex or reintroduces
+    // internal launch-contract diagnostics into the interactive transcript.
     let (_root, project, home, codex_home, bin) = isolated_fixture();
     let fake = bin.join("codex");
     fs::write(
@@ -170,16 +179,16 @@ fn invalid_codex_identity_renders_not_launchable_before_refusal() {
 
     assert_eq!(output.status.code(), Some(2));
     let transcript = String::from_utf8(output.stdout).unwrap().replace('\r', "");
-    assert!(transcript.contains("Boundary: not launchable"));
-    assert!(!transcript.contains("Boundary: clean"));
+    assert!(transcript.contains("CLEAN ROOM"));
+    assert_launch_contract_diagnostics_hidden(&transcript);
     assert!(!project.join(".clroom-capture").exists());
 }
 
 #[cfg(target_os = "macos")]
 #[test]
-fn missing_codex_executable_renders_not_launchable_before_refusal() {
-    // Break caught: executable lookup returns before the launch contract can
-    // report the provider as unavailable.
+fn missing_codex_executable_refuses_without_launch_contract_diagnostics() {
+    // Break caught: missing provider resolution reintroduces internal
+    // launch-contract diagnostics instead of keeping them hidden.
     let (root, project, home, codex_home, _bin) = isolated_fixture();
     let empty_bin = root.join("empty-bin");
     fs::create_dir_all(&empty_bin).unwrap();
@@ -206,8 +215,9 @@ fn missing_codex_executable_renders_not_launchable_before_refusal() {
 
     assert_eq!(output.status.code(), Some(2));
     let transcript = String::from_utf8(output.stdout).unwrap().replace('\r', "");
-    assert!(transcript.contains("Boundary: not launchable"));
-    assert!(!transcript.contains("Boundary: clean"));
+    assert!(transcript.contains("CLEAN ROOM"));
+    assert_launch_contract_diagnostics_hidden(&transcript);
+    assert!(!project.join(".clroom-capture").exists());
 }
 
 fn add_selective_skill_fixture(root: &Scratch, home: &Path, project: &Path) -> PathBuf {
