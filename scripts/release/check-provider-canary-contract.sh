@@ -20,12 +20,16 @@ for needle in \
   '@openai/codex@0.154.0' \
   '@openai/codex@0.154.0-darwin-arm64' \
   '@anthropic-ai/claude-code@2.1.272' \
+  '@anthropic-ai/claude-code-darwin-arm64@2.1.272' \
   'FV/x1OHXYv/ifjf3mXj9ThTTAWcUZN6cGIRQRhRxkKNOPuImu1WW0c8ev1vUkE9XGH90dEnYG1tBjIkxRikg0w==' \
   'HP/vJCH/t2hB9Kg6hotN9UglClJ6/z584fal5lEP14C9gNAgAQS4/kTQC7l5V+BA3TqwDPwINSjul28cX8AYXg==' \
   'sOwHBM69H8Zka3/D3rc2VNNemPYNlgfYTdhsoqPoXZdK5KcKQlzoue4asJ2RVc+tGb/Pz1qxjVV9nVJQ87W7Ng==' \
+  'l3CI1gPSCGkWNbAnX66SbDF4uFBecCCLu9FLN43JSbMMds5cb6tjOTBMSTr1ydZRZALW9AC/PYabtQOgXIbK5Q==' \
   'aarch64-apple-darwin/bin/codex' \
+  'claude_platform_root="$provider_root/claude-platform/package"' \
+  'claude_native="$claude_platform_root/claude"' \
   'claude_canary="$provider_root/bin/claude"' \
-  'cmp -s "$claude_bin" "$claude_canary"' \
+  'cmp -s "$claude_native" "$claude_canary"' \
   'CLROOM_PROVIDER_CODEX=%s\n' \
   '"$codex_native" >> "$env_file"' \
   'CLROOM_PROVIDER_CLAUDE=%s\n' \
