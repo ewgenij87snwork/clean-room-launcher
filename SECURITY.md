@@ -14,11 +14,14 @@ archive is unsigned and unnotarized at the Apple platform-signing layer.
 
 ## Reporting a vulnerability
 
-Use **Security → Report a vulnerability** in the GitHub repository when that
-option is available. If the private reporting option is unavailable, do not put
-exploit details, credentials, private paths, prompts, transcripts or user context
-in a public issue. Open a minimal public issue asking the maintainer to establish
-a private reporting channel.
+Start from the repository Security page:
+https://github.com/y-sor/clean-room-launcher/security
+
+Use **Security → Report a vulnerability** when that option is available. If the
+private reporting option is unavailable, do not put exploit details, credentials,
+private paths, prompts, transcripts or user context in a public issue. Open a
+minimal public issue asking the maintainer to establish a private reporting
+channel.
 
 For a useful report, include the affected CLROOM version, platform, a minimal
 reproduction, expected versus observed behavior, and the security impact. Avoid
