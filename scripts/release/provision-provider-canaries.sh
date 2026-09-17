@@ -132,8 +132,8 @@ chmod 0755 "$codex_bin" "$claude_bin"
 
 # Claude's npm package exposes a verified native binary as bin/claude.exe even on
 # macOS. CLROOM production resolution intentionally searches PATH for the command
-# name `claude`, so materialize an exact-byte command-name copy rather than using
-# npm install/link resolution or a symlink.
+# name `claude`, so materialize an exact-byte command-name copy without package-
+# manager link resolution or a symlink.
 mkdir -p "$provider_root/bin"
 claude_canary="$provider_root/bin/claude"
 cp "$claude_bin" "$claude_canary"
