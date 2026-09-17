@@ -5,6 +5,37 @@ import json, os, sys
 import urllib.request
 from pathlib import Path
 
+FORMULA_CURRENT = "clroom-local/preview/clroom-preview"
+FORMULA_VERSIONED = "clroom-local/preview/clroom-preview@0.0.1"
+FORMULAE = {FORMULA_CURRENT, FORMULA_VERSIONED}
+
+def canonical_formula(value: str) -> str:
+    if value == FORMULA_CURRENT:
+        return FORMULA_CURRENT
+    if value == FORMULA_VERSIONED:
+        return FORMULA_VERSIONED
+    raise SystemExit(2)
+
+def load_state(path: Path) -> dict:
+    if not path.exists():
+        return {"tap": False, "trusted": [], "installed": []}
+    value = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(value, dict) or set(value) - {"tap", "trusted", "installed", "events"}:
+        raise SystemExit(2)
+    if not isinstance(value.get("tap"), bool):
+        raise SystemExit(2)
+    trusted = value.get("trusted", [])
+    installed = value.get("installed", [])
+    events = value.get("events", [])
+    if not isinstance(trusted, list) or not isinstance(installed, list) or not isinstance(events, list):
+        raise SystemExit(2)
+    if any(item not in FORMULAE for item in trusted + installed) or any(event != "upgrade" for event in events):
+        raise SystemExit(2)
+    answer = {"tap": value["tap"], "trusted": [canonical_formula(item) for item in trusted], "installed": [canonical_formula(item) for item in installed]}
+    if events:
+        answer["events"] = ["upgrade" for _ in events]
+    return answer
+
 root = Path(os.environ["CLROOM_PACKAGING_FAKE_ROOT"]).resolve(); prefix = root / "prefix"; argv = sys.argv[1:]; scenario = os.environ.get("CLROOM_PACKAGING_SCENARIO", "")
 credential_words = ("TOKEN", "SECRET", "PASSWORD", "CREDENTIAL", "KEY")
 if not argv or Path(os.environ.get("HOMEBREW_PREFIX", "")).resolve() != prefix or os.environ.get("HOME") != str(root / "home") or os.environ.get("PATH") != f"{root / 'poison'}:/usr/bin:/bin:/usr/sbin:/sbin" or any(any(word in key.upper() for word in credential_words) for key in os.environ): raise SystemExit(2)
@@ -15,27 +46,28 @@ if scenario == "require_rendered_formula":
     if not formula.is_file() or 'url "http://127.0.0.1:49152/clean-room-launcher-v0.0.1-aarch64-apple-darwin.tar.gz"' not in formula.read_text(encoding="utf-8") or 'sha256 "' not in formula.read_text(encoding="utf-8"): raise SystemExit(2)
 ledger = root / "ledger.jsonl"; ledger.parent.mkdir(parents=True, exist_ok=True)
 with ledger.open("a", encoding="utf-8") as out: out.write(json.dumps({"argv": argv}, sort_keys=True, separators=(",", ":")) + "\n")
-state_path = root / "state.json"; state = json.loads(state_path.read_text()) if state_path.exists() else {"tap": False, "trusted": [], "installed": []}
-formulae = {"clroom-local/preview/clroom-preview", "clroom-local/preview/clroom-preview@0.0.1"}
+state_path = root / "state.json"; state = load_state(state_path)
 if argv in (["--prefix"], ["--repository"]):
     if scenario == "reported_prefix_mismatch" and argv == ["--prefix"] or scenario == "reported_repository_mismatch" and argv == ["--repository"]: print(root / "live")
     else: print(prefix)
 elif argv == ["--cellar"]: print(root / "live" if scenario == "reported_cellar_mismatch" else prefix / "Cellar")
 elif argv[:2] == ["trust", "--tap"]: raise SystemExit(2)
 elif argv[:2] in (["trust", "--formula"], ["untrust", "--formula"]):
-    if len(argv) != 3 or argv[2] not in formulae or (argv[0] == "trust" and (os.environ.get("HOMEBREW_REQUIRE_TAP_TRUST") != "1" or os.environ.get("HOMEBREW_ALLOWED_TAPS") != str(root / "tap") or scenario == "missing_item_trust")): raise SystemExit(2)
-    state["trusted"] = sorted(set(state["trusted"] + [argv[2]])) if argv[0] == "trust" else [x for x in state["trusted"] if x != argv[2]]
+    if len(argv) != 3: raise SystemExit(2)
+    item = canonical_formula(argv[2])
+    if argv[0] == "trust" and (os.environ.get("HOMEBREW_REQUIRE_TAP_TRUST") != "1" or os.environ.get("HOMEBREW_ALLOWED_TAPS") != str(root / "tap") or scenario == "missing_item_trust"): raise SystemExit(2)
+    state["trusted"] = sorted(set(state["trusted"] + [item])) if argv[0] == "trust" else [x for x in state["trusted"] if x != item]
 elif argv[0] == "tap":
     if scenario == "tap_clone_failed":
         print("fatal: local clone failed", file=sys.stderr); raise SystemExit(2)
     if argv[:2] != ["tap", "clroom-local/preview"] or len(argv) != 3 or not Path(argv[2]).resolve().is_relative_to(root) or os.environ.get("HOMEBREW_ALLOWED_TAPS") != argv[2]: raise SystemExit(2)
     state["tap"] = True
 elif argv[0] in {"style", "audit", "test", "upgrade", "unlink", "link", "install", "uninstall"}:
-    item = argv[-1]
+    item = canonical_formula(argv[-1])
     if scenario == "require_native_install_boundary" and argv[0] in {"install", "upgrade", "test"}:
         if os.environ.get("CLROOM_PACKAGING_NETWORK_BOUNDARY") != "homebrew-native-sandbox-loopback-proxy" or "HOMEBREW_AVOID_NESTED_SANDBOXING" in os.environ: raise SystemExit(2)
         if argv[0] == "test": print("Error: metadata network unavailable", file=sys.stderr); raise SystemExit(2)
-    if item not in formulae or (argv[0] in {"install", "upgrade"} and item not in state["trusted"]): raise SystemExit(2)
+    if argv[0] in {"install", "upgrade"} and item not in state["trusted"]: raise SystemExit(2)
     if scenario == "install_archive_fetch_failed" and argv[0] == "install":
         print("Error: unsupported formula dependency"); raise SystemExit(2)
     if scenario == "smoke_refusal" and argv[0] == "test":
@@ -45,7 +77,7 @@ elif argv[0] in {"style", "audit", "test", "upgrade", "unlink", "link", "install
         body = urllib.request.urlopen("http://127.0.0.1:49152/clean-room-launcher-v0.0.1-aarch64-apple-darwin.tar.gz", timeout=1).read()
         if not body: raise SystemExit(2)
     if argv[0] == "install":
-        version = "0.0.1" if item.endswith("@0.0.1") else ("0.0.2" if "upgrade" in state.get("events", []) else "0.0.1")
+        version = "0.0.1" if item == FORMULA_VERSIONED else ("0.0.2" if "upgrade" in state.get("events", []) else "0.0.1")
         state["installed"] = sorted(set(state["installed"] + [item])); cell = prefix / "Cellar" / item.rsplit("/", 1)[-1] / version / "bin"; cell.mkdir(parents=True, exist_ok=True)
         payload = b'''#!/bin/sh
 if [ "$1" = status ]; then printf 'clroom: command accepted\\n'; exit 0; fi
