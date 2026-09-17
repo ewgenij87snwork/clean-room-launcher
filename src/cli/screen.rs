@@ -14,6 +14,7 @@ pub struct RenderContext {
     pub plain: bool,
 }
 
+#[cfg(test)]
 pub fn render_launch_contract(
     boundary_label: &str,
     managed_label: Option<&str>,
