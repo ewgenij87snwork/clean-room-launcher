@@ -105,9 +105,11 @@ def run_formula():
         renderer.atomic_write(output, first)
         assert output.read_bytes() == first and (output.stat().st_mode & 0o777) == 0o644
         assert b"post_install" not in first and b'system "curl"' not in first
-        rendered_lines = set(first.splitlines())
-        assert b'  homepage "https://clroom-preview.invalid/"' in rendered_lines
-        assert f'  url "{url}"'.encode("utf-8") in rendered_lines
+        lines = first.splitlines()
+        homepage_line = next(line for line in lines if line.startswith(b"  homepage "))
+        url_line = next(line for line in lines if line.startswith(b"  url "))
+        assert homepage_line == b'  homepage "https://clroom-preview.invalid/"'
+        assert url_line == f'  url "{url}"'.encode("utf-8")
         assert b"provider" not in first.lower() and b"login" not in first.lower()
         assert __import__("subprocess").run(["ruby", "-c", str(output)], stdout=__import__("subprocess").PIPE, stderr=__import__("subprocess").PIPE).returncode == 0
         for bad_url in ["https://127.0.0.1:49152/clean-room-launcher-v0.1.0-aarch64-apple-darwin.tar.gz", "http://localhost:49152/clean-room-launcher-v0.1.0-aarch64-apple-darwin.tar.gz", "http://127.0.0.1:49152/other.tar.gz", "http://user@127.0.0.1:49152/clean-room-launcher-v0.1.0-aarch64-apple-darwin.tar.gz", url + "?x=1"]:
