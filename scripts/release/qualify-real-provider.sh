@@ -88,33 +88,48 @@ if pid == 0:
     env = {"PATH": provider_dir + ":/usr/bin:/bin", "HOME": home, "TMPDIR": os.environ.get("TMPDIR", "/tmp"), "TERM": "dumb", "CODEX_HOME": home + "/.codex"}
     os.chdir(project)
     os.execve(candidate, [candidate, "--no-alt-screen"], env)
-deadline = time.monotonic() + 5.0
 provider_observed = False
+def finish():
+    with open(observation_file, "w", encoding="ascii") as handle:
+        handle.write("YES\n" if provider_observed else "NO\n")
+    raise SystemExit(0 if provider_observed else 1)
+deadline = time.monotonic() + 5.0
+reaped = False
 while time.monotonic() < deadline:
-    waited, _ = os.waitpid(pid, os.WNOHANG)
+    try:
+        waited, _ = os.waitpid(pid, os.WNOHANG)
+    except ChildProcessError:
+        reaped = True
+        break
     if waited:
+        reaped = True
         break
     provider_observed = provider_observed or provider_in_tree(pid)
     time.sleep(0.05)
+if reaped:
+    finish()
 try:
     os.killpg(pid, signal.SIGINT)
 except (ProcessLookupError, PermissionError):
     pass
 for _ in range(40):
-    waited, _ = os.waitpid(pid, os.WNOHANG)
+    try:
+        waited, _ = os.waitpid(pid, os.WNOHANG)
+    except ChildProcessError:
+        finish()
     if waited:
-        with open(observation_file, "w", encoding="ascii") as handle:
-            handle.write("YES\n" if provider_observed else "NO\n")
-        raise SystemExit(0 if provider_observed else 1)
+        finish()
+    provider_observed = provider_observed or provider_in_tree(pid)
     time.sleep(0.05)
 try:
     os.killpg(pid, signal.SIGKILL)
-except ProcessLookupError:
+except (ProcessLookupError, PermissionError):
     pass
-os.waitpid(pid, 0)
-with open(observation_file, "w", encoding="ascii") as handle:
-    handle.write("YES\n" if provider_observed else "NO\n")
-raise SystemExit(0 if provider_observed else 1)
+try:
+    os.waitpid(pid, 0)
+except ChildProcessError:
+    pass
+finish()
 PY
 else
   python3 - "$candidate" "$root/project" "$user_home" "$(dirname "$executable")" <<'PY'
