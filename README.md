@@ -6,6 +6,7 @@
 
 <p align="center">
   <a href="https://github.com/y-sor/clean-room-launcher/actions/workflows/ci.yml"><img src="https://github.com/y-sor/clean-room-launcher/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"></a>
+  <a href="https://scorecard.dev/viewer/?uri=github.com/y-sor/clean-room-launcher"><img src="https://api.scorecard.dev/projects/github.com/y-sor/clean-room-launcher/badge" alt="OpenSSF Scorecard"></a>
   <a href="https://github.com/y-sor/clean-room-launcher/releases/latest"><img src="https://img.shields.io/github/v/release/y-sor/clean-room-launcher?display_name=tag&sort=semver" alt="Latest release"></a>
   <a href="LICENSE"><img src="https://img.shields.io/github/license/y-sor/clean-room-launcher" alt="License"></a>
   <a href="docs/install.md"><img src="https://img.shields.io/badge/platform-macOS%20Apple%20Silicon-lightgrey?logo=apple" alt="macOS Apple Silicon"></a>
@@ -321,8 +322,7 @@ See [the current limitations](docs/limitations.md) and
 Native provider controls may be the better fit when you only need one
 provider's own configuration. `clroom` gives Codex and Claude Code one
 repeatable way to launch: project-local context stays available, the documented
-global inputs stay outside, and only the global skills you select are admitted
-for that launch. It does not replace either provider or rewrite its saved
+global inputs stay outside, and only the global skills you select are admitted for this launch. It does not replace either provider or rewrite its saved
 configuration.
 
 See the official [Claude Code CLI reference][claude-cli-reference] and
@@ -484,7 +484,7 @@ This project does not offer a vulnerability bounty.
 ## License
 
 Clean Room Launcher is open-source software under the
-[Mozilla Public License 2.0](LICENSE).
+Mozilla Public License 2.0](LICENSE).
 
 Clean Room Launcher is an independent project and is not affiliated with or
 endorsed by OpenAI or Anthropic.
