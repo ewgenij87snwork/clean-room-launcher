@@ -30,9 +30,10 @@ including unrelated machine or provider state.
 The maintainer will acknowledge and triage reports as capacity allows. No fixed
 response or remediation SLA is promised.
 
-Please allow reasonable time for investigation and remediation before public
-disclosure. Do not publish exploit details or sensitive reproductions while a
-report is being triaged.
+When circumstances permit, allow at least 30 days for investigation and
+remediation before public disclosure. Do not publish exploit details or sensitive
+reproductions while a vulnerability report is being triaged. Active exploitation
+or material user risk can justify a shorter disclosure timeline.
 
 ## Bounty status
 
