@@ -7,6 +7,50 @@ Semantic Versioning after the first public release.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-09-17
+
+### Added
+
+- Added provider-state inspection through `clroom info codex`, backed by explicit
+  catalog, resource, plugin-surface, selection, and selection-receipt handling.
+- Added repository discovery checks plus OpenSSF Scorecard and Dependabot
+  configuration for the public repository.
+
+### Changed
+
+- Moved the canonical public namespace and documentation/discovery URLs to
+  `y-sor/clean-room-launcher` and `y-sor.github.io/clean-room-launcher`.
+- Updated exact Claude Code release qualification to `2.1.272` while retaining
+  Codex `0.154.0` as the exact Codex qualification target.
+- Hardened release-candidate and tag-release provider provisioning so the
+  verified npm tarball bytes are the exact local tarballs installed for real
+  provider qualification.
+
+### Fixed
+
+- Added explicit Codex and Claude plugin-state handling and provider-state
+  inspection coverage without weakening fail-closed launch behavior.
+- Removed stale public control/execution-map residue and tightened the public
+  repository boundary checks after the namespace transfer.
+
+### Compatibility
+
+- macOS on Apple Silicon remains the qualified release platform.
+- Exact real-provider qualification targets are Codex `0.154.0` and Claude Code
+  `2.1.272`; documented minimum accepted ranges remain Codex `0.147.0+` and
+  Claude Code `2.1.223+`.
+- Linux, Windows, Intel macOS, Homebrew, crates.io distribution, Apple signing,
+  and notarization remain outside the qualified release surface.
+
+### Security
+
+- Release readiness continues to run locked tests, dependency SCA review,
+  installer self-test, public-boundary checks, exact artifact metadata checks,
+  real-provider qualification evidence verification, SBOM generation, and
+  provenance verification before release gating.
+- Apps, hooks, and plugins remain disabled by default. The distributed macOS
+  archive remains unsigned and unnotarized.
+
 ## [0.2.1] - 2026-09-15
 
 ### Changed
