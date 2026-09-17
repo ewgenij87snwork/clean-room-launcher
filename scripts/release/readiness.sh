@@ -2,7 +2,7 @@
 set -euo pipefail
 
 root=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)
-version=${CLROOM_RELEASE_VERSION:-0.3.0}
+version=${CLROOM_RELEASE_VERSION:-0.3.1}
 artifact_dir=${CLROOM_ARTIFACT_DIR:-"$root/target/release-candidate"}
 
 fail() {
@@ -11,7 +11,7 @@ fail() {
 }
 
 cd "$root"
-[[ "$version" == "0.3.0" ]] || fail "VERSION_EXPECTED_0.3.0"
+[[ "$version" == "0.3.1" ]] || fail "VERSION_EXPECTED_0.3.1"
 git diff --check || fail "DIFF_CHECK"
 git diff --quiet || fail "CLEAN_TREE_REQUIRED"
 
