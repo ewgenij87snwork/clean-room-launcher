@@ -51,6 +51,10 @@ path = "tests/contracts/adapter_registry.rs"
 name = "gate_contract"
 path = "tests/contracts/gate_contract.rs"
 
+[[test]]
+name = "manifest_framing"
+path = "tests/core/manifest_framing.rs"
+
 [[bin]]
 name = "clroom-codex"
 path = "src/bin/clroom-codex.rs"
