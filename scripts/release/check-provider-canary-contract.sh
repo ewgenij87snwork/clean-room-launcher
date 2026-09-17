@@ -24,8 +24,12 @@ for needle in \
   'HP/vJCH/t2hB9Kg6hotN9UglClJ6/z584fal5lEP14C9gNAgAQS4/kTQC7l5V+BA3TqwDPwINSjul28cX8AYXg==' \
   'sOwHBM69H8Zka3/D3rc2VNNemPYNlgfYTdhsoqPoXZdK5KcKQlzoue4asJ2RVc+tGb/Pz1qxjVV9nVJQ87W7Ng==' \
   'aarch64-apple-darwin/bin/codex' \
+  'claude_canary="$provider_root/bin/claude"' \
+  'cmp -s "$claude_bin" "$claude_canary"' \
   'CLROOM_PROVIDER_CODEX=%s\n' \
-  '"$codex_native" >> "$env_file"'; do
+  '"$codex_native" >> "$env_file"' \
+  'CLROOM_PROVIDER_CLAUDE=%s\n' \
+  '"$claude_canary" >> "$env_file"'; do
   grep -Fq "$needle" "$provisioner" || fail "PIN_OR_LAYOUT_MISSING"
 done
 
