@@ -109,10 +109,15 @@ claude_archive=$(pack_and_verify \
   '@anthropic-ai/claude-code@2.1.272' \
   'anthropic-ai-claude-code-2.1.272.tgz' \
   'sOwHBM69H8Zka3/D3rc2VNNemPYNlgfYTdhsoqPoXZdK5KcKQlzoue4asJ2RVc+tGb/Pz1qxjVV9nVJQ87W7Ng==')
+claude_platform_archive=$(pack_and_verify \
+  '@anthropic-ai/claude-code-darwin-arm64@2.1.272' \
+  'anthropic-ai-claude-code-darwin-arm64-2.1.272.tgz' \
+  'l3CI1gPSCGkWNbAnX66SbDF4uFBecCCLu9FLN43JSbMMds5cb6tjOTBMSTr1ydZRZALW9AC/PYabtQOgXIbK5Q==')
 
 safe_extract "$codex_archive" "$provider_root/codex"
 safe_extract "$codex_platform_archive" "$provider_root/codex-platform"
 safe_extract "$claude_archive" "$provider_root/claude"
+safe_extract "$claude_platform_archive" "$provider_root/claude-platform"
 
 codex_root="$provider_root/codex/package"
 claude_root="$provider_root/claude/package"
@@ -128,21 +133,26 @@ chmod 0755 "$codex_native"
 
 codex_bin=$(resolve_bin "$codex_root" codex) || fail "CODEX_BIN_INVALID"
 claude_bin=$(resolve_bin "$claude_root" claude) || fail "CLAUDE_BIN_INVALID"
-chmod 0755 "$codex_bin" "$claude_bin"
+claude_platform_root="$provider_root/claude-platform/package"
+claude_native="$claude_platform_root/claude"
+[[ -f "$claude_native" ]] || fail "CLAUDE_NATIVE_MISSING"
+chmod 0755 "$codex_bin" "$claude_bin" "$claude_native"
 
-# Claude's npm package exposes a verified native binary as bin/claude.exe even on
-# macOS. CLROOM production resolution intentionally searches PATH for the command
-# name `claude`, so materialize an exact-byte command-name copy without package-
-# manager link resolution or a symlink.
+# The wrapper package normally materializes its optional native package during
+# postinstall. Release qualification must not run install scripts, so use the
+# independently SHA-512-verified darwin-arm64 package directly. CLROOM production
+# resolution still requires the command name `claude`, therefore copy those exact
+# verified native bytes to a command-name path and prove byte identity.
 mkdir -p "$provider_root/bin"
 claude_canary="$provider_root/bin/claude"
-cp "$claude_bin" "$claude_canary"
+cp "$claude_native" "$claude_canary"
 chmod 0755 "$claude_canary"
-cmp -s "$claude_bin" "$claude_canary" || fail "CLAUDE_CANARY_COPY_MISMATCH"
+cmp -s "$claude_native" "$claude_canary" || fail "CLAUDE_CANARY_COPY_MISMATCH"
 
 [[ -x "$codex_native" ]] || fail "CODEX_NATIVE_NOT_EXECUTABLE"
 [[ -x "$codex_bin" ]] || fail "CODEX_BIN_NOT_EXECUTABLE"
 [[ -x "$claude_bin" ]] || fail "CLAUDE_BIN_NOT_EXECUTABLE"
+[[ -x "$claude_native" ]] || fail "CLAUDE_NATIVE_NOT_EXECUTABLE"
 [[ -x "$claude_canary" ]] || fail "CLAUDE_CANARY_NOT_EXECUTABLE"
 [[ -f "$env_file" || -e "$env_file" ]] || :
 printf 'CLROOM_PROVIDER_CODEX=%s\n' "$codex_native" >> "$env_file"
