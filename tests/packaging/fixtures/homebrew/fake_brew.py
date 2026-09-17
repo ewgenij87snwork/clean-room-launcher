@@ -16,6 +16,32 @@ def canonical_formula(value: str) -> str:
         return FORMULA_VERSIONED
     raise SystemExit(2)
 
+def canonical_ledger_token(value: str, tap_path: str) -> str:
+    if value == "--prefix": return "--prefix"
+    if value == "--repository": return "--repository"
+    if value == "--cellar": return "--cellar"
+    if value == "trust": return "trust"
+    if value == "untrust": return "untrust"
+    if value == "--tap": return "--tap"
+    if value == "--formula": return "--formula"
+    if value == "tap": return "tap"
+    if value == "clroom-local/preview": return "clroom-local/preview"
+    if value == "style": return "style"
+    if value == "audit": return "audit"
+    if value == "--strict": return "--strict"
+    if value == "test": return "test"
+    if value == "upgrade": return "upgrade"
+    if value == "unlink": return "unlink"
+    if value == "link": return "link"
+    if value == "--overwrite": return "--overwrite"
+    if value == "install": return "install"
+    if value == "uninstall": return "uninstall"
+    if value == "untap": return "untap"
+    if value == FORMULA_CURRENT: return FORMULA_CURRENT
+    if value == FORMULA_VERSIONED: return FORMULA_VERSIONED
+    if value == tap_path: return "<workspace-tap>"
+    raise SystemExit(2)
+
 def load_state(path: Path) -> dict:
     if not path.exists():
         return {"tap": False, "trusted": [], "installed": []}
@@ -45,7 +71,8 @@ if scenario == "require_rendered_formula":
     formula = Path(os.environ["HOMEBREW_ALLOWED_TAPS"]) / "Formula/clroom-preview.rb"
     if not formula.is_file() or 'url "http://127.0.0.1:49152/clean-room-launcher-v0.0.1-aarch64-apple-darwin.tar.gz"' not in formula.read_text(encoding="utf-8") or 'sha256 "' not in formula.read_text(encoding="utf-8"): raise SystemExit(2)
 ledger = root / "ledger.jsonl"; ledger.parent.mkdir(parents=True, exist_ok=True)
-with ledger.open("a", encoding="utf-8") as out: out.write(json.dumps({"argv": argv}, sort_keys=True, separators=(",", ":")) + "\n")
+safe_argv = [canonical_ledger_token(value, str(root / "tap")) for value in argv]
+with ledger.open("a", encoding="utf-8") as out: out.write(json.dumps({"argv": safe_argv}, sort_keys=True, separators=(",", ":")) + "\n")
 state_path = root / "state.json"; state = load_state(state_path)
 if argv in (["--prefix"], ["--repository"]):
     if scenario == "reported_prefix_mismatch" and argv == ["--prefix"] or scenario == "reported_repository_mismatch" and argv == ["--repository"]: print(root / "live")
