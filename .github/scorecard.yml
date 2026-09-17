@@ -1,0 +1,5 @@
+annotations:
+  - checks:
+      - sast
+    reasons:
+      - reason: remediated # CodeQL is active for current changes; the Scorecard result still reflects its recent-history window.
