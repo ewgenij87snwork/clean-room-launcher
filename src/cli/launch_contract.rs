@@ -162,6 +162,7 @@ impl LaunchContract {
         }
     }
 
+    #[cfg(test)]
     pub fn boundary_label(&self) -> &'static str {
         match self.boundary {
             BoundaryState::Clean => "clean",
@@ -172,6 +173,7 @@ impl LaunchContract {
         }
     }
 
+    #[cfg(test)]
     pub fn managed_label(&self) -> Option<&'static str> {
         self.managed.map(|managed| match managed {
             Presence::Present => "present",
