@@ -17,6 +17,7 @@ import subprocess
 import sys
 import tarfile
 import threading
+import urllib.parse
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
@@ -123,14 +124,28 @@ def tap_diagnostic(stderr: str) -> str:
     if "network" in value: return "tap_network_refused"
     return "tap_command_refused"
 
+def output_mentions_url_host(output: str, expected_host: str) -> bool:
+    expected = expected_host.lower()
+    for token in output.split():
+        candidate = token.strip("'\"()[]{}<>,;.!?")
+        if not candidate.lower().startswith(("http://", "https://")):
+            continue
+        try:
+            hostname = urllib.parse.urlsplit(candidate).hostname
+        except ValueError:
+            continue
+        if hostname is not None and hostname.lower() == expected:
+            return True
+    return False
+
 def install_diagnostic(output: str) -> str:
     value = output.lower()
     if "failed to download resource" in value or "download failed" in value: return "install_archive_fetch_refused"
     if "checksum" in value or "sha256 mismatch" in value: return "install_checksum_refused"
     if "has not allowed this tap" in value: return "install_tap_allowlist_refused"
     if "not trusted" in value or "trust --formula" in value: return "install_formula_trust_refused"
-    if "formulae.brew.sh" in value: return "install_api_access_refused"
-    if "github.com" in value: return "install_external_dependency_refused"
+    if output_mentions_url_host(output, "formulae.brew.sh"): return "install_api_access_refused"
+    if output_mentions_url_host(output, "github.com"): return "install_external_dependency_refused"
     if "no available formula" in value or "formula not found" in value: return "install_formula_lookup_refused"
     if "undefined method" in value or "uninitialized constant" in value: return "install_formula_evaluation_refused"
     if "curl:" in value or "failed to connect" in value or "couldn't connect" in value: return "install_network_refused"
