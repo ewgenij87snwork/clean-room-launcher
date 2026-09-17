@@ -120,7 +120,7 @@ summary of the active filesystem restrictions:
 - developer instructions and notifications are cleared by default.
 
 ```text
-╓──○──╖ ╭─ CLEAN ROOM ─ v0.2.1 ─────────╮
+╓──○──╖ ╭─ CLEAN ROOM ─ v0.3.0 ─────────╮
 ║░░░░░║⠒│                               │
 ║░░░░░║⠒│     Global AGENTS.md  off     │
 ║░░░░░║⠒│     Global skills    3 on     │
@@ -338,7 +338,7 @@ The current release qualifies these macOS provider paths:
 |---|---|---|
 | Codex CLI 0.154.0 — interactive `clroom codex` | macOS / Apple Silicon | Exact qualification target |
 | Codex CLI 0.154.0 — `clroom codex exec` | macOS / Apple Silicon | Exact qualification target |
-| Claude Code CLI 2.1.263 — interactive `clroom claude` | macOS / Apple Silicon | Exact qualification target |
+| Claude Code CLI 2.1.272 — interactive `clroom claude` | macOS / Apple Silicon | Exact qualification target |
 | Claude Code CLI `-p` response-output semantics | macOS / Apple Silicon | Not independently qualified |
 
 Linux and Windows are `NOT_QUALIFIED`. Intel macOS, Homebrew, crates.io,
@@ -439,9 +439,11 @@ Removing the binaries does not modify provider authentication.
 
 ## Project status
 
-`v0.2.1` is published for macOS on Apple Silicon. Its release artifacts are
-integrity-verified, and its real-provider qualification is bound to the exact
-provider versions above. The macOS archive is unsigned and unnotarized.
+The current package line is `v0.3.0` for macOS on Apple Silicon. See the
+[latest GitHub release](https://github.com/y-sor/clean-room-launcher/releases/latest)
+for publication status and downloadable artifacts. Real-provider qualification
+is bound to the exact provider versions above. The macOS archive is unsigned
+and unnotarized.
 
 It supports the documented Codex interactive and exec paths and the interactive
 Claude Code path through the focused clean-room restrictions. The qualification
@@ -449,10 +451,6 @@ is limited to the documented macOS Apple Silicon path.
 
 External launchers can use `clroom-codex` or `clroom-claude` as their provider
 executable override. See the [agent runner guide](docs/agent-runners.md).
-
-See the
-[latest GitHub release](https://github.com/y-sor/clean-room-launcher/releases/latest)
-for the archive and `SHA256SUMS`.
 
 ## Help improve Clean Room Launcher
 

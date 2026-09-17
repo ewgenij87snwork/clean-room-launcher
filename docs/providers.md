@@ -10,7 +10,7 @@ The current release has two supported provider paths:
 | Coding-agent CLI | Platform | Status |
 | --- | --- | --- |
 | Codex CLI 0.147.0+ | macOS / Apple Silicon | Minimum accepted range; 0.154.0 is the exact qualification target |
-| Claude Code CLI 2.1.223+ | macOS / Apple Silicon | Minimum accepted range; 2.1.263 is the exact qualification target |
+| Claude Code CLI 2.1.223+ | macOS / Apple Silicon | Minimum accepted range; 2.1.272 is the exact qualification target |
 
 Qualified examples:
 
