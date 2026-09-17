@@ -129,9 +129,10 @@ codex_bin=$(resolve_bin "$codex_root" codex) || fail "CODEX_BIN_INVALID"
 claude_bin=$(resolve_bin "$claude_root" claude) || fail "CLAUDE_BIN_INVALID"
 chmod 0755 "$codex_bin" "$claude_bin"
 
+[[ -x "$codex_native" ]] || fail "CODEX_NATIVE_NOT_EXECUTABLE"
 [[ -x "$codex_bin" ]] || fail "CODEX_BIN_NOT_EXECUTABLE"
 [[ -x "$claude_bin" ]] || fail "CLAUDE_BIN_NOT_EXECUTABLE"
 [[ -f "$env_file" || -e "$env_file" ]] || :
-printf 'CLROOM_PROVIDER_CODEX=%s\n' "$codex_bin" >> "$env_file"
+printf 'CLROOM_PROVIDER_CODEX=%s\n' "$codex_native" >> "$env_file"
 printf 'CLROOM_PROVIDER_CLAUDE=%s\n' "$claude_bin" >> "$env_file"
 printf 'PROVIDER_CANARY_PASS codex=0.154.0 claude=2.1.272\n'
