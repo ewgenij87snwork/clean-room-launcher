@@ -38,6 +38,7 @@ fi
 ./scripts/check-public-boundary.sh --root "$root" || fail "PUBLIC_BOUNDARY"
 release_workflow=.github/workflows/release.yml
 release_candidate_workflow=.github/workflows/release-candidate.yml
+./scripts/release/check-attestation-contract.sh "$release_workflow" || fail "RELEASE_ATTESTATION_CONTRACT"
 grep -Fq '@anthropic-ai/claude-code@2.1.272' "$release_workflow" || fail "RELEASE_CLAUDE_PIN"
 grep -Fq '@anthropic-ai/claude-code@2.1.272' "$release_candidate_workflow" || fail "READINESS_CLAUDE_PIN"
 if grep -Fq '@anthropic-ai/claude-code@2.1.263' "$release_workflow"; then
@@ -45,9 +46,9 @@ if grep -Fq '@anthropic-ai/claude-code@2.1.263' "$release_workflow"; then
 fi
 grep -Fq 'title="$GITHUB_REF_NAME — Clean Room Launcher"' "$release_workflow" || fail "RELEASE_TITLE_CONTRACT"
 if command -v shellcheck >/dev/null 2>&1; then
-  shellcheck packaging/build-artifacts.sh scripts/release/readiness.sh install.sh || fail "SHELLCHECK"
+  shellcheck packaging/build-artifacts.sh scripts/release/check-attestation-contract.sh scripts/release/readiness.sh install.sh || fail "SHELLCHECK"
 else
-  bash -n packaging/build-artifacts.sh scripts/release/readiness.sh || fail "SHELL_SYNTAX"
+  bash -n packaging/build-artifacts.sh scripts/release/check-attestation-contract.sh scripts/release/readiness.sh || fail "SHELL_SYNTAX"
   sh -n install.sh || fail "INSTALLER_SHELL_SYNTAX"
 fi
 sh install.sh --self-test || fail "INSTALLER_CONTRACT"
