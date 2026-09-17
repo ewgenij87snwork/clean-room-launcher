@@ -458,6 +458,9 @@ If Clean Room Launcher makes your coding-agent sessions easier to trust,
 [star the repository](https://github.com/y-sor/clean-room-launcher).
 It helps other Codex and Claude Code users find it.
 
+Read [CONTRIBUTING.md](CONTRIBUTING.md) for the contribution process, acceptance
+requirements, and local verification steps.
+
 Report bugs or request features in
 [GitHub Issues](https://github.com/y-sor/clean-room-launcher/issues).
 For vulnerability reports, follow the private-reporting instructions below.
