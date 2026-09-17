@@ -4,12 +4,13 @@
 
 | Version | Status |
 | --- | --- |
-| `0.3.0` | Qualified |
+| `0.3.1` | Qualified |
+| `0.3.0` | Superseded by `0.3.1` |
 | `0.2.1` | Superseded by `0.3.0` |
 | `0.2.0` | Superseded by `0.2.1` |
 | `0.1.0-alpha.4.2` | Prior published prerelease |
 
-The v0.3.0 qualification is limited to macOS on Apple Silicon. Its distributed
+The v0.3.1 qualification is limited to macOS on Apple Silicon. Its distributed
 archive is unsigned and unnotarized at the Apple platform-signing layer.
 
 ## Reporting a vulnerability
