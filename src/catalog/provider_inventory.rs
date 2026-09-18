@@ -10,8 +10,9 @@ use crate::catalog::resource::{
 };
 use std::path::{Path, PathBuf};
 
-pub const CODEX_EXACT: (u64, u64, u64) = (0, 154, 0);
-pub const CLAUDE_EXACT: (u64, u64, u64) = (2, 1, 273);
+pub const CODEX_CLEAN_EXACT: (u64, u64, u64) = (0, 154, 0);
+pub const CLAUDE_CLEAN_EXACT: (u64, u64, u64) = (2, 1, 272);
+pub const CLAUDE_PLUGIN_ACTIVATION_EXACT: (u64, u64, u64) = (2, 1, 273);
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Provider {
@@ -42,10 +43,10 @@ impl Provider {
         }
     }
 
-    pub fn exact_version(self) -> (u64, u64, u64) {
+    pub fn clean_launch_exact_version(self) -> (u64, u64, u64) {
         match self {
-            Self::Codex => CODEX_EXACT,
-            Self::Claude => CLAUDE_EXACT,
+            Self::Codex => CODEX_CLEAN_EXACT,
+            Self::Claude => CLAUDE_CLEAN_EXACT,
         }
     }
 
@@ -66,13 +67,27 @@ pub struct PluginInventory {
     pub conflicts: Vec<String>,
 }
 
-pub fn exact_tuple(
+pub fn clean_launch_exact_tuple(
     provider: Provider,
     version: (u64, u64, u64),
     os: &str,
     arch: &str,
 ) -> bool {
-    os == "macos" && arch == "aarch64" && version == provider.exact_version()
+    os == "macos"
+        && arch == "aarch64"
+        && version == provider.clean_launch_exact_version()
+}
+
+pub fn plugin_activation_exact_tuple(
+    provider: Provider,
+    version: (u64, u64, u64),
+    os: &str,
+    arch: &str,
+) -> bool {
+    os == "macos"
+        && arch == "aarch64"
+        && provider == Provider::Claude
+        && version == CLAUDE_PLUGIN_ACTIVATION_EXACT
 }
 
 pub fn valid_plugin_key(provider: Provider, value: &str) -> bool {
@@ -88,14 +103,14 @@ pub fn inspect_plugin(
     home: &Path,
     codex_home: Option<&Path>,
     plugin_id: &str,
-    tuple_qualified: bool,
+    activation_tuple_qualified: bool,
 ) -> PluginInventory {
     inspect_plugin_with_home(
         provider,
         Some(home),
         codex_home,
         plugin_id,
-        tuple_qualified,
+        activation_tuple_qualified,
     )
 }
 
@@ -104,7 +119,7 @@ pub fn inspect_plugin_with_home(
     home: Option<&Path>,
     codex_home: Option<&Path>,
     plugin_id: &str,
-    tuple_qualified: bool,
+    activation_tuple_qualified: bool,
 ) -> PluginInventory {
     let installation = home
         .map(|home| locate_plugin(provider, home, codex_home, plugin_id))
@@ -155,14 +170,14 @@ pub fn inspect_plugin_with_home(
         .unwrap_or_default();
 
     let activation_qualified = provider == Provider::Claude
-        && tuple_qualified
+        && activation_tuple_qualified
         && installation_state == InstallationState::Installed
         && root.is_some()
         && conflicts.is_empty();
 
     if installation_state == InstallationState::Installed && conflicts.is_empty() && !activation_qualified
     {
-        let blocker = if !tuple_qualified {
+        let blocker = if !activation_tuple_qualified {
             "PROVIDER_TUPLE_NOT_QUALIFIED"
         } else {
             "PLUGIN_ACTIVATION_UNAVAILABLE"
@@ -260,7 +275,10 @@ fn plugin_surface_error_code(error: PluginSurfaceError) -> &'static str {
 
 #[cfg(test)]
 mod tests {
-    use super::{exact_tuple, inspect_plugin, Provider, CLAUDE_EXACT};
+    use super::{
+        clean_launch_exact_tuple, inspect_plugin, plugin_activation_exact_tuple, Provider,
+        CLAUDE_CLEAN_EXACT, CLAUDE_PLUGIN_ACTIVATION_EXACT, CODEX_CLEAN_EXACT,
+    };
     use crate::catalog::resource::{QualificationState, SelectionState};
     use std::{
         fs,
@@ -332,14 +350,42 @@ mod tests {
     }
 
     #[test]
-    fn exact_tuple_is_platform_and_version_specific() {
-        assert!(exact_tuple(Provider::Claude, CLAUDE_EXACT, "macos", "aarch64"));
-        assert!(!exact_tuple(
+    fn clean_launch_and_plugin_activation_tuples_are_behavior_specific() {
+        assert!(clean_launch_exact_tuple(
             Provider::Claude,
-            (CLAUDE_EXACT.0, CLAUDE_EXACT.1, CLAUDE_EXACT.2 + 1),
+            CLAUDE_CLEAN_EXACT,
             "macos",
             "aarch64"
         ));
-        assert!(!exact_tuple(Provider::Claude, CLAUDE_EXACT, "linux", "aarch64"));
+        assert!(!clean_launch_exact_tuple(
+            Provider::Claude,
+            CLAUDE_PLUGIN_ACTIVATION_EXACT,
+            "macos",
+            "aarch64"
+        ));
+        assert!(plugin_activation_exact_tuple(
+            Provider::Claude,
+            CLAUDE_PLUGIN_ACTIVATION_EXACT,
+            "macos",
+            "aarch64"
+        ));
+        assert!(!plugin_activation_exact_tuple(
+            Provider::Claude,
+            CLAUDE_CLEAN_EXACT,
+            "macos",
+            "aarch64"
+        ));
+        assert!(!plugin_activation_exact_tuple(
+            Provider::Claude,
+            CLAUDE_PLUGIN_ACTIVATION_EXACT,
+            "linux",
+            "aarch64"
+        ));
+        assert!(!plugin_activation_exact_tuple(
+            Provider::Codex,
+            CODEX_CLEAN_EXACT,
+            "macos",
+            "aarch64"
+        ));
     }
 }
