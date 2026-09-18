@@ -53,7 +53,7 @@ pub fn plan(
         return Ok(None);
     }
     if identity.provider_id != "claude"
-        || !provider_inventory::exact_tuple(
+        || !provider_inventory::plugin_activation_exact_tuple(
             Provider::Claude,
             identity.version,
             &identity.os,
@@ -131,7 +131,10 @@ mod tests {
     use super::{plan, ActivationError};
     use crate::{
         adapters::identity::ProviderIdentity,
-        catalog::{provider_inventory::CLAUDE_EXACT, selection::SelectionRequest},
+        catalog::{
+            provider_inventory::CLAUDE_PLUGIN_ACTIVATION_EXACT,
+            selection::SelectionRequest,
+        },
     };
     use std::{
         fs,
@@ -188,7 +191,7 @@ mod tests {
         let mut request = SelectionRequest::default();
         request.include_value("plugin:superpowers@example").unwrap();
 
-        let activation = plan(&home, &request, &identity(CLAUDE_EXACT))
+        let activation = plan(&home, &request, &identity(CLAUDE_PLUGIN_ACTIVATION_EXACT))
             .unwrap()
             .unwrap();
         let canonical_plugin = fs::canonicalize(&plugin).unwrap();
@@ -210,7 +213,11 @@ mod tests {
         let (home, _) = fixture();
         let mut request = SelectionRequest::default();
         request.include_value("plugin:superpowers@example").unwrap();
-        let drifted = (CLAUDE_EXACT.0, CLAUDE_EXACT.1, CLAUDE_EXACT.2 + 1);
+        let drifted = (
+            CLAUDE_PLUGIN_ACTIVATION_EXACT.0,
+            CLAUDE_PLUGIN_ACTIVATION_EXACT.1,
+            CLAUDE_PLUGIN_ACTIVATION_EXACT.2 + 1,
+        );
 
         assert_eq!(
             plan(&home, &request, &identity(drifted)),
@@ -226,7 +233,7 @@ mod tests {
         let (home, plugin) = fixture();
         let mut request = SelectionRequest::default();
         request.include_value("plugin:superpowers@example").unwrap();
-        let activation = plan(&home, &request, &identity(CLAUDE_EXACT))
+        let activation = plan(&home, &request, &identity(CLAUDE_PLUGIN_ACTIVATION_EXACT))
             .unwrap()
             .unwrap();
 
@@ -270,7 +277,7 @@ mod tests {
             .include_value("plugin:superpowers@example,other@example")
             .unwrap();
         assert_eq!(
-            plan(&home, &request, &identity(CLAUDE_EXACT)),
+            plan(&home, &request, &identity(CLAUDE_PLUGIN_ACTIVATION_EXACT)),
             Err(ActivationError::MultiplePlugins)
         );
 
