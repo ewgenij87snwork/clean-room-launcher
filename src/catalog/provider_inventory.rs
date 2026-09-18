@@ -162,12 +162,12 @@ pub fn inspect_plugin_with_home(
 
     if installation_state == InstallationState::Installed && conflicts.is_empty() && !activation_qualified
     {
-        reason_code = if !tuple_qualified {
+        let blocker = if !tuple_qualified {
             "PROVIDER_TUPLE_NOT_QUALIFIED"
         } else {
             "PLUGIN_ACTIVATION_UNAVAILABLE"
         };
-        conflicts.push(reason_code.to_owned());
+        conflicts.push(blocker.to_owned());
     }
 
     PluginInventory {
