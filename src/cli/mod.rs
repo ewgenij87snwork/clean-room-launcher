@@ -411,18 +411,7 @@ fn launch_isolated_claude(
         activation
             .revalidate(&home)
             .map_err(claude_activation_error_message)?;
-        let insert_at = contract
-            .argv
-            .iter()
-            .position(|argument| argument == "--")
-            .unwrap_or(contract.argv.len());
-        contract
-            .argv
-            .splice(insert_at..insert_at, activation.provider_args());
-        contract.boundary = launch_contract::BoundaryState::Expanded;
-        if !contract.boundary_controls.contains(&"plugin") {
-            contract.boundary_controls.push("plugin");
-        }
+        contract.add_claude_plugin_activation(&activation.provider_args());
     }
 
     if std::io::stderr().is_terminal() {
