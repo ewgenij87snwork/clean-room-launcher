@@ -361,7 +361,7 @@ See the official [Claude Code CLI reference][claude-cli-reference] and
 
 ## Coding-agent support
 
-The current release qualifies these macOS provider paths:
+The qualified macOS provider paths for this source tree are:
 
 | Coding agent and launch path | Platform | Status |
 |---|---|---|
