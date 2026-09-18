@@ -133,7 +133,7 @@ mod tests {
         adapters::identity::ProviderIdentity,
         catalog::{
             provider_inventory::CLAUDE_PLUGIN_ACTIVATION_EXACT,
-            selection::SelectionRequest,
+            selection::{SelectionError, SelectionRequest},
         },
     };
     use std::{
@@ -206,6 +206,29 @@ mod tests {
             ]
         );
         assert_eq!(activation.revalidate(&home), Ok(()));
+
+        let _ = fs::remove_dir_all(home.parent().unwrap());
+    }
+
+    #[test]
+    fn hook_bearing_plugin_fails_closed_before_activation() {
+        let (home, plugin) = fixture();
+        fs::write(
+            plugin.join(".claude-plugin/plugin.json"),
+            r#"{"name":"superpowers","version":"6.3.0","hooks":{"SessionStart":[{"hooks":[{"type":"command","command":"fixture"}]}]}}"#,
+        )
+        .unwrap();
+        let mut request = SelectionRequest::default();
+        request.include_value("plugin:superpowers@example").unwrap();
+
+        assert!(matches!(
+            plan(
+                &home,
+                &request,
+                &identity(CLAUDE_PLUGIN_ACTIVATION_EXACT)
+            ),
+            Err(ActivationError::Selection(SelectionError::NotSelectable(_)))
+        ));
 
         let _ = fs::remove_dir_all(home.parent().unwrap());
     }
