@@ -7,6 +7,8 @@ Semantic Versioning after the first public release.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-09-18
+
 ### Added
 
 - Added `clroom claude --with=plugin:<provider-native-id>` for one exact
@@ -17,10 +19,11 @@ Semantic Versioning after the first public release.
 ### Compatibility
 
 - Whole-plugin activation is exactly qualified for Claude Code `2.1.273` on
-  macOS Apple Silicon. Ordinary clean-launch minimum-version handling remains
-  unchanged, and Codex plugin activation, MCP resource selection,
-  `--with=all`, presets, and component-level plugin selection remain outside
-  this slice.
+  macOS Apple Silicon. Baseline clean-launch exact qualification remains Codex
+  `0.154.0` and Claude Code `2.1.272`; documented minimum accepted ranges
+  remain Codex `0.147.0+` and Claude Code `2.1.223+`.
+- Codex plugin activation, MCP resource selection, `--with=all`, presets, and
+  component-level plugin selection remain outside this release.
 
 ### Security
 
