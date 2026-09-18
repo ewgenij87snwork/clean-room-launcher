@@ -20,10 +20,12 @@ use std::io::{IsTerminal, Write};
 use std::path::PathBuf;
 use std::process::ExitCode;
 
-use clroom::adapters::claude::isolation::{
-    IsolationError as ClaudeIsolationError, plan as plan_claude,
+use clroom::adapters::claude::{
+    activation::{self as claude_activation, ActivationError as ClaudeActivationError},
+    isolation::{IsolationError as ClaudeIsolationError, plan as plan_claude},
+    projection::{ProjectionError, project},
 };
-use clroom::adapters::claude::projection::{ProjectionError, project};
+use clroom::catalog::selection::SelectionRequest;
 use clroom::adapters::codex::isolation::{IsolationError, IsolationInputs, plan_with_skills};
 
 pub fn run(invoked_as: &str, args: impl IntoIterator<Item = String>) -> ExitCode {
@@ -126,14 +128,15 @@ fn run_codex(source: &mut impl Iterator<Item = String>) -> ExitCode {
     } {
         args.push(argument);
     }
-    let args = match resource_options::prepare(resource_options::Provider::Codex, &args) {
-        Ok(args) => args,
+    let prepared = match resource_options::prepare(resource_options::Provider::Codex, &args) {
+        Ok(prepared) => prepared,
         Err(message) => {
             eprintln!("{message}");
             return ExitCode::from(2);
         }
     };
-    let (selection_terms, provider_args, pass_env) = match select_codex_options(&args) {
+    let (selection_terms, provider_args, pass_env) =
+        match select_codex_options(&prepared.provider_args) {
         Ok(options) => options,
         Err(message) => {
             eprintln!("{message}");
@@ -167,21 +170,27 @@ fn run_claude(source: &mut impl Iterator<Item = String>) -> ExitCode {
     } {
         args.push(argument);
     }
-    let args = match resource_options::prepare(resource_options::Provider::Claude, &args) {
-        Ok(args) => args,
+    let prepared = match resource_options::prepare(resource_options::Provider::Claude, &args) {
+        Ok(prepared) => prepared,
         Err(message) => {
             eprintln!("{message}");
             return ExitCode::from(2);
         }
     };
-    let (selection_terms, provider_args, pass_env) = match select_provider_options(&args) {
+    let (selection_terms, provider_args, pass_env) =
+        match select_provider_options(&prepared.provider_args) {
         Ok(options) => options,
         Err(message) => {
             eprintln!("{message}");
             return ExitCode::from(2);
         }
     };
-    match launch_isolated_claude(&selection_terms, &provider_args, &pass_env) {
+    match launch_isolated_claude(
+        &selection_terms,
+        &provider_args,
+        &pass_env,
+        &prepared.request,
+    ) {
         Ok(exit) => exit,
         Err(message) => {
             eprintln!("{message}");
@@ -286,18 +295,19 @@ fn launch_isolated_claude(
     selection_terms: &[String],
     provider_args: &[String],
     pass_env: &[String],
+    resource_request: &SelectionRequest,
 ) -> Result<ExitCode, String> {
     let home = std::env::var_os("HOME").map(PathBuf::from).ok_or_else(|| {
         "CLROOM_CLAUDE_ISOLATION_INVALID: HOME is unavailable; continue locally".to_owned()
     })?;
-    let selectors = skill_sets::expand(&selection_terms, &home)?;
+    let selectors = skill_sets::expand(selection_terms, &home)?;
     let current_project = std::env::current_dir().map_err(|_| {
         "CLROOM_CLAUDE_ISOLATION_INVALID: current project is unavailable; continue locally"
             .to_owned()
     })?;
     let mut projection = project(&home, &selectors).map_err(projection_error_message)?;
     let mut contract = launch_contract::LaunchContract::claude_with_pass_env(
-        &provider_args,
+        provider_args,
         &projection.add_dir,
         clroom::adapters::claude::managed::probe(),
         pass_env,
@@ -319,6 +329,73 @@ fn launch_isolated_claude(
             return Err(error);
         }
     };
+
+    if resource_request.is_empty() {
+        let isolation = plan_claude(
+            &current_project,
+            &executable,
+            &home,
+            projection.storage_root(),
+            &projection.add_dir,
+            projection.denied_source_paths(),
+            projection.allowed_source_paths(),
+        )
+        .map_err(claude_isolation_error_message)?;
+        let identity = match process::preflight_claude(&executable) {
+            Ok(identity) => identity,
+            Err(error) => {
+                contract.boundary = launch_contract::BoundaryState::NotLaunchable;
+                if std::io::stderr().is_terminal() {
+                    eprintln!(
+                        "{}",
+                        screen::render_claude_preview(
+                            &current_project,
+                            projection.selected_global_skills,
+                        )
+                        .join("\n")
+                    );
+                }
+                return Err(error);
+            }
+        };
+        if std::io::stderr().is_terminal() {
+            eprintln!(
+                "{}",
+                screen::render_claude_preview(
+                    &current_project,
+                    projection.selected_global_skills,
+                )
+                .join("\n")
+            );
+        }
+        return process::launch_claude(
+            &isolation,
+            &mut projection,
+            &executable,
+            &contract,
+            &identity,
+            pass_env,
+        );
+    }
+
+    let identity = match process::preflight_claude(&executable) {
+        Ok(identity) => identity,
+        Err(error) => {
+            contract.boundary = launch_contract::BoundaryState::NotLaunchable;
+            return Err(error);
+        }
+    };
+    let activation = claude_activation::plan(&home, resource_request, &identity)
+        .map_err(claude_activation_error_message)?;
+
+    let mut allowed_source_paths = projection.allowed_source_paths().to_vec();
+    if let Some(activation) = activation.as_ref() {
+        activation
+            .revalidate(&home)
+            .map_err(claude_activation_error_message)?;
+        allowed_source_paths.push(activation.root().to_path_buf());
+    }
+
     let isolation = plan_claude(
         &current_project,
         &executable,
@@ -326,31 +403,36 @@ fn launch_isolated_claude(
         projection.storage_root(),
         &projection.add_dir,
         projection.denied_source_paths(),
-        projection.allowed_source_paths(),
+        &allowed_source_paths,
     )
     .map_err(claude_isolation_error_message)?;
-    let identity = match process::preflight_claude(&executable) {
-        Ok(identity) => identity,
-        Err(error) => {
-            contract.boundary = launch_contract::BoundaryState::NotLaunchable;
-            if std::io::stderr().is_terminal() {
-                eprintln!(
-                    "{}",
-                    screen::render_claude_preview(
-                        &current_project,
-                        projection.selected_global_skills,
-                    )
-                    .join("\n")
-                );
-            }
-            return Err(error);
+
+    if let Some(activation) = activation.as_ref() {
+        activation
+            .revalidate(&home)
+            .map_err(claude_activation_error_message)?;
+        let insert_at = contract
+            .argv
+            .iter()
+            .position(|argument| argument == "--")
+            .unwrap_or(contract.argv.len());
+        contract
+            .argv
+            .splice(insert_at..insert_at, activation.provider_args());
+        contract.boundary = launch_contract::BoundaryState::Expanded;
+        if !contract.boundary_controls.contains(&"plugin") {
+            contract.boundary_controls.push("plugin");
         }
-    };
+    }
+
     if std::io::stderr().is_terminal() {
         eprintln!(
             "{}",
-            screen::render_claude_preview(&current_project, projection.selected_global_skills,)
-                .join("\n")
+            screen::render_claude_preview(
+                &current_project,
+                projection.selected_global_skills,
+            )
+            .join("\n")
         );
     }
     process::launch_claude(
@@ -491,6 +573,27 @@ fn projection_error_message(error: ProjectionError) -> String {
 fn claude_isolation_error_message(_: ClaudeIsolationError) -> String {
     "CLROOM_CLAUDE_ISOLATION_INVALID: current project or context boundary is invalid; continue locally"
         .to_owned()
+}
+
+fn claude_activation_error_message(error: ClaudeActivationError) -> String {
+    match error {
+        ClaudeActivationError::ProviderTupleNotQualified => {
+            "CLROOM_RESOURCE_NOT_SELECTABLE: installed Claude version/platform is not qualified for v0.4.0 plugin activation; continue locally".to_owned()
+        }
+        ClaudeActivationError::MultiplePlugins => {
+            "CLROOM_RESOURCE_MULTI_SELECT_UNAVAILABLE_IN_V0_4: v0.4.0 admits one exact Claude plugin per launch".to_owned()
+        }
+        ClaudeActivationError::StateChanged => {
+            "CLROOM_RESOURCE_STATE_CHANGED: selected Claude plugin changed before launch; retry".to_owned()
+        }
+        ClaudeActivationError::UnsupportedRequest => {
+            "CLROOM_RESOURCE_NOT_SELECTABLE: only exact Claude whole-plugin selection is available in v0.4.0; continue locally".to_owned()
+        }
+        ClaudeActivationError::Selection(selection) => format!(
+            "{}: selected Claude plugin is unavailable or unqualified; continue locally",
+            selection.code()
+        ),
+    }
 }
 
 fn next_argument(source: &mut impl Iterator<Item = String>) -> Result<Option<String>, ExitCode> {
