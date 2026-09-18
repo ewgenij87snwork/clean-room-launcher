@@ -280,11 +280,13 @@ mod tests {
         let (home, _) = fixture();
         let second = home.join(".claude/plugins/cache/example/other/1.0.0");
         fs::create_dir_all(second.join(".claude-plugin")).unwrap();
+        fs::create_dir_all(second.join("skills/other")).unwrap();
         fs::write(
             second.join(".claude-plugin/plugin.json"),
             r#"{"name":"other","version":"1.0.0"}"#,
         )
         .unwrap();
+        fs::write(second.join("skills/other/SKILL.md"), "fixture\n").unwrap();
         let registry = home.join(".claude/plugins/installed_plugins.json");
         let first = home.join(".claude/plugins/cache/example/superpowers/6.3.0");
         fs::write(
