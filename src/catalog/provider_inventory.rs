@@ -90,7 +90,25 @@ pub fn inspect_plugin(
     plugin_id: &str,
     tuple_qualified: bool,
 ) -> PluginInventory {
-    let installation = locate_plugin(provider, home, codex_home, plugin_id);
+    inspect_plugin_with_home(
+        provider,
+        Some(home),
+        codex_home,
+        plugin_id,
+        tuple_qualified,
+    )
+}
+
+pub fn inspect_plugin_with_home(
+    provider: Provider,
+    home: Option<&Path>,
+    codex_home: Option<&Path>,
+    plugin_id: &str,
+    tuple_qualified: bool,
+) -> PluginInventory {
+    let installation = home
+        .map(|home| locate_plugin(provider, home, codex_home, plugin_id))
+        .unwrap_or(LocatedPlugin::InvalidState);
     let (installation_state, discovery, root, mut conflicts, mut reason_code) = match installation {
         LocatedPlugin::Installed(root) => (
             InstallationState::Installed,
