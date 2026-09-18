@@ -113,9 +113,20 @@ mod tests {
     }
 
     #[test]
-    fn exact_plugin_and_mcp_activation_remain_future_work() {
-        for selector in ["--with=plugin:review-tools@team", "--without=mcp:local-tools"] {
-            let error = prepare(Provider::Claude, &strings(&[selector])).unwrap_err();
+    fn claude_exact_plugin_is_the_only_v0_4_provider_native_slice() {
+        assert!(
+            prepare(
+                Provider::Claude,
+                &strings(&["--with=plugin:review-tools@team"])
+            )
+            .is_ok()
+        );
+
+        for (provider, selector) in [
+            (Provider::Codex, "--with=plugin:review-tools@team"),
+            (Provider::Claude, "--without=mcp:local-tools"),
+        ] {
+            let error = prepare(provider, &strings(&[selector])).unwrap_err();
             assert!(error.starts_with("CLROOM_RESOURCE_NOT_SELECTABLE:"));
         }
     }
