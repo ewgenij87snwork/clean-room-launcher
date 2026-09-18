@@ -30,8 +30,8 @@ Gatekeeper globally if local macOS policy refuses it.
 ## Manual release archive
 
 ```sh
-VERSION=v0.2.1
-ASSET=clean-room-launcher-v0.2.1-aarch64-apple-darwin.tar.gz
+VERSION=v0.4.0
+ASSET=clean-room-launcher-v0.4.0-aarch64-apple-darwin.tar.gz
 STAGE=$(mktemp -d "${TMPDIR:-/tmp}/clroom-archive.XXXXXX")
 trap 'rm -rf -- "$STAGE"' EXIT
 
@@ -64,7 +64,7 @@ other release assets.
 
 ```sh
 cargo install --git https://github.com/y-sor/clean-room-launcher \
-  --tag v0.2.1 --locked
+  --tag v0.4.0 --locked
 ```
 
 The release is not published to crates.io.
