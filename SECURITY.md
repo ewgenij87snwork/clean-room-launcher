@@ -4,18 +4,14 @@
 
 | Version | Status |
 | --- | --- |
-| `0.4.0` | Qualified |
-| `0.3.1` | Superseded by `0.4.0` |
+| `0.3.1` | Qualified |
 | `0.3.0` | Superseded by `0.3.1` |
 | `0.2.1` | Superseded by `0.3.0` |
 | `0.2.0` | Superseded by `0.2.1` |
 | `0.1.0-alpha.4.2` | Prior published prerelease |
 
-The v0.4.0 qualification is limited to macOS on Apple Silicon. Baseline
-clean-launch exact targets remain Codex `0.154.0` and Claude Code `2.1.272`;
-the bounded skill-only Claude whole-plugin activation path is separately
-qualified on Claude Code `2.1.273`. The distributed archive is unsigned and
-unnotarized at the Apple platform-signing layer.
+The v0.3.1 qualification is limited to macOS on Apple Silicon. Its distributed
+archive is unsigned and unnotarized at the Apple platform-signing layer.
 
 ## Reporting a vulnerability
 
