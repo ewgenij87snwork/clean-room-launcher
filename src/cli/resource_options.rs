@@ -1,10 +1,9 @@
 use clroom::catalog::{
-    provider_inventory::Provider,
     resource::ResourceKind,
     selection::{SelectionError, SelectionRequest, SelectionTarget},
 };
 
-pub use clroom::catalog::provider_inventory::Provider as ResourceProvider;
+pub use clroom::catalog::provider_inventory::Provider;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Prepared {
