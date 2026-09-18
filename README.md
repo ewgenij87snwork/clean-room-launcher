@@ -242,8 +242,9 @@ claude plugin list
 clroom claude --with=plugin:plugin-name@marketplace-name
 ```
 
-Use the provider-native qualified ID reported by Claude. CLROOM does not install,
-update, enable, disable, or rewrite the plugin persistently. It resolves the
+Use the provider-native qualified ID reported by Claude. CLROOM does not install
+or update the plugin, and it does not change persistent provider enablement or
+configuration. It resolves the
 installed plugin root, reopens only that root read-only inside the Claude clean
 launch, and asks Claude to load it for this session. Raw Claude
 `--plugin-dir`/`--plugin-url` activation cannot be combined with a CLROOM
