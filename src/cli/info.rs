@@ -105,19 +105,30 @@ fn parse_native_targets(provider: Provider, args: &[String]) -> Result<Vec<Nativ
 }
 
 fn inspect(provider: Provider, targets: &[NativeTarget]) -> ProviderInfo {
-    let exact = provider.exact_version();
-    let exact_target = format!("{} / macOS / Apple Silicon", version_string(exact));
+    let clean_exact = provider.clean_launch_exact_version();
+    let exact_target = format!(
+        "{} / macOS / Apple Silicon",
+        version_string(clean_exact)
+    );
     let resolved = match provider {
         Provider::Codex => process::resolve_codex_executable(),
         Provider::Claude => process::resolve_claude_executable(),
     };
 
-    let (installed, version, clean_qualification, clean_reason, exact_tuple) = match resolved {
+    let (
+        installed,
+        version,
+        clean_qualification,
+        clean_reason,
+        clean_exact_tuple,
+        plugin_activation_tuple,
+    ) = match resolved {
         Err(_) => (
             false,
             None,
             QualificationState::Unqualified,
             Some("PROVIDER_NOT_INSTALLED"),
+            false,
             false,
         ),
         Ok(executable) => {
@@ -129,6 +140,19 @@ fn inspect(provider: Provider, targets: &[NativeTarget]) -> ProviderInfo {
                 Ok(identity) => {
                     let version = version_string(identity.version);
                     let platform_supported = identity.os == "macos" && identity.arch == "aarch64";
+                    let clean_exact_tuple = provider_inventory::clean_launch_exact_tuple(
+                        provider,
+                        identity.version,
+                        &identity.os,
+                        &identity.arch,
+                    );
+                    let plugin_activation_tuple =
+                        provider_inventory::plugin_activation_exact_tuple(
+                            provider,
+                            identity.version,
+                            &identity.os,
+                            &identity.arch,
+                        );
                     if !platform_supported {
                         (
                             true,
@@ -136,19 +160,16 @@ fn inspect(provider: Provider, targets: &[NativeTarget]) -> ProviderInfo {
                             QualificationState::Unsupported,
                             Some("PLATFORM_NOT_QUALIFIED"),
                             false,
+                            false,
                         )
-                    } else if provider_inventory::exact_tuple(
-                        provider,
-                        identity.version,
-                        &identity.os,
-                        &identity.arch,
-                    ) {
+                    } else if clean_exact_tuple {
                         (
                             true,
                             Some(version),
                             QualificationState::Qualified,
                             None,
                             true,
+                            plugin_activation_tuple,
                         )
                     } else {
                         (
@@ -157,6 +178,7 @@ fn inspect(provider: Provider, targets: &[NativeTarget]) -> ProviderInfo {
                             QualificationState::Unqualified,
                             Some("PROVIDER_VERSION_NOT_EXACT_TARGET"),
                             false,
+                            plugin_activation_tuple,
                         )
                     }
                 }
@@ -166,20 +188,21 @@ fn inspect(provider: Provider, targets: &[NativeTarget]) -> ProviderInfo {
                     QualificationState::Unqualified,
                     Some("PROVIDER_IDENTITY_PROBE_FAILED"),
                     false,
+                    false,
                 ),
             }
         }
     };
 
-    let known_discovery = if exact_tuple {
+    let clean_discovery = if clean_exact_tuple {
         DiscoveryState::Discoverable
     } else {
         DiscoveryState::Unknown
     };
-    let unavailable_reason = if exact_tuple {
-        None
+    let plugin_discovery = if plugin_activation_tuple {
+        DiscoveryState::Discoverable
     } else {
-        Some("PROVIDER_TUPLE_NOT_QUALIFIED")
+        DiscoveryState::Unknown
     };
 
     let home = std::env::var_os("HOME").map(PathBuf::from);
@@ -200,7 +223,7 @@ fn inspect(provider: Provider, targets: &[NativeTarget]) -> ProviderInfo {
                 target,
                 home.as_deref(),
                 codex_home.as_deref(),
-                exact_tuple,
+                plugin_activation_tuple,
             )
         })
         .collect::<Vec<_>>();
@@ -228,20 +251,20 @@ fn inspect(provider: Provider, targets: &[NativeTarget]) -> ProviderInfo {
         capabilities: vec![
             capability(
                 "plugins",
-                known_discovery,
-                if exact_tuple {
+                plugin_discovery,
+                if plugin_activation_tuple {
                     "PLUGIN_ACTIVATION_V04"
                 } else {
-                    unavailable_reason.unwrap_or("PROVIDER_TUPLE_NOT_QUALIFIED")
+                    "PROVIDER_TUPLE_NOT_QUALIFIED"
                 },
             ),
             capability(
                 "mcp",
-                known_discovery,
-                if exact_tuple {
+                clean_discovery,
+                if clean_exact_tuple {
                     "MCP_ACTIVATION_V04"
                 } else {
-                    unavailable_reason.unwrap_or("PROVIDER_TUPLE_NOT_QUALIFIED")
+                    "PROVIDER_TUPLE_NOT_QUALIFIED"
                 },
             ),
         ],
