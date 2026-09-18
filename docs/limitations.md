@@ -5,8 +5,8 @@ description: Current CLROOM support boundaries: macOS Apple Silicon qualificatio
 permalink: /limitations.html
 ---
 
-- The current release is unsigned and unnotarized; qualification is limited to
-  the documented macOS Apple Silicon release path.
+- Distributed macOS release artifacts are unsigned and unnotarized;
+  qualification is limited to the documented macOS Apple Silicon release path.
 - Only macOS on Apple Silicon is supported. The minimum accepted versions are
   Codex CLI `0.147.0` and Claude Code CLI `2.1.223`. Baseline clean-launch
   exact qualification is Codex `0.154.0` and Claude Code `2.1.272`.
