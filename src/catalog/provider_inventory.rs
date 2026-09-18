@@ -288,7 +288,8 @@ mod tests {
             "superpowers@example",
             true,
         );
-        assert_eq!(qualified.root.as_deref(), Some(plugin.as_path()));
+        let canonical_plugin = fs::canonicalize(&plugin).unwrap();
+        assert_eq!(qualified.root.as_deref(), Some(canonical_plugin.as_path()));
         assert_eq!(qualified.entry.selection, SelectionState::Selectable);
         assert_eq!(qualified.entry.qualification, QualificationState::Qualified);
         assert!(qualified.conflicts.is_empty());
