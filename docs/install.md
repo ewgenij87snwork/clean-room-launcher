@@ -29,6 +29,9 @@ Gatekeeper globally if local macOS policy refuses it.
 
 ## Manual release archive
 
+The exact-version examples below require that the named tag and GitHub Release
+have already been published.
+
 ```sh
 VERSION=v0.4.0
 ASSET=clean-room-launcher-v0.4.0-aarch64-apple-darwin.tar.gz
