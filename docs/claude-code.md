@@ -50,8 +50,9 @@ clroom claude --with=plugin:plugin-name@marketplace-name
 ```
 
 The selector takes the provider-native qualified plugin ID. It admits exactly one
-already-installed Claude plugin for this launch. CLROOM does not install, update,
-enable, disable, or persistently rewrite the plugin.
+already-installed Claude plugin for this launch. CLROOM does not install or
+update the plugin, and it does not change persistent provider enablement or
+configuration.
 
 For this path CLROOM resolves the active installed plugin root, requires the
 exact qualified provider tuple, revalidates the root immediately around launch,
