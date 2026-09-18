@@ -234,8 +234,8 @@ global skills for this launch with the same skill choice:
 clroom claude --skill-set=my-skill,@my-skill-set
 ```
 
-The unreleased v0.4 source can also admit exactly one already-installed whole
-Claude plugin for one launch:
+The v0.4.0 source can also admit exactly one already-installed whole Claude
+plugin for one launch:
 
 ```sh
 claude plugin list
@@ -258,9 +258,10 @@ closed instead of receiving a broader `~/.claude` filesystem seam. The whole
 qualified bundle is still passed to Claude atomically; CLROOM does not extract
 individual components.
 
-This is separate from the published v0.3.1 clean-launch qualification, and does
-not add Codex plugin selection, standalone MCP selection, `--with=all`, or
-component-level plugin surgery.
+Baseline clean-launch exact qualification remains Claude Code `2.1.272`; the
+whole-plugin activation path is separately qualified on Claude Code `2.1.273`.
+v0.4.0 does not add Codex plugin selection, standalone MCP selection,
+`--with=all`, or component-level plugin surgery.
 
 ## How it works
 
@@ -366,7 +367,8 @@ The current release qualifies these macOS provider paths:
 |---|---|---|
 | Codex CLI 0.154.0 — interactive `clroom codex` | macOS / Apple Silicon | Exact qualification target |
 | Codex CLI 0.154.0 — `clroom codex exec` | macOS / Apple Silicon | Exact qualification target |
-| Claude Code CLI 2.1.272 — interactive `clroom claude` | macOS / Apple Silicon | Exact qualification target |
+| Claude Code CLI 2.1.272 — interactive `clroom claude` | macOS / Apple Silicon | Exact clean-launch qualification target |
+| Claude Code CLI 2.1.273 — `clroom claude --with=plugin:<id>` | macOS / Apple Silicon | Exact skill-only plugin-activation qualification target |
 | Claude Code CLI `-p` response-output semantics | macOS / Apple Silicon | Not independently qualified |
 
 Linux and Windows are `NOT_QUALIFIED`. Intel macOS, Homebrew, crates.io,
@@ -467,15 +469,16 @@ Removing the binaries does not modify provider authentication.
 
 ## Project status
 
-This source tree is prepared for `v0.3.1` on macOS Apple Silicon. See the
+This source tree is prepared for `v0.4.0` on macOS Apple Silicon. See the
 [latest GitHub release](https://github.com/y-sor/clean-room-launcher/releases/latest)
 for publication status and downloadable artifacts. Real-provider qualification
-is bound to the exact provider versions above. The macOS archive is unsigned
-and unnotarized.
+is bound to the exact behavior-specific provider versions above. The macOS
+archive is unsigned and unnotarized.
 
-It supports the documented Codex interactive and exec paths and the interactive
-Claude Code path through the focused clean-room restrictions. The qualification
-is limited to the documented macOS Apple Silicon path.
+It supports the documented Codex interactive and exec paths, the ordinary
+interactive Claude Code clean launch, and the bounded v0.4.0 Claude skill-only
+whole-plugin activation path. Qualification is limited to the documented macOS
+Apple Silicon paths.
 
 External launchers can use `clroom-codex` or `clroom-claude` as their provider
 executable override. See the [agent runner guide](docs/agent-runners.md).
