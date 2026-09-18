@@ -40,9 +40,9 @@ internal teammate independently.
 
 For practical workflows, see [Use cases](use-cases.md) and [Skill sets](skill-sets.md).
 
-## Unreleased v0.4: select one installed whole plugin
+## v0.4.0: select one installed whole plugin
 
-The unreleased v0.4 source adds one bounded whole-plugin selector:
+The v0.4.0 source adds one bounded whole-plugin selector:
 
 ```sh
 claude plugin list
@@ -79,11 +79,11 @@ While a CLROOM resource selection is active, raw `--plugin-dir` and
 `--plugin-url` arguments are refused to avoid two competing activation
 authorities. More than one selected whole plugin is also refused.
 
-The exact qualification target for this new activation path is Claude Code
+The exact qualification target for this activation path is Claude Code
 `2.1.273` on macOS Apple Silicon. Other provider tuples fail closed for plugin
-activation even though the ordinary Claude clean-launch parser/runtime minimum
-remains `2.1.223+`. The published v0.3.1 release does not include this v0.4
-selector.
+activation. The baseline interactive clean-launch exact qualification remains
+Claude Code `2.1.272`; the ordinary parser/runtime minimum remains
+`2.1.223+`.
 
 This slice does not add Codex plugin activation, MCP resource activation,
 `--with=all`, presets, installation/update/removal, or component-level
