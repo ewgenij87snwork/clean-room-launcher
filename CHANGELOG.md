@@ -28,6 +28,10 @@ Semantic Versioning after the first public release.
   revalidates the exact active install root around launch, reopens only that
   root read-only, refuses overlapping raw `--plugin-dir`/`--plugin-url`
   activation, and leaves persistent Claude configuration unchanged.
+- Activation qualification now inventories Claude's documented plugin surface
+  and fails closed unless the effective bundle is skill-only. Hook, MCP, agent,
+  LSP, monitor, executable, and settings surfaces remain unqualified rather
+  than widening the clean `~/.claude` boundary.
 
 ## [0.3.1] - 2026-09-17
 
