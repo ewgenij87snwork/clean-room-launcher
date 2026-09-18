@@ -156,12 +156,14 @@ mod tests {
         let home = root.join("home");
         let plugin = home.join(".claude/plugins/cache/example/superpowers/6.3.0");
         fs::create_dir_all(plugin.join(".claude-plugin")).unwrap();
+        fs::create_dir_all(plugin.join("skills/brainstorming")).unwrap();
         fs::create_dir_all(home.join(".claude/plugins")).unwrap();
         fs::write(
             plugin.join(".claude-plugin/plugin.json"),
             r#"{"name":"superpowers","version":"6.3.0"}"#,
         )
         .unwrap();
+        fs::write(plugin.join("skills/brainstorming/SKILL.md"), "fixture\n").unwrap();
         fs::write(
             home.join(".claude/plugins/installed_plugins.json"),
             format!(
