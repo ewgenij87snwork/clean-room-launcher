@@ -6,6 +6,8 @@
 
 <p align="center">
   <a href="https://github.com/y-sor/clean-room-launcher/actions/workflows/ci.yml"><img src="https://github.com/y-sor/clean-room-launcher/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"></a>
+  <a href="https://www.bestpractices.dev/en/projects/14692/passing"><img src="https://www.bestpractices.dev/projects/14692/badge" alt="OpenSSF Best Practices Passing"></a>
+  <a href="https://www.bestpractices.dev/en/projects/14692/baseline-1"><img src="https://www.bestpractices.dev/projects/14692/baseline" alt="OpenSSF Baseline Level 1"></a>
   <a href="https://github.com/y-sor/clean-room-launcher/releases/latest"><img src="https://img.shields.io/github/v/release/y-sor/clean-room-launcher?display_name=tag&sort=semver" alt="Latest release"></a>
   <a href="LICENSE"><img src="https://img.shields.io/github/license/y-sor/clean-room-launcher" alt="License"></a>
   <a href="docs/install.md"><img src="https://img.shields.io/badge/platform-macOS%20Apple%20Silicon-lightgrey?logo=apple" alt="macOS Apple Silicon"></a>
