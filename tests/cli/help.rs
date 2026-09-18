@@ -71,6 +71,7 @@ fn top_help_shows_the_single_skill_set_option_and_resolved_file() {
     ));
     assert!(stdout.contains("clroom codex exec [CODEX_ARGS...]"));
     assert!(stdout.contains("clroom claude [CLAUDE_ARGS...]"));
+    assert!(stdout.contains("clroom claude --with=plugin:<id>"));
     assert!(!stdout.contains("--skills="));
     assert!(output.stderr.is_empty());
 }

@@ -8,6 +8,7 @@ pub mod pipeline;
 pub mod plugin_surface;
 pub mod projection;
 pub mod protection;
+pub mod provider_inventory;
 pub mod resource;
 pub mod selection;
 pub mod selection_receipt;

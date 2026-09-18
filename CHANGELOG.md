@@ -7,6 +7,32 @@ Semantic Versioning after the first public release.
 
 ## [Unreleased]
 
+### Added
+
+- Added `clroom claude --with=plugin:<provider-native-id>` for one exact
+  already-installed Claude whole plugin per launch, using Claude's session-only
+  plugin loading path without installing, updating, or persistently rewriting
+  provider state.
+
+### Compatibility
+
+- Whole-plugin activation is exactly qualified for Claude Code `2.1.273` on
+  macOS Apple Silicon. Ordinary clean-launch minimum-version handling remains
+  unchanged, and Codex plugin activation, MCP resource selection,
+  `--with=all`, presets, and component-level plugin selection remain outside
+  this slice.
+
+### Security
+
+- Selected plugin activation reuses provider inventory/selection truth,
+  revalidates the exact active install root around launch, reopens only that
+  root read-only, refuses overlapping raw `--plugin-dir`/`--plugin-url`
+  activation, and leaves persistent Claude configuration unchanged.
+- Activation qualification now inventories Claude's documented plugin surface
+  and fails closed unless the effective bundle is skill-only. Hook, MCP, agent,
+  LSP, monitor, executable, and settings surfaces remain unqualified rather
+  than widening the clean `~/.claude` boundary.
+
 ## [0.3.1] - 2026-09-17
 
 ### Added

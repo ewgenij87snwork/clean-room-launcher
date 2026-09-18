@@ -20,6 +20,9 @@ This table is deliberately conservative.
 | Claude Code | `~/.claude.json` | Not blanket-blocked | Known limitation |
 | Claude Code | managed / organization policy | Must remain authoritative | Product invariant; detailed combinations continue to require tests |
 | Claude Code | selected personal-global skill | Admitted through a private temporary projection | Confirmed from current CLROOM source |
+| Claude Code | unreleased v0.4 whole-plugin selector | `--with=plugin:<provider-native-id>` admits exactly one already-installed plugin whose observed effective surface is skill-only | Exact real-provider E2E on Claude Code 2.1.273 / macOS Apple Silicon |
+| Claude Code | unreleased v0.4 selected plugin root | Exact active install root is revalidated and reopened read-only; persistent provider configuration is not rewritten | Focused negative tests plus exact real-provider E2E |
+| Claude Code | unreleased v0.4 raw plugin activation overlap | `--plugin-dir` and `--plugin-url` are refused while CLROOM resource selection is active | CLI conflict tests |
 | Codex | global `AGENTS.md` / `AGENTS.override.md` | Known global instruction inputs blocked for the CLROOM launch | Confirmed from current CLROOM source |
 | Codex | interactive top-level launch | Existing isolation path retained | Current-release qualification canary |
 | Codex | `exec` non-interactive launch | Existing isolation plus exec-only `--ignore-user-config` | Current-release qualification canary |
@@ -44,8 +47,12 @@ contract.
 
 Provider-managed synced/remote state is not guessed from filesystem residue.
 Cached package directories without an active install record are stale and
-remain unavailable. Selecting a package skill admits only that skill
+remain unavailable. Selecting a package skill through `--skill-set=` admits only that skill
 directory and its supporting files; package hooks, MCP, agents, executables,
-settings, and notifications are not activated.
+settings, and notifications are not activated. By contrast, the unreleased v0.4
+whole-plugin selector deliberately passes one qualified provider-native plugin
+bundle as an atomic unit; it does not perform component-level surgery. The
+initial activation qualification is skill-only: observed hook, MCP, agent, LSP,
+monitor, executable, or settings components make the bundle fail closed.
 
 For support limits and security scope, read [Limitations](limitations.md) and the [Threat model](threat-model.md).

@@ -1,16 +1,22 @@
-use clroom::catalog::selection::{SelectionError, SelectionRequest, SelectionTarget};
+use clroom::catalog::{
+    resource::ResourceKind,
+    selection::{SelectionError, SelectionRequest, SelectionTarget},
+};
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum Provider {
-    Codex,
-    Claude,
+pub use clroom::catalog::provider_inventory::Provider;
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct Prepared {
+    pub request: SelectionRequest,
+    pub provider_args: Vec<String>,
 }
 
-pub fn prepare(provider: Provider, args: &[String]) -> Result<Vec<String>, String> {
+pub fn prepare(provider: Provider, args: &[String]) -> Result<Prepared, String> {
     let mut request = SelectionRequest::default();
     let mut provider_args = Vec::with_capacity(args.len() + 1);
     let mut launcher_options = true;
     let mut raw_chrome_override = false;
+    let mut raw_plugin_activation = false;
 
     for argument in args {
         if launcher_options && argument == "--" {
@@ -27,11 +33,16 @@ pub fn prepare(provider: Provider, args: &[String]) -> Result<Vec<String>, Strin
                 .exclude_value(value)
                 .map_err(selection_error_message)?;
         } else {
-            if provider == Provider::Claude
-                && launcher_options
-                && matches!(argument.as_str(), "--chrome" | "--no-chrome")
-            {
-                raw_chrome_override = true;
+            if provider == Provider::Claude && launcher_options {
+                if matches!(argument.as_str(), "--chrome" | "--no-chrome") {
+                    raw_chrome_override = true;
+                }
+                if matches!(argument.as_str(), "--plugin-dir" | "--plugin-url")
+                    || argument.starts_with("--plugin-dir=")
+                    || argument.starts_with("--plugin-url=")
+                {
+                    raw_plugin_activation = true;
+                }
             }
             provider_args.push(argument.clone());
         }
@@ -44,19 +55,31 @@ pub fn prepare(provider: Provider, args: &[String]) -> Result<Vec<String>, Strin
         .any(|target| matches!(target, SelectionTarget::All))
     {
         return Err(
-            "CLROOM_RESOURCE_ALL_UNAVAILABLE_IN_V0_3: --with=all/--without=all is unavailable in v0.3"
+            "CLROOM_RESOURCE_ALL_UNAVAILABLE_IN_V0_4: --with=all/--without=all is unavailable in v0.4.0"
                 .to_owned(),
         );
     }
 
-    if request
+    let unsupported_exact = request
         .includes
         .iter()
         .chain(request.excludes.iter())
-        .any(|target| matches!(target, SelectionTarget::Exact { .. }))
-    {
+        .any(|target| match target {
+            SelectionTarget::Exact { kind, .. } => {
+                provider != Provider::Claude || *kind != ResourceKind::Plugin
+            }
+            SelectionTarget::All => false,
+        });
+    if unsupported_exact {
         return Err(
-            "CLROOM_RESOURCE_NOT_SELECTABLE: selective provider-native activation is unavailable in v0.3; continue locally"
+            "CLROOM_RESOURCE_NOT_SELECTABLE: only exact Claude whole-plugin selection is available in v0.4.0; continue locally"
+                .to_owned(),
+        );
+    }
+
+    if !request.is_empty() && raw_plugin_activation {
+        return Err(
+            "CLROOM_RESOURCE_ACTIVATION_CONFLICT: raw Claude plugin activation flags cannot be combined with CLROOM --with/--without selection"
                 .to_owned(),
         );
     }
@@ -68,7 +91,10 @@ pub fn prepare(provider: Provider, args: &[String]) -> Result<Vec<String>, Strin
         provider_args.insert(0, "--no-chrome".to_owned());
     }
 
-    Ok(provider_args)
+    Ok(Prepared {
+        request,
+        provider_args,
+    })
 }
 
 fn invalid_selector() -> String {
@@ -82,6 +108,10 @@ fn selection_error_message(_error: SelectionError) -> String {
 #[cfg(test)]
 mod tests {
     use super::{prepare, Provider};
+    use clroom::catalog::{
+        resource::ResourceKind,
+        selection::SelectionTarget,
+    };
 
     fn strings(values: &[&str]) -> Vec<String> {
         values.iter().map(|value| (*value).to_owned()).collect()
@@ -90,7 +120,9 @@ mod tests {
     #[test]
     fn claude_clean_default_disables_ambient_native_chrome_state() {
         assert_eq!(
-            prepare(Provider::Claude, &strings(&["--model", "sonnet"])).unwrap(),
+            prepare(Provider::Claude, &strings(&["--model", "sonnet"]))
+                .unwrap()
+                .provider_args,
             strings(&["--no-chrome", "--model", "sonnet"])
         );
     }
@@ -99,7 +131,10 @@ mod tests {
     fn raw_claude_chrome_override_is_not_shadowed_by_clean_default() {
         for flag in ["--chrome", "--no-chrome"] {
             let args = strings(&[flag, "--model", "sonnet"]);
-            assert_eq!(prepare(Provider::Claude, &args).unwrap(), args);
+            assert_eq!(
+                prepare(Provider::Claude, &args).unwrap().provider_args,
+                args
+            );
         }
     }
 
@@ -107,24 +142,103 @@ mod tests {
     fn provider_terminator_keeps_later_arguments_literal() {
         let args = strings(&["--", "--chrome"]);
         assert_eq!(
-            prepare(Provider::Claude, &args).unwrap(),
+            prepare(Provider::Claude, &args).unwrap().provider_args,
             strings(&["--no-chrome", "--", "--chrome"])
         );
     }
 
     #[test]
-    fn exact_plugin_and_mcp_activation_remain_future_work() {
-        for selector in ["--with=plugin:review-tools@team", "--without=mcp:local-tools"] {
-            let error = prepare(Provider::Claude, &strings(&[selector])).unwrap_err();
-            assert!(error.starts_with("CLROOM_RESOURCE_NOT_SELECTABLE:"));
+    fn claude_exact_plugin_is_preserved_as_structured_selection() {
+        let prepared = prepare(
+            Provider::Claude,
+            &strings(&["--with=plugin:review-tools@team", "--model", "sonnet"]),
+        )
+        .unwrap();
+
+        assert_eq!(
+            prepared.request.includes.iter().collect::<Vec<_>>(),
+            vec![&SelectionTarget::Exact {
+                kind: ResourceKind::Plugin,
+                id: "review-tools@team".to_owned(),
+            }]
+        );
+        assert_eq!(
+            prepared.provider_args,
+            strings(&["--no-chrome", "--model", "sonnet"])
+        );
+    }
+
+    #[test]
+    fn codex_mcp_and_all_remain_closed_in_v0_4_0() {
+        for (provider, selector, code) in [
+            (
+                Provider::Codex,
+                "--with=plugin:review-tools@team",
+                "CLROOM_RESOURCE_NOT_SELECTABLE:",
+            ),
+            (
+                Provider::Claude,
+                "--without=mcp:local-tools",
+                "CLROOM_RESOURCE_NOT_SELECTABLE:",
+            ),
+            (
+                Provider::Claude,
+                "--with=all",
+                "CLROOM_RESOURCE_ALL_UNAVAILABLE_IN_V0_4:",
+            ),
+        ] {
+            let error = prepare(provider, &strings(&[selector])).unwrap_err();
+            assert!(error.starts_with(code), "{error}");
         }
     }
 
     #[test]
-    fn all_and_malformed_or_unknown_selectors_fail_with_stable_codes() {
-        let all = prepare(Provider::Claude, &strings(&["--with=all"])).unwrap_err();
-        assert!(all.starts_with("CLROOM_RESOURCE_ALL_UNAVAILABLE_IN_V0_3:"));
+    fn raw_claude_plugin_activation_conflicts_only_before_terminator() {
+        for flag in [
+            "--plugin-dir",
+            "--plugin-url",
+            "--plugin-dir=/tmp/plugin",
+            "--plugin-url=https://example.invalid/plugin.zip",
+        ] {
+            let error = prepare(
+                Provider::Claude,
+                &strings(&["--with=plugin:review-tools@team", flag]),
+            )
+            .unwrap_err();
+            assert!(
+                error.starts_with("CLROOM_RESOURCE_ACTIVATION_CONFLICT:"),
+                "{flag}: {error}"
+            );
+        }
 
+        let literal = prepare(
+            Provider::Claude,
+            &strings(&[
+                "--with=plugin:review-tools@team",
+                "--",
+                "--plugin-dir",
+                "/tmp/literal",
+            ]),
+        )
+        .unwrap();
+        assert_eq!(
+            literal.provider_args,
+            strings(&["--no-chrome", "--", "--plugin-dir", "/tmp/literal"])
+        );
+
+        let raw_only = prepare(
+            Provider::Claude,
+            &strings(&["--plugin-dir", "/tmp/provider-owned"]),
+        )
+        .unwrap();
+        assert_eq!(
+            raw_only.provider_args,
+            strings(&["--no-chrome", "--plugin-dir", "/tmp/provider-owned"])
+        );
+    }
+
+    #[test]
+    fn malformed_or_unknown_selectors_fail_with_stable_code() {
         for selector in ["--with", "--without", "--with=", "--with=capability"] {
             let error = prepare(Provider::Claude, &strings(&[selector])).unwrap_err();
             assert!(error.starts_with("CLROOM_RESOURCE_SELECTOR_INVALID:"));

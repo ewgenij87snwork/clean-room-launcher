@@ -1,4 +1,4 @@
-use super::resource::ResourceKind;
+use super::resource::{NativeKind, ResourceKind};
 use serde::Serialize;
 use serde_json::Value;
 use std::{
@@ -96,7 +96,7 @@ fn inspect_codex(root: &Path) -> Result<PluginSurface, PluginSurfaceError> {
 
 fn inspect_claude(root: &Path) -> Result<PluginSurface, PluginSurfaceError> {
     let manifest_path = root.join(".claude-plugin/plugin.json");
-    let _manifest = read_json(&manifest_path, MAX_MANIFEST_BYTES)?;
+    let manifest = read_json(&manifest_path, MAX_MANIFEST_BYTES)?;
     let mut declared = BTreeSet::new();
     let mut effective = BTreeSet::new();
 
@@ -104,8 +104,102 @@ fn inspect_claude(root: &Path) -> Result<PluginSurface, PluginSurfaceError> {
         declared.insert(skill.clone());
         effective.insert(skill);
     }
+    add_root_skill(root, &manifest, &mut declared, &mut effective);
+    add_flat_markdown_components(
+        root,
+        "./commands",
+        ResourceKind::Skill,
+        &mut declared,
+        &mut effective,
+    );
+    add_flat_markdown_components(
+        root,
+        "./agents",
+        ResourceKind::Agent,
+        &mut declared,
+        &mut effective,
+    );
+
+    if let Some(hooks) = manifest.get("hooks") {
+        for event in hook_events_from_value(hooks) {
+            let component = component(ResourceKind::HookSet, &event);
+            declared.insert(component.clone());
+            effective.insert(component);
+        }
+    }
     add_hook_file(root, "./hooks/hooks.json", &mut declared, &mut effective);
     add_mcp_components(root, None, &mut declared, &mut effective);
+    add_named_json_components(
+        root,
+        "./.lsp.json",
+        ResourceKind::LspServer,
+        &mut declared,
+        &mut effective,
+    );
+    add_monitor_components(root, &mut declared, &mut effective);
+    add_plugin_executables(root, &mut declared, &mut effective);
+
+    // The v0.4 activation qualifier must fail closed on every provider component
+    // class whose runtime behavior is not proven by the read-only skill seam.
+    // Custom manifest paths can replace default locations, so field presence is
+    // itself meaningful even when this bounded inventory does not enumerate the
+    // custom file's contents.
+    for (field, kind) in [
+        ("agents", ResourceKind::Agent),
+        ("hooks", ResourceKind::HookSet),
+        ("mcpServers", ResourceKind::McpServer),
+        ("lspServers", ResourceKind::LspServer),
+        ("workflows", NativeKind::new("workflow").expect("static kind")),
+        ("outputStyles", NativeKind::new("output_style").expect("static kind")),
+        ("userConfig", ResourceKind::SettingsOverlay),
+        ("channels", NativeKind::new("channel").expect("static kind")),
+        ("dependencies", NativeKind::new("dependency").expect("static kind")),
+    ] {
+        if manifest.get(field).is_some() {
+            let item = component(kind, "manifest");
+            declared.insert(item.clone());
+            effective.insert(item);
+        }
+    }
+    if manifest
+        .get("experimental")
+        .and_then(Value::as_object)
+        .is_some_and(|experimental| experimental.contains_key("monitors"))
+    {
+        let item = component(ResourceKind::Monitor, "manifest");
+        declared.insert(item.clone());
+        effective.insert(item);
+    }
+    if manifest
+        .get("experimental")
+        .and_then(Value::as_object)
+        .is_some_and(|experimental| experimental.contains_key("themes"))
+    {
+        let item = component(NativeKind::new("theme").expect("static kind"), "manifest");
+        declared.insert(item.clone());
+        effective.insert(item);
+    }
+
+    for (relative, kind) in [
+        ("./workflows", NativeKind::new("workflow").expect("static kind")),
+        (
+            "./output-styles",
+            NativeKind::new("output_style").expect("static kind"),
+        ),
+        ("./themes", NativeKind::new("theme").expect("static kind")),
+    ] {
+        if resolve_relative(root, relative).is_some() {
+            let item = component(kind, "default");
+            declared.insert(item.clone());
+            effective.insert(item);
+        }
+    }
+
+    if root.join("settings.json").is_file() || manifest.get("settings").is_some() {
+        let component = component(ResourceKind::SettingsOverlay, "default");
+        declared.insert(component.clone());
+        effective.insert(component);
+    }
 
     Ok(surface(declared, effective))
 }
@@ -217,11 +311,142 @@ fn hook_events_from_value(value: &Value) -> Vec<String> {
     value
         .get("hooks")
         .and_then(Value::as_object)
+        .or_else(|| value.as_object())
         .into_iter()
         .flat_map(|hooks| hooks.keys())
         .filter(|event| valid_public_id(event))
         .cloned()
         .collect()
+}
+
+fn add_root_skill(
+    root: &Path,
+    manifest: &Value,
+    declared: &mut BTreeSet<PluginComponent>,
+    effective: &mut BTreeSet<PluginComponent>,
+) {
+    if safe_regular_file(&root.join("SKILL.md"), MAX_COMPONENT_FILE_BYTES).is_none() {
+        return;
+    }
+    let id = manifest
+        .get("name")
+        .and_then(Value::as_str)
+        .filter(|name| valid_public_id(name))
+        .unwrap_or("root");
+    let skill = component(ResourceKind::Skill, id);
+    declared.insert(skill.clone());
+    effective.insert(skill);
+}
+
+fn add_flat_markdown_components(
+    root: &Path,
+    relative: &str,
+    kind: ResourceKind,
+    declared: &mut BTreeSet<PluginComponent>,
+    effective: &mut BTreeSet<PluginComponent>,
+) {
+    let Some(directory) = resolve_relative(root, relative) else {
+        return;
+    };
+    let Ok(entries) = fs::read_dir(directory) else {
+        return;
+    };
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if !entry.file_type().is_ok_and(|file_type| file_type.is_file())
+            || path.extension().and_then(|value| value.to_str()) != Some("md")
+        {
+            continue;
+        }
+        let Some(id) = path.file_stem().and_then(|value| value.to_str()) else {
+            continue;
+        };
+        if !valid_public_id(id) {
+            continue;
+        }
+        let item = component(kind, id);
+        declared.insert(item.clone());
+        effective.insert(item);
+    }
+}
+
+fn add_named_json_components(
+    root: &Path,
+    relative: &str,
+    kind: ResourceKind,
+    declared: &mut BTreeSet<PluginComponent>,
+    effective: &mut BTreeSet<PluginComponent>,
+) {
+    let Some(path) = resolve_relative(root, relative) else {
+        return;
+    };
+    let Ok(value) = read_json(&path, MAX_COMPONENT_FILE_BYTES) else {
+        return;
+    };
+    let Some(entries) = value.as_object() else {
+        return;
+    };
+    for id in entries.keys().filter(|id| valid_public_id(id)) {
+        let item = component(kind, id);
+        declared.insert(item.clone());
+        effective.insert(item);
+    }
+}
+
+fn add_monitor_components(
+    root: &Path,
+    declared: &mut BTreeSet<PluginComponent>,
+    effective: &mut BTreeSet<PluginComponent>,
+) {
+    let Some(path) = resolve_relative(root, "./monitors/monitors.json") else {
+        return;
+    };
+    let Ok(value) = read_json(&path, MAX_COMPONENT_FILE_BYTES) else {
+        return;
+    };
+    let Some(entries) = value.as_array() else {
+        return;
+    };
+    for entry in entries {
+        let Some(id) = entry
+            .get("name")
+            .and_then(Value::as_str)
+            .filter(|id| valid_public_id(id))
+        else {
+            continue;
+        };
+        let item = component(ResourceKind::Monitor, id);
+        declared.insert(item.clone());
+        effective.insert(item);
+    }
+}
+
+fn add_plugin_executables(
+    root: &Path,
+    declared: &mut BTreeSet<PluginComponent>,
+    effective: &mut BTreeSet<PluginComponent>,
+) {
+    let Some(directory) = resolve_relative(root, "./bin") else {
+        return;
+    };
+    let Ok(entries) = fs::read_dir(directory) else {
+        return;
+    };
+    for entry in entries.flatten() {
+        if !entry.file_type().is_ok_and(|file_type| file_type.is_file()) {
+            continue;
+        }
+        let name = entry.file_name();
+        let Some(id) = name.to_str().map(str::to_owned) else {
+            continue;
+        };
+        if !valid_public_id(&id) {
+            continue;
+        }
+        let item = component(ResourceKind::PluginExecutable, &id);
+        declared.insert(item.clone());
+        effective.insert(item);
+    }
 }
 
 fn add_mcp_components(
@@ -391,6 +616,7 @@ mod tests {
         fs::create_dir_all(root.join(".claude-plugin")).unwrap();
         fs::create_dir_all(root.join("skills/brainstorming")).unwrap();
         fs::create_dir_all(root.join("hooks")).unwrap();
+        fs::create_dir_all(root.join("agents")).unwrap();
         fs::write(root.join("skills/brainstorming/SKILL.md"), "fixture\n").unwrap();
         fs::write(
             root.join(".codex-plugin/plugin.json"),
@@ -399,14 +625,16 @@ mod tests {
         .unwrap();
         fs::write(
             root.join(".claude-plugin/plugin.json"),
-            r#"{"name":"superpowers","version":"6.3.0"}"#,
+            r#"{"name":"superpowers","version":"6.3.0","hooks":{"SessionStart":[{"hooks":[{"type":"command","command":"fixture-inline"}]}]}}"#,
         )
         .unwrap();
         fs::write(
             root.join("hooks/hooks.json"),
-            r#"{"hooks":{"SessionStart":[{"hooks":[{"type":"command","command":"fixture"}]}]}}"#,
+            r#"{"hooks":{"PostToolUse":[{"hooks":[{"type":"command","command":"fixture"}]}]}}"#,
         )
         .unwrap();
+        fs::write(root.join("agents/reviewer.md"), "fixture\n").unwrap();
+        fs::write(root.join(".lsp.json"), r#"{"rust":{"command":"rust-analyzer"}}"#).unwrap();
         root
     }
 
@@ -438,6 +666,17 @@ mod tests {
             ResourceKind::HookSet,
             "SessionStart"
         ));
+        assert!(has(
+            &claude.effective,
+            ResourceKind::HookSet,
+            "PostToolUse"
+        ));
+        assert!(has(&claude.effective, ResourceKind::Agent, "reviewer"));
+        assert!(has(&claude.effective, ResourceKind::LspServer, "rust"));
+        assert!(claude
+            .effective
+            .iter()
+            .any(|item| item.kind == ResourceKind::HookSet && item.id == "manifest"));
         assert!(!codex
             .effective
             .iter()
@@ -461,7 +700,7 @@ mod tests {
         assert!(has(
             &codex.effective,
             ResourceKind::HookSet,
-            "SessionStart"
+            "PostToolUse"
         ));
         let _ = fs::remove_dir_all(root);
     }

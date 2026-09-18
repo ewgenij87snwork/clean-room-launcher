@@ -1,10 +1,8 @@
-use clroom::adapters::{claude::plugin_state as claude_plugins, codex::plugin_state as codex_plugins};
-use clroom::catalog::plugin_surface::{
-    inspect_plugin_surface, PluginComponent, PluginSurfaceError, ProviderPluginSemantics,
-};
+use clroom::catalog::plugin_surface::PluginComponent;
+use clroom::catalog::provider_inventory::{self, Provider};
 use clroom::catalog::resource::{
-    ActivationPolicy, DiscoveryState, EnablementState, InstallationState, QualificationState,
-    ResourceId, ResourceInfo, ResourceKind, ResourceOrigin, SelectionState,
+    DiscoveryState, EnablementState, InstallationState, QualificationState, ResourceInfo,
+    SelectionState,
 };
 use serde::Serialize;
 use std::{collections::BTreeSet, path::PathBuf};
@@ -12,52 +10,6 @@ use std::{collections::BTreeSet, path::PathBuf};
 use super::{output, process};
 
 const SCHEMA_VERSION: &str = "clroom.provider-info.v1";
-const CODEX_EXACT: (u64, u64, u64) = (0, 154, 0);
-const CLAUDE_EXACT: (u64, u64, u64) = (2, 1, 272);
-
-#[derive(Clone, Copy)]
-enum Provider {
-    Codex,
-    Claude,
-}
-
-impl Provider {
-    fn parse(value: &str) -> Option<Self> {
-        match value {
-            "codex" => Some(Self::Codex),
-            "claude" => Some(Self::Claude),
-            _ => None,
-        }
-    }
-
-    fn id(self) -> &'static str {
-        match self {
-            Self::Codex => "codex",
-            Self::Claude => "claude",
-        }
-    }
-
-    fn display(self) -> &'static str {
-        match self {
-            Self::Codex => "Codex",
-            Self::Claude => "Claude Code",
-        }
-    }
-
-    fn exact_version(self) -> (u64, u64, u64) {
-        match self {
-            Self::Codex => CODEX_EXACT,
-            Self::Claude => CLAUDE_EXACT,
-        }
-    }
-
-    fn plugin_semantics(self) -> ProviderPluginSemantics {
-        match self {
-            Self::Codex => ProviderPluginSemantics::Codex,
-            Self::Claude => ProviderPluginSemantics::Claude,
-        }
-    }
-}
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 struct NativeTarget {
@@ -139,7 +91,7 @@ fn parse_native_targets(provider: Provider, args: &[String]) -> Result<Vec<Nativ
                     .to_owned(),
             );
         };
-        if !valid_plugin_key(provider, plugin_id) {
+        if !provider_inventory::valid_plugin_key(provider, plugin_id) {
             return Err(
                 "INFO_NATIVE_TARGET_INVALID: use separate plugin:<provider-native-id> targets"
                     .to_owned(),
@@ -152,42 +104,31 @@ fn parse_native_targets(provider: Provider, args: &[String]) -> Result<Vec<Nativ
     Ok(targets.into_iter().collect())
 }
 
-fn valid_plugin_key(provider: Provider, value: &str) -> bool {
-    let Some((plugin, marketplace)) = value.rsplit_once('@') else {
-        return false;
-    };
-    valid_plugin_segment(plugin, true)
-        && valid_plugin_segment(marketplace, matches!(provider, Provider::Claude))
-}
-
-fn valid_plugin_segment(value: &str, allow_dots: bool) -> bool {
-    if value.is_empty() || allow_dots && matches!(value, "." | "..") {
-        return false;
-    }
-    if allow_dots && (value.starts_with('.') || value.ends_with('.') || value.contains("..")) {
-        return false;
-    }
-    value.chars().all(|character| {
-        character.is_ascii_alphanumeric()
-            || matches!(character, '-' | '_')
-            || allow_dots && character == '.'
-    })
-}
-
 fn inspect(provider: Provider, targets: &[NativeTarget]) -> ProviderInfo {
-    let exact = provider.exact_version();
-    let exact_target = format!("{} / macOS / Apple Silicon", version_string(exact));
+    let clean_exact = provider.clean_launch_exact_version();
+    let exact_target = format!(
+        "{} / macOS / Apple Silicon",
+        version_string(clean_exact)
+    );
     let resolved = match provider {
         Provider::Codex => process::resolve_codex_executable(),
         Provider::Claude => process::resolve_claude_executable(),
     };
 
-    let (installed, version, clean_qualification, clean_reason, exact_tuple) = match resolved {
+    let (
+        installed,
+        version,
+        clean_qualification,
+        clean_reason,
+        clean_exact_tuple,
+        plugin_activation_tuple,
+    ) = match resolved {
         Err(_) => (
             false,
             None,
             QualificationState::Unqualified,
             Some("PROVIDER_NOT_INSTALLED"),
+            false,
             false,
         ),
         Ok(executable) => {
@@ -199,6 +140,19 @@ fn inspect(provider: Provider, targets: &[NativeTarget]) -> ProviderInfo {
                 Ok(identity) => {
                     let version = version_string(identity.version);
                     let platform_supported = identity.os == "macos" && identity.arch == "aarch64";
+                    let clean_exact_tuple = provider_inventory::clean_launch_exact_tuple(
+                        provider,
+                        identity.version,
+                        &identity.os,
+                        &identity.arch,
+                    );
+                    let plugin_activation_tuple =
+                        provider_inventory::plugin_activation_exact_tuple(
+                            provider,
+                            identity.version,
+                            &identity.os,
+                            &identity.arch,
+                        );
                     if !platform_supported {
                         (
                             true,
@@ -206,14 +160,16 @@ fn inspect(provider: Provider, targets: &[NativeTarget]) -> ProviderInfo {
                             QualificationState::Unsupported,
                             Some("PLATFORM_NOT_QUALIFIED"),
                             false,
+                            false,
                         )
-                    } else if identity.version == exact {
+                    } else if clean_exact_tuple {
                         (
                             true,
                             Some(version),
                             QualificationState::Qualified,
                             None,
                             true,
+                            plugin_activation_tuple,
                         )
                     } else {
                         (
@@ -222,6 +178,7 @@ fn inspect(provider: Provider, targets: &[NativeTarget]) -> ProviderInfo {
                             QualificationState::Unqualified,
                             Some("PROVIDER_VERSION_NOT_EXACT_TARGET"),
                             false,
+                            plugin_activation_tuple,
                         )
                     }
                 }
@@ -231,25 +188,44 @@ fn inspect(provider: Provider, targets: &[NativeTarget]) -> ProviderInfo {
                     QualificationState::Unqualified,
                     Some("PROVIDER_IDENTITY_PROBE_FAILED"),
                     false,
+                    false,
                 ),
             }
         }
     };
 
-    let known_discovery = if exact_tuple {
+    let clean_discovery = if clean_exact_tuple {
         DiscoveryState::Discoverable
     } else {
         DiscoveryState::Unknown
     };
-    let unavailable_reason = if exact_tuple {
-        None
+    let plugin_discovery = if plugin_activation_tuple {
+        DiscoveryState::Discoverable
     } else {
-        Some("PROVIDER_TUPLE_NOT_QUALIFIED")
+        DiscoveryState::Unknown
     };
 
+    let home = std::env::var_os("HOME").map(PathBuf::from);
+    let codex_home = if provider == Provider::Codex {
+        home.as_ref().map(|home| {
+            std::env::var_os("CODEX_HOME")
+                .map(PathBuf::from)
+                .unwrap_or_else(|| home.join(".codex"))
+        })
+    } else {
+        None
+    };
     let native_entries = targets
         .iter()
-        .map(|target| inspect_plugin(provider, target))
+        .map(|target| {
+            inspect_plugin_detail(
+                provider,
+                target,
+                home.as_deref(),
+                codex_home.as_deref(),
+                plugin_activation_tuple,
+            )
+        })
         .collect::<Vec<_>>();
     let conflicts = native_entries
         .iter()
@@ -275,20 +251,20 @@ fn inspect(provider: Provider, targets: &[NativeTarget]) -> ProviderInfo {
         capabilities: vec![
             capability(
                 "plugins",
-                known_discovery,
-                if exact_tuple {
+                plugin_discovery,
+                if plugin_activation_tuple {
                     "PLUGIN_ACTIVATION_V04"
                 } else {
-                    unavailable_reason.unwrap_or("PROVIDER_TUPLE_NOT_QUALIFIED")
+                    "PROVIDER_TUPLE_NOT_QUALIFIED"
                 },
             ),
             capability(
                 "mcp",
-                known_discovery,
-                if exact_tuple {
+                clean_discovery,
+                if clean_exact_tuple {
                     "MCP_ACTIVATION_V04"
                 } else {
-                    unavailable_reason.unwrap_or("PROVIDER_TUPLE_NOT_QUALIFIED")
+                    "PROVIDER_TUPLE_NOT_QUALIFIED"
                 },
             ),
         ],
@@ -300,114 +276,26 @@ fn inspect(provider: Provider, targets: &[NativeTarget]) -> ProviderInfo {
     }
 }
 
-fn inspect_plugin(provider: Provider, target: &NativeTarget) -> NativeEntryDetail {
-    let installation = locate_plugin(provider, &target.plugin_id);
-    let (installation_state, discovery, root, mut conflicts, reason_code) = match installation {
-        LocatedPlugin::Installed(root) => (
-            InstallationState::Installed,
-            DiscoveryState::Discoverable,
-            Some(root),
-            Vec::new(),
-            "PLUGIN_ACTIVATION_V04",
-        ),
-        LocatedPlugin::NotInstalled => (
-            InstallationState::NotInstalled,
-            DiscoveryState::Unknown,
-            None,
-            vec!["PLUGIN_NOT_INSTALLED".to_owned()],
-            "PLUGIN_NOT_INSTALLED",
-        ),
-        LocatedPlugin::Ambiguous => (
-            InstallationState::Installed,
-            DiscoveryState::Discoverable,
-            None,
-            vec!["PLUGIN_INSTALLATION_AMBIGUOUS".to_owned()],
-            "PLUGIN_INSTALLATION_AMBIGUOUS",
-        ),
-        LocatedPlugin::InvalidState => (
-            InstallationState::Unknown,
-            DiscoveryState::Unknown,
-            None,
-            vec!["PLUGIN_INSTALLATION_STATE_INVALID".to_owned()],
-            "PLUGIN_INSTALLATION_STATE_INVALID",
-        ),
-    };
-
-    let (declared_components, effective_components) = root
-        .as_deref()
-        .map(|root| inspect_plugin_surface(provider.plugin_semantics(), root))
-        .map(|result| match result {
-            Ok(surface) => (surface.declared, surface.effective),
-            Err(error) => {
-                let blocker = plugin_surface_error_code(error).to_owned();
-                conflicts.push(blocker);
-                (Vec::new(), Vec::new())
-            }
-        })
-        .unwrap_or_default();
-
-    if installation_state == InstallationState::Installed && conflicts.is_empty() {
-        conflicts.push(reason_code.to_owned());
-    }
-
+fn inspect_plugin_detail(
+    provider: Provider,
+    target: &NativeTarget,
+    home: Option<&std::path::Path>,
+    codex_home: Option<&std::path::Path>,
+    tuple_qualified: bool,
+) -> NativeEntryDetail {
+    let inventory = provider_inventory::inspect_plugin_with_home(
+        provider,
+        home,
+        codex_home,
+        &target.plugin_id,
+        tuple_qualified,
+    );
     NativeEntryDetail {
-        entry: ResourceInfo {
-            resource: ResourceId::new(provider.id(), ResourceKind::Plugin, &target.plugin_id)
-                .expect("validated plugin target"),
-            origin: ResourceOrigin::Unknown,
-            discovery,
-            installation: installation_state,
-            provider_enablement: EnablementState::Unknown,
-            selection: SelectionState::NotSelectable,
-            qualification: QualificationState::Unqualified,
-            required_dependencies: Vec::new(),
-            activation_policy: ActivationPolicy::AtomicBundle,
-            reason_code: Some(reason_code.to_owned()),
-        },
-        declared_components,
-        effective_components,
+        entry: inventory.entry,
+        declared_components: inventory.declared_components,
+        effective_components: inventory.effective_components,
         qualified_closure: Vec::new(),
-        conflicts,
-    }
-}
-
-enum LocatedPlugin {
-    Installed(PathBuf),
-    NotInstalled,
-    Ambiguous,
-    InvalidState,
-}
-
-fn locate_plugin(provider: Provider, plugin_id: &str) -> LocatedPlugin {
-    let Some(home) = std::env::var_os("HOME").map(PathBuf::from) else {
-        return LocatedPlugin::InvalidState;
-    };
-    match provider {
-        Provider::Codex => {
-            let codex_home = std::env::var_os("CODEX_HOME")
-                .map(PathBuf::from)
-                .unwrap_or_else(|| home.join(".codex"));
-            match codex_plugins::locate(&codex_home, plugin_id) {
-                codex_plugins::PluginInstallation::Installed(root) => LocatedPlugin::Installed(root),
-                codex_plugins::PluginInstallation::NotInstalled => LocatedPlugin::NotInstalled,
-                codex_plugins::PluginInstallation::Ambiguous => LocatedPlugin::Ambiguous,
-                codex_plugins::PluginInstallation::InvalidState => LocatedPlugin::InvalidState,
-            }
-        }
-        Provider::Claude => match claude_plugins::locate(&home, plugin_id) {
-            claude_plugins::PluginInstallation::Installed(root) => LocatedPlugin::Installed(root),
-            claude_plugins::PluginInstallation::NotInstalled => LocatedPlugin::NotInstalled,
-            claude_plugins::PluginInstallation::Ambiguous => LocatedPlugin::Ambiguous,
-            claude_plugins::PluginInstallation::InvalidState => LocatedPlugin::InvalidState,
-        },
-    }
-}
-
-fn plugin_surface_error_code(error: PluginSurfaceError) -> &'static str {
-    match error {
-        PluginSurfaceError::Unavailable => "PLUGIN_SURFACE_UNAVAILABLE",
-        PluginSurfaceError::InvalidManifest => "PLUGIN_MANIFEST_INVALID",
-        PluginSurfaceError::UnsupportedManifest => "PLUGIN_MANIFEST_UNSUPPORTED",
+        conflicts: inventory.conflicts,
     }
 }
 

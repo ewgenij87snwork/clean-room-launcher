@@ -40,6 +40,55 @@ internal teammate independently.
 
 For practical workflows, see [Use cases](use-cases.md) and [Skill sets](skill-sets.md).
 
+## Unreleased v0.4: select one installed whole plugin
+
+The unreleased v0.4 source adds one bounded whole-plugin selector:
+
+```sh
+claude plugin list
+clroom claude --with=plugin:plugin-name@marketplace-name
+```
+
+The selector takes the provider-native qualified plugin ID. It admits exactly one
+already-installed Claude plugin for this launch. CLROOM does not install or
+update the plugin, and it does not change persistent provider enablement or
+configuration.
+
+For this path CLROOM resolves the active installed plugin root, requires the
+exact qualified provider tuple, revalidates the root immediately around launch,
+reopens only that selected root read-only in the outer macOS isolation policy,
+and delegates activation to Claude's session-only `--plugin-dir` interface.
+Claude documents `--plugin-dir` as loading a plugin for the current session
+only.
+
+Whole-plugin still means the provider-native bundle is atomic: CLROOM either
+admits the qualified bundle root or refuses the plugin; it does not extract
+individual files or components.
+
+The initial v0.4.0 qualification is intentionally narrower than Claude's full
+plugin format. The observed effective surface must be skill-only. If inventory
+finds hooks, MCP servers, agents, LSP servers, background monitors, plugin
+executables, or plugin settings, selection fails closed. Real-provider testing
+showed why this boundary is necessary: a hook-bearing plugin can load through
+`--plugin-dir` while its hook still depends on provider-global runtime state
+under `~/.claude`, which the clean launch intentionally keeps unavailable.
+CLROOM does not reopen that ambient provider directory merely to make such a
+plugin run.
+
+While a CLROOM resource selection is active, raw `--plugin-dir` and
+`--plugin-url` arguments are refused to avoid two competing activation
+authorities. More than one selected whole plugin is also refused.
+
+The exact qualification target for this new activation path is Claude Code
+`2.1.273` on macOS Apple Silicon. Other provider tuples fail closed for plugin
+activation even though the ordinary Claude clean-launch parser/runtime minimum
+remains `2.1.223+`. The published v0.3.1 release does not include this v0.4
+selector.
+
+This slice does not add Codex plugin activation, MCP resource activation,
+`--with=all`, presets, installation/update/removal, or component-level
+selection.
+
 ## Does CLROOM remove every Claude global or provider-owned input?
 
 **No.**
@@ -110,4 +159,4 @@ This is also why managed-policy interactions around selected skills require care
 - [Claude Code skills](https://code.claude.com/docs/en/skills)
 - [Claude Code documentation index](https://code.claude.com/docs/llms.txt)
 
-Last verified against current Anthropic documentation: **2026-09-14**.
+Last verified against current Anthropic documentation: **2026-09-18**.
