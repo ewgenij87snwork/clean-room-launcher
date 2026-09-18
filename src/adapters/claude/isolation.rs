@@ -220,3 +220,141 @@ fn escape_path(path: &Path) -> Result<String, IsolationError> {
     let value = path.to_str().ok_or(IsolationError::InvalidAllowedPath)?;
     Ok(value.replace('\\', "\\\\").replace('"', "\\\""))
 }
+
+
+#[cfg(all(test, target_os = "macos", target_arch = "aarch64"))]
+mod tests {
+    use super::plan;
+    use std::{
+        fs,
+        os::unix::fs::symlink,
+        path::{Path, PathBuf},
+        process::{Command, Stdio},
+        sync::atomic::{AtomicU64, Ordering},
+    };
+
+    static SEQUENCE: AtomicU64 = AtomicU64::new(0);
+
+    struct Fixture {
+        root: PathBuf,
+        project: PathBuf,
+        home: PathBuf,
+        projection_root: PathBuf,
+        projection_view: PathBuf,
+        selected: PathBuf,
+        sibling: PathBuf,
+        outside: PathBuf,
+    }
+
+    impl Fixture {
+        fn create() -> Self {
+            let root = std::env::temp_dir().join(format!(
+                "clroom-claude-plugin-isolation-{}-{}",
+                std::process::id(),
+                SEQUENCE.fetch_add(1, Ordering::Relaxed)
+            ));
+            let _ = fs::remove_dir_all(&root);
+            let project = root.join("project");
+            let home = root.join("home");
+            let projection_root = root.join("projections");
+            let projection_view = projection_root.join("active/session-test/view");
+            let selected = home.join(".claude/plugins/cache/example/selected/1.0.0");
+            let sibling = home.join(".claude/plugins/cache/example/sibling/1.0.0");
+            let outside = home.join(".ssh/canary");
+            for directory in [
+                &project,
+                &projection_view,
+                &selected,
+                &sibling,
+                outside.parent().unwrap(),
+            ] {
+                fs::create_dir_all(directory).unwrap();
+            }
+            fs::write(selected.join("selected.txt"), "selected\n").unwrap();
+            fs::write(sibling.join("sibling.txt"), "sibling\n").unwrap();
+            fs::write(&outside, "outside\n").unwrap();
+            symlink(&outside, selected.join("escape")).unwrap();
+            Self {
+                root,
+                project,
+                home,
+                projection_root,
+                projection_view,
+                selected,
+                sibling,
+                outside,
+            }
+        }
+
+        fn cleanup(self) {
+            let _ = fs::remove_dir_all(self.root);
+        }
+    }
+
+    fn sandbox_status(profile: &str, program: &str, argument: &Path) -> std::process::ExitStatus {
+        Command::new("/usr/bin/sandbox-exec")
+            .args(["-p", profile, "--", program])
+            .arg(argument)
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .status()
+            .unwrap()
+    }
+
+    fn fixture_plan(fixture: &Fixture) -> super::IsolationPlan {
+        let selected = fs::canonicalize(&fixture.selected).unwrap();
+        plan(
+            &fixture.project,
+            Path::new("/bin/cat"),
+            &fixture.home,
+            &fixture.projection_root,
+            &fixture.projection_view,
+            &[],
+            &[selected],
+        )
+        .unwrap()
+    }
+
+    #[test]
+    fn selected_plugin_root_is_readable_but_sibling_remains_denied() {
+        let fixture = Fixture::create();
+        let plan = fixture_plan(&fixture);
+
+        assert!(
+            sandbox_status(&plan.profile, "/bin/cat", &fixture.selected.join("selected.txt"))
+                .success()
+        );
+        assert!(
+            !sandbox_status(&plan.profile, "/bin/cat", &fixture.sibling.join("sibling.txt"))
+                .success()
+        );
+
+        fixture.cleanup();
+    }
+
+    #[test]
+    fn selected_plugin_root_remains_write_denied() {
+        let fixture = Fixture::create();
+        let plan = fixture_plan(&fixture);
+        let written = fixture.selected.join("written-by-provider");
+
+        assert!(!sandbox_status(&plan.profile, "/usr/bin/touch", &written).success());
+        assert!(!written.exists());
+
+        fixture.cleanup();
+    }
+
+    #[test]
+    fn nested_symlink_cannot_escape_selected_plugin_read_seam() {
+        let fixture = Fixture::create();
+        let plan = fixture_plan(&fixture);
+
+        assert!(fixture.outside.exists());
+        assert!(
+            !sandbox_status(&plan.profile, "/bin/cat", &fixture.selected.join("escape")).success()
+        );
+
+        fixture.cleanup();
+    }
+}
