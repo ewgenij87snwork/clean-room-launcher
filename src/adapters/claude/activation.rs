@@ -138,6 +138,8 @@ mod tests {
         path::PathBuf,
         sync::atomic::{AtomicU64, Ordering},
     };
+    #[cfg(unix)]
+    use std::os::unix::fs::symlink;
 
     static SEQUENCE: AtomicU64 = AtomicU64::new(0);
 
@@ -189,12 +191,13 @@ mod tests {
         let activation = plan(&home, &request, &identity(CLAUDE_EXACT))
             .unwrap()
             .unwrap();
-        assert_eq!(activation.root(), plugin.as_path());
+        let canonical_plugin = fs::canonicalize(&plugin).unwrap();
+        assert_eq!(activation.root(), canonical_plugin.as_path());
         assert_eq!(
             activation.provider_args(),
             vec![
                 "--plugin-dir".to_owned(),
-                plugin.to_string_lossy().into_owned(),
+                canonical_plugin.to_string_lossy().into_owned(),
             ]
         );
         assert_eq!(activation.revalidate(&home), Ok(()));
@@ -217,8 +220,9 @@ mod tests {
         let _ = fs::remove_dir_all(home.parent().unwrap());
     }
 
+    #[cfg(unix)]
     #[test]
-    fn root_replacement_after_planning_is_refused() {
+    fn symlink_root_replacement_after_planning_is_refused() {
         let (home, plugin) = fixture();
         let mut request = SelectionRequest::default();
         request.include_value("plugin:superpowers@example").unwrap();
@@ -226,8 +230,10 @@ mod tests {
             .unwrap()
             .unwrap();
 
+        let outside = home.parent().unwrap().join("replacement");
+        fs::create_dir_all(&outside).unwrap();
         fs::remove_dir_all(&plugin).unwrap();
-        fs::create_dir_all(&plugin).unwrap();
+        symlink(&outside, &plugin).unwrap();
 
         assert_eq!(
             activation.revalidate(&home),
