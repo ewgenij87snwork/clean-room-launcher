@@ -169,8 +169,13 @@ pub fn inspect_plugin_with_home(
         })
         .unwrap_or_default();
 
+    let activation_surface_qualified = !effective_components.is_empty()
+        && effective_components
+            .iter()
+            .all(|component| component.kind == ResourceKind::Skill);
     let activation_qualified = provider == Provider::Claude
         && activation_tuple_qualified
+        && activation_surface_qualified
         && installation_state == InstallationState::Installed
         && root.is_some()
         && conflicts.is_empty();
@@ -179,6 +184,8 @@ pub fn inspect_plugin_with_home(
     {
         let blocker = if !activation_tuple_qualified {
             "PROVIDER_TUPLE_NOT_QUALIFIED"
+        } else if !activation_surface_qualified {
+            "PLUGIN_ACTIVATION_SURFACE_UNQUALIFIED"
         } else {
             "PLUGIN_ACTIVATION_UNAVAILABLE"
         };
@@ -279,7 +286,7 @@ mod tests {
         clean_launch_exact_tuple, inspect_plugin, plugin_activation_exact_tuple, Provider,
         CLAUDE_CLEAN_EXACT, CLAUDE_PLUGIN_ACTIVATION_EXACT, CODEX_CLEAN_EXACT,
     };
-    use crate::catalog::resource::{QualificationState, SelectionState};
+    use crate::catalog::resource::{QualificationState, ResourceKind, SelectionState};
     use std::{
         fs,
         sync::atomic::{AtomicU64, Ordering},
@@ -297,12 +304,14 @@ mod tests {
         let home = root.join("home");
         let plugin = home.join(".claude/plugins/cache/example/superpowers/6.3.0");
         fs::create_dir_all(plugin.join(".claude-plugin")).unwrap();
+        fs::create_dir_all(plugin.join("skills/brainstorming")).unwrap();
         fs::create_dir_all(home.join(".claude/plugins")).unwrap();
         fs::write(
             plugin.join(".claude-plugin/plugin.json"),
             r#"{"name":"superpowers","version":"6.3.0"}"#,
         )
         .unwrap();
+        fs::write(plugin.join("skills/brainstorming/SKILL.md"), "fixture\n").unwrap();
         fs::write(
             home.join(".claude/plugins/installed_plugins.json"),
             format!(
@@ -344,6 +353,44 @@ mod tests {
                 .conflicts
                 .iter()
                 .any(|reason| reason == "PROVIDER_TUPLE_NOT_QUALIFIED")
+        );
+
+        let _ = fs::remove_dir_all(home.parent().unwrap());
+    }
+
+    #[test]
+    fn hook_bearing_claude_plugin_is_observed_but_not_activation_qualified() {
+        let (home, plugin) = fixture();
+        fs::write(
+            plugin.join(".claude-plugin/plugin.json"),
+            r#"{"name":"superpowers","version":"6.3.0","hooks":{"SessionStart":[{"hooks":[{"type":"command","command":"fixture"}]}]}}"#,
+        )
+        .unwrap();
+
+        let inventory = inspect_plugin(
+            Provider::Claude,
+            &home,
+            None,
+            "superpowers@example",
+            true,
+        );
+
+        assert_eq!(inventory.entry.selection, SelectionState::NotSelectable);
+        assert_eq!(
+            inventory.entry.qualification,
+            QualificationState::Unqualified
+        );
+        assert!(
+            inventory
+                .effective_components
+                .iter()
+                .any(|component| component.kind == ResourceKind::HookSet)
+        );
+        assert!(
+            inventory
+                .conflicts
+                .iter()
+                .any(|reason| reason == "PLUGIN_ACTIVATION_SURFACE_UNQUALIFIED")
         );
 
         let _ = fs::remove_dir_all(home.parent().unwrap());
