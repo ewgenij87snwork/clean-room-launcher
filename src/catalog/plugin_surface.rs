@@ -379,7 +379,8 @@ fn add_plugin_executables(
         if !entry.file_type().is_ok_and(|file_type| file_type.is_file()) {
             continue;
         }
-        let Some(id) = entry.file_name().to_str().map(str::to_owned) else {
+        let name = entry.file_name();
+        let Some(id) = name.to_str().map(str::to_owned) else {
             continue;
         };
         if !valid_public_id(&id) {
@@ -638,7 +639,7 @@ mod tests {
         assert!(has(
             &codex.effective,
             ResourceKind::HookSet,
-            "SessionStart"
+            "PostToolUse"
         ));
         let _ = fs::remove_dir_all(root);
     }
