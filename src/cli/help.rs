@@ -239,6 +239,12 @@ fn render_top(invoked_as: &str, skill_sets_path: &str, width: usize, styled: boo
         styled,
     ));
     lines.extend(usage(
+        &format!("{invoked_as} claude --with=plugin:<id>"),
+        "Admit one installed Claude plugin",
+        width,
+        styled,
+    ));
+    lines.extend(usage(
         &format!("{invoked_as} info codex"),
         "Inspect provider state",
         width,
