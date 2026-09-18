@@ -162,6 +162,23 @@ impl LaunchContract {
         }
     }
 
+    pub fn add_claude_plugin_activation(&mut self, activation_args: &[String]) {
+        if self.provider != Provider::Claude || activation_args.is_empty() {
+            return;
+        }
+        let insert_at = self
+            .argv
+            .iter()
+            .position(|argument| argument == "--")
+            .unwrap_or(self.argv.len());
+        self.argv
+            .splice(insert_at..insert_at, activation_args.iter().cloned());
+        self.boundary = BoundaryState::Expanded;
+        if !self.boundary_controls.contains(&"plugin") {
+            self.boundary_controls.push("plugin");
+        }
+    }
+
     #[cfg(test)]
     pub fn boundary_label(&self) -> &'static str {
         match self.boundary {
@@ -235,7 +252,9 @@ fn analyze(
                 "--permission-mode"
                 | "--dangerously-skip-permissions"
                 | "--allow-dangerously-skip-permissions" => Some("permissions/sandbox"),
-                "--plugin-dir" | "--agents" | "--hooks" => Some("plugin/hook/agent"),
+                "--plugin-dir" | "--plugin-url" | "--agents" | "--hooks" => {
+                    Some("plugin/hook/agent")
+                }
                 "--chrome" => Some("browser"),
                 "--no-chrome" => None,
                 "--model" => {
@@ -302,6 +321,7 @@ fn analyze(
                 | "--mcp-config"
                 | "--permission-mode"
                 | "--plugin-dir"
+                | "--plugin-url"
                 | "--agents"
                 | "--hooks"
                 | "--agent"
@@ -437,6 +457,52 @@ mod tests {
                 .count(),
             1
         );
+    }
+
+    #[test]
+    fn claude_owned_plugin_activation_is_inserted_before_provider_terminator() {
+        let mut contract = LaunchContract::claude(
+            &[
+                "--model".to_owned(),
+                "sonnet".to_owned(),
+                "--".to_owned(),
+                "--plugin-dir".to_owned(),
+                "literal".to_owned(),
+            ],
+            Path::new("/tmp/view"),
+            Presence::Absent,
+        );
+        contract.add_claude_plugin_activation(&[
+            "--plugin-dir".to_owned(),
+            "/tmp/selected".to_owned(),
+        ]);
+
+        let terminator = contract
+            .argv
+            .iter()
+            .position(|argument| argument == "--")
+            .unwrap();
+        assert_eq!(
+            &contract.argv[terminator - 2..terminator],
+            &["--plugin-dir".to_owned(), "/tmp/selected".to_owned()]
+        );
+        assert_eq!(contract.argv[terminator + 1], "--plugin-dir");
+        assert_eq!(contract.boundary, BoundaryState::Expanded);
+        assert!(contract.boundary_controls.contains(&"plugin"));
+    }
+
+    #[test]
+    fn raw_claude_plugin_url_is_classified_as_plugin_control() {
+        let contract = LaunchContract::claude(
+            &[
+                "--plugin-url".to_owned(),
+                "https://example.invalid/plugin.zip".to_owned(),
+            ],
+            Path::new("/tmp/view"),
+            Presence::Absent,
+        );
+        assert_eq!(contract.boundary, BoundaryState::Expanded);
+        assert_eq!(contract.boundary_controls, vec!["plugin/hook/agent"]);
     }
 
     #[test]
