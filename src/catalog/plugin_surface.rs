@@ -1,4 +1,4 @@
-use super::resource::ResourceKind;
+use super::resource::{NativeKind, ResourceKind};
 use serde::Serialize;
 use serde_json::Value;
 use std::{
@@ -138,6 +138,63 @@ fn inspect_claude(root: &Path) -> Result<PluginSurface, PluginSurfaceError> {
     );
     add_monitor_components(root, &mut declared, &mut effective);
     add_plugin_executables(root, &mut declared, &mut effective);
+
+    // The v0.4 activation qualifier must fail closed on every provider component
+    // class whose runtime behavior is not proven by the read-only skill seam.
+    // Custom manifest paths can replace default locations, so field presence is
+    // itself meaningful even when this bounded inventory does not enumerate the
+    // custom file's contents.
+    for (field, kind) in [
+        ("agents", ResourceKind::Agent),
+        ("hooks", ResourceKind::HookSet),
+        ("mcpServers", ResourceKind::McpServer),
+        ("lspServers", ResourceKind::LspServer),
+        ("workflows", NativeKind::new("workflow").expect("static kind")),
+        ("outputStyles", NativeKind::new("output_style").expect("static kind")),
+        ("userConfig", ResourceKind::SettingsOverlay),
+        ("channels", NativeKind::new("channel").expect("static kind")),
+        ("dependencies", NativeKind::new("dependency").expect("static kind")),
+    ] {
+        if manifest.get(field).is_some() {
+            let item = component(kind, "manifest");
+            declared.insert(item.clone());
+            effective.insert(item);
+        }
+    }
+    if manifest
+        .get("experimental")
+        .and_then(Value::as_object)
+        .is_some_and(|experimental| experimental.contains_key("monitors"))
+    {
+        let item = component(ResourceKind::Monitor, "manifest");
+        declared.insert(item.clone());
+        effective.insert(item);
+    }
+    if manifest
+        .get("experimental")
+        .and_then(Value::as_object)
+        .is_some_and(|experimental| experimental.contains_key("themes"))
+    {
+        let item = component(NativeKind::new("theme").expect("static kind"), "manifest");
+        declared.insert(item.clone());
+        effective.insert(item);
+    }
+
+    for (relative, kind) in [
+        ("./workflows", NativeKind::new("workflow").expect("static kind")),
+        (
+            "./output-styles",
+            NativeKind::new("output_style").expect("static kind"),
+        ),
+        ("./themes", NativeKind::new("theme").expect("static kind")),
+    ] {
+        if resolve_relative(root, relative).is_some() {
+            let item = component(kind, "default");
+            declared.insert(item.clone());
+            effective.insert(item);
+        }
+    }
+
     if root.join("settings.json").is_file() || manifest.get("settings").is_some() {
         let component = component(ResourceKind::SettingsOverlay, "default");
         declared.insert(component.clone());
@@ -616,6 +673,10 @@ mod tests {
         ));
         assert!(has(&claude.effective, ResourceKind::Agent, "reviewer"));
         assert!(has(&claude.effective, ResourceKind::LspServer, "rust"));
+        assert!(claude
+            .effective
+            .iter()
+            .any(|item| item.kind == ResourceKind::HookSet && item.id == "manifest"));
         assert!(!codex
             .effective
             .iter()
