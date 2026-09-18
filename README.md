@@ -186,11 +186,12 @@ Add selected global skills for the same interactive launch:
 clroom codex --skill-set=my-skill,@my-skill-set
 ```
 
-For a non-interactive Codex task with eligible approval requests handled by
-Codex Auto-review:
+Interactive Codex is the default path. Codex options you supply are forwarded
+to the installed Codex CLI after CLROOM applies its clean launch defaults:
 
 ```sh
-clroom codex exec --approve-for-me
+clroom codex --approve-for-me
+clroom codex --enable apps --enable hooks --enable plugins
 ```
 
 `--approve-for-me` is a Codex option. It keeps the Codex workspace sandbox and
@@ -198,17 +199,17 @@ routes eligible approval requests through its automatic reviewer. Availability
 and reviewer behavior are controlled by the installed Codex version and
 account.
 
-For a non-interactive task where you prefer to review approval requests yourself:
+Use `exec` when you specifically want Codex's non-interactive automation path,
+for example from a script or CI job:
 
 ```sh
 clroom codex exec
+clroom codex exec --approve-for-me
 ```
 
-Non-interactive `codex exec` arguments pass through unchanged:
-
-```sh
-clroom codex exec --enable apps --enable hooks --enable plugins
-```
+The interactive and `exec` forms use the same CLROOM isolation path. CLROOM
+additionally preflights and injects Codex's native `--ignore-user-config`
+enhancement for `exec`; that flag is exec-only.
 
 For provider diagnostics, use the top-level forms:
 
@@ -216,9 +217,6 @@ For provider diagnostics, use the top-level forms:
 clroom codex --help
 clroom codex --version
 ```
-
-Interactive `clroom codex` uses the same clean isolation path as the
-exec launch. The native `--ignore-user-config` enhancement is exec-only.
 
 ### Claude Code
 
