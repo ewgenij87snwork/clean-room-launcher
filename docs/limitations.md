@@ -10,6 +10,16 @@ permalink: /limitations.html
 - Only macOS on Apple Silicon is supported. The minimum accepted versions are
   Codex CLI `0.147.0` and Claude Code CLI `2.1.223`; independent current-release
   qualification is limited to Codex `0.154.0` and Claude Code `2.1.272`.
+- The unreleased v0.4 whole-plugin selector is qualified only for Claude Code
+  `2.1.273` on macOS Apple Silicon and admits exactly one already-installed
+  provider-native plugin per launch. Other provider tuples fail closed for this
+  activation path. The published v0.3.1 release remains qualified against Claude
+  Code `2.1.272` for its documented clean-launch path.
+- Selecting a whole plugin deliberately activates the provider-native bundle as
+  a unit. Components such as plugin hooks, MCP servers, agents, LSP servers, or
+  skills may therefore become active according to Claude's plugin behavior.
+  Component-level filtering, Codex plugin activation, MCP resource selection,
+  presets, and `--with=all` are not qualified by this slice.
 - The protection is a narrow macOS filesystem denylist, not a VM, container,
   network sandbox or complete home-directory isolation.
 - A provider may visibly warn that reading a blocked global instruction is not
