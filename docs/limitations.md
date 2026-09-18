@@ -8,13 +8,12 @@ permalink: /limitations.html
 - The current release is unsigned and unnotarized; qualification is limited to
   the documented macOS Apple Silicon release path.
 - Only macOS on Apple Silicon is supported. The minimum accepted versions are
-  Codex CLI `0.147.0` and Claude Code CLI `2.1.223`; independent current-release
-  qualification is limited to Codex `0.154.0` and Claude Code `2.1.272`.
-- The unreleased v0.4 whole-plugin selector is qualified only for Claude Code
+  Codex CLI `0.147.0` and Claude Code CLI `2.1.223`. Baseline clean-launch
+  exact qualification is Codex `0.154.0` and Claude Code `2.1.272`.
+- The v0.4.0 whole-plugin selector is separately qualified only for Claude Code
   `2.1.273` on macOS Apple Silicon and admits exactly one already-installed
   provider-native plugin per launch. Other provider tuples fail closed for this
-  activation path. The published v0.3.1 release remains qualified against Claude
-  Code `2.1.272` for its documented clean-launch path.
+  activation path.
 - The initial v0.4 whole-plugin qualification accepts only bundles whose
   observed effective surface is skill-only. Bundles exposing hooks, MCP
   servers, agents, LSP servers, background monitors, plugin executables, or
