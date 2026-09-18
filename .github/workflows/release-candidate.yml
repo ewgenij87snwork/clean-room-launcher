@@ -87,5 +87,5 @@ jobs:
           echo "CLROOM_QUALIFICATION_EVIDENCE_DIR=$RUNNER_TEMP/clroom-qualification" >> "$GITHUB_ENV"
       - name: Run canonical fail-closed gate
         env:
-          CLROOM_RELEASE_VERSION: 0.3.1
+          CLROOM_RELEASE_VERSION: 0.4.0
         run: scripts/release/readiness.sh
