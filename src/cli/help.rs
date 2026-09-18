@@ -240,7 +240,7 @@ fn render_top(invoked_as: &str, skill_sets_path: &str, width: usize, styled: boo
     ));
     lines.extend(usage(
         &format!("{invoked_as} claude --with=plugin:<id>"),
-        "Admit one installed Claude plugin",
+        "Admit one qualified Claude plugin",
         width,
         styled,
     ));
