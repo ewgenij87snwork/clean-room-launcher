@@ -234,6 +234,26 @@ global skills for this launch with the same skill choice:
 clroom claude --skill-set=my-skill,@my-skill-set
 ```
 
+The unreleased v0.4 source can also admit exactly one already-installed whole
+Claude plugin for one launch:
+
+```sh
+claude plugin list
+clroom claude --with=plugin:plugin-name@marketplace-name
+```
+
+Use the provider-native qualified ID reported by Claude. CLROOM does not install,
+update, enable, disable, or rewrite the plugin persistently. It resolves the
+installed plugin root, reopens only that root read-only inside the Claude clean
+launch, and asks Claude to load it for this session. Raw Claude
+`--plugin-dir`/`--plugin-url` activation cannot be combined with a CLROOM
+resource selection.
+
+This whole-plugin path is currently an exact macOS Apple Silicon qualification
+for Claude Code `2.1.273`. It is separate from the published v0.3.1 clean-launch
+qualification, and does not add Codex plugin selection, MCP selection,
+`--with=all`, or component-level plugin surgery.
+
 ## How it works
 
 1. **Resolve the provider locally.** Clean Room Launcher finds the installed
