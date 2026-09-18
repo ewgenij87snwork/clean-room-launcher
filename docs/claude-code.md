@@ -61,10 +61,19 @@ and delegates activation to Claude's session-only `--plugin-dir` interface.
 Claude documents `--plugin-dir` as loading a plugin for the current session
 only.
 
-Whole-plugin means the provider-native bundle is atomic. Skills, agents, hooks,
-MCP servers, LSP servers, or other components shipped by that plugin may become
-active according to Claude's plugin behavior. CLROOM does not perform
-component-level surgery in this slice.
+Whole-plugin still means the provider-native bundle is atomic: CLROOM either
+admits the qualified bundle root or refuses the plugin; it does not extract
+individual files or components.
+
+The initial v0.4.0 qualification is intentionally narrower than Claude's full
+plugin format. The observed effective surface must be skill-only. If inventory
+finds hooks, MCP servers, agents, LSP servers, background monitors, plugin
+executables, or plugin settings, selection fails closed. Real-provider testing
+showed why this boundary is necessary: a hook-bearing plugin can load through
+`--plugin-dir` while its hook still depends on provider-global runtime state
+under `~/.claude`, which the clean launch intentionally keeps unavailable.
+CLROOM does not reopen that ambient provider directory merely to make such a
+plugin run.
 
 While a CLROOM resource selection is active, raw `--plugin-dir` and
 `--plugin-url` arguments are refused to avoid two competing activation
