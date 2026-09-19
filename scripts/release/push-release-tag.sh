@@ -44,10 +44,6 @@ python3 scripts/release/check-repository-release-policy.py >/dev/null || fail "R
 if git ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null 2>&1; then
   fail "REMOTE_TAG_ALREADY_EXISTS"
 fi
-if git show-ref --verify --quiet "refs/tags/$tag"; then
-  fail "LOCAL_TAG_ALREADY_EXISTS"
-fi
-
 version=${tag#v}
 manifest_version=$(python3 - <<'PY'
 import tomllib
@@ -57,13 +53,21 @@ PY
 )
 [[ "$manifest_version" == "$version" ]] || fail "PACKAGE_VERSION_MISMATCH"
 
-utc_now=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
-release_date=${utc_now%%T*}
-grep -Fqx "## [$version] - $release_date" CHANGELOG.md || fail "CHANGELOG_UTC_DATE_MISMATCH"
-
 title="$tag — Clean Room Launcher"
-GIT_COMMITTER_DATE="$utc_now" git tag -a "$tag" "$expected_main" -m "$title" || fail "ANNOTATED_TAG_CREATE"
+if git show-ref --verify --quiet "refs/tags/$tag"; then
+  [[ "$(git cat-file -t "refs/tags/$tag")" == tag ]] || fail "LOCAL_TAG_NOT_ANNOTATED"
+  [[ "$(git rev-list -n1 "$tag")" == "$expected_main" ]] || fail "LOCAL_TAG_TARGET_MISMATCH"
+  release_date=$(git for-each-ref --format='%(taggerdate:short)' "refs/tags/$tag")
+  [[ -n "$release_date" ]] || fail "LOCAL_TAG_DATE_MISSING"
+  [[ "$(git for-each-ref --format='%(subject)' "refs/tags/$tag")" == "$title" ]] || fail "LOCAL_TAG_MESSAGE_MISMATCH"
+else
+  utc_now=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+  release_date=${utc_now%%T*}
+  grep -Fqx "## [$version] - $release_date" CHANGELOG.md || fail "CHANGELOG_UTC_DATE_MISMATCH"
+  GIT_COMMITTER_DATE="$utc_now" git tag -a "$tag" "$expected_main" -m "$title" || fail "ANNOTATED_TAG_CREATE"
+fi
 
+grep -Fqx "## [$version] - $release_date" CHANGELOG.md || fail "CHANGELOG_TAG_DATE_MISMATCH"
 [[ "$(git cat-file -t "refs/tags/$tag")" == tag ]] || fail "ANNOTATED_TAG_TYPE"
 [[ "$(git rev-list -n1 "$tag")" == "$expected_main" ]] || fail "TAG_TARGET"
 [[ "$(git for-each-ref --format='%(taggerdate:short)' "refs/tags/$tag")" == "$release_date" ]] || fail "TAG_DATE"
