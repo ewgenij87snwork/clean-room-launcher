@@ -50,6 +50,7 @@ if command -v shellcheck >/dev/null 2>&1; then
     scripts/release/qualify-real-provider.sh \
     scripts/release/review-release-delta.sh \
     scripts/release/local-release-smoke.sh \
+    scripts/release/post-publish-smoke.sh \
     scripts/release/readiness.sh \
     install.sh || fail "SHELLCHECK"
 else
