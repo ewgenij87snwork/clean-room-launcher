@@ -28,7 +28,19 @@ jobs:
           test -n "$base_tag"
           git fetch --force origin "refs/tags/$base_tag:refs/tags/$base_tag"
           git rev-parse "$base_tag^{commit}" >/dev/null
+          candidate_version="$(python3 - <<'PY'
+          import tomllib
+          with open("Cargo.toml", "rb") as handle:
+              print(tomllib.load(handle)["package"]["version"])
+          PY
+          )"
+          published_version="${base_tag#v}"
+          audit_mode=required
+          if [[ "$candidate_version" == "$published_version" ]]; then
+            audit_mode=skip_same_published_version
+          fi
           echo "CLROOM_RELEASE_BASE_REF=$base_tag" >> "$GITHUB_ENV"
+          echo "CLROOM_RELEASE_DELTA_AUDIT=$audit_mode" >> "$GITHUB_ENV"
       - name: Prove release attestation contract fails closed
         shell: bash
         run: |
