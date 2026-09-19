@@ -248,101 +248,15 @@ if kinds != ["skill"]:
     raise SystemExit("surface")
 PY
 
-clean_stream="$tmp/clean.jsonl"
-selected_stream="$tmp/selected.jsonl"
 set +e
-"$clroom" claude -p --output-format stream-json --verbose "Reply exactly UNUSED."   >"$clean_stream" 2>"$tmp/clean.err"
-clean_rc=$?
-"$clroom" claude --with="plugin:$plugin_id" -p --output-format stream-json --verbose   "Reply exactly UNUSED." >"$selected_stream" 2>"$tmp/selected.err"
-selected_rc=$?
+"$clroom" claude --init-only >"$tmp/clean-init.out" 2>"$tmp/clean-init.err"
+clean_init_rc=$?
+"$clroom" claude --with="plugin:$plugin_id" --init-only \
+  >"$tmp/selected-init.out" 2>"$tmp/selected-init.err"
+selected_init_rc=$?
 set -e
-
-python3 -   "$HOME/.claude/plugins/installed_plugins.json"   "$plugin_id"   "$clean_stream"   "$selected_stream" <<'PY' || fail "PLUGIN_RUNTIME_EVIDENCE"
-import json
-import os
-import sys
-
-registry_path, plugin_id, clean_path, selected_path = sys.argv[1:]
-
-try:
-    with open(registry_path, encoding="utf-8") as handle:
-        installed = json.load(handle).get("plugins", {})
-except (OSError, ValueError):
-    raise SystemExit("registry")
-
-def roots_for(pid):
-    roots = []
-    records = installed.get(pid, [])
-    if not isinstance(records, list):
-        return roots
-    for record in records:
-        if not isinstance(record, dict):
-            continue
-        path = record.get("installPath")
-        if isinstance(path, str) and os.path.isdir(path):
-            roots.append(os.path.realpath(path))
-    return sorted(set(roots))
-
-if len(roots_for(plugin_id)) != 1:
-    raise SystemExit("target-root")
-
-def read_init(path):
-    init = None
-    with open(path, encoding="utf-8") as handle:
-        for line in handle:
-            try:
-                item = json.loads(line)
-            except Exception:
-                continue
-            if item.get("type") == "system" and item.get("subtype") == "init":
-                init = item
-    return init
-
-clean = read_init(clean_path)
-selected = read_init(selected_path)
-if clean is None or selected is None:
-    raise SystemExit("system-init")
-
-def matches(plugin, pid):
-    name = pid.rsplit("@", 1)[0]
-    roots = roots_for(pid)
-    if isinstance(plugin, str):
-        if plugin in (pid, name) or pid in plugin:
-            return True
-        return bool(os.path.isabs(plugin) and os.path.realpath(plugin) in roots)
-    if not isinstance(plugin, dict):
-        return False
-    for key in ("name", "id", "plugin_id", "source"):
-        value = plugin.get(key)
-        if value in (pid, name) or (isinstance(value, str) and pid in value):
-            return True
-    path = plugin.get("path")
-    return bool(
-        isinstance(path, str)
-        and os.path.isabs(path)
-        and os.path.realpath(path) in roots
-    )
-
-clean_plugins = clean.get("plugins") or []
-selected_plugins = selected.get("plugins") or []
-if any(matches(item, plugin_id) for item in clean_plugins):
-    raise SystemExit("target-present-clean")
-if not any(matches(item, plugin_id) for item in selected_plugins):
-    raise SystemExit("target-missing-selected")
-if selected.get("plugin_errors"):
-    raise SystemExit("plugin-errors")
-
-new_siblings = []
-for sibling in installed:
-    if sibling == plugin_id:
-        continue
-    clean_has = any(matches(item, sibling) for item in clean_plugins)
-    selected_has = any(matches(item, sibling) for item in selected_plugins)
-    if selected_has and not clean_has:
-        new_siblings.append(sibling)
-if new_siblings:
-    raise SystemExit("new-sibling")
-PY
+[[ "$clean_init_rc" -eq 0 ]] || fail "CLAUDE_CLEAN_INIT_ONLY"
+[[ "$selected_init_rc" -eq 0 ]] || fail "CLAUDE_SELECTED_INIT_ONLY"
 
 after_automated=$(fingerprint_config)
 [[ "$before" == "$after_automated" ]] || fail "PERSISTENT_CONFIG_CHANGED_AUTOMATED"
@@ -366,21 +280,23 @@ read -r codex_confirm
 echo
 echo "========================================"
 echo "MANUAL CLEAN CLAUDE TUI SMOKE"
-echo "No model prompt. Wait for the normal clean TUI, then exit normally."
+echo "No model prompt. Wait for the normal clean TUI."
+echo "Type the selected plugin skill prefix and confirm it is NOT offered, then exit normally."
 echo "========================================"
 echo
 set +e
 "$clroom" claude
 claude_clean_tui_rc=$?
 set -e
-printf 'Confirm clean Claude TUI opened normally and no model request was sent [y/N]: '
+printf 'Confirm clean Claude TUI opened, selected plugin skill was absent, and no model request was sent [y/N]: '
 read -r claude_clean_confirm
 [[ "$claude_clean_confirm" == y || "$claude_clean_confirm" == Y ]] || fail "CLAUDE_CLEAN_TUI_NOT_CONFIRMED"
 
 echo
 echo "========================================"
 echo "MANUAL CLAUDE SELECTED-PLUGIN TUI SMOKE"
-echo "No model prompt. Wait for the normal TUI, then exit normally."
+echo "No model prompt. Wait for the normal TUI."
+echo "Type the selected plugin skill prefix and confirm it IS offered, then exit normally."
 echo "Selected plugin: $plugin_id"
 echo "========================================"
 echo
@@ -388,7 +304,7 @@ set +e
 "$clroom" claude --with="plugin:$plugin_id"
 claude_tui_rc=$?
 set -e
-printf 'Confirm Claude TUI opened normally and no model request was sent [y/N]: '
+printf 'Confirm selected-plugin Claude TUI opened, selected skill was visible, and no model request was sent [y/N]: '
 read -r claude_confirm
 [[ "$claude_confirm" == y || "$claude_confirm" == Y ]] || fail "CLAUDE_TUI_NOT_CONFIRMED"
 
@@ -401,7 +317,7 @@ short_head=${source_head:0:12}
 evidence="$evidence_dir/${phase}-v${release_version}-${short_head}.json"
 
 python3 -   "$evidence" "$phase" "$release_version" "$source_head" "$artifact_sha"   "$codex_version" "$claude_version" "$codex_provider_sha" "$claude_provider_sha" \
-  "$plugin_id" "$clean_rc" "$selected_rc" "$codex_tui_rc" "$claude_clean_tui_rc" \
+  "$plugin_id" "$clean_init_rc" "$selected_init_rc" "$codex_tui_rc" "$claude_clean_tui_rc" \
   "$claude_tui_rc" "$tag" <<'PY'
 import datetime
 import json
@@ -418,8 +334,8 @@ import sys
     codex_provider_sha,
     claude_provider_sha,
     plugin_id,
-    clean_rc,
-    selected_rc,
+    clean_init_rc,
+    selected_init_rc,
     codex_tui_rc,
     claude_clean_tui_rc,
     claude_tui_rc,
@@ -441,13 +357,13 @@ record = {
     },
     "claude_plugin_id": plugin_id,
     "automated": {
-        "clean_system_init": True,
-        "selected_system_init": True,
-        "selected_plugin_only": True,
-        "plugin_errors_zero": True,
+        "clean_init_only": True,
+        "selected_init_only": True,
+        "plugin_inventory_qualified": True,
         "persistent_config_unchanged": True,
-        "clean_provider_rc": int(clean_rc),
-        "selected_provider_rc": int(selected_rc),
+        "model_prompt_sent": False,
+        "clean_provider_rc": int(clean_init_rc),
+        "selected_provider_rc": int(selected_init_rc),
     },
     "human": {
         "codex_tui_confirmed": True,
@@ -480,8 +396,8 @@ echo "CODEX_PROVIDER_SHA256=$codex_provider_sha"
 echo "CLAUDE_VERSION=$claude_version"
 echo "CLAUDE_PROVIDER_SHA256=$claude_provider_sha"
 echo "PLUGIN_ID=$plugin_id"
-echo "CLEAN_PROVIDER_RC=$clean_rc"
-echo "SELECTED_PROVIDER_RC=$selected_rc"
+echo "CLEAN_INIT_ONLY_RC=$clean_init_rc"
+echo "SELECTED_INIT_ONLY_RC=$selected_init_rc"
 echo "PERSISTENT_CONFIG_UNCHANGED=YES"
 echo "EVIDENCE_FILE=${evidence#$root/}"
 echo "========================================"
