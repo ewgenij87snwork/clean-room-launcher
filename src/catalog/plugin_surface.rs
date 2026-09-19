@@ -394,7 +394,33 @@ fn add_recursive_markdown_components(
     declared: &mut BTreeSet<PluginComponent>,
     effective: &mut BTreeSet<PluginComponent>,
 ) {
+    let Some(raw_relative) = relative.strip_prefix("./") else {
+        let item = component(kind, "invalid-component-root");
+        declared.insert(item.clone());
+        effective.insert(item);
+        return;
+    };
+    let raw_directory = root.join(raw_relative);
+    match fs::symlink_metadata(&raw_directory) {
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return,
+        Err(_) => {
+            let item = component(kind, "unreadable-component-root");
+            declared.insert(item.clone());
+            effective.insert(item);
+            return;
+        }
+        Ok(metadata) if metadata.file_type().is_symlink() || !metadata.is_dir() => {
+            let item = component(kind, "symlink-or-invalid-component-root");
+            declared.insert(item.clone());
+            effective.insert(item);
+            return;
+        }
+        Ok(_) => {}
+    }
     let Some(directory) = resolve_relative(root, relative) else {
+        let item = component(kind, "component-root-escape");
+        declared.insert(item.clone());
+        effective.insert(item);
         return;
     };
     let mut visited = 0usize;
@@ -823,6 +849,28 @@ mod tests {
             .effective
             .iter()
             .any(|item| matches!(item.kind.as_str(), "mcp" | "app")));
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn claude_symlinked_command_root_is_observed_fail_closed() {
+        use std::os::unix::fs::symlink;
+
+        let root = fixture();
+        fs::remove_dir_all(root.join("commands")).unwrap();
+        let target = root.join("command-target");
+        fs::create_dir_all(&target).unwrap();
+        fs::write(target.join("inspect.md"), "fixture\n").unwrap();
+        symlink(&target, root.join("commands")).unwrap();
+
+        let claude = inspect_plugin_surface(ProviderPluginSemantics::Claude, &root).unwrap();
+        assert!(has(
+            &claude.effective,
+            ResourceKind::Command,
+            "symlink-or-invalid-component-root"
+        ));
+
         let _ = fs::remove_dir_all(root);
     }
 
