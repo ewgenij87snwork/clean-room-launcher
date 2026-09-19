@@ -54,13 +54,6 @@ Semantic Versioning after the first public release.
   to `4.0.3`, incorporating the upstream fix for
   `GHSA-hp8f-xmx4-4qrg` affecting trailing-slash symlink containment on
   platforms including macOS.
-- Added a fail-closed release-governance contract that audits the complete delta
-  from the latest published stable release to the prospective tag, rejects
-  unclassified changed paths, derives required gates from observed change
-  classes, records a versioned contract review, and requires every release to
-  decide whether new near-misses or surfaces must expand the release contract.
-  Release promotion is explicitly phased into pre-tag, tag-workflow,
-  pre-publish, and post-publish gates.
 
 ## [0.3.1] - 2026-09-17
 
