@@ -1,0 +1,149 @@
+{
+  "schema_version": "clroom.release-review.v1",
+  "release": "v0.4.0",
+  "baseline_release": "v0.3.1",
+  "reviewed_through_commit": "b4b72d2ec5c6273928606e57fc91453e21dd0c9a",
+  "domain_dispositions": {
+    "runtime": {
+      "decision": "CONTRACT_EXPAND",
+      "evidence": [
+        "Claude whole-plugin activation is bounded by the exact provider tuple, matching manifest identity, provider-visible inventory with a deliberately narrower default one-level skills/<name>/SKILL.md activation surface, action-time requalification, negative tests, and exact-provider E2E before release."
+      ]
+    },
+    "tests": {
+      "decision": "COVERED",
+      "evidence": [
+        "Full locked tests, focused negative tests, fuzz smoke, and release-readiness checks are required."
+      ]
+    },
+    "dependencies": {
+      "decision": "CONTRACT_EXPAND",
+      "evidence": [
+        "cap-std/cap-primitives 4.0.3 delta is lockfile-pinned and covered by Dependency Review plus cargo-deny."
+      ]
+    },
+    "ci": {
+      "decision": "COVERED",
+      "evidence": [
+        "Pinned Actions changes are reviewed by whole-release delta, CodeQL, public-boundary and release workflows."
+      ]
+    },
+    "release": {
+      "decision": "CONTRACT_EXPAND",
+      "evidence": [
+        "v0.4.0 version identity, artifact qualification, SBOM/provenance, draft-only release workflow, executable local release helpers, and truthful pre-tag smoke evidence are machine gated."
+      ]
+    },
+    "public_claims": {
+      "decision": "COVERED",
+      "evidence": [
+        "README/docs/SECURITY/changelog are reviewed against implementation and publication state; false release claims block acceptance."
+      ]
+    }
+  },
+  "near_misses": [
+    {
+      "id": "plugin-loaded-is-not-plugin-works",
+      "decision": "CONTRACT_EXPAND",
+      "durable_control": "Provider inventory may observe broader Claude plugin surfaces, but v0.4.0 activation requires matching manifest identity plus only the default one-level skills/<name>/SKILL.md surface; slash commands and every other non-skill surface fail closed, and release requires behavior-specific exact-provider evidence."
+    },
+    {
+      "id": "clean-vs-activation-version-coupling",
+      "decision": "CONTRACT_EXPAND",
+      "durable_control": "Clean-launch and plugin-activation exact qualification tuples are separate and regression-tested."
+    },
+    {
+      "id": "release-date-drift",
+      "decision": "CONTRACT_EXPAND",
+      "durable_control": "Release identity/date is checked again at the action-time tag boundary; changelog date must match the annotated tagger date, and the tagger-timestamp parser is regression-tested against the real digit format."
+    },
+    {
+      "id": "release-review-only-looked-at-last-pr",
+      "decision": "CONTRACT_EXPAND",
+      "durable_control": "This contract binds every release to the authoritative latest published stable release and classifies the whole delta fail-closed."
+    },
+    {
+      "id": "semantic-review-tail-could-change-release-gates",
+      "decision": "CONTRACT_EXPAND",
+      "durable_control": "Semantic review is sealed to a SHA-256 digest of every tracked mode/type/blob/path, with the review declaration represented by canonical semantics that exclude only the self-referential digest field; any later code/docs/workflow/release-script or review-semantic drift fails closed."
+    },
+    {
+      "id": "provider-qualified-sibling-build-not-shipped-archive",
+      "decision": "CONTRACT_EXPAND",
+      "durable_control": "Tag workflow extracts the exact release archive and runs real-provider qualification against the archived clroom-codex and clroom-claude binaries."
+    },
+    {
+      "id": "sbom-attestation-exported-without-explicit-bundle-verify",
+      "decision": "CONTRACT_EXPAND",
+      "durable_control": "Tag workflow explicitly verifies the exported SBOM attestation bundle against the exact archive before Draft Release creation."
+    },
+    {
+      "id": "immutable-tag-before-capability-smoke",
+      "decision": "CONTRACT_EXPAND",
+      "durable_control": "Stable tag helper requires exact accepted-main pre-tag plugin smoke evidence before creating the protected annotated v* tag; Draft bytes are exercised again before publication."
+    },
+    {
+      "id": "review-declaration-was-excluded-from-seal",
+      "decision": "CONTRACT_EXPAND",
+      "durable_control": "The candidate seal includes canonical semantics of the release review declaration itself, excluding only the self-referential digest field."
+    },
+    {
+      "id": "cross-domain-rename-could-hide-old-surface",
+      "decision": "CONTRACT_EXPAND",
+      "durable_control": "Whole-release path inventory disables rename detection so a move is classified at both the deleted old path and the added new path."
+    },
+    {
+      "id": "contract-test-enforced-weaker-sibling-build-semantics",
+      "decision": "CONTRACT_EXPAND",
+      "durable_control": "Release workflow contract test now requires archive extraction, exact archive-root provider binaries, and explicitly rejects sibling target/* provider candidates."
+    },
+    {
+      "id": "plugin-qualified-at-plan-time-can-drift-before-launch",
+      "decision": "CONTRACT_EXPAND",
+      "durable_control": "Activation re-runs install-root, manifest identity, component-surface, selection, and qualification inspection immediately before launch; nested, symlinked, unreadable, identity-mismatched, or newly introduced non-skill surfaces fail closed with regression coverage."
+    },
+    {
+      "id": "documented-release-helper-not-executable",
+      "decision": "CONTRACT_EXPAND",
+      "durable_control": "Release readiness now requires executable mode on the documented direct-run local release audit and plugin activation smoke helpers, so mode drift fails before merge/tag."
+    },
+    {
+      "id": "release-smoke-evidence-overstated-no-prompt",
+      "decision": "CONTRACT_EXPAND",
+      "durable_control": "Smoke evidence distinguishes the fixed automated sentinel prompt from the separately confirmed no-prompt interactive TUI check; the tag gate validates those truthful fields instead of asserting that no prompt was supplied anywhere."
+    }
+  ],
+  "artifact_capability_gates": [
+    {
+      "id": "claude-skill-only-plugin-activation",
+      "phase": "ACCEPTED_MAIN_PRE_TAG",
+      "requirement": "Build an exact accepted-main candidate archive on macOS Apple Silicon with an already-installed qualified skill-only Claude plugin; prove clean absence, selected presence, no newly admitted sibling, no plugin errors, unchanged persistent provider config, and normal selected-plugin interactive TUI startup without a model prompt."
+    },
+    {
+      "id": "claude-skill-only-plugin-activation",
+      "phase": "DRAFT_ARTIFACT_PRE_PUBLISH",
+      "requirement": "Download the exact Draft Release archive on macOS Apple Silicon with an already-installed qualified skill-only Claude plugin; verify checksums and both release attestation bundles, then prove clean absence, selected presence, no newly admitted sibling, no plugin errors, and unchanged persistent provider config."
+    }
+  ],
+  "reviewed_content_digest": "57877c0372896c654512a9524becfc999904fd4fb5c22ec61b1568c5f76b29a6",
+  "product_outcome": "Ship the bounded Claude skill-only whole-plugin activation and the post-v0.3.1 security/maintenance delta without widening CLROOM trust boundaries or weakening the existing clean-launch contract.",
+  "contract_evolution_review": {
+    "decision": "EXPAND",
+    "rationale": "v0.4.0 review exposed repeated gaps where existing CI could pass while release-wide semantic scope, exact shipped bytes, or an exported attestation bundle were not independently bound. These are recurring release failure modes and are promoted to deterministic gates.",
+    "promoted_controls": [
+      "whole-release delta classification from the latest published stable immutable release",
+      "exact tracked-content semantic review digest including canonical review-declaration semantics and excluding only the self-referential digest field",
+      "mandatory per-release contract-evolution decision with durable controls",
+      "real-provider qualification against binaries extracted from the exact release archive",
+      "explicit verification of the exported SBOM attestation bundle",
+      "local whole-release summary/full audit command",
+      "exact accepted-main plugin capability smoke evidence required before protected tag creation",
+      "rename-safe whole-release path classification that evaluates both old and new paths",
+      "negative release workflow contract test forbidding provider qualification against sibling build outputs",
+      "action-time plugin install-root, manifest-identity, component-surface and qualification revalidation with fail-closed drift tests",
+      "executable-mode readiness checks for documented direct-run release audit and plugin smoke helpers",
+      "truthful smoke evidence separating automated sentinel-prompt probes from manual no-prompt TUI confirmation",
+      "annotated-tagger date parser regression coverage for the local protected-tag helper"
+    ]
+  }
+}

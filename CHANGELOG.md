@@ -28,6 +28,10 @@ Semantic Versioning after the first public release.
   valid YAML, the site exposes a shorter SEO tagline, and project crawler/sitemap
   metadata is aligned with the host-root policy without changing the canonical
   URL set.
+- Added Release Contract v1: every stable release is checked against the full
+  delta from the latest published stable release, with fail-closed change
+  classification, explicit contract-evolution review, exact tracked-content
+  review sealing, and a local whole-release audit command.
 
 ### Compatibility
 
@@ -56,6 +60,9 @@ Semantic Versioning after the first public release.
   to `4.0.3`, incorporating the upstream fix for
   `GHSA-hp8f-xmx4-4qrg` affecting trailing-slash symlink containment on
   platforms including macOS.
+- Release qualification executes provider canaries against binaries extracted
+  from the exact release archive and explicitly verifies both exported
+  provenance and SBOM attestation bundles before Draft Release creation.
 
 ## [0.3.1] - 2026-09-17
 

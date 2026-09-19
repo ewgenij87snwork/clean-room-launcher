@@ -79,17 +79,41 @@ fn tag_release_qualifies_the_exact_archive_before_upload() {
     assert!(provisioner.contains("@anthropic-ai/claude-code@2.1.272"));
     assert!(provisioner.contains("HP/vJCH/t2hB9Kg6hotN9UglClJ6/z584fal5lEP14C9gNAgAQS4/kTQC7l5V+BA3TqwDPwINSjul28cX8AYXg=="));
     assert!(!provisioner.contains("npm install"));
-    assert!(source.contains("target/aarch64-apple-darwin/release/clroom-codex"));
-    assert!(source.contains("target/aarch64-apple-darwin/release/clroom-claude"));
+    assert!(
+        source.contains("tar -xzf \"$artifact\" -C \"$extract_dir\""),
+        "provider qualification must extract the exact packaged archive"
+    );
+    assert!(source.contains("codex_candidate=\"$archive_root/bin/clroom-codex\""));
+    assert!(source.contains("claude_candidate=\"$archive_root/bin/clroom-claude\""));
+    assert!(
+        !source.contains("codex_candidate=\"target/aarch64-apple-darwin/release/clroom-codex\"")
+            && !source.contains(
+                "claude_candidate=\"target/aarch64-apple-darwin/release/clroom-claude\""
+            ),
+        "release qualification must not fall back to sibling build outputs"
+    );
     assert_eq!(
         source.matches("scripts/release/qualify-real-provider.sh").count(),
         2,
-        "both qualified providers must execute against the release-built binaries"
+        "both qualified providers must execute against the archive-extracted binaries"
     );
     assert_eq!(
         source.matches("scripts/release/verify-qualification.py").count(),
         2,
         "both qualification records must be rebound to the exact release archive"
+    );
+}
+
+#[test]
+fn local_tag_helper_parses_annotated_tagger_timestamp_with_digit_regex() {
+    let source = std::fs::read_to_string("scripts/release/push-release-tag.sh").unwrap();
+    assert!(
+        source.contains(r#"match = re.search(r" (\d+) ([+-])(\d{2})(\d{2})$", line)"#),
+        "tag helper must parse the real annotated-tagger timestamp format"
+    );
+    assert!(
+        !source.contains(r#"match = re.search(r" (\\d+) ([+-])(\\d{2})(\\d{2})$", line)"#),
+        "double-escaped digit classes would match literal backslashes and break the tag gate"
     );
 }
 
