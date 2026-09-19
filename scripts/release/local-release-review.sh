@@ -73,7 +73,7 @@ PY
   exit 1
 }
 
-git fetch --force --quiet origin "refs/tags/$base_tag:refs/tags/$base_tag"
+git fetch --quiet origin "refs/tags/$base_tag:refs/tags/$base_tag"
 git rev-parse "$base_tag^{commit}" >/dev/null
 candidate=$(git rev-parse "$head_ref^{commit}")
 
