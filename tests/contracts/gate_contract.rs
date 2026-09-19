@@ -218,6 +218,12 @@ fn whole_release_review_is_fail_closed_and_declared() {
     );
     assert_eq!(declaration["contract_evolution"]["reviewed"], true);
 
+    assert!(
+        checker.contains("\"--name-only\",")
+            && checker.contains("\"--no-renames\","),
+        "release classifier must preserve both sides of renames"
+    );
+
     for invariant in [
         "unclassified-paths:",
         "undeclared-change-classes:",
