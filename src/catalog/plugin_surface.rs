@@ -238,27 +238,9 @@ fn claude_manifest(root: &Path) -> Result<Value, PluginSurfaceError> {
 }
 
 fn valid_claude_plugin_name(value: &str) -> bool {
-    if value.is_empty() || value.len() > 256 {
-        return false;
-    }
-    let mut segments = value.split('-');
-    let Some(first) = segments.next() else {
-        return false;
-    };
-    if first.is_empty()
-        || !first.as_bytes()[0].is_ascii_lowercase()
-        || !first
-            .bytes()
-            .all(|byte| byte.is_ascii_lowercase() || byte.is_ascii_digit())
-    {
-        return false;
-    }
-    segments.all(|segment| {
-        !segment.is_empty()
-            && segment
-                .bytes()
-                .all(|byte| byte.is_ascii_lowercase() || byte.is_ascii_digit())
-    })
+    !value.is_empty()
+        && value.len() <= 256
+        && !value.chars().any(char::is_control)
 }
 
 fn codex_manifest(root: &Path) -> Result<(PathBuf, Value), PluginSurfaceError> {
@@ -990,17 +972,28 @@ mod tests {
     }
 
     #[test]
-    fn claude_manifest_requires_valid_provider_name() {
+    fn claude_manifest_requires_nonempty_provider_name_without_controls() {
+        for invalid in ["", "bad\\nname"] {
+            let root = fixture();
+            fs::write(
+                root.join(".claude-plugin/plugin.json"),
+                serde_json::json!({"name": invalid}).to_string(),
+            )
+            .unwrap();
+            assert_eq!(
+                inspect_plugin_surface(ProviderPluginSemantics::Claude, &root),
+                Err(super::PluginSurfaceError::InvalidManifest)
+            );
+            let _ = fs::remove_dir_all(root);
+        }
+
         let root = fixture();
         fs::write(
             root.join(".claude-plugin/plugin.json"),
-            r#"{"name":"Bad_Name"}"#,
+            r#"{"name":"Provider_Name"}"#,
         )
         .unwrap();
-        assert_eq!(
-            inspect_plugin_surface(ProviderPluginSemantics::Claude, &root),
-            Err(super::PluginSurfaceError::InvalidManifest)
-        );
+        assert!(inspect_plugin_surface(ProviderPluginSemantics::Claude, &root).is_ok());
         let _ = fs::remove_dir_all(root);
     }
 
