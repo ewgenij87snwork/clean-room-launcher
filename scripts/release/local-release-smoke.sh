@@ -156,6 +156,7 @@ else
   ) >/dev/null || fail "DRAFT_CHECKSUMS"
 
   gh attestation verify "$artifact"     -R y-sor/clean-room-launcher     --bundle "$provenance"     --signer-workflow y-sor/clean-room-launcher/.github/workflows/release.yml     --deny-self-hosted-runners >/dev/null || fail "DRAFT_PROVENANCE"
+  gh attestation verify "$artifact"     -R y-sor/clean-room-launcher     --bundle "$sbom_bundle"     --signer-workflow y-sor/clean-room-launcher/.github/workflows/release.yml     --deny-self-hosted-runners >/dev/null || fail "DRAFT_SBOM_ATTESTATION"
 
 fi
 
