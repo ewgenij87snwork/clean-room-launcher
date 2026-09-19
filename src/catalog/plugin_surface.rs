@@ -994,10 +994,9 @@ mod tests {
 
         let claude = inspect_plugin_surface(ProviderPluginSemantics::Claude, &root).unwrap();
         assert_eq!(claude.plugin_name.as_deref(), Some("superpowers"));
-        assert_eq!(
-            claude.effective,
-            vec![component(ResourceKind::Skill, "brainstorming")]
-        );
+        assert_eq!(claude.effective.len(), 1);
+        assert_eq!(claude.effective[0].kind, ResourceKind::Skill);
+        assert_eq!(claude.effective[0].id, "brainstorming");
         assert!(claude.activation_eligible);
         let _ = fs::remove_dir_all(root);
     }
