@@ -156,8 +156,8 @@ else
     shasum -a 256 -c SHA256SUMS
   ) >/dev/null || fail "DRAFT_CHECKSUMS"
 
-  gh attestation verify "$artifact"     -R y-sor/clean-room-launcher     --bundle "$provenance"     --signer-workflow y-sor/clean-room-launcher/.github/workflows/release.yml     --deny-self-hosted-runners >/dev/null || fail "DRAFT_PROVENANCE"
-  gh attestation verify "$artifact"     -R y-sor/clean-room-launcher     --bundle "$sbom_bundle"     --signer-workflow y-sor/clean-room-launcher/.github/workflows/release.yml     --deny-self-hosted-runners >/dev/null || fail "DRAFT_SBOM_ATTESTATION"
+  gh attestation verify "$artifact"     -R y-sor/clean-room-launcher     --bundle "$provenance"     --signer-workflow y-sor/clean-room-launcher/.github/workflows/release.yml     --source-digest "$source_head"     --source-ref "refs/tags/$tag"     --deny-self-hosted-runners >/dev/null || fail "DRAFT_PROVENANCE"
+  gh attestation verify "$artifact"     -R y-sor/clean-room-launcher     --bundle "$sbom_bundle"     --signer-workflow y-sor/clean-room-launcher/.github/workflows/release.yml     --source-digest "$source_head"     --source-ref "refs/tags/$tag"     --deny-self-hosted-runners >/dev/null || fail "DRAFT_SBOM_ATTESTATION"
 
 fi
 
@@ -274,6 +274,7 @@ set +e
 "$clroom" codex --no-alt-screen
 codex_tui_rc=$?
 set -e
+[[ "$codex_tui_rc" -eq 0 ]] || fail "CODEX_TUI_EXIT"
 printf 'Confirm Codex TUI opened normally and no model request was sent [y/N]: '
 read -r codex_confirm
 [[ "$codex_confirm" == y || "$codex_confirm" == Y ]] || fail "CODEX_TUI_NOT_CONFIRMED"
@@ -289,6 +290,7 @@ set +e
 "$clroom" claude
 claude_clean_tui_rc=$?
 set -e
+[[ "$claude_clean_tui_rc" -eq 0 ]] || fail "CLAUDE_CLEAN_TUI_EXIT"
 printf 'Confirm clean Claude TUI opened, selected plugin skill was absent, and no model request was sent [y/N]: '
 read -r claude_clean_confirm
 [[ "$claude_clean_confirm" == y || "$claude_clean_confirm" == Y ]] || fail "CLAUDE_CLEAN_TUI_NOT_CONFIRMED"
@@ -305,6 +307,7 @@ set +e
 "$clroom" claude --with="plugin:$plugin_id"
 claude_tui_rc=$?
 set -e
+[[ "$claude_tui_rc" -eq 0 ]] || fail "CLAUDE_SELECTED_TUI_EXIT"
 printf 'Confirm selected-plugin Claude TUI opened, selected skill was visible, and no model request was sent [y/N]: '
 read -r claude_confirm
 [[ "$claude_confirm" == y || "$claude_confirm" == Y ]] || fail "CLAUDE_TUI_NOT_CONFIRMED"
