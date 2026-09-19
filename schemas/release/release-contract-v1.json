@@ -8,20 +8,72 @@
     "post_review_product_change": "fail"
   },
   "domains": [
-    {"id":"runtime","patterns":["src/**"]},
-    {"id":"tests","patterns":["tests/**","fixtures/**","fuzz/**"]},
-    {"id":"dependencies","patterns":["Cargo.toml","Cargo.lock","deny.toml"]},
-    {"id":"ci","patterns":[".github/workflows/**"]},
-    {"id":"release","patterns":["scripts/release/**","packaging/**","install.sh","release/**"]},
-    {"id":"public_claims","patterns":["README.md","SECURITY.md","CHANGELOG.md","docs/**","CONTRIBUTING.md","GOVERNANCE.md","_config.yml","robots.txt","sitemap.xml"]}
+    {
+      "id": "runtime",
+      "patterns": [
+        "src/**"
+      ]
+    },
+    {
+      "id": "tests",
+      "patterns": [
+        "tests/**",
+        "fixtures/**",
+        "fuzz/**"
+      ]
+    },
+    {
+      "id": "dependencies",
+      "patterns": [
+        "Cargo.toml",
+        "Cargo.lock",
+        "deny.toml"
+      ]
+    },
+    {
+      "id": "ci",
+      "patterns": [
+        ".github/workflows/**"
+      ]
+    },
+    {
+      "id": "release",
+      "patterns": [
+        "scripts/release/**",
+        "packaging/**",
+        "install.sh",
+        "schemas/release/**",
+        "reports/release/**"
+      ]
+    },
+    {
+      "id": "public_claims",
+      "patterns": [
+        "README.md",
+        "SECURITY.md",
+        "CHANGELOG.md",
+        "docs/**",
+        "CONTRIBUTING.md",
+        "GOVERNANCE.md",
+        "_config.yml",
+        "robots.txt",
+        "sitemap.xml"
+      ]
+    }
   ],
   "release_assurance_only_patterns": [
-    "release/**",
+    "schemas/release/**",
+    "reports/release/**",
     "scripts/release/check-release-contract.py",
     "scripts/release/local-release-audit.sh",
     ".github/workflows/release-candidate.yml",
     ".github/workflows/release.yml",
     "scripts/release/readiness.sh"
   ],
-  "allowed_dispositions": ["COVERED","CONTRACT_EXPAND","NOT_APPLICABLE","FOLLOW_UP"]
+  "allowed_dispositions": [
+    "COVERED",
+    "CONTRACT_EXPAND",
+    "NOT_APPLICABLE",
+    "FOLLOW_UP"
+  ]
 }
