@@ -69,22 +69,43 @@ fi
 release_workflow=.github/workflows/release.yml
 bash scripts/release/check-attestation-contract.sh "$release_workflow" || fail "RELEASE_ATTESTATION_CONTRACT"
 bash scripts/release/check-provider-canary-contract.sh || fail "PROVIDER_CANARY_CONTRACT"
+bash scripts/release/check-governance-contract.sh || fail "RELEASE_GOVERNANCE_CONTRACT"
+governance_probe=$(mktemp "${TMPDIR:-/tmp}/clroom-governance-probe.XXXXXX.yml")
+governance_output=$(mktemp "${TMPDIR:-/tmp}/clroom-governance-output.XXXXXX")
+grep -Fv 'scripts/release/audit-release-delta.py' "$release_workflow" >"$governance_probe"
+if bash scripts/release/check-governance-contract.sh .github/workflows/release-candidate.yml "$governance_probe" >"$governance_output" 2>&1; then
+  rm -f -- "$governance_probe" "$governance_output"
+  fail "RELEASE_GOVERNANCE_NEGATIVE_TEST"
+fi
+grep -Fq 'RELEASE_GOVERNANCE_CONTRACT_BLOCKED:FULL_DELTA_AUDIT' "$governance_output" || {
+  rm -f -- "$governance_probe" "$governance_output"
+  fail "RELEASE_GOVERNANCE_NEGATIVE_REASON"
+}
+rm -f -- "$governance_probe" "$governance_output"
 grep -Fq 'title="$GITHUB_REF_NAME — Clean Room Launcher"' "$release_workflow" || fail "RELEASE_TITLE_CONTRACT"
 if command -v shellcheck >/dev/null 2>&1; then
   shellcheck \
     packaging/build-artifacts.sh \
     scripts/release/check-attestation-contract.sh \
     scripts/release/check-provider-canary-contract.sh \
+    scripts/release/check-governance-contract.sh \
     scripts/release/provision-provider-canaries.sh \
     scripts/release/readiness.sh \
+    scripts/release/local-release-review.sh \
+    scripts/release/verify-draft-plugin-activation.sh \
+    scripts/release/verify-published-release.sh \
     install.sh || fail "SHELLCHECK"
 else
   bash -n \
     packaging/build-artifacts.sh \
     scripts/release/check-attestation-contract.sh \
     scripts/release/check-provider-canary-contract.sh \
+    scripts/release/check-governance-contract.sh \
     scripts/release/provision-provider-canaries.sh \
-    scripts/release/readiness.sh || fail "SHELL_SYNTAX"
+    scripts/release/readiness.sh \
+    scripts/release/local-release-review.sh \
+    scripts/release/verify-draft-plugin-activation.sh \
+    scripts/release/verify-published-release.sh || fail "SHELL_SYNTAX"
   sh -n install.sh || fail "INSTALLER_SHELL_SYNTAX"
 fi
 sh install.sh --self-test || fail "INSTALLER_CONTRACT"
