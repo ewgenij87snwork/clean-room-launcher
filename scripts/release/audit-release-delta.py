@@ -189,10 +189,24 @@ def main() -> int:
             "release review required gates are stale: "
             + f"computed={gates} reviewed={expected_gates}"
         )
-    if review.get("contract_review") not in {"confirmed", "expanded"}:
+    contract_review = review.get("contract_review")
+    if contract_review not in {"confirmed", "expanded"}:
         raise AuditError("release contract review decision missing")
+    expansions = review.get("contract_expansions", [])
+    if not isinstance(expansions, list) or any(not isinstance(item, str) or not item for item in expansions):
+        raise AuditError("release contract expansions must be a string list")
+    if contract_review == "expanded" and not expansions:
+        raise AuditError("expanded release contract requires explicit durable expansions")
     if review.get("strategic_alignment_gate") != "required_before_tag":
         raise AuditError("strategic alignment gate must remain required before tag")
+
+    changelog_lines = pathlib.Path("CHANGELOG.md").read_text(encoding="utf-8").splitlines()
+    expected_date = review.get("release_date")
+    if not isinstance(expected_date, str) or not expected_date:
+        raise AuditError("release review date missing")
+    expected_heading = f"## [{args.version}] - {expected_date}"
+    if expected_heading not in changelog_lines:
+        raise AuditError("release review date does not match CHANGELOG.md")
 
     commits_raw = run_git(
         "log",
@@ -224,6 +238,8 @@ def main() -> int:
         ],
         "commits": commits,
         "contract_review": review["contract_review"],
+        "contract_expansions": expansions,
+        "release_date": expected_date,
         "strategic_alignment_gate": review["strategic_alignment_gate"],
     }
 
@@ -245,6 +261,7 @@ def main() -> int:
         f"- Commits: {len(commits)}",
         f"- Files: {len(paths)}",
         f"- Contract review: `{review['contract_review']}`",
+        f"- Release date: `{expected_date}`",
         "- Strategic alignment: **required before tag**",
         "",
         "## Change classes",
@@ -257,6 +274,8 @@ def main() -> int:
         markdown.append("")
         markdown.extend(f"- `{item}`" for item in values)
         markdown.append("")
+    markdown.extend(["", "## Contract expansions", ""])
+    markdown.extend(f"- `{item}`" for item in expansions)
     markdown.extend(["", "## Commits", ""])
     markdown.extend(f"- `{item['sha'][:12]}` {item['subject']}" for item in commits)
     markdown.extend(["", "## Files", ""])
