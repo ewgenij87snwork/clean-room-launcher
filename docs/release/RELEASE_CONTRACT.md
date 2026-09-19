@@ -222,10 +222,26 @@ Stable release tags MUST be annotated tags. The release workflow rejects
 lightweight tags and binds the changelog release date to the annotated tagger
 date.
 
+Because the protected `v*` tag namespace cannot be updated or deleted through
+normal project operation, the irreversible remote push must not be the first
+place tag shape is validated. After the Owner grants the one-shot tag gate, use:
+
+```sh
+scripts/release/push-release-tag.sh vX.Y.Z <exact-accepted-main-sha>
+```
+
+The helper rechecks exact local/remote `main`, remote tag absence, active
+repository tag policy, package/changelog identity, and creates and validates the
+annotated tag locally before its single remote push. A safe exact local tag may
+be reused after a transient push failure; any mismatch fails closed.
+
 Tag identity is version-first: `vX.Y.Z`.
 
-Protected release tags must not be mutable or deletable through normal project
-operation.
+The active repository tag ruleset for `refs/tags/v*` must restrict both update
+and deletion with no bypass actors. Release-candidate and tag workflows verify
+that external policy instead of treating repository settings as timeless.
+Published releases should remain immutable; Draft assets are assembled and
+verified before publication.
 
 ## 7. Draft Release gate
 
