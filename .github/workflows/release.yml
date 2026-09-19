@@ -49,6 +49,11 @@ jobs:
           if not any(heading.fullmatch(line) for line in Path("CHANGELOG.md").read_text(encoding="utf-8").splitlines()):
               raise SystemExit(f"CHANGELOG.md has no dated entry for {version}")
           PY
+          release_date="$(date -u +%F)"
+          grep -Fqx "## [${version}] - ${release_date}" CHANGELOG.md || {
+            echo "CHANGELOG.md release date must equal UTC tag date ${release_date}" >&2
+            exit 1
+          }
           manifest_version=$(python3 - <<'PY'
           import tomllib
           with open("Cargo.toml", "rb") as handle:
