@@ -34,7 +34,7 @@
       "accepted-main pre-tag local artifact smoke",
       "exact Draft Release artifact smoke before publish",
       "evidence invalidation after source/provider/artifact drift",
-      "pre-push annotated tag guard bound to active immutable v* tag policy"
+      "two-stage v* tag policy proof with strict no-bypass verification immediately before annotated tag push"
     ]
   }
 }
