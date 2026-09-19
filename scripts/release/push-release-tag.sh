@@ -116,8 +116,38 @@ PY
 [[ "$(git for-each-ref --format='%(subject)' "refs/tags/$tag")" == "$title" ]] || fail "TAG_MESSAGE"
 
 # The protected remote v* tag is created only after every local invariant above passes.
-git push origin "refs/tags/$tag:refs/tags/$tag" || fail "TAG_PUSH"
+# A transport failure after the server accepts the ref is an ambiguous outcome:
+# never push again until the remote ref is reconciled.
+local_object=$(git rev-parse "refs/tags/$tag")
+set +e
+git push origin "refs/tags/$tag:refs/tags/$tag"
+push_rc=$?
+set -e
 
-remote_object=$(git ls-remote --tags origin "refs/tags/$tag" | awk 'NR==1 {print $1}')
-[[ -n "$remote_object" ]] || fail "REMOTE_TAG_NOT_VISIBLE"
-printf 'RELEASE_TAG_PUSH_PASS tag=%s target=%s remote_tag_object=%s\n' "$tag" "$expected_main" "$remote_object"
+remote_refs=$(git ls-remote --tags origin "refs/tags/$tag" "refs/tags/$tag^{}" 2>/dev/null || true)
+remote_object=$(printf '%s\n' "$remote_refs" | awk -v ref="refs/tags/$tag" '$2 == ref {print $1}')
+remote_target=$(printf '%s\n' "$remote_refs" | awk -v ref="refs/tags/$tag^{}" '$2 == ref {print $1}')
+
+if [[ -n "$remote_object" ]]; then
+  [[ "$remote_object" == "$local_object" ]] || {
+    printf 'REMOTE_TAG_OBJECT=%s LOCAL_TAG_OBJECT=%s\n' "$remote_object" "$local_object" >&2
+    fail "REMOTE_TAG_OBJECT_MISMATCH"
+  }
+  [[ "$remote_target" == "$expected_main" ]] || {
+    printf 'REMOTE_TAG_TARGET=%s EXPECTED=%s\n' "$remote_target" "$expected_main" >&2
+    fail "REMOTE_TAG_TARGET_MISMATCH"
+  }
+  if [[ "$push_rc" -ne 0 ]]; then
+    printf 'RELEASE_TAG_PUSH_RECONCILED tag=%s target=%s remote_tag_object=%s\n' \
+      "$tag" "$expected_main" "$remote_object"
+  else
+    printf 'RELEASE_TAG_PUSH_PASS tag=%s target=%s remote_tag_object=%s\n' \
+      "$tag" "$expected_main" "$remote_object"
+  fi
+  exit 0
+fi
+
+if [[ "$push_rc" -ne 0 ]]; then
+  fail "TAG_PUSH_NOT_DELIVERED"
+fi
+fail "TAG_PUSH_OUTCOME_UNKNOWN"
