@@ -68,6 +68,48 @@ else
 fi
 
 grep -Fqx "## [$version] - $release_date" CHANGELOG.md || fail "CHANGELOG_TAG_DATE_MISMATCH"
+
+short_head=${expected_main:0:12}
+evidence="target/release-evidence/pretag-v${version}-${short_head}.json"
+[[ -f "$evidence" ]] || fail "PRETAG_SMOKE_EVIDENCE_MISSING"
+python3 - "$evidence" "$version" "$expected_main" <<'PY' || fail "PRETAG_SMOKE_EVIDENCE_INVALID"
+import json
+import sys
+from pathlib import Path
+
+path, version, expected_head = sys.argv[1:]
+record = json.loads(Path(path).read_text(encoding="utf-8"))
+if record.get("schema_version") != "clroom.local-release-smoke.v1":
+    raise SystemExit("schema")
+if record.get("result") != "PASS" or record.get("phase") != "pretag":
+    raise SystemExit("result-phase")
+if record.get("release_version") != version or record.get("source_head") != expected_head:
+    raise SystemExit("identity")
+if not isinstance(record.get("artifact_sha256"), str) or len(record["artifact_sha256"]) != 64:
+    raise SystemExit("artifact")
+auto = record.get("automated") or {}
+human = record.get("human") or {}
+for key in (
+    "clean_init_only",
+    "selected_init_only",
+    "plugin_inventory_qualified",
+    "persistent_config_unchanged",
+):
+    if auto.get(key) is not True:
+        raise SystemExit("automated:" + key)
+for key in (
+    "codex_tui_confirmed",
+    "claude_clean_tui_confirmed",
+    "claude_clean_selected_skill_absent_confirmed",
+    "claude_selected_plugin_tui_confirmed",
+    "claude_selected_skill_visible_confirmed",
+):
+    if human.get(key) is not True:
+        raise SystemExit("human:" + key)
+if auto.get("model_prompt_sent") is not False or human.get("model_prompt_sent") is not False:
+    raise SystemExit("model-prompt")
+PY
+
 [[ "$(git cat-file -t "refs/tags/$tag")" == tag ]] || fail "ANNOTATED_TAG_TYPE"
 [[ "$(git rev-list -n1 "$tag")" == "$expected_main" ]] || fail "TAG_TARGET"
 [[ "$(git for-each-ref --format='%(taggerdate:short)' "refs/tags/$tag")" == "$release_date" ]] || fail "TAG_DATE"
