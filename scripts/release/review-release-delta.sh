@@ -25,6 +25,10 @@ git rev-parse --verify "$candidate^{commit}" >/dev/null 2>&1 || {
 base_sha=$(git rev-parse "$base^{commit}")
 candidate_sha=$(git rev-parse "$candidate^{commit}")
 
+python3 scripts/release/check-release-review.py \
+  --base-tag "$base" \
+  --candidate "$candidate_sha"
+
 git merge-base --is-ancestor "$base_sha" "$candidate_sha" || {
   echo "RELEASE_DELTA_BLOCKED:BASE_NOT_ANCESTOR" >&2
   exit 1
