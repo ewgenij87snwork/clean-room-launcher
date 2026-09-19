@@ -119,6 +119,35 @@ fn local_tag_helper_parses_annotated_tagger_timestamp_with_digit_regex() {
 
 
 #[test]
+fn tag_push_revalidates_mutable_remote_state_at_action_time() {
+    let source = std::fs::read_to_string("scripts/release/push-release-tag.sh").unwrap();
+
+    assert!(source.contains("REMOTE_TAG_QUERY_$phase"));
+    assert!(source.contains("REMOTE_TAG_PRESENT_$phase"));
+
+    let action_time = source
+        .find("# Mutable remote release state is refreshed immediately before the irreversible push.")
+        .expect("tag helper must have an explicit action-time refresh boundary");
+    let push = source
+        .rfind("git push origin \"refs/tags/$tag\"")
+        .expect("tag helper must push the protected tag");
+
+    assert!(action_time < push, "action-time guards must precede the irreversible push");
+    let guard = &source[action_time..push];
+    for required in [
+        "git fetch --quiet origin main",
+        "MAIN_DRIFT_ACTION_TIME",
+        "LOCAL_HEAD_DRIFT_ACTION_TIME",
+        "ensure_remote_tag_absent ACTION_TIME",
+        "verify_tag_ruleset",
+        "check-release-contract.py --report",
+        "RELEASE_CONTRACT_ACTION_TIME",
+    ] {
+        assert!(guard.contains(required), "missing action-time tag guard: {required}");
+    }
+}
+
+#[test]
 fn release_candidate_models_post_publish_and_active_candidate_lifecycle() {
     let workflow = std::fs::read_to_string(".github/workflows/release-candidate.yml").unwrap();
     let readiness = std::fs::read_to_string("scripts/release/readiness.sh").unwrap();
