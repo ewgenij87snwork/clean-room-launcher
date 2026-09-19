@@ -26,6 +26,10 @@ def latest_published_release(repository):
         data = json.load(response)
     if data.get("draft") or data.get("prerelease"):
         raise SystemExit("RELEASE_CONTRACT_BLOCKED:PUBLISHED_BASELINE_NOT_STABLE")
+    if not data.get("published_at") or not data.get("tag_name"):
+        raise SystemExit("RELEASE_CONTRACT_BLOCKED:PUBLISHED_BASELINE_IDENTITY")
+    if data.get("immutable") is not True:
+        raise SystemExit("RELEASE_CONTRACT_BLOCKED:PUBLISHED_BASELINE_NOT_IMMUTABLE")
     return data["tag_name"], data.get("published_at")
 
 def classify(paths, contract):
