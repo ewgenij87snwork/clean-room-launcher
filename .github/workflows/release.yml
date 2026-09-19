@@ -307,6 +307,7 @@ jobs:
           gh attestation verify "release-artifacts/$ARTIFACT" \
             -R "$GITHUB_REPOSITORY" \
             --bundle "$sbom" \
+            --predicate-type https://cyclonedx.org/bom \
             --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/release.yml" \
             --source-digest "$GITHUB_SHA" \
             --source-ref "$GITHUB_REF" \
