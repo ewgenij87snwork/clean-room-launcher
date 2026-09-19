@@ -41,6 +41,34 @@ remote_main=$(git rev-parse FETCH_HEAD)
 
 python3 scripts/release/check-repository-release-policy.py --mode strict >/dev/null || fail "REPOSITORY_TAG_POLICY"
 
+read -r codex_pin claude_plugin_pin < <(
+  python3 - <<'PY'
+import json
+from pathlib import Path
+data = json.loads(Path("release/qualification.json").read_text(encoding="utf-8"))
+print(
+    data["providers"]["codex"]["clean_exact"],
+    data["providers"]["claude"]["plugin_activation_exact"],
+)
+PY
+)
+for command_name in codex claude; do
+  command -v "$command_name" >/dev/null 2>&1 || fail "PROVIDER_COMMAND_MISSING:$command_name"
+done
+version_from_output() {
+  "$1" --version 2>&1 | grep -Eo '[0-9]+\.[0-9]+\.[0-9]+' | head -1
+}
+current_codex=$(version_from_output "$(command -v codex)")
+current_claude=$(version_from_output "$(command -v claude)")
+[[ "$current_codex" == "$codex_pin" ]] || {
+  printf 'PROVIDER_REFRESH_REQUIRED provider=codex installed=%s release_pin=%s\n' "$current_codex" "$codex_pin" >&2
+  fail "CODEX_PROVIDER_DRIFT"
+}
+[[ "$current_claude" == "$claude_plugin_pin" ]] || {
+  printf 'PROVIDER_REFRESH_REQUIRED provider=claude capability=plugin_activation installed=%s release_pin=%s\n' "$current_claude" "$claude_plugin_pin" >&2
+  fail "CLAUDE_PLUGIN_PROVIDER_DRIFT"
+}
+
 if git ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null 2>&1; then
   fail "REMOTE_TAG_ALREADY_EXISTS"
 fi
