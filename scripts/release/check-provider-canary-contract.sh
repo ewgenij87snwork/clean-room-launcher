@@ -83,7 +83,7 @@ SH
     --executable "$fake_provider" \
     --candidate "$early_exit_candidate" \
     --source-head 0000000000000000000000000000000000000000 \
-    --version 0.3.1 \
+    --version 0.4.0 \
     --output "$record" \
     >"$tmp/stdout.log" 2>"$stderr_log"
   status=$?

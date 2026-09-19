@@ -1,4 +1,4 @@
-# CLROOM v0.2 target matrix.
+# CLROOM target matrix.
 # The build lane is integrity-verified; real-provider qualification is a
 # separate evidence-bound release gate.
 # Unsupported and missing-runner fixtures remain excluded from release claims.
@@ -20,7 +20,7 @@ name = "alpha-macos-aarch64"
 rust_target = "aarch64-apple-darwin"
 runner = "macos-14"
 qualification_status = "INTEGRITY_VERIFIED"
-artifact_name = "clean-room-launcher-v0.2.0-aarch64-apple-darwin"
+artifact_name = "clean-room-launcher-v0.4.0-aarch64-apple-darwin"
 required_checks = "fmt, clippy, test, schema, target-matrix"
 signing_policy = "unsigned"
 
