@@ -57,7 +57,11 @@ release archive, not sibling build outputs. The archive, installer, SBOM,
 checksums, provenance attestation bundle, and SBOM attestation bundle are
 verified before a guarded Draft Release is created.
 
-Publishing remains a separate action.
+Publishing remains a separate action. Immediately before a protected tag
+push, the tag helper refreshes the remote `main` tip, confirms the tag is still
+absent, revalidates the active no-bypass `v*` tag ruleset, and reruns the
+whole-release contract against the current published baseline. Any drift blocks
+the push.
 
 Because stable `v*` tags are protected against update/deletion, the new
 Claude plugin capability is exercised twice:
