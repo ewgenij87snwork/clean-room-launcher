@@ -34,6 +34,8 @@ release_title=$(gh release view "$tag" --json name,isDraft,isPrerelease,tagName 
 release_tag=$(gh release view "$tag" --json tagName --jq '.tagName')
 release_draft=$(gh release view "$tag" --json isDraft --jq '.isDraft')
 release_prerelease=$(gh release view "$tag" --json isPrerelease --jq '.isPrerelease')
+source_head=$(gh api "repos/y-sor/clean-room-launcher/commits/$tag" --jq .sha)
+[[ "$source_head" =~ ^[0-9a-f]{40}$ ]] || fail "PUBLIC_TAG_SOURCE_UNKNOWN"
 [[ "$release_tag" == "$tag" ]] || fail "PUBLIC_RELEASE_TAG_MISMATCH"
 [[ "$release_title" == "$tag — Clean Room Launcher" ]] || fail "PUBLIC_RELEASE_TITLE_MISMATCH"
 [[ "$release_draft" == false ]] || fail "PUBLIC_RELEASE_STILL_DRAFT"
@@ -52,8 +54,8 @@ done
   shasum -a 256 -c SHA256SUMS
 ) >/dev/null || fail "PUBLIC_CHECKSUMS"
 
-gh attestation verify "$tmp/$artifact"   -R y-sor/clean-room-launcher   --bundle "$tmp/$artifact.provenance.sigstore.json"   --signer-workflow y-sor/clean-room-launcher/.github/workflows/release.yml   --deny-self-hosted-runners >/dev/null || fail "PUBLIC_PROVENANCE"
-gh attestation verify "$tmp/$artifact"   -R y-sor/clean-room-launcher   --bundle "$tmp/$artifact.sbom.sigstore.json"   --signer-workflow y-sor/clean-room-launcher/.github/workflows/release.yml   --deny-self-hosted-runners >/dev/null || fail "PUBLIC_SBOM_ATTESTATION"
+gh attestation verify "$tmp/$artifact"   -R y-sor/clean-room-launcher   --bundle "$tmp/$artifact.provenance.sigstore.json"   --signer-workflow y-sor/clean-room-launcher/.github/workflows/release.yml   --source-digest "$source_head"   --source-ref "refs/tags/$tag"   --deny-self-hosted-runners >/dev/null || fail "PUBLIC_PROVENANCE"
+gh attestation verify "$tmp/$artifact"   -R y-sor/clean-room-launcher   --bundle "$tmp/$artifact.sbom.sigstore.json"   --signer-workflow y-sor/clean-room-launcher/.github/workflows/release.yml   --source-digest "$source_head"   --source-ref "refs/tags/$tag"   --deny-self-hosted-runners >/dev/null || fail "PUBLIC_SBOM_ATTESTATION"
 
 extract="$tmp/extracted"
 mkdir -p "$extract"
