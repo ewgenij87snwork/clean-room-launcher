@@ -176,6 +176,13 @@ Automated real-provider qualification MUST execute `clroom-codex` and
 `clroom-claude` extracted from the created archive. Qualifying
 `target/.../release/*` beside the archive is insufficient release evidence.
 
+The exact archive must also pass a deterministic capability falsifier for the
+new Claude plugin path: a synthetic installed skill-only plugin must produce
+exactly one CLROOM-owned `--plugin-dir`, its admitted root must remain
+read-only, and adding an unqualified hook surface must refuse before the fake
+provider launch. This machine gate complements rather than replaces the
+real-provider pre-tag and Draft smokes.
+
 The archive must remain bound to:
 
 - release version;
@@ -221,7 +228,8 @@ Immediately before tag creation verify:
 - accepted `main` has not moved;
 - all required checks are green on the exact accepted source;
 - pre-tag local evidence is PASS and bound to that source;
-- provider versions still match the qualification pins;
+- provider versions still match the qualification pins, re-read from the
+  installed provider binaries immediately before the irreversible push;
 - the tag does not already exist;
 - changelog date and version identity are correct.
 
