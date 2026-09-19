@@ -116,6 +116,14 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          if [[ "$CLROOM_RELEASE_LIFECYCLE" == "POST_PUBLISH" ]]; then
+            echo "PROVIDER_CANARY_SKIPPED lifecycle=POST_PUBLISH"
+            exit 0
+          fi
+          [[ "$CLROOM_RELEASE_LIFECYCLE" == "ACTIVE_CANDIDATE" ]] || {
+            echo "invalid release lifecycle: $CLROOM_RELEASE_LIFECYCLE" >&2
+            exit 1
+          }
           ./scripts/release/provision-provider-canaries.sh "$RUNNER_TEMP/clroom-providers" "$GITHUB_ENV"
           echo "CLROOM_QUALIFICATION_EVIDENCE_DIR=$RUNNER_TEMP/clroom-qualification" >> "$GITHUB_ENV"
       - name: Run canonical fail-closed gate
