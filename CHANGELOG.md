@@ -7,7 +7,7 @@ Semantic Versioning after the first public release.
 
 ## [Unreleased]
 
-## [0.4.0] - 2026-09-18
+## [0.4.0] - 2026-09-19
 
 ### Added
 
@@ -19,12 +19,15 @@ Semantic Versioning after the first public release.
 ### Changed
 
 - Clarified interactive `clroom codex` as the primary Codex path while keeping
-  `codex exec` for non-interactive automation; this is documentation-only.
+  `codex exec` for non-interactive automation; this is a documentation change,
+  not a new Codex runtime path.
 - Updated pinned CI checkout usage to `actions/checkout` v7.0.1 and added
   OpenSSF Best Practices status badges; these do not change shipped runtime
   behavior.
-- Hardened public search-discovery metadata and crawler/sitemap policy without
-  changing the shipped runtime surface.
+- Hardened public search/discovery metadata: the Limitations front matter is
+  valid YAML, the site exposes a shorter SEO tagline, and project crawler/sitemap
+  metadata is aligned with the host-root policy without changing the canonical
+  URL set.
 - Added Release Contract v1: every stable release is checked against the full
   delta from the latest published stable release, with fail-closed change
   classification, explicit contract-evolution review, exact tracked-content
@@ -45,18 +48,21 @@ Semantic Versioning after the first public release.
   revalidates the exact active install root around launch, reopens only that
   root read-only, refuses overlapping raw `--plugin-dir`/`--plugin-url`
   activation, and leaves persistent Claude configuration unchanged.
-- Activation qualification now inventories Claude's documented plugin surface
-  and fails closed unless the effective bundle is skill-only. Hook, MCP, agent,
-  LSP, monitor, executable, and settings surfaces remain unqualified rather
-  than widening the clean `~/.claude` boundary.
+- Activation inventory follows Claude provider-visible plugin surfaces, while
+  v0.4.0 activation remains deliberately narrower: a matching plugin manifest
+  identity plus only the default one-level `skills/<name>/SKILL.md` layout is
+  qualified. Manifestless/root-single-skill/custom-skill-path bundles and
+  slash-command, hook, MCP, agent, LSP, monitor, executable, or settings
+  surfaces remain unqualified. Nested non-skill paths and identity are included
+  in the fail-closed check, and qualification is revalidated immediately around
+  launch.
 - Updated the shipped `cap-std` / `cap-primitives` dependency from `4.0.2`
   to `4.0.3`, incorporating the upstream fix for
   `GHSA-hp8f-xmx4-4qrg` affecting trailing-slash symlink containment on
   platforms including macOS.
-- Release qualification now executes provider canaries against binaries
-  extracted from the exact release archive and explicitly verifies both
-  exported provenance and SBOM attestation bundles before Draft Release
-  creation.
+- Release qualification executes provider canaries against binaries extracted
+  from the exact release archive and explicitly verifies both exported
+  provenance and SBOM attestation bundles before Draft Release creation.
 
 ## [0.3.1] - 2026-09-17
 
