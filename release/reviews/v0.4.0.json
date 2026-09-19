@@ -47,7 +47,11 @@
     "unclassified_path_fail_closed",
     "versioned_release_review_manifest",
     "mandatory_release_contract_self_review",
-    "draft_artifact_plugin_activation_e2e_before_publish"
+    "utc_tag_date_binding",
+    "behavior_specific_provider_evidence",
+    "draft_artifact_plugin_activation_e2e_before_publish",
+    "draft_artifact_source_commit_binding",
+    "post_publish_public_latest_installer_verify"
   ],
   "release_date": "2026-09-19"
 }
