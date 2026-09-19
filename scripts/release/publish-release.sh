@@ -138,7 +138,7 @@ if [[ "$after_draft" == false ]]; then
 fi
 
 # The authoritative state is still the exact pre-action Draft. A future explicit
-# publish attempt may retry after a fresh Owner/action-time gate; this invocation
+# publish attempt may retry after a fresh maintainer action-time authorization; this invocation
 # does not retry automatically.
 [[ "$after_draft" == true && "$after_immutable" == false && "$after_prerelease" == false ]] \
   || fail "PUBLISH_OUTCOME_UNKNOWN"
