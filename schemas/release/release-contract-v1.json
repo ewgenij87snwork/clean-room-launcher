@@ -68,7 +68,9 @@
     "scripts/release/local-release-audit.sh",
     ".github/workflows/release-candidate.yml",
     ".github/workflows/release.yml",
-    "scripts/release/readiness.sh"
+    "scripts/release/readiness.sh",
+    "scripts/release/push-release-tag.sh",
+    "scripts/release/verify-draft-plugin-activation.sh"
   ],
   "allowed_dispositions": [
     "COVERED",
