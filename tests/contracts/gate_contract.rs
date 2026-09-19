@@ -164,6 +164,10 @@ fn release_contract_binds_latest_stable_annotated_tags_and_inference_free_local_
     assert!(post_publish.contains("LATEST_INSTALLER_BYTES_MISMATCH"));
     assert!(post_publish.contains("gh release verify \"$tag\""));
     assert!(post_publish.contains("PUBLIC_RELEASE_ATTESTATION"));
+    assert!(post_publish.contains("PUBLIC_RELEASE_DRIFT_FROM_ACCEPTED_DRAFT"));
+    assert!(post_publish.contains("api-asset-drift"));
+    assert!(post_publish.contains("body-drift"));
+    assert!(post_publish.contains("\"immutable\""));
     assert!(post_publish.contains("sh \"$latest_installer\""));
     assert!(post_publish.contains("--source-digest \"$source_head\""));
     assert!(post_publish.contains("--source-ref \"refs/tags/$tag\""));
