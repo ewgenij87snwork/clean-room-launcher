@@ -2,7 +2,7 @@
   "schema_version": "clroom.release-review.v1",
   "release": "v0.4.0",
   "baseline_release": "v0.3.1",
-  "reviewed_through_commit": "3694eb90d06274b027d31b128281843ed98715a9",
+  "reviewed_through_commit": "3b363d97bbd82503af847d1dfc8607422c9da1fd",
   "domain_dispositions": {
     "runtime": {
       "decision": "CONTRACT_EXPAND",
@@ -85,7 +85,7 @@
       "requirement": "Run exact downloaded v0.4.0 archive on macOS Apple Silicon with Claude Code 2.1.273 and an already-installed qualified skill-only plugin; prove clean absence, selected presence, no newly admitted sibling, no plugin errors, and unchanged persistent provider config."
     }
   ],
-  "reviewed_content_digest": "9be85d8a0875681720d91aad5f78bc690fa487410602cc579e15d40a748ef3b8",
+  "reviewed_content_digest": "123833f126ace84093624c0dfa9d09fa08f0c9ac26087cc6e7f877bcc16e4b0f",
   "product_outcome": "Ship the bounded Claude skill-only whole-plugin activation and the post-v0.3.1 security/maintenance delta without widening CLROOM trust boundaries or weakening the existing clean-launch contract.",
   "contract_evolution_review": {
     "decision": "EXPAND",
