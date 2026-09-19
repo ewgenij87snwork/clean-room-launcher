@@ -69,8 +69,9 @@ Claude plugin capability is exercised twice:
 1. **Pre-tag:** exact accepted `main` builds a candidate archive locally,
    proves clean/selected plugin separation and unchanged provider config, then
    opens the selected-plugin TUI without sending a model prompt. The PASS
-   evidence is bound to the exact accepted-main SHA and is required by the tag
-   helper.
+   evidence is bound to the exact accepted-main SHA and records the observed
+   Claude provider version and executable SHA-256; both are revalidated
+   immediately before the protected tag push.
 2. **Pre-publish:** repository release immutability must still be enabled, then
    the exact Draft Release archive is downloaded, checksum and attestation
    bundles are verified, and the same automated plugin separation checks run
