@@ -74,17 +74,34 @@ fn tag_release_qualifies_the_exact_archive_before_upload() {
         "./scripts/release/provision-provider-canaries.sh \"$RUNNER_TEMP/clroom-providers\" \"$GITHUB_ENV\""
     ));
     assert!(!source.contains("npm install"));
-    assert!(provisioner.contains("@openai/codex@0.154.0"));
-    assert!(provisioner.contains("@openai/codex@0.154.0-darwin-arm64"));
-    assert!(provisioner.contains("@anthropic-ai/claude-code@2.1.272"));
-    assert!(provisioner.contains("HP/vJCH/t2hB9Kg6hotN9UglClJ6/z584fal5lEP14C9gNAgAQS4/kTQC7l5V+BA3TqwDPwINSjul28cX8AYXg=="));
+    let pins: serde_json::Value = serde_json::from_str(
+        &std::fs::read_to_string("release/qualification.json").unwrap(),
+    )
+    .unwrap();
+    let codex = pins["providers"]["codex"]["clean_exact"].as_str().unwrap();
+    let claude = pins["providers"]["claude"]["clean_exact"].as_str().unwrap();
+    assert!(provisioner.contains(&format!("@openai/codex@{codex}")));
+    assert!(provisioner.contains(&format!("@openai/codex@{codex}-darwin-arm64")));
+    assert!(provisioner.contains(&format!("@anthropic-ai/claude-code@{claude}")));
+    assert!(provisioner.contains(
+        "HP/vJCH/t2hB9Kg6hotN9UglClJ6/z584fal5lEP14C9gNAgAQS4/kTQC7l5V+BA3TqwDPwINSjul28cX8AYXg=="
+    ));
     assert!(!provisioner.contains("npm install"));
-    assert!(source.contains("target/aarch64-apple-darwin/release/clroom-codex"));
-    assert!(source.contains("target/aarch64-apple-darwin/release/clroom-claude"));
+
+    assert!(source.contains("qualification_extract=\"$RUNNER_TEMP/clroom-release-archive\""));
+    assert!(source.contains("tar -xzf \"$artifact\" -C \"$qualification_extract\""));
+    assert!(source.contains("candidate_dir=\"$archive_root/bin\""));
+    assert!(source.contains("--candidate \"$candidate_dir/clroom-codex\""));
+    assert!(source.contains("--candidate \"$candidate_dir/clroom-claude\""));
+    assert!(
+        !source.contains("target/aarch64-apple-darwin/release/clroom-codex")
+            && !source.contains("target/aarch64-apple-darwin/release/clroom-claude"),
+        "provider qualification must not use sibling target build outputs"
+    );
     assert_eq!(
         source.matches("scripts/release/qualify-real-provider.sh").count(),
         2,
-        "both qualified providers must execute against the release-built binaries"
+        "both qualified providers must execute against binaries extracted from the archive"
     );
     assert_eq!(
         source.matches("scripts/release/verify-qualification.py").count(),
