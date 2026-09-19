@@ -1,0 +1,91 @@
+{
+  "schema_version": 1,
+  "release_version": "0.4.0",
+  "baseline_release": "v0.3.1",
+  "changed_domains": [
+    "ci",
+    "dependencies",
+    "provider_runtime",
+    "public_claims",
+    "release_distribution",
+    "runtime",
+    "verification"
+  ],
+  "assessments": [
+    {
+      "trigger": "runtime_or_provider_behavior_changed",
+      "disposition": "CONTRACT_EXPAND",
+      "evidence": [
+        "src/adapters/claude/activation.rs",
+        "src/catalog/provider_inventory.rs",
+        "src/catalog/plugin_surface.rs",
+        "tests/cli/info.rs"
+      ],
+      "note": "v0.4.0 adds bounded Claude whole-plugin activation and new provider-surface qualification; focused negative tests and exact-provider qualification were added."
+    },
+    {
+      "trigger": "dependency_graph_changed",
+      "disposition": "COVERED",
+      "evidence": [
+        "Cargo.lock",
+        "scripts/release/readiness.sh"
+      ],
+      "note": "Dependency Review and cargo-deny remain release gates; SBOM/provenance are regenerated for exact release bytes."
+    },
+    {
+      "trigger": "ci_workflow_changed",
+      "disposition": "COVERED",
+      "evidence": [
+        ".github/workflows/ci.yml",
+        ".github/workflows/release-candidate.yml",
+        ".github/workflows/release.yml"
+      ],
+      "note": "Workflow changes remain pinned to immutable action SHAs and are covered by CI/CodeQL/release-readiness."
+    },
+    {
+      "trigger": "release_or_distribution_changed",
+      "disposition": "CONTRACT_EXPAND",
+      "evidence": [
+        "release/technical-release-contract.json",
+        "scripts/release/check-release-delta.py",
+        "scripts/release/local-release-audit.sh",
+        ".github/workflows/release.yml"
+      ],
+      "note": "v0.4.0 introduces release-wide delta classification and explicit contract-evolution review in addition to existing artifact/SBOM/provenance gates."
+    },
+    {
+      "trigger": "public_claims_changed",
+      "disposition": "COVERED",
+      "evidence": [
+        "CHANGELOG.md",
+        "README.md",
+        "SECURITY.md",
+        "docs/limitations.md"
+      ],
+      "note": "Public claims are reviewed against exact behavior-specific qualification and the public-boundary gate."
+    },
+    {
+      "trigger": "verification_surface_changed",
+      "disposition": "CONTRACT_EXPAND",
+      "evidence": [
+        "tests/cli/info.rs",
+        "tests/release/test_release_delta.py"
+      ],
+      "note": "New runtime behavior received regression/negative coverage; release-delta contract itself receives deterministic unit coverage."
+    },
+    {
+      "trigger": "contract_self_change",
+      "disposition": "CONTRACT_EXPAND",
+      "evidence": [
+        "release/technical-release-contract.json",
+        "scripts/release/check-release-delta.py"
+      ],
+      "note": "This release establishes the first machine-enforced release-delta contract."
+    }
+  ],
+  "residuals": [
+    "macOS release artifacts remain unsigned and unnotarized at the Apple platform-signing layer.",
+    "Linux, Windows and Intel macOS remain not qualified.",
+    "Claude whole-plugin activation is limited to the documented exact provider tuple and skill-only observed surface."
+  ]
+}
