@@ -293,7 +293,15 @@ repeats provider/manual startup checks against those exact public-candidate
 bytes.
 
 This is the final protection against a difference between source/build evidence
-and the bytes that would be published.
+and the bytes that would be published. Draft smoke evidence seals the release
+notes body and SHA-256 of every release asset, not only the main archive.
+
+Evidence is invalidated by drift in any fact it depends on. Immediately before
+the irreversible tag push, the helper refreshes remote main, remote tag absence,
+the no-bypass tag ruleset, provider versions, and provider executable bytes.
+Immediately before publication, the helper refreshes the tag source, strict tag
+policy, immutable-release policy, provider versions/bytes, Draft release body,
+and all six asset digests against the exact Draft-smoke evidence.
 
 ## 8. Publish gate
 
