@@ -2,7 +2,7 @@
   "schema_version": "clroom.release-review.v1",
   "release": "v0.4.0",
   "baseline_release": "v0.3.1",
-  "reviewed_through_commit": "b4bb120fb04201200ad8b144d1150ea894af78d2",
+  "reviewed_through_commit": "d175b3e7fbfd7b34b2a1a931b3e6730c35edb644",
   "domain_dispositions": {
     "runtime": {
       "decision": "CONTRACT_EXPAND",
@@ -86,6 +86,11 @@
       "id": "review-declaration-was-excluded-from-seal",
       "decision": "CONTRACT_EXPAND",
       "durable_control": "The candidate seal includes canonical semantics of the release review declaration itself, excluding only the self-referential digest field."
+    },
+    {
+      "id": "cross-domain-rename-could-hide-old-surface",
+      "decision": "CONTRACT_EXPAND",
+      "durable_control": "Whole-release path inventory disables rename detection so a move is classified at both the deleted old path and the added new path."
     }
   ],
   "artifact_capability_gates": [
@@ -112,7 +117,8 @@
       "real-provider qualification against binaries extracted from the exact release archive",
       "explicit verification of the exported SBOM attestation bundle",
       "local whole-release summary/full audit command",
-      "exact accepted-main plugin capability smoke evidence required before protected tag creation"
+      "exact accepted-main plugin capability smoke evidence required before protected tag creation",
+      "rename-safe whole-release path classification that evaluates both old and new paths"
     ]
   }
 }
