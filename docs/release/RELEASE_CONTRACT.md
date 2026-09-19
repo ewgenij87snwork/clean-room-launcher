@@ -1,0 +1,75 @@
+# Release Contract
+
+CLROOM reviews releases as a whole product delta, not as the last pull request.
+
+The authoritative baseline is the latest published stable GitHub Release. Before
+tagging, the release candidate must classify every changed path since that
+baseline, record a disposition for every changed release domain, record all
+known near-misses, and decide whether the release contract itself must expand.
+
+## What is machine-enforced
+
+`scripts/release/check-release-contract.py` fails closed when:
+
+- the declared baseline is not the current latest published stable release;
+- a changed path is not classified by the release contract;
+- a changed domain lacks an evidence-backed disposition;
+- a known near-miss lacks a disposition;
+- contract expansion is declared without a durable promoted control;
+- semantic product outcome is missing;
+- any tracked byte, executable mode, or symlink changes after the semantic
+  review seal, except the review declaration file that contains the seal.
+
+The semantic review seal is a SHA-256 digest over the tracked Git tree
+(mode/type/blob/path), excluding only the current release review JSON. Changing
+source, docs, workflows, packaging, tests, scripts, file modes, or symlinks
+therefore requires a fresh review seal.
+
+Release readiness and the tag workflow both run the same contract check.
+
+## Contract evolution review
+
+Every release must explicitly choose one:
+
+- `EXPAND`: a new/repeated failure mode requires a new durable gate or evidence;
+- `NO_CHANGE`: existing gates already detect all newly relevant failure modes,
+  with a written rationale.
+
+This is intentionally separate from ordinary CI. CI answers whether the current
+candidate passes existing controls. Contract evolution asks whether the delta
+made any existing control insufficient.
+
+## Artifact integrity
+
+The release workflow qualifies the provider launchers extracted from the exact
+release archive, not sibling build outputs. The archive, installer, SBOM,
+checksums, provenance attestation bundle, and SBOM attestation bundle are
+verified before a guarded Draft Release is created.
+
+Publishing remains a separate action.
+
+## Local audit
+
+To inspect what is actually in the candidate relative to the last published
+release:
+
+```sh
+scripts/release/local-release-audit.sh
+```
+
+For the full local test/build/artifact pass:
+
+```sh
+scripts/release/local-release-audit.sh --full
+```
+
+The summary prints the authoritative published baseline, the complete commit
+list, every changed file and its release domain, the contract-evolution
+decision, artifact capability gates, and the dependency/version diff.
+
+The full mode additionally runs the public-boundary check, installer self-test,
+all locked tests, builds a candidate archive, verifies its metadata, and prints
+its SHA-256.
+
+Local audit complements GitHub CI and real-provider/draft-artifact evidence; it
+does not grant merge, tag, or publish permission.
