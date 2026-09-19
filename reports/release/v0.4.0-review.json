@@ -2,7 +2,7 @@
   "schema_version": "clroom.release-review.v1",
   "release": "v0.4.0",
   "baseline_release": "v0.3.1",
-  "reviewed_through_commit": "022881c136c198d6a892ffcca1215ab91f4d011f",
+  "reviewed_through_commit": "78b8a5d6b6d231006f7843ef592808592f0e4fde",
   "domain_dispositions": {
     "runtime": {
       "decision": "CONTRACT_EXPAND",
@@ -65,7 +65,7 @@
     {
       "id": "semantic-review-tail-could-change-release-gates",
       "decision": "CONTRACT_EXPAND",
-      "durable_control": "Semantic review is sealed to a SHA-256 digest of every tracked mode/type/blob/path except the review declaration itself; any later code/docs/workflow/release-script drift fails closed."
+      "durable_control": "Semantic review is sealed to a SHA-256 digest of every tracked mode/type/blob/path, with the review declaration represented by canonical semantics that exclude only the self-referential digest field; any later code/docs/workflow/release-script or review-semantic drift fails closed."
     },
     {
       "id": "provider-qualified-sibling-build-not-shipped-archive",
