@@ -58,14 +58,17 @@ PY
 
 capture="$root/provider-args.txt"
 write_probe="$root/plugin-write.txt"
-capture_q=$(printf '%q' "$capture")
-write_probe_q=$(printf '%q' "$write_probe")
-cat > "$root/bin/claude" <<SH
-#!/usr/bin/env bash
+python3 - "$root/bin/claude" "$capture" "$write_probe" <<'PY'
+import pathlib
+import shlex
+import sys
+
+path, capture, write_probe = sys.argv[1:]
+script = f"""#!/usr/bin/env bash
 set -euo pipefail
-capture=$capture_q
-write_probe=$write_probe_q
-if [[ ${1:-} == --version ]]; then
+capture={shlex.quote(capture)}
+write_probe={shlex.quote(write_probe)}
+if [[ ${{1:-}} == --version ]]; then
   printf '2.1.273 (Claude Code)\\n'
   exit 0
 fi
@@ -91,7 +94,9 @@ else
   printf 'READ_ONLY\\n' > "$write_probe"
 fi
 exit 0
-SH
+"""
+pathlib.Path(path).write_text(script, encoding="utf-8")
+PY
 chmod 0755 "$root/bin/claude"
 
 set +e
