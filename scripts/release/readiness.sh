@@ -22,17 +22,11 @@ baseline=${CLROOM_RELEASE_BASE_REF:-}
 
 [[ "$version" == "$manifest_version" ]] || fail "VERSION_ENV_MISMATCH"
 [[ -n "$baseline" ]] || fail "PUBLISHED_RELEASE_BASE_REQUIRED"
-case "$lifecycle" in
-  POST_PUBLISH)
-    [[ "$baseline" == "v$version" ]] || fail "POST_PUBLISH_BASE_VERSION_MISMATCH"
-    ;;
-  ACTIVE_CANDIDATE)
-    [[ "$baseline" != "v$version" ]] || fail "ACTIVE_CANDIDATE_VERSION_NOT_ADVANCED"
-    ;;
-  *)
-    fail "RELEASE_LIFECYCLE"
-    ;;
-esac
+python3 scripts/release/resolve-release-lifecycle.py --self-test >/dev/null || fail "RELEASE_LIFECYCLE_SELF_TEST"
+expected_lifecycle="$(python3 scripts/release/resolve-release-lifecycle.py \
+  --candidate-version "$version" \
+  --published-tag "$baseline")" || fail "RELEASE_LIFECYCLE_RESOLUTION"
+[[ "$lifecycle" == "$expected_lifecycle" ]] || fail "RELEASE_LIFECYCLE_MISMATCH"
 
 git diff --check || fail "DIFF_CHECK"
 git diff --quiet || fail "CLEAN_TREE_REQUIRED"
