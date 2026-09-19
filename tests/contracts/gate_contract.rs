@@ -200,6 +200,29 @@ fn release_lifecycle_resolver_and_local_audit_are_fail_closed() {
 }
 
 #[test]
+fn draft_release_smoke_requires_repository_release_immutability() {
+    let source = std::fs::read_to_string("scripts/release/local-plugin-activation-smoke.sh").unwrap();
+
+    assert!(source.contains("repos/y-sor/clean-room-launcher/immutable-releases"));
+    assert!(source.contains("IMMUTABLE_RELEASE_POLICY_UNVERIFIED"));
+    assert!(source.contains("IMMUTABLE_RELEASE_POLICY_DISABLED"));
+
+    let draft_branch = source
+        .find("if [[ \"$phase\" == \"pretag\" ]]; then")
+        .expect("release smoke must branch between pretag and draft behavior");
+    let policy = source
+        .find("immutable-releases --jq .enabled")
+        .expect("draft smoke must verify release immutability");
+    let release_download = source
+        .find("gh release download \"$tag\" --dir \"$assets\"")
+        .expect("draft smoke must download the exact Draft assets");
+    assert!(
+        draft_branch < policy && policy < release_download,
+        "immutability must be proven in the Draft pre-publish path before accepting release assets"
+    );
+}
+
+#[test]
 fn draft_plugin_release_smoke_binds_cyclonedx_predicate() {
     let source = std::fs::read_to_string("scripts/release/local-plugin-activation-smoke.sh").unwrap();
     assert!(
