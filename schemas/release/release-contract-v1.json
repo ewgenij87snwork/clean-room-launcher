@@ -72,7 +72,12 @@
     "scripts/release/push-release-tag.sh",
     "scripts/release/verify-draft-plugin-activation.sh"
   ],
-  "allowed_dispositions": [
+  "domain_satisfying_dispositions": [
+    "COVERED",
+    "CONTRACT_EXPAND",
+    "NOT_APPLICABLE"
+  ],
+  "near_miss_dispositions": [
     "COVERED",
     "CONTRACT_EXPAND",
     "NOT_APPLICABLE",
