@@ -23,18 +23,23 @@ trap 'rm -rf -- "$tmp"' EXIT HUP INT TERM
 cd "$tmp"
 
 gh release view "$tag" -R y-sor/clean-room-launcher --json isDraft,tagName >release.json
-python3 - <<'PY'
-import json
+python3 - "$tag" <<'PY'
+import json, sys
 d=json.load(open("release.json"))
 assert d["isDraft"] is True, "release must still be draft"
-assert d["tagName"], "missing tag"
+assert d["tagName"] == sys.argv[1], "draft release tag mismatch"
 PY
 
 gh release download "$tag" -R y-sor/clean-room-launcher   --pattern "clean-room-launcher-${tag}-aarch64-apple-darwin.tar.gz"   --pattern "SHA256SUMS"
 
 asset="clean-room-launcher-${tag}-aarch64-apple-darwin.tar.gz"
 [[ -f $asset && -f SHA256SUMS ]]
-shasum -a 256 -c SHA256SUMS --ignore-missing
+expected=$(awk -v asset="$asset" '$2 == asset {print $1}' SHA256SUMS)
+actual=$(shasum -a 256 "$asset" | awk '{print $1}')
+[[ -n $expected && $actual == "$expected" ]] || {
+  echo "DRAFT_PLUGIN_SMOKE_FAIL:ASSET_CHECKSUM" >&2
+  exit 67
+}
 mkdir unpack
 tar -xzf "$asset" -C unpack
 bin=$(find unpack -type f -path '*/bin/clroom' -print -quit)
@@ -67,9 +72,9 @@ selected_rc=$?
 set -e
 after=$(fingerprint)
 
-python3 - "$registry" "$plugin_id" info.json clean.jsonl selected.jsonl "$before" "$after" "$clean_rc" "$selected_rc" <<'PY'
+python3 - "$tag" "$registry" "$plugin_id" info.json clean.jsonl selected.jsonl "$before" "$after" "$clean_rc" "$selected_rc" <<'PY'
 import json, os, sys
-registry_path, plugin_id, info_path, clean_path, selected_path, before, after, clean_rc, selected_rc=sys.argv[1:]
+tag, registry_path, plugin_id, info_path, clean_path, selected_path, before, after, clean_rc, selected_rc=sys.argv[1:]
 registry=json.load(open(registry_path))
 records=registry.get("plugins",{}).get(plugin_id,[])
 roots=sorted({os.path.realpath(r["installPath"]) for r in records if isinstance(r,dict) and isinstance(r.get("installPath"),str) and os.path.isdir(r["installPath"])})
@@ -103,7 +108,7 @@ for pid in registry.get("plugins",{}):
  if any(matches(p,pid) for p in selected_plugins) and not any(matches(p,pid) for p in clean_plugins): new_siblings.append(pid)
 errors=selected.get("plugin_errors") or []
 ok=(entry.get("selection")=="selectable" and entry.get("qualification")=="qualified" and entry.get("activation_policy")=="atomic_bundle" and not clean_target and selected_target and not new_siblings and not errors and before==after)
-print(f"DRAFT_TAG={os.environ.get('tag','')}")
+print(f"DRAFT_TAG={tag}")
 print(f"PLUGIN_ID={plugin_id}")
 print(f"CLEAN_RC={clean_rc}")
 print(f"SELECTED_RC={selected_rc}")
