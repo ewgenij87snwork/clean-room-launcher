@@ -17,13 +17,15 @@ known near-misses, and decide whether the release contract itself must expand.
 - a known near-miss lacks a disposition;
 - contract expansion is declared without a durable promoted control;
 - semantic product outcome is missing;
-- any tracked byte, executable mode, or symlink changes after the semantic
-  review seal, except the review declaration file that contains the seal.
+- any tracked byte, executable mode, symlink, or semantic review declaration
+  changes after the semantic review seal.
 
 The semantic review seal is a SHA-256 digest over the tracked Git tree
-(mode/type/blob/path), excluding only the current release review JSON. Changing
-source, docs, workflows, packaging, tests, scripts, file modes, or symlinks
-therefore requires a fresh review seal.
+(mode/type/blob/path). The release review JSON participates through canonical
+JSON semantics with only its self-referential `reviewed_content_digest` field
+removed. Changing source, docs, workflows, packaging, tests, scripts, file
+modes, symlinks, dispositions, near-misses, product outcome, contract-evolution
+decision, or capability gates therefore requires a fresh review seal.
 
 Release readiness and the tag workflow both run the same contract check.
 
