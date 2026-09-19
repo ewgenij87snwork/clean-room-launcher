@@ -16,7 +16,32 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
           persist-credentials: false
+      - name: Resolve last published release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          baseline=$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq .tag_name)
+          test -n "$baseline"
+          git rev-parse --verify "$baseline^{commit}" >/dev/null
+          echo "CLROOM_RELEASE_BASELINE_TAG=$baseline" >> "$GITHUB_ENV"
+      - name: Validate whole-release delta contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          version=$(python3 - <<'PY'
+          import tomllib
+          with open("Cargo.toml", "rb") as handle:
+              print(tomllib.load(handle)["package"]["version"])
+          PY
+          )
+          python3 scripts/release/check-release-delta.py \
+            --baseline "$CLROOM_RELEASE_BASELINE_TAG" \
+            --candidate HEAD \
+            --review "release/reviews/v${version}.json"
       - name: Prove release attestation contract fails closed
         shell: bash
         run: |
