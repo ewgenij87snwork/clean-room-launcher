@@ -283,6 +283,11 @@ fn whole_release_review_is_fail_closed_and_declared() {
             .is_some_and(|value| !value.trim().is_empty())
     );
     assert_eq!(declaration["contract_evolution"]["reviewed"], true);
+    assert!(
+        declaration["reviewed_through_commit"]
+            .as_str()
+            .is_some_and(|value| value.len() == 40)
+    );
 
     assert!(
         checker.contains("\"--name-only\",")
@@ -297,6 +302,9 @@ fn whole_release_review_is_fail_closed_and_declared() {
         "published-baseline:",
         "contract-evolution-review",
         "contract-change-requires-expansion-review",
+        "reviewed-through-commit",
+        "post-review-drift:",
+        "release/review.json",
         "\"scripts/release/**\"",
         "scripts/release/local-release-smoke.sh",
         "scripts/release/post-publish-smoke.sh",
