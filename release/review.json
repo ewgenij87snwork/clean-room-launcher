@@ -38,7 +38,8 @@
       "ambiguous-outcome reconciliation for protected tag creation and immutable release publication",
       "rename-safe whole-release path classification that preserves both source and destination risk classes",
       "deterministic Claude plugin activation and fail-closed hook-surface check against the exact release archive",
-      "fresh installed-provider version revalidation immediately before irreversible tag push"
+      "fresh installed-provider version revalidation immediately before irreversible tag push",
+      "post-publication verification of the immutable GitHub Release attestation"
     ]
   }
 }
