@@ -98,8 +98,13 @@ int main(int argc, char **argv) {
         return 20;
     }
 
-    puts("CLROOM_FAKE_WRITE=READ_ONLY");
-    return 0;
+    if (errno == EACCES || errno == EPERM) {
+        puts("CLROOM_FAKE_WRITE=READ_ONLY");
+        return 0;
+    }
+
+    printf("CLROOM_FAKE_WRITE=ERROR:%d\n", errno);
+    return 22;
 }
 C
 clang -O2 -Wall -Wextra -Werror "$root/fake-claude.c" -o "$root/bin/claude" \
