@@ -48,7 +48,7 @@ def ensure_ref(ref):
     except subprocess.CalledProcessError:
         raise SystemExit(f"RELEASE_CONTRACT_BLOCKED:MISSING_GIT_REF:{ref}")
 
-def reviewed_content_digest(ref, excluded_path):
+def reviewed_content_digest(ref, review_path):
     raw = subprocess.check_output(["git", "ls-tree", "-r", "-z", ref], cwd=ROOT)
     records = []
     for record in raw.split(b"\0"):
@@ -56,8 +56,22 @@ def reviewed_content_digest(ref, excluded_path):
             continue
         meta, path = record.split(b"\t", 1)
         decoded = path.decode("utf-8")
-        if decoded == excluded_path:
-            continue
+        if decoded == review_path:
+            review_bytes = subprocess.check_output(
+                ["git", "show", f"{ref}:{review_path}"],
+                cwd=ROOT,
+            )
+            review = json.loads(review_bytes)
+            review.pop("reviewed_content_digest", None)
+            canonical = json.dumps(
+                review,
+                sort_keys=True,
+                separators=(",", ":"),
+                ensure_ascii=False,
+            ).encode("utf-8")
+            semantic_sha = hashlib.sha256(canonical).hexdigest().encode("ascii")
+            mode, object_type, _object_sha = meta.split(b" ", 2)
+            meta = b" ".join((mode, object_type, semantic_sha))
         records.append((decoded, meta, path))
     digest = hashlib.sha256()
     for _, meta, path in sorted(records, key=lambda item: item[0]):
