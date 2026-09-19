@@ -69,7 +69,6 @@ PROVIDER_PATTERNS = (
 
 CONTRACT_PATTERNS = (
     "docs/release/RELEASE_CONTRACT.md",
-    "release/review.json",
     "release/qualification.json",
     "scripts/release/check-release-review.py",
     "scripts/release/review-release-delta.sh",
