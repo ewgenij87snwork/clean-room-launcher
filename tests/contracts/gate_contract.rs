@@ -144,6 +144,25 @@ fn release_contract_binds_latest_stable_annotated_tags_and_inference_free_local_
 
     assert!(attestation.contains("--bundle \"$provenance\""));
     assert!(attestation.contains("--bundle \"$sbom\""));
+
+    let pins: serde_json::Value =
+        serde_json::from_str(&std::fs::read_to_string("release/qualification.json").unwrap())
+            .unwrap();
+    let claude_clean = pins["providers"]["claude"]["clean_exact"].as_str().unwrap();
+    let claude_plugin = pins["providers"]["claude"]["plugin_activation_exact"]
+        .as_str()
+        .unwrap();
+    assert_ne!(claude_clean, claude_plugin);
+    assert!(smoke.contains("$claude_version\" != \"$claude_plugin_pin"));
+    assert!(!smoke.contains(
+        "$claude_version\" != \"$claude_clean_pin\" || \"$claude_version\" != \"$claude_plugin_pin"
+    ));
+
+    let post_publish =
+        std::fs::read_to_string("scripts/release/post-publish-smoke.sh").unwrap();
+    assert!(post_publish.contains("releases/latest/download/install.sh"));
+    assert!(post_publish.contains("LATEST_INSTALLER_BYTES_MISMATCH"));
+    assert!(post_publish.contains("sh \"$latest_installer\""));
 }
 
 #[test]
