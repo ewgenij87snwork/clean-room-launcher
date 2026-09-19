@@ -7,7 +7,7 @@ Semantic Versioning after the first public release.
 
 ## [Unreleased]
 
-## [0.4.0] - 2026-09-18
+## [0.4.0] - 2026-09-19
 
 ### Added
 
@@ -15,6 +15,15 @@ Semantic Versioning after the first public release.
   already-installed Claude whole plugin per launch, using Claude's session-only
   plugin loading path without installing, updating, or persistently rewriting
   provider state.
+
+### Changed
+
+- Clarified interactive `clroom codex` as the primary Codex path while keeping
+  `codex exec` for non-interactive automation; this is a documentation change,
+  not a new Codex runtime path.
+- Updated pinned CI checkout usage to `actions/checkout` v7.0.1 and added
+  OpenSSF Best Practices status badges; these do not change shipped runtime
+  behavior.
 
 ### Compatibility
 
@@ -31,10 +40,16 @@ Semantic Versioning after the first public release.
   revalidates the exact active install root around launch, reopens only that
   root read-only, refuses overlapping raw `--plugin-dir`/`--plugin-url`
   activation, and leaves persistent Claude configuration unchanged.
-- Activation qualification now inventories Claude's documented plugin surface
-  and fails closed unless the effective bundle is skill-only. Hook, MCP, agent,
-  LSP, monitor, executable, and settings surfaces remain unqualified rather
-  than widening the clean `~/.claude` boundary.
+- Activation qualification inventories Claude's documented plugin surface and
+  fails closed unless the effective bundle is skill-only. Slash-command, hook,
+  MCP, agent, LSP, monitor, executable, and settings surfaces remain
+  unqualified rather than widening the clean `~/.claude` boundary. Nested
+  command/agent paths and manifest identity are included in that fail-closed
+  check, and qualification is revalidated immediately around launch.
+- Updated the shipped `cap-std` / `cap-primitives` dependency from `4.0.2`
+  to `4.0.3`, incorporating the upstream fix for
+  `GHSA-hp8f-xmx4-4qrg` affecting trailing-slash symlink containment on
+  platforms including macOS.
 
 ## [0.3.1] - 2026-09-17
 
