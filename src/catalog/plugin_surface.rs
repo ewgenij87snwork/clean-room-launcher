@@ -109,11 +109,10 @@ fn inspect_claude(root: &Path) -> Result<PluginSurface, PluginSurfaceError> {
     let mut declared = BTreeSet::new();
     let mut effective = BTreeSet::new();
 
-    for skill in skill_components(root, &["./skills".to_owned()]) {
+    for skill in claude_skill_components(root) {
         declared.insert(skill.clone());
         effective.insert(skill);
     }
-    add_root_skill(root, &manifest, &mut declared, &mut effective);
     add_recursive_markdown_components(
         root,
         "./commands",
@@ -402,23 +401,53 @@ fn hook_events_from_value(value: &Value) -> Vec<String> {
         .collect()
 }
 
-fn add_root_skill(
-    root: &Path,
-    manifest: &Value,
-    declared: &mut BTreeSet<PluginComponent>,
-    effective: &mut BTreeSet<PluginComponent>,
-) {
-    if safe_regular_file(&root.join("SKILL.md"), MAX_COMPONENT_FILE_BYTES).is_none() {
-        return;
+fn claude_skill_components(root: &Path) -> Vec<PluginComponent> {
+    let skill_root = root.join("skills");
+    let Ok(metadata) = fs::symlink_metadata(&skill_root) else {
+        return Vec::new();
+    };
+    if metadata.file_type().is_symlink() || !metadata.is_dir() {
+        return Vec::new();
     }
-    let id = manifest
-        .get("name")
-        .and_then(Value::as_str)
-        .filter(|name| valid_public_id(name))
-        .unwrap_or("root");
-    let skill = component(ResourceKind::Skill, id);
-    declared.insert(skill.clone());
-    effective.insert(skill);
+    let Ok(entries) = fs::read_dir(&skill_root) else {
+        return Vec::new();
+    };
+
+    let mut names = BTreeSet::new();
+    let mut visited = 0usize;
+    for entry in entries.flatten() {
+        visited += 1;
+        if visited > MAX_SKILL_ENTRIES {
+            break;
+        }
+        let Ok(file_type) = entry.file_type() else {
+            continue;
+        };
+        if file_type.is_symlink() || !file_type.is_dir() {
+            continue;
+        }
+        let directory = entry.path();
+        let Some(directory) = canonical_nonsymlink_directory(&directory) else {
+            continue;
+        };
+        if !directory.starts_with(root) {
+            continue;
+        }
+        if safe_regular_file(&directory.join("SKILL.md"), MAX_COMPONENT_FILE_BYTES).is_none() {
+            continue;
+        }
+        let Some(name) = entry.file_name().to_str().map(str::to_owned) else {
+            continue;
+        };
+        if valid_public_id(&name) {
+            names.insert(name);
+        }
+    }
+
+    names
+        .into_iter()
+        .map(|name| component(ResourceKind::Skill, &name))
+        .collect()
 }
 
 fn add_recursive_markdown_components(
@@ -883,6 +912,37 @@ mod tests {
             .effective
             .iter()
             .any(|item| matches!(item.kind.as_str(), "mcp" | "app")));
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn claude_root_skill_is_not_a_provider_plugin_skill() {
+        let root = fixture();
+        fs::remove_dir_all(root.join("skills")).unwrap();
+        fs::write(root.join("SKILL.md"), "fixture\n").unwrap();
+
+        let claude = inspect_plugin_surface(ProviderPluginSemantics::Claude, &root).unwrap();
+        assert!(!claude
+            .effective
+            .iter()
+            .any(|component| component.kind == ResourceKind::Skill));
+
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn claude_nested_skill_is_not_auto_discovered_beyond_one_level() {
+        let root = fixture();
+        fs::remove_dir_all(root.join("skills")).unwrap();
+        fs::create_dir_all(root.join("skills/group/nested")).unwrap();
+        fs::write(root.join("skills/group/nested/SKILL.md"), "fixture\n").unwrap();
+
+        let claude = inspect_plugin_surface(ProviderPluginSemantics::Claude, &root).unwrap();
+        assert!(!claude
+            .effective
+            .iter()
+            .any(|component| component.kind == ResourceKind::Skill));
+
         let _ = fs::remove_dir_all(root);
     }
 
