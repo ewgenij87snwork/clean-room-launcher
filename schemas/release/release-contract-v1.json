@@ -5,7 +5,7 @@
     "unclassified_delta": "fail",
     "changed_domain_without_disposition": "fail",
     "near_miss_without_disposition": "fail",
-    "post_review_product_change": "fail"
+    "reviewed_content_drift": "fail"
   },
   "domains": [
     {
@@ -61,17 +61,6 @@
       ]
     }
   ],
-  "release_assurance_only_patterns": [
-    "schemas/release/**",
-    "reports/release/**",
-    "scripts/release/check-release-contract.py",
-    "scripts/release/local-release-audit.sh",
-    ".github/workflows/release-candidate.yml",
-    ".github/workflows/release.yml",
-    "scripts/release/readiness.sh",
-    "scripts/release/push-release-tag.sh",
-    "scripts/release/verify-draft-plugin-activation.sh"
-  ],
   "domain_satisfying_dispositions": [
     "COVERED",
     "CONTRACT_EXPAND",
@@ -82,5 +71,9 @@
     "CONTRACT_EXPAND",
     "NOT_APPLICABLE",
     "FOLLOW_UP"
+  ],
+  "contract_evolution_decisions": [
+    "EXPAND",
+    "NO_CHANGE"
   ]
 }
