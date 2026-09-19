@@ -45,6 +45,7 @@ done
 ) >/dev/null || fail "PUBLIC_CHECKSUMS"
 
 gh attestation verify "$tmp/$artifact"   -R y-sor/clean-room-launcher   --bundle "$tmp/$artifact.provenance.sigstore.json"   --signer-workflow y-sor/clean-room-launcher/.github/workflows/release.yml   --deny-self-hosted-runners >/dev/null || fail "PUBLIC_PROVENANCE"
+gh attestation verify "$tmp/$artifact"   -R y-sor/clean-room-launcher   --bundle "$tmp/$artifact.sbom.sigstore.json"   --signer-workflow y-sor/clean-room-launcher/.github/workflows/release.yml   --deny-self-hosted-runners >/dev/null || fail "PUBLIC_SBOM_ATTESTATION"
 
 extract="$tmp/extracted"
 mkdir -p "$extract"
