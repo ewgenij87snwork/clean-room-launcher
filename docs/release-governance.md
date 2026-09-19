@@ -78,3 +78,48 @@ The tag workflow must never publish automatically. Publication is a separate
 Owner decision after the draft artifacts and release identity are reviewed.
 
 Published release assets are treated as immutable supply-chain outputs.
+
+
+## Local pre-release review
+
+A maintainer can inspect exactly what will enter the next release without creating a tag:
+
+```sh
+git fetch origin
+scripts/release/local-release-review.sh
+```
+
+On the qualified macOS Apple Silicon host, add the full locked regression and installer self-test:
+
+```sh
+scripts/release/local-release-review.sh --full
+```
+
+The report is written to `target/local-release-review/release-delta.md`. It includes the exact latest published baseline, candidate SHA, every commit, every changed file, derived change classes, and every required gate.
+
+After the tag workflow creates the guarded Draft Release, the behavior-specific v0.4.0 plugin gate is run against the **downloaded draft artifact bytes**:
+
+```sh
+scripts/release/verify-draft-plugin-activation.sh \
+  --tag v0.4.0 \
+  --plugin-id <qualified-skill-only-plugin@marketplace>
+```
+
+After publication:
+
+```sh
+scripts/release/verify-published-release.sh v0.4.0
+```
+
+That final verification checks immutable release identity/assets, hashes and provenance, and then downloads the public `releases/latest/download/install.sh` path into an isolated temporary HOME and verifies the installed binaries.
+
+## Industry reference points
+
+The CLROOM contract is project-specific and does not claim certification, but it intentionally follows the control direction of:
+
+- NIST SP 800-218 Secure Software Development Framework (SSDF): integrate secure practices into the SDLC and feed root causes back into the process;
+- OpenSSF Open Source Project Security Baseline (OSPS Baseline): descriptive functional/security release logs, security assessment, dependency controls, integrity/authenticity instructions, and signed/hash-bound release assets;
+- SLSA provenance: bind distributed artifacts to source/build provenance;
+- GitHub artifact attestations / Sigstore: verify release provenance and SBOM attestations.
+
+The durable rule is stronger than a static checklist: a new failure mode or near-miss must either be captured by an existing control with evidence or expand this contract before the affected behavior is released.
