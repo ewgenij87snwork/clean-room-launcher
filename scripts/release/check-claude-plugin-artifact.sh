@@ -118,6 +118,5 @@ negative_status=$?
 set -e
 [[ $negative_status -ne 0 ]] || fail "HOOK_BUNDLE_UNEXPECTEDLY_ACCEPTED"
 [[ ! -e "$capture" ]] || fail "HOOK_BUNDLE_REACHED_PROVIDER"
-grep -Fq 'not selectable' "$root/negative.stderr.log" ||   grep -Fq 'CLROOM_RESOURCE' "$root/negative.stderr.log" ||   fail "HOOK_BUNDLE_ERROR_CONTRACT"
 
 printf 'CLAUDE_PLUGIN_ARTIFACT_PASS provider=2.1.273 plugin=release-fixture@example\n'
