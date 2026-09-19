@@ -70,6 +70,9 @@ if [[ "$phase" == "pretag" ]]; then
 else
   command -v gh >/dev/null 2>&1 || fail "GH_REQUIRED"
   gh auth status >/dev/null 2>&1 || fail "GH_AUTH_REQUIRED"
+  immutable_enabled=$(gh api repos/y-sor/clean-room-launcher/immutable-releases --jq .enabled 2>/dev/null) \
+    || fail "IMMUTABLE_RELEASE_POLICY_UNVERIFIED"
+  [[ "$immutable_enabled" == true ]] || fail "IMMUTABLE_RELEASE_POLICY_DISABLED"
   git fetch --quiet origin "refs/tags/$tag:refs/tags/$tag"
   source_head=$(git rev-list -n 1 "$tag")
   [[ "$head" == "$source_head" ]] || fail "HEAD_NOT_TAG_SOURCE"
