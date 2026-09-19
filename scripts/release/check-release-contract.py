@@ -70,7 +70,6 @@ def main():
     parser.add_argument("--repository", default=os.environ.get("GITHUB_REPOSITORY","y-sor/clean-room-launcher"))
     parser.add_argument("--report", action="store_true")
     parser.add_argument("--self-test", action="store_true")
-    parser.add_argument("--require-head-reviewed", action="store_true")
     args=parser.parse_args()
 
     contract=load_json(CONTRACT)
