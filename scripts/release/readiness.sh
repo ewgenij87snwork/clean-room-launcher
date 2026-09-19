@@ -62,6 +62,7 @@ else
     scripts/release/qualify-real-provider.sh \
     scripts/release/review-release-delta.sh \
     scripts/release/local-release-smoke.sh \
+    scripts/release/post-publish-smoke.sh \
     scripts/release/readiness.sh || fail "SHELL_SYNTAX"
   sh -n install.sh || fail "INSTALLER_SHELL_SYNTAX"
 fi
