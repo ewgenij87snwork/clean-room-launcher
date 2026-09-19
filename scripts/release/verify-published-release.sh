@@ -11,6 +11,8 @@ tag=$1
 [[ "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || usage
 command -v gh >/dev/null 2>&1 || { echo "PUBLISHED_RELEASE_VERIFY_BLOCKED:GH_REQUIRED" >&2; exit 1; }
 command -v jq >/dev/null 2>&1 || { echo "PUBLISHED_RELEASE_VERIFY_BLOCKED:JQ_REQUIRED" >&2; exit 1; }
+command -v curl >/dev/null 2>&1 || { echo "PUBLISHED_RELEASE_VERIFY_BLOCKED:CURL_REQUIRED" >&2; exit 1; }
+command -v cmp >/dev/null 2>&1 || { echo "PUBLISHED_RELEASE_VERIFY_BLOCKED:CMP_REQUIRED" >&2; exit 1; }
 
 repo=y-sor/clean-room-launcher
 json=$(gh api "repos/$repo/releases/tags/$tag") || {
@@ -23,6 +25,8 @@ test "$(jq -r .prerelease <<<"$json")" = false || { echo "PUBLISHED_RELEASE_VERI
 test "$(jq -r .tag_name <<<"$json")" = "$tag" || { echo "PUBLISHED_RELEASE_VERIFY_BLOCKED:TAG_MISMATCH" >&2; exit 1; }
 test "$(jq -r .name <<<"$json")" = "$tag — Clean Room Launcher" || { echo "PUBLISHED_RELEASE_VERIFY_BLOCKED:TITLE_MISMATCH" >&2; exit 1; }
 test "$(jq -r .immutable <<<"$json")" = true || { echo "PUBLISHED_RELEASE_VERIFY_BLOCKED:NOT_IMMUTABLE" >&2; exit 1; }
+latest_tag="$(gh api "repos/$repo/releases/latest" --jq .tag_name)"
+test "$latest_tag" = "$tag" || { echo "PUBLISHED_RELEASE_VERIFY_BLOCKED:LATEST_RELEASE_MISMATCH" >&2; exit 1; }
 
 artifact="clean-room-launcher-${tag}-aarch64-apple-darwin.tar.gz"
 expected=(
@@ -64,4 +68,27 @@ gh release download "$tag" -R "$repo" --dir "$tmp" --clobber
     --signer-workflow "$repo/.github/workflows/release.yml"
 )
 
-echo "PUBLISHED_RELEASE_VERIFY=PASS tag=$tag immutable=true assets=${#expected[@]}"
+latest_installer="$tmp/latest-install.sh"
+curl --proto '=https' --tlsv1.2 --fail --location --silent --show-error --retry 3 \
+  --output "$latest_installer" \
+  "https://github.com/$repo/releases/latest/download/install.sh"
+cmp -s "$latest_installer" "$tmp/install.sh" || {
+  echo "PUBLISHED_RELEASE_VERIFY_BLOCKED:LATEST_INSTALLER_BYTES_MISMATCH" >&2
+  exit 1
+}
+chmod 0755 "$latest_installer"
+public_home="$tmp/public-install-home"
+mkdir -p "$public_home"
+HOME="$public_home" PATH="/usr/bin:/bin:/opt/homebrew/bin" "$latest_installer"
+for name in clroom clroom-codex clroom-claude; do
+  test -x "$public_home/.local/bin/$name" || {
+    echo "PUBLISHED_RELEASE_VERIFY_BLOCKED:PUBLIC_INSTALL_MISSING_$name" >&2
+    exit 1
+  }
+  "$public_home/.local/bin/$name" --clroom-installer-smoke >/dev/null 2>&1 || {
+    echo "PUBLISHED_RELEASE_VERIFY_BLOCKED:PUBLIC_INSTALL_SMOKE_$name" >&2
+    exit 1
+  }
+done
+
+echo "PUBLISHED_RELEASE_VERIFY=PASS tag=$tag immutable=true assets=${#expected[@]} public_install=PASS"
