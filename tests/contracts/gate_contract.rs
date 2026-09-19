@@ -305,9 +305,9 @@ fn whole_release_review_is_fail_closed_and_declared() {
     );
     assert_eq!(declaration["contract_evolution"]["reviewed"], true);
     assert!(
-        declaration["reviewed_through_commit"]
+        declaration["reviewed_content_digest"]
             .as_str()
-            .is_some_and(|value| value.len() == 40)
+            .is_some_and(|value| value.len() == 64)
     );
 
     assert!(
@@ -323,8 +323,10 @@ fn whole_release_review_is_fail_closed_and_declared() {
         "published-baseline:",
         "contract-evolution-review",
         "contract-change-requires-expansion-review",
-        "reviewed-through-commit",
-        "post-review-drift:",
+        "reviewed-content-digest",
+        "review-content-drift:",
+        "git",
+        "ls-tree",
         "release/review.json",
         "\"scripts/release/**\"",
         "scripts/release/local-release-smoke.sh",
