@@ -100,6 +100,13 @@ whole delta and fails closed when:
 - the release contract changed but contract evolution is not declared;
 - the release lacks a product-level strategic outcome.
 
+Evidence IDs are closed, not free-form labels. Machine evidence such as full
+regression, dependency SCA, exact artifact binding, attestations, real-provider
+qualification, and the whole-release delta check must be bound by regression
+tests to executable gates. Semantic evidence such as strategic fit, public-truth
+review, security review, and contract-evolution judgment remains explicit
+GPT/human evidence and must not be presented as machine-proven.
+
 The machine check cannot decide semantic product strategy. GPT/human review must
 still determine whether the release materially serves the current product
 roadmap and whether a discovered failure mode should expand the contract.
