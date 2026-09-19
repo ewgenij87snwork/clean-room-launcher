@@ -19,9 +19,10 @@
         "src/adapters/claude/activation.rs",
         "src/catalog/provider_inventory.rs",
         "src/catalog/plugin_surface.rs",
-        "tests/cli/info.rs"
+        "tests/cli/info.rs",
+        "scripts/release/check-claude-plugin-artifact.sh"
       ],
-      "note": "v0.4.0 adds bounded Claude whole-plugin activation and new provider-surface qualification; focused negative tests and exact-provider qualification were added."
+      "note": "v0.4.0 adds bounded Claude whole-plugin activation and new provider-surface qualification; focused negative tests, exact-provider evidence, and an exact-release-artifact activation/fail-closed gate cover the new path."
     },
     {
       "trigger": "dependency_graph_changed",
