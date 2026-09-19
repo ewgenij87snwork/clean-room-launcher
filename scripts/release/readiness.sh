@@ -14,6 +14,24 @@ cd "$root"
 [[ "$version" == "0.4.0" ]] || fail "VERSION_EXPECTED_0.4.0"
 git diff --check || fail "DIFF_CHECK"
 git diff --quiet || fail "CLEAN_TREE_REQUIRED"
+[[ -n ${CLROOM_RELEASE_BASE_REF:-} ]] || fail "PUBLISHED_RELEASE_BASE_REQUIRED"
+review_manifest="release/reviews/v${version}.json"
+[[ -f "$review_manifest" ]] || fail "RELEASE_REVIEW_MANIFEST_REQUIRED"
+python3 scripts/release/audit-release-delta.py --self-test || fail "RELEASE_DELTA_AUDIT_SELF_TEST"
+rm -rf target/release-governance
+mkdir -p target/release-governance
+python3 scripts/release/audit-release-delta.py \
+  --contract packaging/release-contract.json \
+  --review "$review_manifest" \
+  --base-ref "$CLROOM_RELEASE_BASE_REF" \
+  --head-ref HEAD \
+  --version "$version" \
+  --output-json target/release-governance/release-delta.json \
+  --output-markdown target/release-governance/release-delta.md \
+  || fail "RELEASE_DELTA_AUDIT"
+if [[ -n ${GITHUB_STEP_SUMMARY:-} ]]; then
+  cat target/release-governance/release-delta.md >> "$GITHUB_STEP_SUMMARY"
+fi
 
 legacy_upper=$(printf '%s%s' TASK SEAL)
 legacy_lower=$(printf '%s%s' task seal)
