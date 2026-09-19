@@ -27,7 +27,16 @@ removed. Changing source, docs, workflows, packaging, tests, scripts, file
 modes, symlinks, dispositions, near-misses, product outcome, contract-evolution
 decision, or capability gates therefore requires a fresh review seal.
 
-Release readiness and the tag workflow both run the same contract check.
+Release-candidate readiness has two explicit lifecycle states. When the manifest
+version still equals the latest immutable published stable release, readiness is
+in `POST_PUBLISH`: historical review evidence is left untouched, governance,
+negative-contract, regression, installer, and supply-chain checks still run, and
+candidate-only whole-delta/artifact qualification is skipped. Once the manifest
+version advances beyond that published release, readiness enters
+`ACTIVE_CANDIDATE`: the full whole-delta release contract is required against
+the latest published stable baseline, including a new versioned review snapshot
+and candidate artifact/provider qualification. The tag workflow always runs the
+full contract check for the exact tagged candidate.
 
 ## Contract evolution review
 
