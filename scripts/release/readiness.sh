@@ -37,6 +37,7 @@ fi
 
 ./scripts/check-public-boundary.sh --root "$root" || fail "PUBLIC_BOUNDARY"
 python3 scripts/release/check-provider-version-sync.py || fail "PROVIDER_VERSION_SYNC"
+python3 -m py_compile scripts/release/check-release-review.py || fail "RELEASE_REVIEW_SCRIPT"
 release_workflow=.github/workflows/release.yml
 bash scripts/release/check-attestation-contract.sh "$release_workflow" || fail "RELEASE_ATTESTATION_CONTRACT"
 bash scripts/release/check-provider-canary-contract.sh || fail "PROVIDER_CANARY_CONTRACT"
