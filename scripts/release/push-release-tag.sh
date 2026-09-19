@@ -39,7 +39,7 @@ remote_main=$(git rev-parse FETCH_HEAD)
   fail "REMOTE_MAIN_MOVED"
 }
 
-python3 scripts/release/check-repository-release-policy.py >/dev/null || fail "REPOSITORY_TAG_POLICY"
+python3 scripts/release/check-repository-release-policy.py --mode strict >/dev/null || fail "REPOSITORY_TAG_POLICY"
 
 if git ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null 2>&1; then
   fail "REMOTE_TAG_ALREADY_EXISTS"
