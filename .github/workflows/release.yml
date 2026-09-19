@@ -198,11 +198,16 @@ jobs:
             exit 1
           }
           artifact="target/release-artifacts/${{ needs.prepare.outputs.artifact_name }}"
-          codex_candidate="target/aarch64-apple-darwin/release/clroom-codex"
-          claude_candidate="target/aarch64-apple-darwin/release/clroom-claude"
           evidence_dir="$RUNNER_TEMP/clroom-release-qualification"
-          mkdir -p "$evidence_dir"
+          extract_dir="$RUNNER_TEMP/clroom-release-archive"
+          rm -rf "$extract_dir"
+          mkdir -p "$evidence_dir" "$extract_dir"
           test -f "$artifact"
+          tar -xzf "$artifact" -C "$extract_dir"
+          archive_root="$(find "$extract_dir" -mindepth 1 -maxdepth 1 -type d -print -quit)"
+          test -n "$archive_root"
+          codex_candidate="$archive_root/bin/clroom-codex"
+          claude_candidate="$archive_root/bin/clroom-claude"
           test -x "$codex_candidate"
           test -x "$claude_candidate"
           scripts/release/qualify-real-provider.sh \
@@ -299,6 +304,13 @@ jobs:
               --source-ref "$GITHUB_REF" \
               --deny-self-hosted-runners
           done
+          gh attestation verify "release-artifacts/$ARTIFACT" \
+            -R "$GITHUB_REPOSITORY" \
+            --bundle "$sbom" \
+            --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/release.yml" \
+            --source-digest "$GITHUB_SHA" \
+            --source-ref "$GITHUB_REF" \
+            --deny-self-hosted-runners
       - name: Upload release-visible attestation bundles
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
