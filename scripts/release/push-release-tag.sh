@@ -40,12 +40,6 @@ fi
 python3 scripts/release/check-release-contract.py --report
 
 version=${tag#v}
-today=$(date +%F)
-grep -Fxq "## [$version] - $today" CHANGELOG.md || {
-  echo "TAG_GATE_BLOCKED:CHANGELOG_DATE expected=$today" >&2
-  exit 69
-}
-
 title="$tag — Clean Room Launcher"
 git tag -a "$tag" "$expected" -m "$title"
 
@@ -67,6 +61,34 @@ cleanup_local_tag() {
   cleanup_local_tag
   echo "TAG_GATE_BLOCKED:TAG_TITLE_MISMATCH" >&2
   exit 72
+}
+
+tag_date=$(python3 - "$tag" <<'PY'
+import datetime
+import re
+import subprocess
+import sys
+
+tag = sys.argv[1]
+raw = subprocess.check_output(["git", "cat-file", "-p", f"refs/tags/{tag}"], text=True)
+line = next((line for line in raw.splitlines() if line.startswith("tagger ")), None)
+if line is None:
+    raise SystemExit("tagger line missing")
+match = re.search(r" (\\d+) ([+-])(\\d{2})(\\d{2})$", line)
+if match is None:
+    raise SystemExit("tagger timestamp malformed")
+epoch = int(match.group(1))
+minutes = int(match.group(3)) * 60 + int(match.group(4))
+if match.group(2) == "-":
+    minutes = -minutes
+tz = datetime.timezone(datetime.timedelta(minutes=minutes))
+print(datetime.datetime.fromtimestamp(epoch, tz=tz).date().isoformat())
+PY
+)
+grep -Fxq "## [$version] - $tag_date" CHANGELOG.md || {
+  cleanup_local_tag
+  echo "TAG_GATE_BLOCKED:CHANGELOG_DATE expected=$tag_date" >&2
+  exit 69
 }
 
 set +e
