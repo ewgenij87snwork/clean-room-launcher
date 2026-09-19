@@ -227,7 +227,44 @@ if ! python3 scripts/release/check-release-contract.py --report >/dev/null; then
   exit 77
 fi
 
-IFS=push_rc=$?
+IFS=  python3 - "$evidence" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as handle:
+    record = json.load(handle)
+print(record["claude_version_output"], record["claude_provider_sha256"], sep="\t")
+PY
+)
+if ! claude_executable=$(command -v claude); then
+  cleanup_local_tag
+  echo "TAG_GATE_BLOCKED:CLAUDE_PROVIDER_MISSING_ACTION_TIME" >&2
+  exit 78
+fi
+if ! claude_version_now=$(claude --version 2>&1 | head -1); then
+  cleanup_local_tag
+  echo "TAG_GATE_BLOCKED:CLAUDE_PROVIDER_VERSION_ACTION_TIME" >&2
+  exit 78
+fi
+if ! claude_sha_now=$(shasum -a 256 "$claude_executable" | awk '{print $1}'); then
+  cleanup_local_tag
+  echo "TAG_GATE_BLOCKED:CLAUDE_PROVIDER_HASH_ACTION_TIME" >&2
+  exit 78
+fi
+[[ "$claude_version_now" == "$evidence_claude_version" ]] || {
+  cleanup_local_tag
+  echo "TAG_GATE_BLOCKED:CLAUDE_PROVIDER_DRIFT_ACTION_TIME" >&2
+  exit 78
+}
+[[ "$claude_sha_now" == "$evidence_claude_sha" ]] || {
+  cleanup_local_tag
+  echo "TAG_GATE_BLOCKED:CLAUDE_PROVIDER_BYTES_DRIFT_ACTION_TIME" >&2
+  exit 78
+}
+
+set +e
+git push origin "refs/tags/$tag"
+push_rc=$?
 set -e
 
 remote_peeled=$(git ls-remote --tags origin "refs/tags/$tag^{}" | awk '{print $1}')
