@@ -181,14 +181,15 @@ Required evidence:
 - macOS Apple Silicon;
 - real Codex version;
 - real Claude version;
-- clean provider startup;
+- inference-free Claude clean and selected-plugin startup through Claude's
+  provider-native `--init-only` path;
 - interactive Codex TUI startup without a model request;
-- interactive Claude TUI startup without a model request;
-- bounded Claude selected-plugin startup using an already-installed,
-  qualification-eligible skill-only plugin;
-- selected plugin absent from clean launch and present from selected launch;
-- no newly admitted sibling plugin;
-- zero plugin load errors;
+- interactive clean Claude TUI startup without a model request, with the
+  selected plugin skill confirmed absent from autocomplete;
+- interactive Claude selected-plugin TUI startup without a model request, with
+  the selected plugin skill confirmed visible from autocomplete;
+- the selected plugin is already installed and inventory-qualified as
+  skill-only before provider launch;
 - persistent provider configuration unchanged.
 
 A failure is a release blocker. A provider-version mismatch returns to the
