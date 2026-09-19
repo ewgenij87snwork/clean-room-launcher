@@ -1,0 +1,39 @@
+{
+  "schema_version": "clroom.release-review.v1",
+  "release_version": "0.4.0",
+  "previous_published_stable_tag": "v0.3.1",
+  "strategic_product_outcome": "Ship the first bounded selective-restore slice: exact one-launch Claude skill-only whole-plugin activation without widening clean-by-default behavior.",
+  "declared_change_classes": [
+    "ci_release",
+    "dependencies",
+    "docs_public",
+    "runtime",
+    "security_boundary",
+    "tests"
+  ],
+  "required_evidence": [
+    "artifact-binding",
+    "attestation",
+    "contract-evolution-review",
+    "dependency-sca",
+    "full-regression",
+    "public-truth-review",
+    "real-provider",
+    "security-review",
+    "strategic-fit-review",
+    "whole-release-review"
+  ],
+  "contract_evolution": {
+    "reviewed": true,
+    "result": "expanded",
+    "release_contract_changed": true,
+    "promoted_controls": [
+      "whole-release delta review from the previous published stable release",
+      "fresh provider-version truth before stable release",
+      "real-provider qualification against binaries extracted from the release archive",
+      "accepted-main pre-tag local artifact smoke",
+      "exact Draft Release artifact smoke before publish",
+      "evidence invalidation after source/provider/artifact drift"
+    ]
+  }
+}
