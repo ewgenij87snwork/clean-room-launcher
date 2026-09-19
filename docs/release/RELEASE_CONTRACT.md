@@ -26,7 +26,7 @@ A CLROOM release is acceptable only when all of these are true:
 8. The Draft Release is verified before publication, including an Owner-machine
    smoke of the exact draft archive bytes.
 9. Publication is a separate explicit gate.
-10. Post-publication installation is verified from the public release surface.
+10. Post-publication identity, immutable GitHub Release attestation, assets, and installation are verified from the public release surface.
 11. Every stable release performs a release-contract evolution review: new near-misses, manual steps, external behavior changes, and gates that passed despite real blockers are classified and either promoted to deterministic enforcement or explicitly retained as semantic/human gates.
 
 ## Release state machine
