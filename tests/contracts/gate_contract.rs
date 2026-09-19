@@ -110,4 +110,65 @@ fn tag_release_qualifies_the_exact_archive_before_upload() {
     );
 }
 
+
+#[test]
+fn release_contract_binds_latest_stable_annotated_tags_and_inference_free_local_smoke() {
+    let candidate = std::fs::read_to_string(".github/workflows/release-candidate.yml").unwrap();
+    let release = std::fs::read_to_string(".github/workflows/release.yml").unwrap();
+    let smoke = std::fs::read_to_string("scripts/release/local-release-smoke.sh").unwrap();
+    let attestation =
+        std::fs::read_to_string("scripts/release/check-attestation-contract.sh").unwrap();
+
+    assert!(
+        candidate.contains("gh api \"repos/$GITHUB_REPOSITORY/releases/latest\" --jq .tag_name"),
+        "release candidate must resolve the authoritative latest published stable release"
+    );
+    assert!(candidate.contains("python3 scripts/release/check-release-review.py"));
+
+    assert!(
+        release.contains("git cat-file -t \"refs/tags/$tag\"") && release.contains("= tag"),
+        "release workflow must reject lightweight release tags"
+    );
+    assert!(release.contains("%(taggerdate:short)"));
+    assert!(
+        release.contains("gh api \"repos/$GITHUB_REPOSITORY/releases/latest\" --jq .tag_name")
+    );
+
+    assert!(
+        smoke.contains("claude --init-only")
+            && smoke.contains("--with=\"plugin:$plugin_id\" --init-only"),
+        "Claude release smoke must use inference-free clean and selected startup"
+    );
+    assert!(!smoke.contains("Reply exactly UNUSED"));
+    assert!(!smoke.contains("--output-format stream-json"));
+
+    assert!(attestation.contains("--bundle \"$provenance\""));
+    assert!(attestation.contains("--bundle \"$sbom\""));
+}
+
+#[test]
+fn whole_release_review_is_fail_closed_and_declared() {
+    let checker = std::fs::read_to_string("scripts/release/check-release-review.py").unwrap();
+    let declaration: serde_json::Value =
+        serde_json::from_str(&std::fs::read_to_string("release/review.json").unwrap()).unwrap();
+
+    assert_eq!(declaration["schema_version"], "clroom.release-review.v1");
+    assert!(
+        declaration["strategic_product_outcome"]
+            .as_str()
+            .is_some_and(|value| !value.trim().is_empty())
+    );
+    assert_eq!(declaration["contract_evolution"]["reviewed"], true);
+
+    for invariant in [
+        "unclassified-paths:",
+        "undeclared-change-classes:",
+        "missing-required-evidence:",
+        "published-baseline:",
+        "contract-evolution-review",
+    ] {
+        assert!(checker.contains(invariant), "missing fail-closed invariant {invariant}");
+    }
+}
+
 use std::os::unix::fs::PermissionsExt;
