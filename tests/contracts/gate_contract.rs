@@ -133,6 +133,129 @@ fn tag_push_revalidates_mutable_remote_state_at_action_time() {
         .expect("tag helper must push the protected tag");
 
     assert!(action_time < push, "action-time guards must precede the irreversible push");
+    assert_eq!(
+        source.matches("git push origin \"refs/tags/$tag\"").count(),
+        1,
+        "tag helper must perform exactly one irreversible tag push"
+    );
+    assert_eq!(
+        source.matches("TAG_PUSH_BLOCKED:REMOTE_TARGET_NOT_RECONCILED").count(),
+        1,
+        "tag push reconciliation must exist only after the actual push"
+    );
+
+    let provider_evidence = source[action_time..]
+        .find("IFS=
+#[test]
+fn release_candidate_models_post_publish_and_active_candidate_lifecycle() {
+    let workflow = std::fs::read_to_string(".github/workflows/release-candidate.yml").unwrap();
+    let readiness = std::fs::read_to_string("scripts/release/readiness.sh").unwrap();
+
+    assert!(workflow.contains("name: Resolve published release lifecycle"));
+    assert!(workflow.contains("scripts/release/resolve-release-lifecycle.py"));
+    assert!(workflow.contains("PROVIDER_CANARY_SKIPPED lifecycle=POST_PUBLISH"));
+    assert!(
+        !workflow.contains("CLROOM_RELEASE_VERSION: 0.4.0"),
+        "release-candidate CI must derive the candidate version from Cargo.toml instead of pinning a published version"
+    );
+    assert!(readiness.contains("RELEASE_LIFECYCLE_SELF_TEST"));
+    assert!(readiness.contains("RELEASE_LIFECYCLE_RESOLUTION"));
+    assert!(readiness.contains("RELEASE_LIFECYCLE_MISMATCH"));
+    assert!(readiness.contains("RELEASE_CONTRACT_SKIPPED lifecycle=POST_PUBLISH"));
+    assert!(readiness.contains("if [[ \"$lifecycle\" == \"ACTIVE_CANDIDATE\" ]]; then"));
+
+    let post_publish_exit = readiness
+        .find("RELEASE_READINESS_PASS lifecycle=POST_PUBLISH")
+        .expect("post-publish readiness must terminate before candidate artifact work");
+    let candidate_build = readiness
+        .find("./packaging/build-artifacts.sh")
+        .expect("active candidates must still build and verify a release artifact");
+    assert!(
+        post_publish_exit < candidate_build,
+        "published-version PRs must not fabricate another candidate artifact for the already-published version"
+    );
+}
+
+#[test]
+fn release_lifecycle_resolver_and_local_audit_are_fail_closed() {
+    let resolver = std::fs::read_to_string("scripts/release/resolve-release-lifecycle.py").unwrap();
+    let audit = std::fs::read_to_string("scripts/release/local-release-audit.sh").unwrap();
+
+    assert!(resolver.contains("POST_PUBLISH"));
+    assert!(resolver.contains("ACTIVE_CANDIDATE"));
+    assert!(resolver.contains("CANDIDATE_NOT_ADVANCED"));
+    assert!(resolver.contains("RELEASE_LIFECYCLE_SELF_TEST_PASS"));
+
+    assert!(audit.contains("scripts/release/resolve-release-lifecycle.py"));
+    assert!(audit.contains("PUBLISHED_BASELINE_NOT_STABLE_IMMUTABLE"));
+    assert!(audit.contains("RELEASE_CONTRACT_SKIPPED lifecycle=POST_PUBLISH"));
+    let post_publish_pass = audit
+        .find("LOCAL_RELEASE_AUDIT_PASS lifecycle=POST_PUBLISH")
+        .expect("post-publish local audit must terminate before candidate artifact work");
+    let candidate_build = audit
+        .find("./packaging/build-artifacts.sh")
+        .expect("active candidate local audit must still verify a built artifact");
+    assert!(post_publish_pass < candidate_build);
+}
+
+#[test]
+fn draft_release_smoke_requires_repository_release_immutability() {
+    let source = std::fs::read_to_string("scripts/release/local-plugin-activation-smoke.sh").unwrap();
+
+    assert!(source.contains("repos/y-sor/clean-room-launcher/immutable-releases"));
+    assert!(source.contains("IMMUTABLE_RELEASE_POLICY_UNVERIFIED"));
+    assert!(source.contains("IMMUTABLE_RELEASE_POLICY_DISABLED"));
+    assert!(source.contains("\"claude_provider_sha256\":claude_provider_sha"));
+
+    let draft_branch = source
+        .find("if [[ \"$phase\" == \"pretag\" ]]; then")
+        .expect("release smoke must branch between pretag and draft behavior");
+    let policy = source
+        .find("immutable-releases --jq .enabled")
+        .expect("draft smoke must verify release immutability");
+    let release_download = source
+        .find("gh release download \"$tag\" --dir \"$assets\"")
+        .expect("draft smoke must download the exact Draft assets");
+    assert!(
+        draft_branch < policy && policy < release_download,
+        "immutability must be proven in the Draft pre-publish path before accepting release assets"
+    );
+}
+
+#[test]
+fn draft_plugin_release_smoke_binds_cyclonedx_predicate() {
+    let source = std::fs::read_to_string("scripts/release/local-plugin-activation-smoke.sh").unwrap();
+    assert!(
+        source.contains("--bundle \"$sbom\"     --predicate-type https://cyclonedx.org/bom"),
+        "draft release smoke must verify the SBOM bundle as CycloneDX instead of the default SLSA provenance predicate"
+    );
+}
+
+use std::os::unix::fs::PermissionsExt;
+\\t' read -r evidence_claude_version evidence_claude_sha")
+        .map(|offset| action_time + offset)
+        .expect("action-time provider evidence must be loaded");
+    let provider_version = source[action_time..]
+        .find("CLAUDE_PROVIDER_DRIFT_ACTION_TIME")
+        .map(|offset| action_time + offset)
+        .expect("provider version must be revalidated");
+    let provider_bytes = source[action_time..]
+        .find("CLAUDE_PROVIDER_BYTES_DRIFT_ACTION_TIME")
+        .map(|offset| action_time + offset)
+        .expect("provider bytes must be revalidated");
+    let reconciliation = source
+        .find("TAG_PUSH_BLOCKED:REMOTE_TARGET_NOT_RECONCILED")
+        .expect("tag push must reconcile the remote result");
+
+    assert!(
+        action_time < provider_evidence
+            && provider_evidence < provider_version
+            && provider_version < provider_bytes
+            && provider_bytes < push
+            && push < reconciliation,
+        "provider revalidation must complete before the single push, and reconciliation must follow it"
+    );
+
     let guard = &source[action_time..push];
     for required in [
         "git fetch --quiet origin main",
