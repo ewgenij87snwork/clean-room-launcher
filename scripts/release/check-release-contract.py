@@ -3,7 +3,7 @@ import argparse, fnmatch, json, os, subprocess, sys, urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-CONTRACT = ROOT / "release/release-contract-v1.json"
+CONTRACT = ROOT / "schemas/release/release-contract-v1.json"
 
 def run(*args):
     return subprocess.check_output(args, cwd=ROOT, text=True).strip()
@@ -67,7 +67,7 @@ def main():
         return
 
     version = __import__("tomllib").loads((ROOT/"Cargo.toml").read_text(encoding="utf-8"))["package"]["version"]
-    review_path = Path(args.review or ROOT/f"release/reviews/v{version}.json")
+    review_path = Path(args.review or ROOT/f"reports/release/v{version}-review.json")
     review=load_json(review_path)
     if review.get("schema_version")!="clroom.release-review.v1":
         raise SystemExit("RELEASE_CONTRACT_BLOCKED:REVIEW_SCHEMA")
