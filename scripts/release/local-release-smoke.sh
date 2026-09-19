@@ -349,6 +349,20 @@ read -r codex_confirm
 
 echo
 echo "========================================"
+echo "MANUAL CLEAN CLAUDE TUI SMOKE"
+echo "No model prompt. Wait for the normal clean TUI, then exit normally."
+echo "========================================"
+echo
+set +e
+"$clroom" claude
+claude_clean_tui_rc=$?
+set -e
+printf 'Confirm clean Claude TUI opened normally and no model request was sent [y/N]: '
+read -r claude_clean_confirm
+[[ "$claude_clean_confirm" == y || "$claude_clean_confirm" == Y ]] || fail "CLAUDE_CLEAN_TUI_NOT_CONFIRMED"
+
+echo
+echo "========================================"
 echo "MANUAL CLAUDE SELECTED-PLUGIN TUI SMOKE"
 echo "No model prompt. Wait for the normal TUI, then exit normally."
 echo "Selected plugin: $plugin_id"
@@ -387,6 +401,7 @@ import sys
     clean_rc,
     selected_rc,
     codex_tui_rc,
+    claude_clean_tui_rc,
     claude_tui_rc,
     tag,
 ) = sys.argv[1:]
@@ -412,10 +427,12 @@ record = {
     },
     "human": {
         "codex_tui_confirmed": True,
+        "claude_clean_tui_confirmed": True,
         "claude_selected_plugin_tui_confirmed": True,
         "model_prompt_sent": False,
         "codex_tui_exit_code": int(codex_tui_rc),
-        "claude_tui_exit_code": int(claude_tui_rc),
+        "claude_clean_tui_exit_code": int(claude_clean_tui_rc),
+        "claude_selected_tui_exit_code": int(claude_tui_rc),
     },
     "release_tag": tag or None,
     "observed_at_utc": datetime.datetime.now(datetime.timezone.utc)
