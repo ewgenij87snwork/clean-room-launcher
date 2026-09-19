@@ -238,8 +238,13 @@ be reused after a transient push failure; any mismatch fails closed.
 Tag identity is version-first: `vX.Y.Z`.
 
 The active repository tag ruleset for `refs/tags/v*` must restrict both update
-and deletion with no bypass actors. Release-candidate and tag workflows verify
-that external policy instead of treating repository settings as timeless.
+and deletion with no bypass actors. Read-only CI and tag workflows verify the
+structural rules that GitHub exposes to read-only callers. GitHub intentionally
+withholds `bypass_actors` unless the caller can write the ruleset, so the
+Owner-authenticated pre-push and pre-publish helpers perform the strict
+action-time proof that the same ruleset has no bypass actors. This split avoids
+both false CI failures and false no-bypass claims.
+
 Published releases should remain immutable; Draft assets are assembled and
 verified before publication.
 
