@@ -48,6 +48,17 @@ def ensure_ref(ref):
     except subprocess.CalledProcessError:
         raise SystemExit(f"RELEASE_CONTRACT_BLOCKED:MISSING_GIT_REF:{ref}")
 
+def review_semantic_sha(review):
+    semantic = dict(review)
+    semantic.pop("reviewed_content_digest", None)
+    canonical = json.dumps(
+        semantic,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+    ).encode("utf-8")
+    return hashlib.sha256(canonical).hexdigest()
+
 def reviewed_content_digest(ref, review_path):
     raw = subprocess.check_output(["git", "ls-tree", "-r", "-z", ref], cwd=ROOT)
     records = []
@@ -62,14 +73,7 @@ def reviewed_content_digest(ref, review_path):
                 cwd=ROOT,
             )
             review = json.loads(review_bytes)
-            review.pop("reviewed_content_digest", None)
-            canonical = json.dumps(
-                review,
-                sort_keys=True,
-                separators=(",", ":"),
-                ensure_ascii=False,
-            ).encode("utf-8")
-            semantic_sha = hashlib.sha256(canonical).hexdigest().encode("ascii")
+            semantic_sha = review_semantic_sha(review).encode("ascii")
             mode, object_type, _object_sha = meta.split(b" ", 2)
             meta = b" ".join((mode, object_type, semantic_sha))
         records.append((decoded, meta, path))
@@ -101,6 +105,20 @@ def main():
             raise SystemExit("RELEASE_CONTRACT_SELF_TEST_FAIL_REVIEW_SEAL")
         if set(contract.get("contract_evolution_decisions", [])) != {"EXPAND", "NO_CHANGE"}:
             raise SystemExit("RELEASE_CONTRACT_SELF_TEST_FAIL_EVOLUTION_DECISIONS")
+        declaration = {
+            "release": "v9.9.9",
+            "product_outcome": "A",
+            "reviewed_content_digest": "0" * 64,
+        }
+        semantic = review_semantic_sha(declaration)
+        digest_only = dict(declaration)
+        digest_only["reviewed_content_digest"] = "1" * 64
+        if review_semantic_sha(digest_only) != semantic:
+            raise SystemExit("RELEASE_CONTRACT_SELF_TEST_FAIL_SELF_DIGEST")
+        changed = dict(declaration)
+        changed["product_outcome"] = "B"
+        if review_semantic_sha(changed) == semantic:
+            raise SystemExit("RELEASE_CONTRACT_SELF_TEST_FAIL_REVIEW_SEMANTICS")
         print("RELEASE_CONTRACT_SELF_TEST_PASS")
         return
 
@@ -133,7 +151,9 @@ def main():
             f"RELEASE_CONTRACT_BLOCKED:REVIEW_CONTENT_DRIFT:expected={expected_digest}:actual={actual_digest}"
         )
 
-    changed=run("git","diff","--name-only",f"{base_commit}..HEAD").splitlines()
+    # Disable rename detection so a cross-domain move is classified as both a
+    # deletion at the old path and an addition at the new path.
+    changed=run("git","diff","--no-renames","--name-only",f"{base_commit}..HEAD").splitlines()
     classified, unknown=classify(changed,contract)
     if unknown:
         print("\n".join(f"UNCLASSIFIED_RELEASE_DELTA:{p}" for p in unknown),file=sys.stderr)
