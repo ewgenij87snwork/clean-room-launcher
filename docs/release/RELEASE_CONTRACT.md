@@ -107,6 +107,14 @@ tests to executable gates. Semantic evidence such as strategic fit, public-truth
 review, security review, and contract-evolution judgment remains explicit
 human/maintainer evidence and must not be presented as machine-proven.
 
+Semantic review is nevertheless machine-bound to source identity. The release
+declaration records `reviewed_through_commit`, the exact commit whose product,
+public claims, security boundaries, and release machinery were semantically
+reviewed. The final candidate may differ from that checkpoint only by the
+`release/review.json` sealing commit itself. Any other post-review path change
+fails closed as `post-review-drift` and requires a fresh semantic review plus a
+new seal.
+
 The machine check cannot decide semantic product strategy. human/maintainer review must
 still determine whether the release materially serves the current product
 roadmap and whether a discovered failure mode should expand the contract.
