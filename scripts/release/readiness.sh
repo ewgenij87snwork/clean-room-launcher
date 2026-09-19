@@ -53,6 +53,7 @@ if command -v shellcheck >/dev/null 2>&1; then
     scripts/release/qualify-real-provider.sh \
     scripts/release/review-release-delta.sh \
     scripts/release/push-release-tag.sh \
+    scripts/release/publish-release.sh \
     scripts/release/local-release-smoke.sh \
     scripts/release/post-publish-smoke.sh \
     scripts/release/readiness.sh \
@@ -66,6 +67,7 @@ else
     scripts/release/qualify-real-provider.sh \
     scripts/release/review-release-delta.sh \
     scripts/release/push-release-tag.sh \
+    scripts/release/publish-release.sh \
     scripts/release/local-release-smoke.sh \
     scripts/release/post-publish-smoke.sh \
     scripts/release/readiness.sh || fail "SHELL_SYNTAX"
