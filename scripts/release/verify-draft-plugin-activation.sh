@@ -52,6 +52,11 @@ PY
 
 git fetch --quiet --force origin "refs/tags/$tag:refs/tags/$tag"
 tag_commit="$(git rev-parse "$tag^{commit}")"
+current_commit="$(git rev-parse HEAD)"
+[[ "$current_commit" == "$tag_commit" ]] || {
+  echo "DRAFT_PLUGIN_E2E_BLOCKED:CHECKOUT_NOT_EXACT_TAG current=$current_commit tag=$tag_commit" >&2
+  exit 1
+}
 
 gh release download "$tag" -R "$repo" --dir "$tmp" --pattern "$artifact" --pattern SHA256SUMS --clobber
 (
