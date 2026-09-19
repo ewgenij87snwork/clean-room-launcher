@@ -105,6 +105,8 @@ artifact=
 source_head=${source_head:-}
 release_version=
 artifact_dir="$tmp/assets"
+draft_state_file="$tmp/draft-release-state.json"
+printf '%s\n' '{"release_body_sha256":null,"assets_sha256":{}}' > "$draft_state_file"
 
 if [[ "$phase" == pretag ]]; then
   [[ -z "$(git status --porcelain)" ]] || fail "WORKTREE_NOT_CLEAN"
@@ -158,6 +160,36 @@ else
 
   gh attestation verify "$artifact"     -R y-sor/clean-room-launcher     --bundle "$provenance"     --signer-workflow y-sor/clean-room-launcher/.github/workflows/release.yml     --source-digest "$source_head"     --source-ref "refs/tags/$tag"     --deny-self-hosted-runners >/dev/null || fail "DRAFT_PROVENANCE"
   gh attestation verify "$artifact"     -R y-sor/clean-room-launcher     --bundle "$sbom_bundle"     --signer-workflow y-sor/clean-room-launcher/.github/workflows/release.yml     --source-digest "$source_head"     --source-ref "refs/tags/$tag"     --deny-self-hosted-runners >/dev/null || fail "DRAFT_SBOM_ATTESTATION"
+
+  gh release view "$tag" --json body > "$tmp/draft-release.json" \
+    || fail "DRAFT_RELEASE_BODY"
+  python3 - "$tmp/draft-release.json" "$artifact_dir" "$draft_state_file" <<'PY' \
+    || fail "DRAFT_STATE_SEAL"
+import hashlib
+import json
+import pathlib
+import sys
+
+release_path, assets_dir, output = sys.argv[1:]
+release = json.loads(pathlib.Path(release_path).read_text(encoding="utf-8"))
+body = release.get("body")
+if not isinstance(body, str) or not body.strip():
+    raise SystemExit("release-body")
+assets = {}
+for path in sorted(pathlib.Path(assets_dir).iterdir()):
+    if path.is_file():
+        assets[path.name] = hashlib.sha256(path.read_bytes()).hexdigest()
+if len(assets) != 6:
+    raise SystemExit("asset-count")
+state = {
+    "release_body_sha256": hashlib.sha256(body.encode("utf-8")).hexdigest(),
+    "assets_sha256": assets,
+}
+pathlib.Path(output).write_text(
+    json.dumps(state, sort_keys=True, separators=(",", ":")) + "\n",
+    encoding="utf-8",
+)
+PY
 
 fi
 
@@ -322,7 +354,7 @@ evidence="$evidence_dir/${phase}-v${release_version}-${short_head}.json"
 
 python3 -   "$evidence" "$phase" "$release_version" "$source_head" "$artifact_sha"   "$codex_version" "$claude_version" "$codex_provider_sha" "$claude_provider_sha" \
   "$plugin_id" "$clean_init_rc" "$selected_init_rc" "$codex_tui_rc" "$claude_clean_tui_rc" \
-  "$claude_tui_rc" "$tag" <<'PY'
+  "$claude_tui_rc" "$tag" "$draft_state_file" <<'PY'
 import datetime
 import json
 import sys
@@ -344,7 +376,12 @@ import sys
     claude_clean_tui_rc,
     claude_tui_rc,
     tag,
+    draft_state_path,
 ) = sys.argv[1:]
+
+draft_state = json.loads(
+    open(draft_state_path, encoding="utf-8").read()
+)
 
 record = {
     "schema_version": "clroom.local-release-smoke.v1",
@@ -381,6 +418,7 @@ record = {
         "claude_selected_tui_exit_code": int(claude_tui_rc),
     },
     "release_tag": tag or None,
+    "draft_release_state": draft_state if phase == "draft" else None,
     "observed_at_utc": datetime.datetime.now(datetime.timezone.utc)
     .replace(microsecond=0)
     .isoformat()
