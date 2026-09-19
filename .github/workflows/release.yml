@@ -28,6 +28,8 @@ jobs:
           persist-credentials: false
       - name: Bind tag, version, changelog, and action-time default branch
         id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
@@ -68,7 +70,7 @@ jobs:
             exit 1
           }
           python3 scripts/release/check-provider-version-sync.py
-          latest=$(GH_TOKEN="$GITHUB_TOKEN" gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq .tag_name)
+          latest=$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq .tag_name)
           test -n "$latest" || {
             echo "could not resolve latest published stable release" >&2
             exit 1
