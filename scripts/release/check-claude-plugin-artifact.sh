@@ -58,15 +58,15 @@ PY
 
 capture="$root/provider-args.txt"
 write_probe="$root/plugin-write.txt"
-cat > "$root/bin/claude" <<SH
+cat > "$root/bin/claude" <<'SH'
 #!/usr/bin/env bash
 set -euo pipefail
 if [[ ${1:-} == --version ]]; then
   printf '2.1.273 (Claude Code)\n'
   exit 0
 fi
-: > "$capture"
-printf '%s\n' "$@" > "$capture"
+: > "$CLROOM_TEST_CAPTURE"
+printf '%s\n' "$@" > "$CLROOM_TEST_CAPTURE"
 plugin_root=
 previous=
 for arg in "$@"; do
@@ -77,21 +77,21 @@ for arg in "$@"; do
   previous=$arg
 done
 if [[ -z $plugin_root ]]; then
-  printf 'MISSING\n' > "$write_probe"
+  printf 'MISSING\n' > "$CLROOM_TEST_WRITE_PROBE"
   exit 19
 fi
 if /usr/bin/touch "$plugin_root/CLROOM_RELEASE_WRITE_PROBE" 2>/dev/null; then
-  printf 'WRITABLE\n' > "$write_probe"
+  printf 'WRITABLE\n' > "$CLROOM_TEST_WRITE_PROBE"
   exit 20
 else
-  printf 'READ_ONLY\n' > "$write_probe"
+  printf 'READ_ONLY\n' > "$CLROOM_TEST_WRITE_PROBE"
 fi
 exit 0
 SH
 chmod 0755 "$root/bin/claude"
 
 set +e
-HOME="$home" PATH="$root/bin:/usr/bin:/bin"   "$candidate" claude --with=plugin:release-fixture@example --help   >"$root/stdout.log" 2>"$root/stderr.log"
+HOME="$home" PATH="$root/bin:/usr/bin:/bin" CLROOM_TEST_CAPTURE="$capture" CLROOM_TEST_WRITE_PROBE="$write_probe"   "$candidate" claude --with=plugin:release-fixture@example --help   >"$root/stdout.log" 2>"$root/stderr.log"
 status=$?
 set -e
 [[ $status -eq 0 ]] || fail "SKILL_ONLY_LAUNCH_FAILED"
@@ -113,7 +113,7 @@ PY
 printf '%s\n' '{"name":"release-fixture","version":"1.0.0","hooks":{"SessionStart":[{"hooks":[{"type":"command","command":"echo nope"}]}]}}' > "$plugin/.claude-plugin/plugin.json"
 rm -f -- "$capture" "$write_probe"
 set +e
-HOME="$home" PATH="$root/bin:/usr/bin:/bin"   "$candidate" claude --with=plugin:release-fixture@example --help   >"$root/negative.stdout.log" 2>"$root/negative.stderr.log"
+HOME="$home" PATH="$root/bin:/usr/bin:/bin" CLROOM_TEST_CAPTURE="$capture" CLROOM_TEST_WRITE_PROBE="$write_probe"   "$candidate" claude --with=plugin:release-fixture@example --help   >"$root/negative.stdout.log" 2>"$root/negative.stderr.log"
 negative_status=$?
 set -e
 [[ $negative_status -ne 0 ]] || fail "HOOK_BUNDLE_UNEXPECTEDLY_ACCEPTED"
