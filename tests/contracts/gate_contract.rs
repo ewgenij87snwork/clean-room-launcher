@@ -183,6 +183,8 @@ fn release_contract_binds_latest_stable_annotated_tags_and_inference_free_local_
     assert!(tag_push.contains("git cat-file -t \"refs/tags/$tag\""));
     assert!(tag_push.contains("git push origin \"refs/tags/$tag:refs/tags/$tag\""));
     assert!(tag_push.contains("REMOTE_TAG_ALREADY_EXISTS"));
+    assert!(tag_push.contains("RELEASE_TAG_PUSH_RECONCILED"));
+    assert!(tag_push.contains("TAG_PUSH_OUTCOME_UNKNOWN"));
     assert!(tag_push.contains(
         "check-repository-release-policy.py --mode strict"
     ));
@@ -202,6 +204,10 @@ fn release_contract_binds_latest_stable_annotated_tags_and_inference_free_local_
     assert!(smoke.contains("[[ \"$codex_tui_rc\" -eq 0 ]] || fail \"CODEX_TUI_EXIT\""));
     assert!(smoke.contains("[[ \"$claude_clean_tui_rc\" -eq 0 ]] || fail \"CLAUDE_CLEAN_TUI_EXIT\""));
     assert!(smoke.contains("[[ \"$claude_tui_rc\" -eq 0 ]] || fail \"CLAUDE_SELECTED_TUI_EXIT\""));
+    let publish = std::fs::read_to_string("scripts/release/publish-release.sh").unwrap();
+    assert!(publish.contains("RELEASE_PUBLISH_RECONCILED"));
+    assert!(publish.contains("PUBLISH_OUTCOME_UNKNOWN"));
+    assert!(publish.contains("PUBLISH_NOT_DELIVERED"));
 }
 
 #[test]
