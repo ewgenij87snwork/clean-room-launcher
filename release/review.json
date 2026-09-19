@@ -33,7 +33,8 @@
       "real-provider qualification against binaries extracted from the release archive",
       "accepted-main pre-tag local artifact smoke",
       "exact Draft Release artifact smoke before publish",
-      "evidence invalidation after source/provider/artifact drift"
+      "evidence invalidation after source/provider/artifact drift",
+      "pre-push annotated tag guard bound to active immutable v* tag policy"
     ]
   }
 }
