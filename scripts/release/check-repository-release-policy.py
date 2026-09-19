@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import subprocess
@@ -32,6 +33,18 @@ def gh_json(endpoint: str):
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--mode",
+        choices=("visible", "strict"),
+        default="strict",
+        help=(
+            "visible checks rules exposed to read-only tokens; strict additionally "
+            "requires bypass_actors=[] and is mandatory immediately before tag push"
+        ),
+    )
+    args = parser.parse_args()
+
     rulesets = gh_json(f"repos/{REPO}/rulesets")
     if not isinstance(rulesets, list):
         fail("rulesets-response")
@@ -46,7 +59,8 @@ def main() -> None:
     if not candidates:
         fail("active-tag-ruleset-missing")
 
-    qualifying = []
+    structural = []
+    strict = []
     for summary in candidates:
         ruleset_id = summary.get("id")
         if not isinstance(ruleset_id, int):
@@ -58,22 +72,33 @@ def main() -> None:
             for rule in detail.get("rules", [])
             if isinstance(rule, dict)
         }
-        bypass = detail.get("bypass_actors")
-        if (
-            TAG_PATTERN in includes
-            and {"update", "deletion"}.issubset(rule_types)
-            and isinstance(bypass, list)
-            and not bypass
-        ):
-            qualifying.append(detail)
+        if TAG_PATTERN not in includes or not {"update", "deletion"}.issubset(rule_types):
+            continue
+        structural.append(detail)
 
-    if len(qualifying) != 1:
-        fail(f"exact-protective-tag-ruleset-count:{len(qualifying)}")
+        # GitHub intentionally omits bypass_actors unless the caller has write
+        # access to the ruleset. A read-only CI token therefore cannot prove
+        # the no-bypass invariant. That proof belongs to strict action-time
+        # verification with the Owner-authorized gh identity.
+        if "bypass_actors" in detail:
+            bypass = detail.get("bypass_actors")
+            if isinstance(bypass, list) and not bypass:
+                strict.append(detail)
 
-    ruleset = qualifying[0]
+    if len(structural) != 1:
+        fail(f"exact-protective-tag-ruleset-count:{len(structural)}")
+
+    ruleset = structural[0]
+    if args.mode == "strict":
+        if "bypass_actors" not in ruleset:
+            fail("bypass-actors-not-visible-to-caller")
+        if len(strict) != 1 or strict[0].get("id") != ruleset.get("id"):
+            fail("tag-ruleset-bypass-present")
+
     print(
         "RELEASE_REPOSITORY_POLICY_PASS "
-        f"repo={REPO} tag_ruleset={ruleset.get('id')} pattern={TAG_PATTERN}"
+        f"mode={args.mode} repo={REPO} "
+        f"tag_ruleset={ruleset.get('id')} pattern={TAG_PATTERN}"
     )
 
 
