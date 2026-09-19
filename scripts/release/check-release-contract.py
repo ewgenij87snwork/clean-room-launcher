@@ -50,6 +50,7 @@ def main():
     parser.add_argument("--repository", default=os.environ.get("GITHUB_REPOSITORY","y-sor/clean-room-launcher"))
     parser.add_argument("--report", action="store_true")
     parser.add_argument("--self-test", action="store_true")
+    parser.add_argument("--require-head-reviewed", action="store_true")
     args=parser.parse_args()
 
     contract=load_json(CONTRACT)
@@ -107,6 +108,12 @@ def main():
         if item.get("decision")=="CONTRACT_EXPAND" and not item.get("durable_control"):
             raise SystemExit("RELEASE_CONTRACT_BLOCKED:NEAR_MISS_CONTROL")
 
+    head = run("git","rev-parse","HEAD")
+    if args.require_head_reviewed and reviewed != head:
+        raise SystemExit(
+            f"RELEASE_CONTRACT_BLOCKED:HEAD_NOT_REVIEWED:reviewed={reviewed}:head={head}"
+        )
+
     tail=run("git","diff","--name-only",f"{reviewed}..HEAD").splitlines()
     allowed_tail=contract["release_assurance_only_patterns"]
     bad_tail=[p for p in tail if not any(matches(p,pat) for pat in allowed_tail)]
@@ -120,7 +127,7 @@ def main():
         print(f"PUBLISHED_AT={published_at}")
         print(f"BASE_COMMIT={base_commit}")
         print(f"REVIEWED_THROUGH={reviewed}")
-        print(f"HEAD={run('git','rev-parse','HEAD')}")
+        print(f"HEAD={head}")
         print("CHANGED_DOMAINS="+",".join(changed_domains))
         print(f"CHANGED_FILES={len(changed)}")
         print("=== COMMITS SINCE PUBLISHED RELEASE ===")
