@@ -29,6 +29,7 @@ jobs:
           python3 scripts/release/check-release-review.py \
             --base-tag "$latest" \
             --candidate HEAD
+          python3 scripts/release/check-repository-release-policy.py
       - name: Prove release attestation contract fails closed
         shell: bash
         run: |
