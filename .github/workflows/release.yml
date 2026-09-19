@@ -163,6 +163,12 @@ jobs:
               > SHA256SUMS
             shasum -a 256 -c SHA256SUMS
           )
+      - name: Exercise Claude plugin capability on exact archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          artifact="target/release-artifacts/${{ needs.prepare.outputs.artifact_name }}"
+          scripts/release/check-claude-plugin-artifact.sh "$artifact"
       - name: Provision pinned real provider canaries
         shell: bash
         run: |
