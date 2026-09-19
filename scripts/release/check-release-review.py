@@ -70,6 +70,14 @@ PROVIDER_PATTERNS = (
 CONTRACT_PATTERNS = (
     "docs/release/RELEASE_CONTRACT.md",
     "scripts/release/check-release-review.py",
+    "scripts/release/check-provider-version-sync.py",
+    "scripts/release/local-release-smoke.sh",
+    "scripts/release/post-publish-smoke.sh",
+    "scripts/release/qualify-real-provider.sh",
+    "scripts/release/verify-qualification.py",
+    ".github/workflows/release-candidate.yml",
+    ".github/workflows/release.yml",
+    "tests/contracts/gate_contract.rs",
 )
 
 
@@ -208,6 +216,8 @@ def main() -> None:
     contract_changed = any(matches(path, CONTRACT_PATTERNS) for path in changed)
     if bool(evolution.get("release_contract_changed")) != contract_changed:
         fail("contract-change-declaration")
+    if contract_changed and evolution.get("result") != "expanded":
+        fail("contract-change-requires-expansion-review")
 
     if evolution.get("result") == "expanded":
         promoted = evolution.get("promoted_controls")
