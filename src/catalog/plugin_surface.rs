@@ -31,6 +31,8 @@ pub struct PluginSurface {
     pub declared: Vec<PluginComponent>,
     pub effective: Vec<PluginComponent>,
     pub plugin_name: Option<String>,
+    #[serde(skip)]
+    pub activation_eligible: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -96,22 +98,39 @@ fn inspect_codex(root: &Path) -> Result<PluginSurface, PluginSurfaceError> {
     add_mcp_components(root, manifest.get("mcpServers"), &mut declared, &mut effective);
     add_app_components(root, manifest.get("apps"), &mut declared, &mut effective);
 
-    Ok(surface(declared, effective, plugin_name))
+    Ok(surface(declared, effective, plugin_name, false))
 }
 
 fn inspect_claude(root: &Path) -> Result<PluginSurface, PluginSurfaceError> {
     let manifest = claude_manifest(root)?;
     let plugin_name = manifest
-        .get("name")
+        .as_ref()
+        .and_then(|value| value.get("name"))
         .and_then(Value::as_str)
-        .expect("validated Claude manifest must contain a name")
-        .to_owned();
+        .map(str::to_owned);
+    let custom_skills = manifest
+        .as_ref()
+        .and_then(|value| value.get("skills"))
+        .is_some();
     let mut declared = BTreeSet::new();
     let mut effective = BTreeSet::new();
 
-    for skill in claude_skill_components(root) {
+    let default_skills = claude_skill_components(root);
+    for skill in &default_skills {
         declared.insert(skill.clone());
-        effective.insert(skill);
+        effective.insert(skill.clone());
+    }
+
+    if custom_skills {
+        let item = component(ResourceKind::Skill, "manifest");
+        declared.insert(item.clone());
+        effective.insert(item);
+    } else if default_skills.is_empty()
+        && safe_regular_file(&root.join("SKILL.md"), MAX_COMPONENT_FILE_BYTES).is_some()
+    {
+        let item = component(ResourceKind::Skill, "root");
+        declared.insert(item.clone());
+        effective.insert(item);
     }
     add_recursive_markdown_components(
         root,
@@ -137,7 +156,7 @@ fn inspect_claude(root: &Path) -> Result<PluginSurface, PluginSurfaceError> {
         mark_component_path_presence(root, relative, kind, &mut declared, &mut effective);
     }
 
-    if let Some(hooks) = manifest.get("hooks") {
+    if let Some(hooks) = manifest.as_ref().and_then(|value| value.get("hooks")) {
         for event in hook_events_from_value(hooks) {
             let component = component(ResourceKind::HookSet, &event);
             declared.insert(component.clone());
@@ -173,14 +192,15 @@ fn inspect_claude(root: &Path) -> Result<PluginSurface, PluginSurfaceError> {
         ("channels", NativeKind::new("channel").expect("static kind")),
         ("dependencies", NativeKind::new("dependency").expect("static kind")),
     ] {
-        if manifest.get(field).is_some() {
+        if manifest.as_ref().and_then(|value| value.get(field)).is_some() {
             let item = component(kind, "manifest");
             declared.insert(item.clone());
             effective.insert(item);
         }
     }
     if manifest
-        .get("experimental")
+        .as_ref()
+        .and_then(|value| value.get("experimental"))
         .and_then(Value::as_object)
         .is_some_and(|experimental| experimental.contains_key("monitors"))
     {
@@ -189,7 +209,8 @@ fn inspect_claude(root: &Path) -> Result<PluginSurface, PluginSurfaceError> {
         effective.insert(item);
     }
     if manifest
-        .get("experimental")
+        .as_ref()
+        .and_then(|value| value.get("experimental"))
         .and_then(Value::as_object)
         .is_some_and(|experimental| experimental.contains_key("themes"))
     {
@@ -213,18 +234,39 @@ fn inspect_claude(root: &Path) -> Result<PluginSurface, PluginSurfaceError> {
         }
     }
 
-    if root.join("settings.json").is_file() || manifest.get("settings").is_some() {
+    if root.join("settings.json").is_file()
+        || manifest
+            .as_ref()
+            .and_then(|value| value.get("settings"))
+            .is_some()
+    {
         let component = component(ResourceKind::SettingsOverlay, "default");
         declared.insert(component.clone());
         effective.insert(component);
     }
 
-    Ok(surface(declared, effective, Some(plugin_name)))
+    let activation_eligible = plugin_name.is_some()
+        && !custom_skills
+        && !default_skills.is_empty()
+        && effective
+            .iter()
+            .all(|component| component.kind == ResourceKind::Skill);
+
+    Ok(surface(
+        declared,
+        effective,
+        plugin_name,
+        activation_eligible,
+    ))
 }
 
-fn claude_manifest(root: &Path) -> Result<Value, PluginSurfaceError> {
+fn claude_manifest(root: &Path) -> Result<Option<Value>, PluginSurfaceError> {
     let manifest_path = root.join(".claude-plugin/plugin.json");
-    let manifest = read_json(&manifest_path, MAX_MANIFEST_BYTES)?;
+    let manifest = match read_json(&manifest_path, MAX_MANIFEST_BYTES) {
+        Ok(value) => value,
+        Err(PluginSurfaceError::Unavailable) => return Ok(None),
+        Err(error) => return Err(error),
+    };
     let Some(object) = manifest.as_object() else {
         return Err(PluginSurfaceError::InvalidManifest);
     };
@@ -234,7 +276,7 @@ fn claude_manifest(root: &Path) -> Result<Value, PluginSurfaceError> {
     if !valid_claude_plugin_name(name) {
         return Err(PluginSurfaceError::InvalidManifest);
     }
-    Ok(manifest)
+    Ok(Some(manifest))
 }
 
 fn valid_claude_plugin_name(value: &str) -> bool {
@@ -781,11 +823,13 @@ fn surface(
     declared: BTreeSet<PluginComponent>,
     effective: BTreeSet<PluginComponent>,
     plugin_name: Option<String>,
+    activation_eligible: bool,
 ) -> PluginSurface {
     PluginSurface {
         declared: declared.into_iter().collect(),
         effective: effective.into_iter().collect(),
         plugin_name,
+        activation_eligible,
     }
 }
 
@@ -904,17 +948,43 @@ mod tests {
     }
 
     #[test]
-    fn claude_root_skill_is_not_a_provider_plugin_skill() {
+    fn claude_root_skill_is_observed_but_not_activation_eligible() {
         let root = fixture();
         fs::remove_dir_all(root.join("skills")).unwrap();
+        fs::remove_file(root.join(".claude-plugin/plugin.json")).unwrap();
         fs::write(root.join("SKILL.md"), "fixture\n").unwrap();
 
         let claude = inspect_plugin_surface(ProviderPluginSemantics::Claude, &root).unwrap();
-        assert!(!claude
-            .effective
-            .iter()
-            .any(|component| component.kind == ResourceKind::Skill));
+        assert!(has(&claude.effective, ResourceKind::Skill, "root"));
+        assert_eq!(claude.plugin_name, None);
+        assert!(!claude.activation_eligible);
 
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn claude_manifestless_default_skill_is_observed_but_not_activation_eligible() {
+        let root = fixture();
+        fs::remove_file(root.join(".claude-plugin/plugin.json")).unwrap();
+
+        let claude = inspect_plugin_surface(ProviderPluginSemantics::Claude, &root).unwrap();
+        assert!(has(
+            &claude.effective,
+            ResourceKind::Skill,
+            "brainstorming"
+        ));
+        assert_eq!(claude.plugin_name, None);
+        assert!(!claude.activation_eligible);
+
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn claude_matching_manifest_default_skill_is_activation_eligible() {
+        let root = fixture();
+        let claude = inspect_plugin_surface(ProviderPluginSemantics::Claude, &root).unwrap();
+        assert_eq!(claude.plugin_name.as_deref(), Some("superpowers"));
+        assert!(claude.activation_eligible);
         let _ = fs::remove_dir_all(root);
     }
 
