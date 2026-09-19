@@ -1,0 +1,44 @@
+schema_version = 1
+version = "0.4.0"
+previous_published_release = "v0.3.1"
+contract_revision = 2
+release_intent = "Ship bounded Claude whole-plugin selective restore without widening the clean-launch trust boundary."
+
+declared_domains = [
+  "runtime",
+  "tests",
+  "dependencies",
+  "ci",
+  "release",
+  "docs",
+]
+
+declared_risk_classes = [
+  "runtime_behavior",
+  "provider_activation",
+  "process_sandbox",
+  "dependencies",
+  "ci_pipeline",
+  "release_pipeline",
+  "public_claims",
+  "verification",
+]
+
+required_evidence = [
+  "full_locked_tests",
+  "dependency_sca",
+  "public_boundary",
+  "codex_0_154_0_baseline",
+  "claude_2_1_272_baseline",
+  "claude_2_1_273_plugin_activation",
+  "artifact_metadata",
+  "sbom",
+  "provenance",
+  "draft_release",
+]
+
+contract_expansions = [
+  "whole_release_delta_gate",
+  "claude_plugin_activation_qualification",
+  "release_date_binding",
+]
