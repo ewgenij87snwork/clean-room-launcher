@@ -252,8 +252,8 @@ resource selection.
 
 This whole-plugin path is currently an exact macOS Apple Silicon qualification
 for Claude Code `2.1.273`. v0.4.0 qualifies only bundles whose observed
-effective surface is skill-only. Bundles that expose hooks, MCP servers, agents,
-LSP servers, background monitors, plugin executables, or plugin settings fail
+effective surface is skill-only. Bundles that expose slash commands, hooks, MCP servers,
+agents, LSP servers, background monitors, plugin executables, or plugin settings fail
 closed instead of receiving a broader `~/.claude` filesystem seam. The whole
 qualified bundle is still passed to Claude atomically; CLROOM does not extract
 individual components.
