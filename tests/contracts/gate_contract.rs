@@ -117,4 +117,14 @@ fn local_tag_helper_parses_annotated_tagger_timestamp_with_digit_regex() {
     );
 }
 
+
+#[test]
+fn draft_plugin_release_smoke_binds_cyclonedx_predicate() {
+    let source = std::fs::read_to_string("scripts/release/local-plugin-activation-smoke.sh").unwrap();
+    assert!(
+        source.contains("--bundle \"$sbom\"     --predicate-type https://cyclonedx.org/bom"),
+        "draft release smoke must verify the SBOM bundle as CycloneDX instead of the default SLSA provenance predicate"
+    );
+}
+
 use std::os::unix::fs::PermissionsExt;
