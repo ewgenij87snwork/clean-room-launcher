@@ -2,12 +2,12 @@
   "schema_version": "clroom.release-review.v1",
   "release": "v0.4.0",
   "baseline_release": "v0.3.1",
-  "reviewed_through_commit": "4073420176dfe2492d1a7c488690341119407cfe",
+  "reviewed_through_commit": "2688cbd678129e1ada6d43ee62787884b9d24954",
   "domain_dispositions": {
     "runtime": {
       "decision": "CONTRACT_EXPAND",
       "evidence": [
-        "Claude whole-plugin activation is bounded by exact provider tuple, fail-closed inventory, negative tests, and exact-provider E2E before release."
+        "Claude whole-plugin activation is bounded by the exact provider tuple, matching manifest identity, provider-visible inventory with a deliberately narrower default one-level skills/<name>/SKILL.md activation surface, action-time requalification, negative tests, and exact-provider E2E before release."
       ]
     },
     "tests": {
@@ -45,7 +45,7 @@
     {
       "id": "plugin-loaded-is-not-plugin-works",
       "decision": "CONTRACT_EXPAND",
-      "durable_control": "Provider plugin activation now fails closed on unqualified component surfaces; release requires behavior-specific exact-provider evidence."
+      "durable_control": "Provider inventory may observe broader Claude plugin surfaces, but v0.4.0 activation requires matching manifest identity plus only the default one-level skills/<name>/SKILL.md surface; slash commands and every other non-skill surface fail closed, and release requires behavior-specific exact-provider evidence."
     },
     {
       "id": "clean-vs-activation-version-coupling",
@@ -96,6 +96,11 @@
       "id": "contract-test-enforced-weaker-sibling-build-semantics",
       "decision": "CONTRACT_EXPAND",
       "durable_control": "Release workflow contract test now requires archive extraction, exact archive-root provider binaries, and explicitly rejects sibling target/* provider candidates."
+    },
+    {
+      "id": "plugin-qualified-at-plan-time-can-drift-before-launch",
+      "decision": "CONTRACT_EXPAND",
+      "durable_control": "Activation re-runs install-root, manifest identity, component-surface, selection, and qualification inspection immediately before launch; nested, symlinked, unreadable, identity-mismatched, or newly introduced non-skill surfaces fail closed with regression coverage."
     }
   ],
   "artifact_capability_gates": [
@@ -124,7 +129,8 @@
       "local whole-release summary/full audit command",
       "exact accepted-main plugin capability smoke evidence required before protected tag creation",
       "rename-safe whole-release path classification that evaluates both old and new paths",
-      "negative release workflow contract test forbidding provider qualification against sibling build outputs"
+      "negative release workflow contract test forbidding provider qualification against sibling build outputs",
+      "action-time plugin install-root, manifest-identity, component-surface and qualification revalidation with fail-closed drift tests"
     ]
   }
 }
