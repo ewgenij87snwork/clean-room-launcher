@@ -1,7 +1,7 @@
 ---
 layout: page
 title: Limitations
-description: Current CLROOM support boundaries: macOS Apple Silicon qualification, filesystem isolation limits, provider configuration caveats, and unsupported platforms.
+description: "Current CLROOM support boundaries: macOS Apple Silicon qualification, filesystem isolation limits, provider configuration caveats, and unsupported platforms."
 permalink: /limitations.html
 ---
 
