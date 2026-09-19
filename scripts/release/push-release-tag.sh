@@ -32,22 +32,33 @@ actual_main=$(git rev-parse FETCH_HEAD)
   exit 67
 }
 
-if git ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null 2>&1; then
-  echo "TAG_GATE_BLOCKED:TAG_ALREADY_EXISTS" >&2
-  exit 68
-fi
-
 command -v gh >/dev/null 2>&1 || {
   echo "TAG_GATE_BLOCKED:GH_REQUIRED_FOR_RULESET_CHECK" >&2
   exit 74
 }
-ruleset_tmp=$(mktemp "${TMPDIR:-/tmp}/clroom-tag-rulesets.XXXXXX")
-cleanup_ruleset_tmp() {
-  rm -f -- "$ruleset_tmp"
+
+ensure_remote_tag_absent() {
+  local phase=$1
+  local remote_refs
+  if ! remote_refs=$(git ls-remote --tags origin "refs/tags/$tag" "refs/tags/$tag^{}"); then
+    echo "TAG_GATE_BLOCKED:REMOTE_TAG_QUERY_$phase" >&2
+    return 1
+  fi
+  if [[ -n "$remote_refs" ]]; then
+    echo "TAG_GATE_BLOCKED:REMOTE_TAG_PRESENT_$phase" >&2
+    return 1
+  fi
 }
-trap cleanup_ruleset_tmp EXIT HUP INT TERM
-gh api repos/y-sor/clean-room-launcher/rulesets > "$ruleset_tmp"
-python3 - "$ruleset_tmp" <<'PY'
+
+verify_tag_ruleset() {
+  local ruleset_tmp
+  ruleset_tmp=$(mktemp "${TMPDIR:-/tmp}/clroom-tag-rulesets.XXXXXX") || return 1
+  if ! gh api repos/y-sor/clean-room-launcher/rulesets > "$ruleset_tmp"; then
+    rm -f -- "$ruleset_tmp"
+    echo "TAG_GATE_BLOCKED:RULESET_READ" >&2
+    return 1
+  fi
+  if python3 - "$ruleset_tmp" <<'PY'
 import json, subprocess, sys
 
 rulesets = json.load(open(sys.argv[1], encoding="utf-8"))
@@ -79,8 +90,16 @@ if not ok:
     raise SystemExit("TAG_GATE_BLOCKED:TAG_RULESET_WEAKENED")
 print("TAG_RULESET_PASS")
 PY
-cleanup_ruleset_tmp
-trap - EXIT HUP INT TERM
+  then
+    rm -f -- "$ruleset_tmp"
+    return 0
+  fi
+  rm -f -- "$ruleset_tmp"
+  return 1
+}
+
+ensure_remote_tag_absent INITIAL || exit 68
+verify_tag_ruleset || exit 74
 
 python3 scripts/release/check-release-contract.py --report
 
@@ -171,6 +190,38 @@ grep -Fxq "## [$version] - $tag_date" CHANGELOG.md || {
   echo "TAG_GATE_BLOCKED:CHANGELOG_DATE expected=$tag_date" >&2
   exit 69
 }
+
+# Mutable remote release state is refreshed immediately before the irreversible push.
+git fetch --quiet origin main || {
+  cleanup_local_tag
+  echo "TAG_GATE_BLOCKED:REMOTE_MAIN_REFRESH_ACTION_TIME" >&2
+  exit 76
+}
+actual_main_now=$(git rev-parse FETCH_HEAD)
+[[ $actual_main_now == "$expected" ]] || {
+  cleanup_local_tag
+  echo "TAG_GATE_BLOCKED:MAIN_DRIFT_ACTION_TIME expected=$expected actual=$actual_main_now" >&2
+  exit 76
+}
+[[ $(git rev-parse HEAD) == "$expected" ]] || {
+  cleanup_local_tag
+  echo "TAG_GATE_BLOCKED:LOCAL_HEAD_DRIFT_ACTION_TIME" >&2
+  exit 76
+}
+if ! ensure_remote_tag_absent ACTION_TIME; then
+  cleanup_local_tag
+  exit 76
+fi
+if ! verify_tag_ruleset; then
+  cleanup_local_tag
+  echo "TAG_GATE_BLOCKED:TAG_RULESET_ACTION_TIME" >&2
+  exit 76
+fi
+if ! python3 scripts/release/check-release-contract.py --report >/dev/null; then
+  cleanup_local_tag
+  echo "TAG_GATE_BLOCKED:RELEASE_CONTRACT_ACTION_TIME" >&2
+  exit 77
+fi
 
 set +e
 git push origin "refs/tags/$tag"
