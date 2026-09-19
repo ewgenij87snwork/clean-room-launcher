@@ -177,14 +177,22 @@ pub fn inspect_plugin_with_home(
     let expected_plugin_name = plugin_id.rsplit_once('@').map(|(name, _)| name);
     let activation_identity_qualified = provider != Provider::Claude
         || manifest_name.as_deref() == expected_plugin_name;
-    if provider == Provider::Claude
-        && installation_state == InstallationState::Installed
+    let activation_identity_blocker = if provider != Provider::Claude
+        || activation_identity_qualified
+    {
+        None
+    } else if manifest_name.is_none() {
+        Some("PLUGIN_IDENTITY_UNPROVEN")
+    } else {
+        Some("PLUGIN_IDENTITY_MISMATCH")
+    };
+    if installation_state == InstallationState::Installed
         && root.is_some()
         && conflicts.is_empty()
-        && !activation_identity_qualified
+        && let Some(blocker) = activation_identity_blocker
     {
-        reason_code = "PLUGIN_IDENTITY_MISMATCH";
-        conflicts.push(reason_code.to_owned());
+        reason_code = blocker;
+        conflicts.push(blocker.to_owned());
     }
 
     let activation_surface_qualified = activation_surface_eligible
@@ -204,8 +212,8 @@ pub fn inspect_plugin_with_home(
     {
         let blocker = if !activation_tuple_qualified {
             "PROVIDER_TUPLE_NOT_QUALIFIED"
-        } else if !activation_identity_qualified {
-            "PLUGIN_IDENTITY_MISMATCH"
+        } else if let Some(blocker) = activation_identity_blocker {
+            blocker
         } else if !activation_surface_qualified {
             "PLUGIN_ACTIVATION_SURFACE_UNQUALIFIED"
         } else {
@@ -402,7 +410,7 @@ mod tests {
         assert!(inventory
             .conflicts
             .iter()
-            .any(|reason| reason == "PLUGIN_IDENTITY_MISMATCH"));
+            .any(|reason| reason == "PLUGIN_IDENTITY_UNPROVEN"));
 
         let _ = fs::remove_dir_all(home.parent().unwrap());
     }
