@@ -185,6 +185,10 @@ fn whole_release_review_is_fail_closed_and_declared() {
         "missing-required-evidence:",
         "published-baseline:",
         "contract-evolution-review",
+        "contract-change-requires-expansion-review",
+        "scripts/release/local-release-smoke.sh",
+        "scripts/release/post-publish-smoke.sh",
+        ".github/workflows/release.yml",
     ] {
         assert!(checker.contains(invariant), "missing fail-closed invariant {invariant}");
     }
