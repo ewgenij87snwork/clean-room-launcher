@@ -44,6 +44,19 @@ for command_name in git python3 shasum tar codex claude cargo rustc; do
   command -v "$command_name" >/dev/null 2>&1 || fail "COMMAND_MISSING:$command_name"
 done
 
+source_head=
+if [[ "$phase" == draft ]]; then
+  [[ -z "$(git status --porcelain)" ]] || fail "WORKTREE_NOT_CLEAN"
+  git remote get-url origin >/dev/null 2>&1 || fail "ORIGIN_MISSING"
+  git fetch --quiet origin "refs/tags/$tag:refs/tags/$tag" || fail "TAG_FETCH"
+  source_head=$(git rev-list -n1 "$tag")
+  local_head=$(git rev-parse HEAD)
+  [[ "$local_head" == "$source_head" ]] || {
+    printf 'LOCAL_HEAD=%s\nTAG_SOURCE=%s\n' "$local_head" "$source_head" >&2
+    fail "CHECKOUT_NOT_TAG_SOURCE"
+  }
+fi
+
 python3 scripts/release/check-provider-version-sync.py >/dev/null || fail "PROVIDER_VERSION_REPO_DRIFT"
 
 read -r codex_pin claude_clean_pin claude_plugin_pin < <(
@@ -63,10 +76,14 @@ version_from_output() {
   "$1" --version 2>&1 | grep -Eo '[0-9]+\.[0-9]+\.[0-9]+' | head -1
 }
 
-codex_version=$(version_from_output "$(command -v codex)")
-claude_version=$(version_from_output "$(command -v claude)")
+codex_executable=$(command -v codex)
+claude_executable=$(command -v claude)
+codex_version=$(version_from_output "$codex_executable")
+claude_version=$(version_from_output "$claude_executable")
 [[ -n "$codex_version" ]] || fail "CODEX_VERSION_UNKNOWN"
 [[ -n "$claude_version" ]] || fail "CLAUDE_VERSION_UNKNOWN"
+codex_provider_sha=$(shasum -a 256 "$codex_executable" | awk '{print $1}')
+claude_provider_sha=$(shasum -a 256 "$claude_executable" | awk '{print $1}')
 
 if [[ "$codex_version" != "$codex_pin" ]]; then
   printf 'PROVIDER_REFRESH_REQUIRED provider=codex installed=%s release_pin=%s\n'     "$codex_version" "$codex_pin" >&2
@@ -84,7 +101,7 @@ cleanup() {
 trap cleanup EXIT HUP INT TERM
 
 artifact=
-source_head=
+source_head=${source_head:-}
 release_version=
 artifact_dir="$tmp/assets"
 
@@ -140,8 +157,6 @@ else
 
   gh attestation verify "$artifact"     -R y-sor/clean-room-launcher     --bundle "$provenance"     --signer-workflow y-sor/clean-room-launcher/.github/workflows/release.yml     --deny-self-hosted-runners >/dev/null || fail "DRAFT_PROVENANCE"
 
-  git fetch --quiet origin "refs/tags/$tag:refs/tags/$tag" || fail "TAG_FETCH"
-  source_head=$(git rev-list -n1 "$tag")
 fi
 
 python3 packaging/verify-artifact.py "$artifact" >/dev/null || fail "ARTIFACT_METADATA"
@@ -384,7 +399,9 @@ mkdir -p "$evidence_dir"
 short_head=${source_head:0:12}
 evidence="$evidence_dir/${phase}-v${release_version}-${short_head}.json"
 
-python3 -   "$evidence" "$phase" "$release_version" "$source_head" "$artifact_sha"   "$codex_version" "$claude_version" "$plugin_id" "$clean_rc" "$selected_rc"   "$codex_tui_rc" "$claude_clean_tui_rc" "$claude_tui_rc" "$tag" <<'PY'
+python3 -   "$evidence" "$phase" "$release_version" "$source_head" "$artifact_sha"   "$codex_version" "$claude_version" "$codex_provider_sha" "$claude_provider_sha" \
+  "$plugin_id" "$clean_rc" "$selected_rc" "$codex_tui_rc" "$claude_clean_tui_rc" \
+  "$claude_tui_rc" "$tag" <<'PY'
 import datetime
 import json
 import sys
@@ -397,6 +414,8 @@ import sys
     artifact_sha,
     codex,
     claude,
+    codex_provider_sha,
+    claude_provider_sha,
     plugin_id,
     clean_rc,
     selected_rc,
@@ -415,6 +434,10 @@ record = {
     "artifact_sha256": artifact_sha,
     "platform": "macos-aarch64",
     "provider_versions": {"codex": codex, "claude": claude},
+    "provider_sha256": {
+        "codex": codex_provider_sha,
+        "claude": claude_provider_sha,
+    },
     "claude_plugin_id": plugin_id,
     "automated": {
         "clean_system_init": True,
@@ -452,7 +475,9 @@ echo "PHASE=$phase"
 echo "SOURCE_HEAD=$source_head"
 echo "ARTIFACT_SHA256=$artifact_sha"
 echo "CODEX_VERSION=$codex_version"
+echo "CODEX_PROVIDER_SHA256=$codex_provider_sha"
 echo "CLAUDE_VERSION=$claude_version"
+echo "CLAUDE_PROVIDER_SHA256=$claude_provider_sha"
 echo "PLUGIN_ID=$plugin_id"
 echo "CLEAN_PROVIDER_RC=$clean_rc"
 echo "SELECTED_PROVIDER_RC=$selected_rc"
