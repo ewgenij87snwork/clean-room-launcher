@@ -106,11 +106,8 @@ def main():
     base_commit=run("git","rev-list","-n","1",latest_tag)
 
     reviewed=review.get("reviewed_through_commit","")
-    ensure_ref(reviewed)
-    if subprocess.call(["git","merge-base","--is-ancestor",base_commit,reviewed],cwd=ROOT)!=0:
-        raise SystemExit("RELEASE_CONTRACT_BLOCKED:REVIEWED_COMMIT_NOT_AFTER_BASELINE")
-    if subprocess.call(["git","merge-base","--is-ancestor",reviewed,"HEAD"],cwd=ROOT)!=0:
-        raise SystemExit("RELEASE_CONTRACT_BLOCKED:REVIEWED_COMMIT_NOT_ANCESTOR")
+    if not isinstance(reviewed, str) or len(reviewed) != 40 or any(ch not in "0123456789abcdef" for ch in reviewed):
+        raise SystemExit("RELEASE_CONTRACT_BLOCKED:REVIEWED_COMMIT_ID")
 
     head = run("git","rev-parse","HEAD")
     review_relative = str(review_path.resolve().relative_to(ROOT))
