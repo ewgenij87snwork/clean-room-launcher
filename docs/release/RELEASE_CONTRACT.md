@@ -228,6 +228,12 @@ then publish once.
 
 After publish verify from the public user path, not the workspace:
 
+```sh
+scripts/release/post-publish-smoke.sh vX.Y.Z
+```
+
+The smoke verifies:
+
 - `releases/latest` resolves to the intended version;
 - public `install.sh` downloads successfully;
 - checksums/attestations verify;
@@ -309,10 +315,12 @@ paths, or unrestricted environment dumps.
 
 These are design references, not compliance claims:
 
-- NIST SSDF, especially release archival/provenance and secure testing;
-- SLSA build provenance;
-- OpenSSF Scorecard branch protection, pinned build dependencies, token
-  permissions, vulnerability and CI checks;
-- GitHub artifact attestations, protected tags/rulesets, Draft Releases, and
-  immutable releases;
-- Google SRE release engineering: repeatable processes, canarying, and recovery.
+- [NIST SSDF SP 800-218](https://csrc.nist.gov/pubs/sp/800/218/final),
+  especially release archival/provenance and secure testing;
+- [SLSA v1.2](https://slsa.dev/spec/v1.2/) build provenance;
+- [OpenSSF Scorecard](https://scorecard.dev/) branch protection, pinned build
+  dependencies, token permissions, vulnerability and CI checks;
+- [GitHub artifact attestations](https://docs.github.com/en/actions/security-for-github-actions/using-artifact-attestations/using-artifact-attestations-to-establish-provenance-for-builds),
+  protected tags/rulesets, Draft Releases, and immutable releases;
+- [Google SRE release engineering](https://sre.google/sre-book/release-engineering/):
+  repeatable processes, canarying, and recovery.
