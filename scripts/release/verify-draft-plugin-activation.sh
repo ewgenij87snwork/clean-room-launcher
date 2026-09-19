@@ -59,6 +59,10 @@ with tarfile.open(archive, "r:gz") as handle:
         path = pathlib.PurePosixPath(member.name)
         if path.is_absolute() or ".." in path.parts:
             raise SystemExit("unsafe archive path")
+        if member.issym() or member.islnk():
+            target = pathlib.PurePosixPath(member.linkname)
+            if target.is_absolute() or ".." in target.parts:
+                raise SystemExit("unsafe archive link")
         candidate = (root / pathlib.Path(*path.parts)).resolve(strict=False)
         if candidate != root and root not in candidate.parents:
             raise SystemExit("archive path escapes extraction root")
