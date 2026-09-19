@@ -195,7 +195,8 @@ fn release_contract_binds_latest_stable_annotated_tags_and_inference_free_local_
     assert!(repo_policy.contains("refs/tags/v*"));
     assert!(repo_policy.contains("{\"update\", \"deletion\"}.issubset(rule_types)"));
     assert!(repo_policy.contains("bypass-actors-not-visible-to-caller"));
-    assert!(repo_policy.contains("tag-ruleset-bypass-present"));
+    assert!(repo_policy.contains("no-no-bypass-protective-tag-ruleset"));
+    assert!(repo_policy.contains("protective-tag-ruleset-missing"));
     assert!(smoke.contains("--source-digest \"$source_head\""));
     assert!(smoke.contains("--source-ref \"refs/tags/$tag\""));
     assert!(smoke.contains("[[ \"$codex_tui_rc\" -eq 0 ]] || fail \"CODEX_TUI_EXIT\""));
