@@ -155,9 +155,18 @@ def main() -> None:
     if ancestor.returncode != 0:
         fail("base-not-ancestor")
 
+    # Disable rename collapsing so both the removed and added path are classified.
+    # A move across trust/change-class boundaries must not make the original
+    # high-risk path disappear from release evidence requirements.
     changed = [
         line.strip()
-        for line in run("git", "diff", "--name-only", f"{base_sha}..{candidate_sha}").splitlines()
+        for line in run(
+            "git",
+            "diff",
+            "--name-only",
+            "--no-renames",
+            f"{base_sha}..{candidate_sha}",
+        ).splitlines()
         if line.strip()
     ]
     if not changed:
