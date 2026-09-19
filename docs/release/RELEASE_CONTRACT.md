@@ -48,6 +48,29 @@ verified before a guarded Draft Release is created.
 
 Publishing remains a separate action.
 
+Because stable `v*` tags are protected against update/deletion, the new
+Claude plugin capability is exercised twice:
+
+1. **Pre-tag:** exact accepted `main` builds a candidate archive locally,
+   proves clean/selected plugin separation and unchanged provider config, then
+   opens the selected-plugin TUI without sending a model prompt. The PASS
+   evidence is bound to the exact accepted-main SHA and is required by the tag
+   helper.
+2. **Pre-publish:** the exact Draft Release archive is downloaded, checksum and
+   attestation bundles are verified, and the same automated plugin separation
+   checks run against those downloaded bytes.
+
+Use:
+
+```sh
+scripts/release/local-plugin-activation-smoke.sh pretag --plugin-id <qualified-id>
+scripts/release/local-plugin-activation-smoke.sh draft --tag vX.Y.Z --plugin-id <qualified-id>
+```
+
+The smoke never installs, updates, enables, disables, or downgrades Claude or a
+plugin. Provider inference success is not required: qualification is based on
+startup `system/init` evidence before any billing/model response.
+
 ## Local audit
 
 To inspect what is actually in the candidate relative to the last published
