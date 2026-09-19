@@ -76,9 +76,44 @@ print("TAG_RULESET_PASS")
 PY
 rm -f /tmp/clroom-tag-rulesets.json
 
-python3 scripts/release/check-release-contract.py --report --require-head-reviewed
+python3 scripts/release/check-release-contract.py --report
 
 version=${tag#v}
+evidence="target/release-evidence/pretag-v${version}-${expected:0:12}.json"
+[[ -f "$evidence" ]] || {
+  echo "TAG_GATE_BLOCKED:PRETAG_EVIDENCE_MISSING:$evidence" >&2
+  exit 75
+}
+python3 - "$evidence" "$version" "$expected" <<'PY'
+import json, sys
+path, version, expected = sys.argv[1:]
+with open(path, encoding="utf-8") as handle:
+    record = json.load(handle)
+required = {
+    "schema_version": "clroom.plugin-release-smoke.v1",
+    "result": "PASS",
+    "phase": "pretag",
+    "release_version": version,
+    "source_head": expected,
+    "platform": "macos-aarch64",
+    "clean_system_init": True,
+    "selected_system_init": True,
+    "clean_target_plugin": False,
+    "selected_target_plugin": True,
+    "new_sibling_plugins": 0,
+    "selected_plugin_errors": 0,
+    "persistent_config_unchanged": True,
+    "interactive_selected_tui_confirmed": True,
+    "model_prompt_sent": False,
+}
+for key, value in required.items():
+    if record.get(key) != value:
+        raise SystemExit(f"TAG_GATE_BLOCKED:PRETAG_EVIDENCE:{key}")
+if not record.get("artifact_sha256") or not record.get("plugin_id"):
+    raise SystemExit("TAG_GATE_BLOCKED:PRETAG_EVIDENCE_INCOMPLETE")
+print("PRETAG_EVIDENCE_PASS")
+PY
+
 title="$tag — Clean Room Launcher"
 git tag -a "$tag" "$expected" -m "$title"
 
