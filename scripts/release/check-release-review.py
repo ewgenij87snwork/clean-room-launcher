@@ -73,6 +73,7 @@ CONTRACT_PATTERNS = (
     "scripts/release/check-provider-version-sync.py",
     "scripts/release/check-repository-release-policy.py",
     "scripts/release/push-release-tag.sh",
+    "scripts/release/publish-release.sh",
     "scripts/release/local-release-smoke.sh",
     "scripts/release/post-publish-smoke.sh",
     "scripts/release/qualify-real-provider.sh",
