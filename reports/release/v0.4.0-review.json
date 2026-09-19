@@ -2,7 +2,7 @@
   "schema_version": "clroom.release-review.v1",
   "release": "v0.4.0",
   "baseline_release": "v0.3.1",
-  "reviewed_through_commit": "2047e222f62e704d2158a5fa22b8ee2250c25193",
+  "reviewed_through_commit": "b4bb120fb04201200ad8b144d1150ea894af78d2",
   "domain_dispositions": {
     "runtime": {
       "decision": "CONTRACT_EXPAND",
