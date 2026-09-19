@@ -142,6 +142,8 @@ fn tag_push_revalidates_mutable_remote_state_at_action_time() {
         "verify_tag_ruleset",
         "check-release-contract.py --report",
         "RELEASE_CONTRACT_ACTION_TIME",
+        "CLAUDE_PROVIDER_DRIFT_ACTION_TIME",
+        "CLAUDE_PROVIDER_BYTES_DRIFT_ACTION_TIME",
     ] {
         assert!(guard.contains(required), "missing action-time tag guard: {required}");
     }
@@ -206,6 +208,7 @@ fn draft_release_smoke_requires_repository_release_immutability() {
     assert!(source.contains("repos/y-sor/clean-room-launcher/immutable-releases"));
     assert!(source.contains("IMMUTABLE_RELEASE_POLICY_UNVERIFIED"));
     assert!(source.contains("IMMUTABLE_RELEASE_POLICY_DISABLED"));
+    assert!(source.contains("\"claude_provider_sha256\":claude_provider_sha"));
 
     let draft_branch = source
         .find("if [[ \"$phase\" == \"pretag\" ]]; then")
