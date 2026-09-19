@@ -124,17 +124,15 @@ fn release_candidate_models_post_publish_and_active_candidate_lifecycle() {
     let readiness = std::fs::read_to_string("scripts/release/readiness.sh").unwrap();
 
     assert!(workflow.contains("name: Resolve published release lifecycle"));
-    assert!(workflow.contains("lifecycle=ACTIVE_CANDIDATE"));
-    assert!(workflow.contains("lifecycle=POST_PUBLISH"));
+    assert!(workflow.contains("scripts/release/resolve-release-lifecycle.py"));
+    assert!(workflow.contains("PROVIDER_CANARY_SKIPPED lifecycle=POST_PUBLISH"));
     assert!(
         !workflow.contains("CLROOM_RELEASE_VERSION: 0.4.0"),
         "release-candidate CI must derive the candidate version from Cargo.toml instead of pinning a published version"
     );
-    assert!(workflow.contains("PROVIDER_CANARY_SKIPPED lifecycle=POST_PUBLISH"));
-
-    assert!(readiness.contains("POST_PUBLISH_BASE_VERSION_MISMATCH"));
-    assert!(readiness.contains("ACTIVE_CANDIDATE_VERSION_NOT_ADVANCED"));
-    assert!(readiness.contains("RELEASE_LIFECYCLE"));
+    assert!(readiness.contains("RELEASE_LIFECYCLE_SELF_TEST"));
+    assert!(readiness.contains("RELEASE_LIFECYCLE_RESOLUTION"));
+    assert!(readiness.contains("RELEASE_LIFECYCLE_MISMATCH"));
     assert!(readiness.contains("RELEASE_CONTRACT_SKIPPED lifecycle=POST_PUBLISH"));
     assert!(readiness.contains("if [[ \"$lifecycle\" == \"ACTIVE_CANDIDATE\" ]]; then"));
 
@@ -148,6 +146,28 @@ fn release_candidate_models_post_publish_and_active_candidate_lifecycle() {
         post_publish_exit < candidate_build,
         "published-version PRs must not fabricate another candidate artifact for the already-published version"
     );
+}
+
+#[test]
+fn release_lifecycle_resolver_and_local_audit_are_fail_closed() {
+    let resolver = std::fs::read_to_string("scripts/release/resolve-release-lifecycle.py").unwrap();
+    let audit = std::fs::read_to_string("scripts/release/local-release-audit.sh").unwrap();
+
+    assert!(resolver.contains("POST_PUBLISH"));
+    assert!(resolver.contains("ACTIVE_CANDIDATE"));
+    assert!(resolver.contains("CANDIDATE_NOT_ADVANCED"));
+    assert!(resolver.contains("RELEASE_LIFECYCLE_SELF_TEST_PASS"));
+
+    assert!(audit.contains("scripts/release/resolve-release-lifecycle.py"));
+    assert!(audit.contains("PUBLISHED_BASELINE_NOT_STABLE_IMMUTABLE"));
+    assert!(audit.contains("RELEASE_CONTRACT_SKIPPED lifecycle=POST_PUBLISH"));
+    let post_publish_pass = audit
+        .find("LOCAL_RELEASE_AUDIT_PASS lifecycle=POST_PUBLISH")
+        .expect("post-publish local audit must terminate before candidate artifact work");
+    let candidate_build = audit
+        .find("./packaging/build-artifacts.sh")
+        .expect("active candidate local audit must still verify a built artifact");
+    assert!(post_publish_pass < candidate_build);
 }
 
 #[test]
