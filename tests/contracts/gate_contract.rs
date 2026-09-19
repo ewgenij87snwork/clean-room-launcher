@@ -119,6 +119,38 @@ fn local_tag_helper_parses_annotated_tagger_timestamp_with_digit_regex() {
 
 
 #[test]
+fn release_candidate_models_post_publish_and_active_candidate_lifecycle() {
+    let workflow = std::fs::read_to_string(".github/workflows/release-candidate.yml").unwrap();
+    let readiness = std::fs::read_to_string("scripts/release/readiness.sh").unwrap();
+
+    assert!(workflow.contains("name: Resolve published release lifecycle"));
+    assert!(workflow.contains("lifecycle=ACTIVE_CANDIDATE"));
+    assert!(workflow.contains("lifecycle=POST_PUBLISH"));
+    assert!(
+        !workflow.contains("CLROOM_RELEASE_VERSION: 0.4.0"),
+        "release-candidate CI must derive the candidate version from Cargo.toml instead of pinning a published version"
+    );
+    assert!(workflow.contains("PROVIDER_CANARY_SKIPPED lifecycle=POST_PUBLISH"));
+
+    assert!(readiness.contains("POST_PUBLISH_BASE_VERSION_MISMATCH"));
+    assert!(readiness.contains("ACTIVE_CANDIDATE_VERSION_NOT_ADVANCED"));
+    assert!(readiness.contains("RELEASE_LIFECYCLE"));
+    assert!(readiness.contains("RELEASE_CONTRACT_SKIPPED lifecycle=POST_PUBLISH"));
+    assert!(readiness.contains("if [[ \"$lifecycle\" == \"ACTIVE_CANDIDATE\" ]]; then"));
+
+    let post_publish_exit = readiness
+        .find("RELEASE_READINESS_PASS lifecycle=POST_PUBLISH")
+        .expect("post-publish readiness must terminate before candidate artifact work");
+    let candidate_build = readiness
+        .find("./packaging/build-artifacts.sh")
+        .expect("active candidates must still build and verify a release artifact");
+    assert!(
+        post_publish_exit < candidate_build,
+        "published-version PRs must not fabricate another candidate artifact for the already-published version"
+    );
+}
+
+#[test]
 fn draft_plugin_release_smoke_binds_cyclonedx_predicate() {
     let source = std::fs::read_to_string("scripts/release/local-plugin-activation-smoke.sh").unwrap();
     assert!(
