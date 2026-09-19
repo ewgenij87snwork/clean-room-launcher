@@ -283,6 +283,13 @@ jobs:
               --source-ref "$GITHUB_REF" \
               --deny-self-hosted-runners
           done
+          gh attestation verify "release-artifacts/$ARTIFACT" \
+            -R "$GITHUB_REPOSITORY" \
+            --bundle "$sbom" \
+            --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/release.yml" \
+            --source-digest "$GITHUB_SHA" \
+            --source-ref "$GITHUB_REF" \
+            --deny-self-hosted-runners
       - name: Upload release-visible attestation bundles
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
