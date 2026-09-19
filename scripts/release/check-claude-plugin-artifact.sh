@@ -58,15 +58,19 @@ PY
 
 capture="$root/provider-args.txt"
 write_probe="$root/plugin-write.txt"
-cat > "$root/bin/claude" <<'SH'
+capture_q=$(printf '%q' "$capture")
+write_probe_q=$(printf '%q' "$write_probe")
+cat > "$root/bin/claude" <<SH
 #!/usr/bin/env bash
 set -euo pipefail
+capture=$capture_q
+write_probe=$write_probe_q
 if [[ ${1:-} == --version ]]; then
-  printf '2.1.273 (Claude Code)\n'
+  printf '2.1.273 (Claude Code)\\n'
   exit 0
 fi
-: > "$CLROOM_TEST_CAPTURE"
-printf '%s\n' "$@" > "$CLROOM_TEST_CAPTURE"
+: > "$capture"
+printf '%s\\n' "$@" > "$capture"
 plugin_root=
 previous=
 for arg in "$@"; do
@@ -77,24 +81,29 @@ for arg in "$@"; do
   previous=$arg
 done
 if [[ -z $plugin_root ]]; then
-  printf 'MISSING\n' > "$CLROOM_TEST_WRITE_PROBE"
+  printf 'MISSING\\n' > "$write_probe"
   exit 19
 fi
 if /usr/bin/touch "$plugin_root/CLROOM_RELEASE_WRITE_PROBE" 2>/dev/null; then
-  printf 'WRITABLE\n' > "$CLROOM_TEST_WRITE_PROBE"
+  printf 'WRITABLE\\n' > "$write_probe"
   exit 20
 else
-  printf 'READ_ONLY\n' > "$CLROOM_TEST_WRITE_PROBE"
+  printf 'READ_ONLY\\n' > "$write_probe"
 fi
 exit 0
 SH
 chmod 0755 "$root/bin/claude"
 
 set +e
-HOME="$home" PATH="$root/bin:/usr/bin:/bin" CLROOM_TEST_CAPTURE="$capture" CLROOM_TEST_WRITE_PROBE="$write_probe"   "$candidate" claude --with=plugin:release-fixture@example --help   >"$root/stdout.log" 2>"$root/stderr.log"
+HOME="$home" PATH="$root/bin:/usr/bin:/bin" \
+  "$candidate" claude --with=plugin:release-fixture@example --help \
+  >"$root/stdout.log" 2>"$root/stderr.log"
 status=$?
 set -e
-[[ $status -eq 0 ]] || fail "SKILL_ONLY_LAUNCH_FAILED"
+if [[ $status -ne 0 ]]; then
+  cat "$root/stderr.log" >&2
+  fail "SKILL_ONLY_LAUNCH_FAILED"
+fi
 [[ -s "$capture" ]] || fail "PROVIDER_NOT_LAUNCHED"
 [[ $(cat "$write_probe") == READ_ONLY ]] || fail "PLUGIN_ROOT_WRITE_POLICY"
 
@@ -113,7 +122,9 @@ PY
 printf '%s\n' '{"name":"release-fixture","version":"1.0.0","hooks":{"SessionStart":[{"hooks":[{"type":"command","command":"echo nope"}]}]}}' > "$plugin/.claude-plugin/plugin.json"
 rm -f -- "$capture" "$write_probe"
 set +e
-HOME="$home" PATH="$root/bin:/usr/bin:/bin" CLROOM_TEST_CAPTURE="$capture" CLROOM_TEST_WRITE_PROBE="$write_probe"   "$candidate" claude --with=plugin:release-fixture@example --help   >"$root/negative.stdout.log" 2>"$root/negative.stderr.log"
+HOME="$home" PATH="$root/bin:/usr/bin:/bin" \
+  "$candidate" claude --with=plugin:release-fixture@example --help \
+  >"$root/negative.stdout.log" 2>"$root/negative.stderr.log"
 negative_status=$?
 set -e
 [[ $negative_status -ne 0 ]] || fail "HOOK_BUNDLE_UNEXPECTEDLY_ACCEPTED"
