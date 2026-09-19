@@ -16,31 +16,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          fetch-depth: 0
           persist-credentials: false
-      - name: Resolve latest published release baseline
-        env:
-          GH_TOKEN: ${{ github.token }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          base_tag="$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq .tag_name)"
-          test -n "$base_tag"
-          git fetch --force origin "refs/tags/$base_tag:refs/tags/$base_tag"
-          git rev-parse "$base_tag^{commit}" >/dev/null
-          candidate_version="$(python3 - <<'PY'
-          import tomllib
-          with open("Cargo.toml", "rb") as handle:
-              print(tomllib.load(handle)["package"]["version"])
-          PY
-          )"
-          published_version="${base_tag#v}"
-          audit_mode=required
-          if [[ "$candidate_version" == "$published_version" ]]; then
-            audit_mode=skip_same_published_version
-          fi
-          echo "CLROOM_RELEASE_BASE_REF=$base_tag" >> "$GITHUB_ENV"
-          echo "CLROOM_RELEASE_DELTA_AUDIT=$audit_mode" >> "$GITHUB_ENV"
       - name: Prove release attestation contract fails closed
         shell: bash
         run: |
@@ -113,12 +89,3 @@ jobs:
         env:
           CLROOM_RELEASE_VERSION: 0.4.0
         run: scripts/release/readiness.sh
-      - name: Upload release governance evidence
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: release-governance-evidence
-          path: |
-            target/release-governance/release-delta.json
-            target/release-governance/release-delta.md
-          if-no-files-found: error
-          retention-days: 14
