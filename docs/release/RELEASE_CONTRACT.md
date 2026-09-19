@@ -16,10 +16,10 @@ A CLROOM release is acceptable only when all of these are true:
 2. The exact release candidate source is accepted and current.
 3. Security, dependency, documentation, packaging, and release-workflow changes
    are represented in the changelog and public support claims.
-4. Current real provider versions used by each Owner-machine smoke match the
+4. Current real provider versions used by each maintainer-machine smoke match the
    exact pin for that behavior. Baseline clean-launch qualification and
    capability-specific qualification remain separate evidence.
-5. Provider behavior is exercised manually on the Owner machine.
+5. Provider behavior is exercised manually on the maintainer machine.
 6. Real-provider automated qualification runs against binaries extracted from
    the release archive, never only against sibling build outputs.
 7. A tag is created only after accepted-main evidence is current.
@@ -105,9 +105,9 @@ regression, dependency SCA, exact artifact binding, attestations, real-provider
 qualification, and the whole-release delta check must be bound by regression
 tests to executable gates. Semantic evidence such as strategic fit, public-truth
 review, security review, and contract-evolution judgment remains explicit
-GPT/human evidence and must not be presented as machine-proven.
+human/maintainer evidence and must not be presented as machine-proven.
 
-The machine check cannot decide semantic product strategy. GPT/human review must
+The machine check cannot decide semantic product strategy. human/maintainer review must
 still determine whether the release materially serves the current product
 roadmap and whether a discovered failure mode should expand the contract.
 Repeated or high-risk deterministic failures should become machine gates rather
@@ -116,7 +116,7 @@ than checklist prose.
 ## 2. Provider freshness and version truth
 
 Codex and Claude are fast-moving external providers. Stable CLROOM releases
-therefore require a fresh Owner-machine check immediately before tag approval.
+therefore require a fresh maintainer-machine check immediately before tag approval.
 
 The public qualification source is `release/qualification.json`. The code,
 provider canary provisioning, qualification verification, README, SECURITY,
@@ -140,7 +140,7 @@ differ.
 
 If an installed provider needed by the current smoke differs from that
 behavior's exact pin, stop. Do not reinterpret an older qualification as
-current. Provider install/update/downgrade remains a separate Owner action.
+current. Provider install/update/downgrade remains a separate maintainer action.
 After any approved pin/provider change, update canary package integrity, code
 constants, and public claims in a reviewed PR; rerun CI/release readiness and
 the local smoke.
@@ -150,7 +150,7 @@ evidence bound to their own exact provider/version contract; one cannot stand in
 for the other.
 
 The smoke must never install, update, downgrade, enable, or disable a provider
-or provider plugin. Provider maintenance is an explicit Owner action outside the
+or provider plugin. Provider maintenance is an explicit maintainer action outside the
 release script.
 
 ## 3. Release candidate freeze
@@ -231,7 +231,7 @@ date.
 
 Because the protected `v*` tag namespace cannot be updated or deleted through
 normal project operation, the irreversible remote push must not be the first
-place tag shape is validated. After the Owner grants the one-shot tag gate, use:
+place tag shape is validated. After the maintainer authorizes the tag action, use:
 
 ```sh
 scripts/release/push-release-tag.sh vX.Y.Z <exact-accepted-main-sha>
@@ -252,7 +252,7 @@ The active repository tag ruleset for `refs/tags/v*` must restrict both update
 and deletion with no bypass actors. Read-only CI and tag workflows verify the
 structural rules that GitHub exposes to read-only callers. GitHub intentionally
 withholds `bypass_actors` unless the caller can write the ruleset, so the
-Owner-authenticated pre-push and pre-publish helpers perform the strict
+maintainer-authenticated pre-push and pre-publish helpers perform the strict
 action-time proof that the same ruleset has no bypass actors. This split avoids
 both false CI failures and false no-bypass claims.
 
@@ -281,7 +281,7 @@ and the bytes that would be published.
 
 ## 8. Publish gate
 
-Publishing is a separate Owner action after Draft verification. A failed or
+Publishing is a separate maintainer action after Draft verification. A failed or
 timed-out publish request is reconciled against authoritative GitHub Release
 state before any retry; exact published state is accepted as delivered, exact
 unchanged Draft state requires a fresh action-time gate for a later retry, and
