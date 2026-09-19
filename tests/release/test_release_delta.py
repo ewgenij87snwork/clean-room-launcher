@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 import importlib.util
 import pathlib
-import tempfile
+import sys
 import unittest
 
 SCRIPT = pathlib.Path(__file__).resolve().parents[2] / "scripts/release/check-release-delta.py"
 SPEC = importlib.util.spec_from_file_location("release_delta", SCRIPT)
 release_delta = importlib.util.module_from_spec(SPEC)
 assert SPEC.loader is not None
+sys.modules[SPEC.name] = release_delta
 SPEC.loader.exec_module(release_delta)
 
 
