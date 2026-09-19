@@ -104,4 +104,17 @@ fn tag_release_qualifies_the_exact_archive_before_upload() {
     );
 }
 
+#[test]
+fn local_tag_helper_parses_annotated_tagger_timestamp_with_digit_regex() {
+    let source = std::fs::read_to_string("scripts/release/push-release-tag.sh").unwrap();
+    assert!(
+        source.contains(r#"match = re.search(r" (\d+) ([+-])(\d{2})(\d{2})$", line)"#),
+        "tag helper must parse the real annotated-tagger timestamp format"
+    );
+    assert!(
+        !source.contains(r#"match = re.search(r" (\\d+) ([+-])(\\d{2})(\\d{2})$", line)"#),
+        "double-escaped digit classes would match literal backslashes and break the tag gate"
+    );
+}
+
 use std::os::unix::fs::PermissionsExt;

@@ -155,7 +155,7 @@ raw = subprocess.check_output(["git", "cat-file", "-p", f"refs/tags/{tag}"], tex
 line = next((line for line in raw.splitlines() if line.startswith("tagger ")), None)
 if line is None:
     raise SystemExit("tagger line missing")
-match = re.search(r" (\\d+) ([+-])(\\d{2})(\\d{2})$", line)
+match = re.search(r" (\d+) ([+-])(\d{2})(\d{2})$", line)
 if match is None:
     raise SystemExit("tagger timestamp malformed")
 epoch = int(match.group(1))

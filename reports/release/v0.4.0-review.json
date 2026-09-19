@@ -55,7 +55,7 @@
     {
       "id": "release-date-drift",
       "decision": "CONTRACT_EXPAND",
-      "durable_control": "Release identity/date is checked again at the action-time tag boundary; changelog date must match the actual release action date."
+      "durable_control": "Release identity/date is checked again at the action-time tag boundary; changelog date must match the annotated tagger date, and the tagger-timestamp parser is regression-tested against the real digit format."
     },
     {
       "id": "release-review-only-looked-at-last-pr",
@@ -142,7 +142,8 @@
       "negative release workflow contract test forbidding provider qualification against sibling build outputs",
       "action-time plugin install-root, manifest-identity, component-surface and qualification revalidation with fail-closed drift tests",
       "executable-mode readiness checks for documented direct-run release audit and plugin smoke helpers",
-      "truthful smoke evidence separating automated sentinel-prompt probes from manual no-prompt TUI confirmation"
+      "truthful smoke evidence separating automated sentinel-prompt probes from manual no-prompt TUI confirmation",
+      "annotated-tagger date parser regression coverage for the local protected-tag helper"
     ]
   }
 }
