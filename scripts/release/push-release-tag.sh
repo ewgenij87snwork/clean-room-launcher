@@ -143,6 +143,44 @@ PY
 [[ "$(git for-each-ref --format='%(taggerdate:short)' "refs/tags/$tag")" == "$release_date" ]] || fail "TAG_DATE"
 [[ "$(git for-each-ref --format='%(subject)' "refs/tags/$tag")" == "$title" ]] || fail "TAG_MESSAGE"
 
+# Action-time refresh. Everything above may take long enough for mutable remote
+# or provider state to drift. Revalidate immediately before the irreversible push.
+git fetch --quiet --no-tags origin main
+remote_main_now=$(git rev-parse FETCH_HEAD)
+[[ "$remote_main_now" == "$expected_main" ]] || {
+  printf 'REMOTE_MAIN_NOW=%s EXPECTED=%s\n' "$remote_main_now" "$expected_main" >&2
+  fail "REMOTE_MAIN_MOVED_ACTION_TIME"
+}
+python3 scripts/release/check-repository-release-policy.py --mode strict >/dev/null \
+  || fail "REPOSITORY_TAG_POLICY_ACTION_TIME"
+if git ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null 2>&1; then
+  fail "REMOTE_TAG_APPEARED_ACTION_TIME"
+fi
+
+read -r evidence_codex_sha evidence_claude_sha < <(
+  python3 - "$evidence" <<'PY'
+import json
+import sys
+from pathlib import Path
+record = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+hashes = record.get("provider_sha256") or {}
+print(hashes.get("codex", ""), hashes.get("claude", ""))
+PY
+)
+[[ "$evidence_codex_sha" =~ ^[0-9a-f]{64}$ ]] || fail "PRETAG_CODEX_HASH_MISSING"
+[[ "$evidence_claude_sha" =~ ^[0-9a-f]{64}$ ]] || fail "PRETAG_CLAUDE_HASH_MISSING"
+
+codex_executable_now=$(command -v codex)
+claude_executable_now=$(command -v claude)
+codex_version_now=$(version_from_output "$codex_executable_now")
+claude_version_now=$(version_from_output "$claude_executable_now")
+[[ "$codex_version_now" == "$codex_pin" ]] || fail "CODEX_PROVIDER_DRIFT_ACTION_TIME"
+[[ "$claude_version_now" == "$claude_plugin_pin" ]] || fail "CLAUDE_PLUGIN_PROVIDER_DRIFT_ACTION_TIME"
+codex_sha_now=$(shasum -a 256 "$codex_executable_now" | awk '{print $1}')
+claude_sha_now=$(shasum -a 256 "$claude_executable_now" | awk '{print $1}')
+[[ "$codex_sha_now" == "$evidence_codex_sha" ]] || fail "CODEX_PROVIDER_BYTES_DRIFT_ACTION_TIME"
+[[ "$claude_sha_now" == "$evidence_claude_sha" ]] || fail "CLAUDE_PROVIDER_BYTES_DRIFT_ACTION_TIME"
+
 # The protected remote v* tag is created only after every local invariant above passes.
 # A transport failure after the server accepts the ref is an ambiguous outcome:
 # never push again until the remote ref is reconciled.
