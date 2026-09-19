@@ -129,6 +129,15 @@ fn inspect_claude(root: &Path) -> Result<PluginSurface, PluginSurfaceError> {
         &mut effective,
     );
 
+    for (relative, kind) in [
+        ("./hooks/hooks.json", ResourceKind::HookSet),
+        ("./.mcp.json", ResourceKind::McpServer),
+        ("./.lsp.json", ResourceKind::LspServer),
+        ("./monitors/monitors.json", ResourceKind::Monitor),
+    ] {
+        mark_component_path_presence(root, relative, kind, &mut declared, &mut effective);
+    }
+
     if let Some(hooks) = manifest.get("hooks") {
         for event in hook_events_from_value(hooks) {
             let component = component(ResourceKind::HookSet, &event);
@@ -333,6 +342,31 @@ fn collect_skills(
         }
         if entry.file_type().is_ok_and(|kind| kind.is_dir()) {
             collect_skills(plugin_root, &entry.path(), names, visited, depth + 1);
+        }
+    }
+}
+
+fn mark_component_path_presence(
+    root: &Path,
+    relative: &str,
+    kind: ResourceKind,
+    declared: &mut BTreeSet<PluginComponent>,
+    effective: &mut BTreeSet<PluginComponent>,
+) {
+    let Some(raw_relative) = relative.strip_prefix("./") else {
+        return;
+    };
+    match fs::symlink_metadata(root.join(raw_relative)) {
+        Ok(_) => {
+            let item = component(kind, "default");
+            declared.insert(item.clone());
+            effective.insert(item);
+        }
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+        Err(_) => {
+            let item = component(kind, "unreadable-default");
+            declared.insert(item.clone());
+            effective.insert(item);
         }
     }
 }
@@ -849,6 +883,27 @@ mod tests {
             .effective
             .iter()
             .any(|item| matches!(item.kind.as_str(), "mcp" | "app")));
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn claude_symlinked_mcp_config_is_observed_fail_closed() {
+        use std::os::unix::fs::symlink;
+
+        let root = fixture();
+        let target = root.join("config/mcp.json");
+        fs::create_dir_all(target.parent().unwrap()).unwrap();
+        fs::write(&target, r#"{"mcpServers":{}}"#).unwrap();
+        symlink(&target, root.join(".mcp.json")).unwrap();
+
+        let claude = inspect_plugin_surface(ProviderPluginSemantics::Claude, &root).unwrap();
+        assert!(has(
+            &claude.effective,
+            ResourceKind::McpServer,
+            "default"
+        ));
+
         let _ = fs::remove_dir_all(root);
     }
 
