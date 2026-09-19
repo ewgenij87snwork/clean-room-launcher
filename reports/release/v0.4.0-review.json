@@ -125,7 +125,7 @@
       "requirement": "Download the exact Draft Release archive on macOS Apple Silicon with an already-installed qualified skill-only Claude plugin; verify checksums and both release attestation bundles, then prove clean absence, selected presence, no newly admitted sibling, no plugin errors, and unchanged persistent provider config."
     }
   ],
-  "reviewed_content_digest": "4ee7d6d2bcf8cdd39f30f32bb015aa5aaadbd5c6a8a6ffc3c8a8973dc2d53b84",
+  "reviewed_content_digest": "8803df8334b93d01e3f07a55644b1d0928e641853ac737b9b671ba0810d656e6",
   "product_outcome": "Ship the bounded Claude skill-only whole-plugin activation and the post-v0.3.1 security/maintenance delta without widening CLROOM trust boundaries or weakening the existing clean-launch contract.",
   "contract_evolution_review": {
     "decision": "EXPAND",
