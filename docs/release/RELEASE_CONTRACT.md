@@ -71,9 +71,10 @@ Claude plugin capability is exercised twice:
    opens the selected-plugin TUI without sending a model prompt. The PASS
    evidence is bound to the exact accepted-main SHA and is required by the tag
    helper.
-2. **Pre-publish:** the exact Draft Release archive is downloaded, checksum and
-   attestation bundles are verified, and the same automated plugin separation
-   checks run against those downloaded bytes.
+2. **Pre-publish:** repository release immutability must still be enabled, then
+   the exact Draft Release archive is downloaded, checksum and attestation
+   bundles are verified, and the same automated plugin separation checks run
+   against those downloaded bytes.
 
 Use:
 
