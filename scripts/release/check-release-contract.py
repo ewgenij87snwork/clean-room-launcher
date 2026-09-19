@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import argparse, fnmatch, json, os, subprocess, sys, urllib.request
+import argparse, fnmatch, hashlib, json, os, subprocess, sys, urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -48,6 +48,22 @@ def ensure_ref(ref):
     except subprocess.CalledProcessError:
         raise SystemExit(f"RELEASE_CONTRACT_BLOCKED:MISSING_GIT_REF:{ref}")
 
+def reviewed_content_digest(ref, excluded_path):
+    raw = subprocess.check_output(["git", "ls-tree", "-r", "-z", ref], cwd=ROOT)
+    records = []
+    for record in raw.split(b"\0"):
+        if not record:
+            continue
+        meta, path = record.split(b"\t", 1)
+        decoded = path.decode("utf-8")
+        if decoded == excluded_path:
+            continue
+        records.append((decoded, meta, path))
+    digest = hashlib.sha256()
+    for _, meta, path in sorted(records, key=lambda item: item[0]):
+        digest.update(meta + b"\t" + path + b"\0")
+    return digest.hexdigest()
+
 def main():
     parser=argparse.ArgumentParser()
     parser.add_argument("--review", default=None)
@@ -68,11 +84,10 @@ def main():
             raise SystemExit("RELEASE_CONTRACT_SELF_TEST_FAIL")
         if classify(["totally-new-root.bin"],contract)[1] != ["totally-new-root.bin"]:
             raise SystemExit("RELEASE_CONTRACT_SELF_TEST_FAIL_UNKNOWN")
-        assurance = contract["release_assurance_only_patterns"]
-        if any(matches("src/cli/mod.rs", pattern) for pattern in assurance):
-            raise SystemExit("RELEASE_CONTRACT_SELF_TEST_FAIL_ASSURANCE_TOO_BROAD")
-        if not any(matches("scripts/release/check-release-contract.py", pattern) for pattern in assurance):
-            raise SystemExit("RELEASE_CONTRACT_SELF_TEST_FAIL_ASSURANCE_MISSING")
+        if contract.get("policy", {}).get("reviewed_content_drift") != "fail":
+            raise SystemExit("RELEASE_CONTRACT_SELF_TEST_FAIL_REVIEW_SEAL")
+        if set(contract.get("contract_evolution_decisions", [])) != {"EXPAND", "NO_CHANGE"}:
+            raise SystemExit("RELEASE_CONTRACT_SELF_TEST_FAIL_EVOLUTION_DECISIONS")
         print("RELEASE_CONTRACT_SELF_TEST_PASS")
         return
 
@@ -97,7 +112,18 @@ def main():
     if subprocess.call(["git","merge-base","--is-ancestor",reviewed,"HEAD"],cwd=ROOT)!=0:
         raise SystemExit("RELEASE_CONTRACT_BLOCKED:REVIEWED_COMMIT_NOT_ANCESTOR")
 
-    changed=run("git","diff","--name-only",f"{base_commit}..{reviewed}").splitlines()
+    head = run("git","rev-parse","HEAD")
+    review_relative = str(review_path.resolve().relative_to(ROOT))
+    expected_digest = review.get("reviewed_content_digest")
+    if not isinstance(expected_digest, str) or len(expected_digest) != 64:
+        raise SystemExit("RELEASE_CONTRACT_BLOCKED:REVIEW_CONTENT_DIGEST_MISSING")
+    actual_digest = reviewed_content_digest("HEAD", review_relative)
+    if actual_digest != expected_digest:
+        raise SystemExit(
+            f"RELEASE_CONTRACT_BLOCKED:REVIEW_CONTENT_DRIFT:expected={expected_digest}:actual={actual_digest}"
+        )
+
+    changed=run("git","diff","--name-only",f"{base_commit}..HEAD").splitlines()
     classified, unknown=classify(changed,contract)
     if unknown:
         print("\n".join(f"UNCLASSIFIED_RELEASE_DELTA:{p}" for p in unknown),file=sys.stderr)
@@ -112,24 +138,29 @@ def main():
         if not item or item.get("decision") not in domain_allowed or not item.get("evidence"):
             raise SystemExit(f"RELEASE_CONTRACT_BLOCKED:DOMAIN_DISPOSITION:{domain}")
 
+    expanded = False
     for item in review.get("near_misses",[]):
         if item.get("decision") not in near_miss_allowed:
             raise SystemExit("RELEASE_CONTRACT_BLOCKED:NEAR_MISS_DISPOSITION")
-        if item.get("decision")=="CONTRACT_EXPAND" and not item.get("durable_control"):
-            raise SystemExit("RELEASE_CONTRACT_BLOCKED:NEAR_MISS_CONTROL")
+        if item.get("decision")=="CONTRACT_EXPAND":
+            expanded = True
+            if not item.get("durable_control"):
+                raise SystemExit("RELEASE_CONTRACT_BLOCKED:NEAR_MISS_CONTROL")
 
-    head = run("git","rev-parse","HEAD")
-    if args.require_head_reviewed and reviewed != head:
-        raise SystemExit(
-            f"RELEASE_CONTRACT_BLOCKED:HEAD_NOT_REVIEWED:reviewed={reviewed}:head={head}"
-        )
+    evolution = review.get("contract_evolution_review")
+    allowed_evolution = set(contract.get("contract_evolution_decisions", []))
+    if not isinstance(evolution, dict) or evolution.get("decision") not in allowed_evolution:
+        raise SystemExit("RELEASE_CONTRACT_BLOCKED:CONTRACT_EVOLUTION_REVIEW")
+    if not evolution.get("rationale"):
+        raise SystemExit("RELEASE_CONTRACT_BLOCKED:CONTRACT_EVOLUTION_RATIONALE")
+    promoted = evolution.get("promoted_controls", [])
+    if evolution.get("decision") == "EXPAND" and not promoted:
+        raise SystemExit("RELEASE_CONTRACT_BLOCKED:CONTRACT_EVOLUTION_CONTROLS")
+    if expanded and evolution.get("decision") != "EXPAND":
+        raise SystemExit("RELEASE_CONTRACT_BLOCKED:CONTRACT_EVOLUTION_MISMATCH")
 
-    tail=run("git","diff","--name-only",f"{reviewed}..HEAD").splitlines()
-    allowed_tail=contract["release_assurance_only_patterns"]
-    bad_tail=[p for p in tail if not any(matches(p,pat) for pat in allowed_tail)]
-    if bad_tail:
-        print("\n".join(f"POST_REVIEW_PRODUCT_CHANGE:{p}" for p in bad_tail),file=sys.stderr)
-        raise SystemExit("RELEASE_CONTRACT_BLOCKED:POST_REVIEW_PRODUCT_CHANGE")
+    if not review.get("product_outcome"):
+        raise SystemExit("RELEASE_CONTRACT_BLOCKED:PRODUCT_OUTCOME")
 
     if args.report:
         print(f"RELEASE={review['release']}")
@@ -145,9 +176,8 @@ def main():
         print("=== FILES SINCE PUBLISHED RELEASE ===")
         for p in changed:
             print(f"{p}\t{','.join(classified[p])}")
-        if tail:
-            print("=== RELEASE-ASSURANCE TAIL ===")
-            print("\n".join(tail))
+        print(f"REVIEWED_CONTENT_DIGEST={actual_digest}")
+        print(f"CONTRACT_EVOLUTION={evolution['decision']}")
         print("=== ARTIFACT CAPABILITY GATES ===")
         for gate in review.get("artifact_capability_gates",[]):
             print(f"{gate['phase']}\t{gate['id']}\t{gate['requirement']}")
