@@ -982,8 +982,22 @@ mod tests {
     #[test]
     fn claude_matching_manifest_default_skill_is_activation_eligible() {
         let root = fixture();
+        fs::remove_dir_all(root.join("hooks")).unwrap();
+        fs::remove_dir_all(root.join("agents")).unwrap();
+        fs::remove_dir_all(root.join("commands")).unwrap();
+        fs::remove_file(root.join(".lsp.json")).unwrap();
+        fs::write(
+            root.join(".claude-plugin/plugin.json"),
+            r#"{"name":"superpowers","version":"6.3.0"}"#,
+        )
+        .unwrap();
+
         let claude = inspect_plugin_surface(ProviderPluginSemantics::Claude, &root).unwrap();
         assert_eq!(claude.plugin_name.as_deref(), Some("superpowers"));
+        assert_eq!(
+            claude.effective,
+            vec![component(ResourceKind::Skill, "brainstorming")]
+        );
         assert!(claude.activation_eligible);
         let _ = fs::remove_dir_all(root);
     }
