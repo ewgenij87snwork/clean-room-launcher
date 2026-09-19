@@ -37,7 +37,46 @@ if git ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null 2>&1; the
   exit 68
 fi
 
-python3 scripts/release/check-release-contract.py --report
+command -v gh >/dev/null 2>&1 || {
+  echo "TAG_GATE_BLOCKED:GH_REQUIRED_FOR_RULESET_CHECK" >&2
+  exit 74
+}
+gh api repos/y-sor/clean-room-launcher/rulesets > /tmp/clroom-tag-rulesets.json
+python3 - /tmp/clroom-tag-rulesets.json <<'PY'
+import json, subprocess, sys
+
+rulesets = json.load(open(sys.argv[1], encoding="utf-8"))
+matches = [
+    item for item in rulesets
+    if item.get("target") == "tag"
+    and item.get("enforcement") == "active"
+]
+if not matches:
+    raise SystemExit("TAG_GATE_BLOCKED:NO_ACTIVE_TAG_RULESET")
+
+ok = False
+for item in matches:
+    detail = json.loads(subprocess.check_output(
+        ["gh", "api", f"repos/y-sor/clean-room-launcher/rulesets/{item['id']}"],
+        text=True,
+    ))
+    refs = detail.get("conditions", {}).get("ref_name", {}).get("include", [])
+    rule_types = {rule.get("type") for rule in detail.get("rules", [])}
+    if (
+        "refs/tags/v*" in refs
+        and {"update", "deletion"} <= rule_types
+        and not detail.get("bypass_actors")
+        and detail.get("current_user_can_bypass") in (None, "never")
+    ):
+        ok = True
+        break
+if not ok:
+    raise SystemExit("TAG_GATE_BLOCKED:TAG_RULESET_WEAKENED")
+print("TAG_RULESET_PASS")
+PY
+rm -f /tmp/clroom-tag-rulesets.json
+
+python3 scripts/release/check-release-contract.py --report --require-head-reviewed
 
 version=${tag#v}
 title="$tag — Clean Room Launcher"
