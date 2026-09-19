@@ -89,9 +89,10 @@ if [[ "$codex_version" != "$codex_pin" ]]; then
   printf 'PROVIDER_REFRESH_REQUIRED provider=codex installed=%s release_pin=%s\n'     "$codex_version" "$codex_pin" >&2
   fail "CODEX_PROVIDER_DRIFT" 20
 fi
-if [[ "$claude_version" != "$claude_clean_pin" || "$claude_version" != "$claude_plugin_pin" ]]; then
-  printf 'PROVIDER_REFRESH_REQUIRED provider=claude installed=%s clean_pin=%s plugin_pin=%s\n'     "$claude_version" "$claude_clean_pin" "$claude_plugin_pin" >&2
-  fail "CLAUDE_PROVIDER_DRIFT" 21
+if [[ "$claude_version" != "$claude_plugin_pin" ]]; then
+  printf 'PROVIDER_REFRESH_REQUIRED provider=claude capability=plugin_activation installed=%s plugin_pin=%s baseline_clean_pin=%s\n' \
+    "$claude_version" "$claude_plugin_pin" "$claude_clean_pin" >&2
+  fail "CLAUDE_PLUGIN_PROVIDER_DRIFT" 21
 fi
 
 tmp=$(mktemp -d "${TMPDIR:-/tmp}/clroom-local-release-smoke.XXXXXX")
