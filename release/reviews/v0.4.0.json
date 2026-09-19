@@ -48,5 +48,6 @@
     "versioned_release_review_manifest",
     "mandatory_release_contract_self_review",
     "draft_artifact_plugin_activation_e2e_before_publish"
-  ]
+  ],
+  "release_date": "2026-09-19"
 }
