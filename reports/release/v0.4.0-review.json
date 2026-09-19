@@ -76,13 +76,23 @@
       "id": "sbom-attestation-exported-without-explicit-bundle-verify",
       "decision": "CONTRACT_EXPAND",
       "durable_control": "Tag workflow explicitly verifies the exported SBOM attestation bundle against the exact archive before Draft Release creation."
+    },
+    {
+      "id": "immutable-tag-before-capability-smoke",
+      "decision": "CONTRACT_EXPAND",
+      "durable_control": "Stable tag helper requires exact accepted-main pre-tag plugin smoke evidence before creating the protected annotated v* tag; Draft bytes are exercised again before publication."
     }
   ],
   "artifact_capability_gates": [
     {
       "id": "claude-skill-only-plugin-activation",
+      "phase": "ACCEPTED_MAIN_PRE_TAG",
+      "requirement": "Build an exact accepted-main candidate archive on macOS Apple Silicon with an already-installed qualified skill-only Claude plugin; prove clean absence, selected presence, no newly admitted sibling, no plugin errors, unchanged persistent provider config, and normal selected-plugin interactive TUI startup without a model prompt."
+    },
+    {
+      "id": "claude-skill-only-plugin-activation",
       "phase": "DRAFT_ARTIFACT_PRE_PUBLISH",
-      "requirement": "Run exact downloaded v0.4.0 archive on macOS Apple Silicon with Claude Code 2.1.273 and an already-installed qualified skill-only plugin; prove clean absence, selected presence, no newly admitted sibling, no plugin errors, and unchanged persistent provider config."
+      "requirement": "Download the exact Draft Release archive on macOS Apple Silicon with an already-installed qualified skill-only Claude plugin; verify checksums and both release attestation bundles, then prove clean absence, selected presence, no newly admitted sibling, no plugin errors, and unchanged persistent provider config."
     }
   ],
   "reviewed_content_digest": "41146686eb035f6ac46402dd6e230552e8d8e362181c5f9019df70644053c0ce",
@@ -96,7 +106,8 @@
       "mandatory per-release contract-evolution decision with durable controls",
       "real-provider qualification against binaries extracted from the exact release archive",
       "explicit verification of the exported SBOM attestation bundle",
-      "local whole-release summary/full audit command"
+      "local whole-release summary/full audit command",
+      "exact accepted-main plugin capability smoke evidence required before protected tag creation"
     ]
   }
 }
