@@ -15,6 +15,23 @@ cd "$root"
 git diff --check || fail "DIFF_CHECK"
 git diff --quiet || fail "CLEAN_TREE_REQUIRED"
 
+review="release/reviews/v${version}.json"
+[[ -f "$review" ]] || fail "RELEASE_REVIEW_MISSING"
+baseline=${CLROOM_RELEASE_BASELINE_TAG:-}
+if [[ -z "$baseline" ]]; then
+  baseline=$(python3 - "$review" <<'PY'
+import json
+import sys
+with open(sys.argv[1], encoding="utf-8") as handle:
+    print(json.load(handle)["baseline_release"])
+PY
+  ) || fail "RELEASE_BASELINE_UNRESOLVED"
+fi
+git rev-parse --verify "$baseline^{commit}" >/dev/null 2>&1 || fail "RELEASE_BASELINE_MISSING"
+python3 scripts/release/check-release-delta.py \
+  --baseline "$baseline" --candidate HEAD --review "$review" || fail "RELEASE_DELTA_CONTRACT"
+python3 tests/release/test_release_delta.py || fail "RELEASE_DELTA_TESTS"
+
 legacy_upper=$(printf '%s%s' TASK SEAL)
 legacy_lower=$(printf '%s%s' task seal)
 legacy_preview=$(printf '%s-%s' unsigned preview-only)
@@ -46,6 +63,8 @@ if command -v shellcheck >/dev/null 2>&1; then
     scripts/release/check-attestation-contract.sh \
     scripts/release/check-provider-canary-contract.sh \
     scripts/release/provision-provider-canaries.sh \
+    scripts/release/check-claude-plugin-artifact.sh \
+    scripts/release/local-release-audit.sh \
     scripts/release/readiness.sh \
     install.sh || fail "SHELLCHECK"
 else
@@ -54,6 +73,8 @@ else
     scripts/release/check-attestation-contract.sh \
     scripts/release/check-provider-canary-contract.sh \
     scripts/release/provision-provider-canaries.sh \
+    scripts/release/check-claude-plugin-artifact.sh \
+    scripts/release/local-release-audit.sh \
     scripts/release/readiness.sh || fail "SHELL_SYNTAX"
   sh -n install.sh || fail "INSTALLER_SHELL_SYNTAX"
 fi
@@ -82,6 +103,7 @@ if [[ -n ${CLROOM_PROVIDER_CODEX:-} && -n ${CLROOM_PROVIDER_CLAUDE:-} && -n ${CL
   scripts/release/qualify-real-provider.sh --provider claude --executable "$CLROOM_PROVIDER_CLAUDE" --candidate "$candidate_dir/clroom-claude" --source-head "$(git rev-parse HEAD)" --version "$version" --output "$CLROOM_QUALIFICATION_EVIDENCE_DIR/claude.json" || fail "REAL_PROVIDER_CLAUDE"
 fi
 python3 packaging/verify-artifact.py "$artifact" || fail "ARTIFACT_METADATA"
+scripts/release/check-claude-plugin-artifact.sh "$artifact" || fail "CLAUDE_PLUGIN_ARTIFACT"
 if [[ -n ${CLROOM_QUALIFICATION_EVIDENCE_DIR:-} ]]; then
   for provider in codex claude; do
     evidence="$CLROOM_QUALIFICATION_EVIDENCE_DIR/$provider.json"
