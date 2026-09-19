@@ -35,6 +35,10 @@ Semantic Versioning after the first public release.
   and fails closed unless the effective bundle is skill-only. Hook, MCP, agent,
   LSP, monitor, executable, and settings surfaces remain unqualified rather
   than widening the clean `~/.claude` boundary.
+- Release readiness now validates the complete delta from the last published
+  stable release, fails closed on unclassified change surfaces, requires an
+  explicit per-release contract-evolution review, and exercises Claude plugin
+  activation/fail-closed behavior on the exact candidate archive.
 
 ## [0.3.1] - 2026-09-17
 
