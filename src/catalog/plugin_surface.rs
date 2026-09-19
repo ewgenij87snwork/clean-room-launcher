@@ -238,9 +238,15 @@ fn claude_manifest(root: &Path) -> Result<Value, PluginSurfaceError> {
 }
 
 fn valid_claude_plugin_name(value: &str) -> bool {
-    !value.is_empty()
-        && value.len() <= 256
-        && !value.chars().any(char::is_control)
+    if value.is_empty() || value.len() > 256 {
+        return false;
+    }
+    value.split('-').all(|segment| {
+        !segment.is_empty()
+            && segment
+                .bytes()
+                .all(|byte| byte.is_ascii_lowercase() || byte.is_ascii_digit())
+    })
 }
 
 fn codex_manifest(root: &Path) -> Result<(PathBuf, Value), PluginSurfaceError> {
@@ -972,8 +978,19 @@ mod tests {
     }
 
     #[test]
-    fn claude_manifest_requires_nonempty_provider_name_without_controls() {
-        for invalid in ["", "bad\\nname"] {
+    fn claude_manifest_requires_provider_kebab_case_name() {
+        for invalid in [
+            "",
+            "bad\\nname",
+            "bad/name",
+            "BadName",
+            "provider_name",
+            "-leading",
+            "trailing-",
+            "double--dash",
+            "bad\nname",
+            "bad\u{202e}name",
+        ] {
             let root = fixture();
             fs::write(
                 root.join(".claude-plugin/plugin.json"),
@@ -990,7 +1007,7 @@ mod tests {
         let root = fixture();
         fs::write(
             root.join(".claude-plugin/plugin.json"),
-            r#"{"name":"Provider_Name"}"#,
+            r#"{"name":"provider-name-2"}"#,
         )
         .unwrap();
         assert!(inspect_plugin_surface(ProviderPluginSemantics::Claude, &root).is_ok());
