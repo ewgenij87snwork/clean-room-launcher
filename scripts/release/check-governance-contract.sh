@@ -27,6 +27,7 @@ grep -Fq 'CLROOM_RELEASE_DELTA_AUDIT=$audit_mode' "$candidate" || fail "PR_AUDIT
 grep -Fq 'fetch-depth: 0' "$candidate" || fail "PR_FULL_HISTORY"
 
 grep -Fq 'release tag must point to the exact accepted default-branch tip' "$release" || fail "EXACT_MAIN_BINDING"
+grep -Fq 'release_date="$(date -u +%F)"' "$release" || fail "UTC_RELEASE_DATE"
 grep -Fq 'title="$GITHUB_REF_NAME — Clean Room Launcher"' "$release" || fail "VERSION_FIRST_TITLE"
 grep -Fq 'args=(release create "$tag" --draft --verify-tag' "$release" || fail "DRAFT_ONLY_CREATION"
 if grep -Eq 'gh release (edit|create).*--(draft=false|latest)' "$release"; then
@@ -36,9 +37,15 @@ fi
 for path in \
   "$root/packaging/release-contract.json" \
   "$root/scripts/release/audit-release-delta.py" \
+  "$root/scripts/release/local-release-review.sh" \
   "$root/scripts/release/verify-draft-plugin-activation.sh" \
   "$root/scripts/release/verify-published-release.sh"; do
   [[ -f "$path" ]] || fail "MISSING_GOVERNANCE_COMPONENT"
 done
+
+grep -Fq 'DRAFT_PLUGIN_E2E_BLOCKED:RELEASE_NOT_DRAFT' "$root/scripts/release/verify-draft-plugin-activation.sh" || fail "DRAFT_RELEASE_STATE_BINDING"
+grep -Fq 'DRAFT_PLUGIN_E2E_BLOCKED:SOURCE_COMMIT_MISMATCH' "$root/scripts/release/verify-draft-plugin-activation.sh" || fail "DRAFT_ARTIFACT_SOURCE_BINDING"
+grep -Fq 'releases/latest/download/install.sh' "$root/scripts/release/verify-published-release.sh" || fail "PUBLIC_LATEST_INSTALL_PATH"
+grep -Fq 'PUBLIC_INSTALL_SMOKE_' "$root/scripts/release/verify-published-release.sh" || fail "PUBLIC_INSTALL_SMOKE"
 
 echo "RELEASE_GOVERNANCE_CONTRACT_PASS"
