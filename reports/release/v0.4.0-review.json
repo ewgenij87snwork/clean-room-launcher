@@ -2,7 +2,7 @@
   "schema_version": "clroom.release-review.v1",
   "release": "v0.4.0",
   "baseline_release": "v0.3.1",
-  "reviewed_through_commit": "6cea5e8de11b469f6432cd367d71f23a790c75d9",
+  "reviewed_through_commit": "2047e222f62e704d2158a5fa22b8ee2250c25193",
   "domain_dispositions": {
     "runtime": {
       "decision": "CONTRACT_EXPAND",
@@ -81,6 +81,11 @@
       "id": "immutable-tag-before-capability-smoke",
       "decision": "CONTRACT_EXPAND",
       "durable_control": "Stable tag helper requires exact accepted-main pre-tag plugin smoke evidence before creating the protected annotated v* tag; Draft bytes are exercised again before publication."
+    },
+    {
+      "id": "review-declaration-was-excluded-from-seal",
+      "decision": "CONTRACT_EXPAND",
+      "durable_control": "The candidate seal includes canonical semantics of the release review declaration itself, excluding only the self-referential digest field."
     }
   ],
   "artifact_capability_gates": [
@@ -102,7 +107,7 @@
     "rationale": "v0.4.0 review exposed repeated gaps where existing CI could pass while release-wide semantic scope, exact shipped bytes, or an exported attestation bundle were not independently bound. These are recurring release failure modes and are promoted to deterministic gates.",
     "promoted_controls": [
       "whole-release delta classification from the latest published stable immutable release",
-      "exact tracked-content semantic review digest excluding only the review declaration",
+      "exact tracked-content semantic review digest including canonical review-declaration semantics and excluding only the self-referential digest field",
       "mandatory per-release contract-evolution decision with durable controls",
       "real-provider qualification against binaries extracted from the exact release archive",
       "explicit verification of the exported SBOM attestation bundle",
