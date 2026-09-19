@@ -16,8 +16,9 @@ A CLROOM release is acceptable only when all of these are true:
 2. The exact release candidate source is accepted and current.
 3. Security, dependency, documentation, packaging, and release-workflow changes
    are represented in the changelog and public support claims.
-4. Current real Codex and Claude versions on the Owner's macOS Apple Silicon
-   machine match the exact qualification pins.
+4. Current real provider versions used by each Owner-machine smoke match the
+   exact pin for that behavior. Baseline clean-launch qualification and
+   capability-specific qualification remain separate evidence.
 5. Provider behavior is exercised manually on the Owner machine.
 6. Real-provider automated qualification runs against binaries extracted from
    the release archive, never only against sibling build outputs.
@@ -124,13 +125,22 @@ scripts/release/local-release-smoke.sh pretag \
 
 The pre-tag smoke reads the currently installed real provider versions.
 
-If either installed provider version differs from the exact pins, stop. Do not
-reinterpret an older qualification as current. Update the exact pins, canary
-packages/integrity values, code constants, and all public version claims in a
-reviewed PR; rerun CI/release readiness; then rerun the local smoke.
+For the pre-tag and Draft plugin-activation smoke, installed Claude must match
+`plugin_activation_exact`. Baseline Claude clean-launch qualification remains
+separately pinned to `clean_exact` and is reproduced by the release
+canary/archive qualification lane. Those two exact versions may intentionally
+differ.
 
-For a stable release, the Claude clean-launch and plugin-activation paths must
-both be manually exercised on the exact Claude version claimed by that release.
+If an installed provider needed by the current smoke differs from that
+behavior's exact pin, stop. Do not reinterpret an older qualification as
+current. Provider install/update/downgrade remains a separate Owner action.
+After any approved pin/provider change, update canary package integrity, code
+constants, and public claims in a reviewed PR; rerun CI/release readiness and
+the local smoke.
+
+For a stable release, baseline clean launch and plugin activation must each have
+evidence bound to their own exact provider/version contract; one cannot stand in
+for the other.
 
 The smoke must never install, update, downgrade, enable, or disable a provider
 or provider plugin. Provider maintenance is an explicit Owner action outside the
