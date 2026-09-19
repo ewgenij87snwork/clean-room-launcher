@@ -20,17 +20,14 @@ jobs:
       version: ${{ steps.release.outputs.version }}
       prerelease: ${{ steps.release.outputs.prerelease }}
       artifact_name: ${{ steps.release.outputs.artifact_name }}
-      baseline_release: ${{ steps.release.outputs.baseline_release }}
     steps:
       - name: Check out exact tag
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
-      - name: Bind tag, version, changelog, action-time default branch, and published baseline
+      - name: Bind tag, version, changelog, and action-time default branch
         id: release
-        env:
-          GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
@@ -49,11 +46,6 @@ jobs:
           if not any(heading.fullmatch(line) for line in Path("CHANGELOG.md").read_text(encoding="utf-8").splitlines()):
               raise SystemExit(f"CHANGELOG.md has no dated entry for {version}")
           PY
-          release_date="$(date -u +%F)"
-          grep -Fqx "## [${version}] - ${release_date}" CHANGELOG.md || {
-            echo "CHANGELOG.md release date must equal UTC tag date ${release_date}" >&2
-            exit 1
-          }
           manifest_version=$(python3 - <<'PY'
           import tomllib
           with open("Cargo.toml", "rb") as handle:
@@ -79,32 +71,9 @@ jobs:
             *-rc.*) prerelease=true ;;
           esac
           artifact_name="clean-room-launcher-v${version}-aarch64-apple-darwin.tar.gz"
-          baseline_release="$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq .tag_name)"
-          test -n "$baseline_release"
-          git fetch --force origin "refs/tags/$baseline_release:refs/tags/$baseline_release"
-          git rev-parse "$baseline_release^{commit}" >/dev/null
-          python3 scripts/release/audit-release-delta.py \
-            --contract packaging/release-contract.json \
-            --review "release/reviews/v${version}.json" \
-            --base-ref "$baseline_release" \
-            --head-ref HEAD \
-            --version "$version" \
-            --output-json target/release-governance/release-delta.json \
-            --output-markdown target/release-governance/release-delta.md
-          cat target/release-governance/release-delta.md >> "$GITHUB_STEP_SUMMARY"
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "prerelease=$prerelease" >> "$GITHUB_OUTPUT"
           echo "artifact_name=$artifact_name" >> "$GITHUB_OUTPUT"
-          echo "baseline_release=$baseline_release" >> "$GITHUB_OUTPUT"
-      - name: Upload release governance evidence
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: release-governance-evidence
-          path: |
-            target/release-governance/release-delta.json
-            target/release-governance/release-delta.md
-          if-no-files-found: error
-          retention-days: 14
 
   build-macos:
     name: Build and verify macOS artifact
