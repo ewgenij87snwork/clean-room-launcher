@@ -107,7 +107,7 @@ if [[ "$(uname -s)" == "Darwin" ]]; then
 
   cat > "$fake_provider" <<SH
 #!/usr/bin/env bash
-if [[ ${1:-} == --version ]]; then
+if [[ \${1:-} == --version ]]; then
   printf 'codex-cli %s\\n' '$codex_pin'
 fi
 exit 0
