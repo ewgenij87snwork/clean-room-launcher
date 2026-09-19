@@ -42,9 +42,34 @@ jobs:
               raise SystemExit("release tag must start with v")
           if not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+(?:-rc\.[0-9]+)?", version):
               raise SystemExit("release tag must be vMAJOR.MINOR.PATCH or vMAJOR.MINOR.PATCH-rc.N")
-          heading = re.compile(rf"^## \[{re.escape(version)}\] - [0-9]{{4}}-[0-9]{{2}}-[0-9]{{2}}$")
-          if not any(heading.fullmatch(line) for line in Path("CHANGELOG.md").read_text(encoding="utf-8").splitlines()):
-              raise SystemExit(f"CHANGELOG.md has no dated entry for {version}")
+          heading = re.compile(rf"^## \[{re.escape(version)}\] - ([0-9]{{4}}-[0-9]{{2}}-[0-9]{{2}})$")
+          dates = [
+              match.group(1)
+              for line in Path("CHANGELOG.md").read_text(encoding="utf-8").splitlines()
+              if (match := heading.fullmatch(line))
+          ]
+          if len(dates) != 1:
+              raise SystemExit(f"CHANGELOG.md must have exactly one dated entry for {version}")
+          Path("/tmp/clroom-changelog-date").write_text(dates[0] + "\n", encoding="utf-8")
+          PY
+          test "$(git cat-file -t "$tag")" = tag || {
+            echo "release tag must be annotated" >&2
+            exit 1
+          }
+          tag_date=$(git for-each-ref --format='%(taggerdate:iso-strict)' "refs/tags/$tag")
+          test -n "$tag_date" || {
+            echo "annotated tag has no tagger date" >&2
+            exit 1
+          }
+          python3 - "$tag_date" "$(cat /tmp/clroom-changelog-date)" <<'PY'
+          import datetime
+          import sys
+          tag_date, changelog_date = sys.argv[1:]
+          actual = datetime.datetime.fromisoformat(tag_date).date().isoformat()
+          if actual != changelog_date:
+              raise SystemExit(
+                  f"CHANGELOG release date {changelog_date} does not match annotated tag date {actual}"
+              )
           PY
           manifest_version=$(python3 - <<'PY'
           import tomllib
@@ -74,6 +99,24 @@ jobs:
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "prerelease=$prerelease" >> "$GITHUB_OUTPUT"
           echo "artifact_name=$artifact_name" >> "$GITHUB_OUTPUT"
+      - name: Validate last-published-release delta contract
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.release.outputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          baseline=$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq .tag_name)
+          test -n "$baseline"
+          test "$baseline" != "$GITHUB_REF_NAME" || {
+            echo "current release is already published" >&2
+            exit 1
+          }
+          git rev-parse --verify "$baseline^{commit}" >/dev/null
+          python3 scripts/release/check-release-delta.py \
+            --baseline "$baseline" \
+            --candidate "$GITHUB_SHA" \
+            --review "release/reviews/v${VERSION}.json"
 
   build-macos:
     name: Build and verify macOS artifact
