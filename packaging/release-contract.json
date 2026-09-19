@@ -9,13 +9,20 @@
     "release_identity",
     "owner_tag_gate",
     "draft_release_review",
-    "owner_publish_gate"
+    "owner_publish_gate",
+    "immutable_release_verify",
+    "post_publish_install_verify"
   ],
   "rules": [
     {
       "id": "runtime",
-      "patterns": ["src/**"],
-      "required_gates": ["full_locked_tests", "codeql"]
+      "patterns": [
+        "src/**"
+      ],
+      "required_gates": [
+        "full_locked_tests",
+        "codeql"
+      ]
     },
     {
       "id": "security_boundary",
@@ -52,7 +59,11 @@
     },
     {
       "id": "dependencies",
-      "patterns": ["Cargo.toml", "Cargo.lock", "deny.toml"],
+      "patterns": [
+        "Cargo.toml",
+        "Cargo.lock",
+        "deny.toml"
+      ],
       "required_gates": [
         "dependency_sca",
         "dependency_review",
@@ -76,13 +87,24 @@
     },
     {
       "id": "ci",
-      "patterns": [".github/workflows/**"],
-      "required_gates": ["ci_workflow_review", "codeql"]
+      "patterns": [
+        ".github/workflows/**"
+      ],
+      "required_gates": [
+        "ci_workflow_review",
+        "codeql"
+      ]
     },
     {
       "id": "tests",
-      "patterns": ["tests/**", "fixtures/**", "fuzz/**"],
-      "required_gates": ["full_locked_tests"]
+      "patterns": [
+        "tests/**",
+        "fixtures/**",
+        "fuzz/**"
+      ],
+      "required_gates": [
+        "full_locked_tests"
+      ]
     },
     {
       "id": "public_claims",
@@ -104,12 +126,53 @@
         "docs/robots.txt",
         "docs/sitemap.xml"
       ],
-      "required_gates": ["docs_discovery_contract"]
+      "required_gates": [
+        "docs_discovery_contract"
+      ]
     },
     {
       "id": "installer",
-      "patterns": ["install.sh", "docs/install.md"],
-      "required_gates": ["installer_self_test"]
+      "patterns": [
+        "install.sh",
+        "docs/install.md"
+      ],
+      "required_gates": [
+        "installer_self_test"
+      ]
     }
-  ]
+  ],
+  "gate_phases": {
+    "pre_tag": [
+      "ci_workflow_review",
+      "codeql",
+      "dependency_review",
+      "dependency_sca",
+      "docs_discovery_contract",
+      "full_delta_audit",
+      "full_locked_tests",
+      "installer_self_test",
+      "negative_security_tests",
+      "public_boundary",
+      "real_provider_baseline",
+      "release_contract_review",
+      "release_identity",
+      "release_notes_reconciliation",
+      "release_readiness",
+      "strategic_alignment",
+      "owner_tag_gate"
+    ],
+    "tag_workflow": [
+      "artifact_integrity",
+      "sbom_provenance"
+    ],
+    "pre_publish": [
+      "draft_artifact_plugin_activation_e2e",
+      "draft_release_review",
+      "owner_publish_gate"
+    ],
+    "post_publish": [
+      "immutable_release_verify",
+      "post_publish_install_verify"
+    ]
+  }
 }
