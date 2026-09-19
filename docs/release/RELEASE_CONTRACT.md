@@ -12,7 +12,7 @@ conditions only.
 
 A CLROOM release is acceptable only when all of these are true:
 
-1. The complete delta since the previous published release has been reviewed.
+1. The complete delta since the authoritative latest published stable release has been reviewed.
 2. The exact release candidate source is accepted and current.
 3. Security, dependency, documentation, packaging, and release-workflow changes
    are represented in the changelog and public support claims.
@@ -26,6 +26,7 @@ A CLROOM release is acceptable only when all of these are true:
    smoke of the exact draft archive bytes.
 9. Publication is a separate explicit gate.
 10. Post-publication installation is verified from the public release surface.
+11. Every stable release performs a release-contract evolution review: new near-misses, manual steps, external behavior changes, and gates that passed despite real blockers are classified and either promoted to deterministic enforcement or explicitly retained as semantic/human gates.
 
 ## Release state machine
 
@@ -77,6 +78,32 @@ scripts/release/review-release-delta.sh <previous-tag> [candidate-ref]
 ```
 
 Material changes absent from the release notes are a release blocker.
+
+## 1a. Release review declaration and contract evolution
+
+The current release declaration is `release/review.json`. It is public product
+evidence, not permission.
+
+The release-candidate workflow resolves GitHub `releases/latest` and requires
+that exact stable tag to equal the declaration's
+`previous_published_stable_tag`. An arbitrary older caller-supplied tag is not
+sufficient.
+
+`scripts/release/check-release-review.py` computes change classes from the
+whole delta and fails closed when:
+
+- a changed path has no known release classification;
+- a computed change class is absent from the release declaration;
+- required evidence for runtime, dependency, public-truth, security,
+  provider, or release-pipeline changes is undeclared;
+- the release contract changed but contract evolution is not declared;
+- the release lacks a product-level strategic outcome.
+
+The machine check cannot decide semantic product strategy. GPT/human review must
+still determine whether the release materially serves the current product
+roadmap and whether a discovered failure mode should expand the contract.
+Repeated or high-risk deterministic failures should become machine gates rather
+than checklist prose.
 
 ## 2. Provider freshness and version truth
 
@@ -180,6 +207,10 @@ Immediately before tag creation verify:
 - the tag does not already exist;
 - changelog date and version identity are correct.
 
+Stable release tags MUST be annotated tags. The release workflow rejects
+lightweight tags and binds the changelog release date to the annotated tagger
+date.
+
 Tag identity is version-first: `vX.Y.Z`.
 
 Protected release tags must not be mutable or deletable through normal project
@@ -216,7 +247,7 @@ Before publish verify:
 - Release title starts with the version token;
 - expected assets are complete;
 - SHA256SUMS passes;
-- provenance and SBOM attestations verify;
+- provenance and SBOM attestation bundles both verify;
 - exact draft-asset local smoke is PASS;
 - release notes match the final whole-release delta;
 - the release is still draft/unpublished.
