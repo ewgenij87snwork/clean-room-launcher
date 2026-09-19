@@ -69,6 +69,7 @@ PROVIDER_PATTERNS = (
 
 CONTRACT_PATTERNS = (
     "docs/release/RELEASE_CONTRACT.md",
+    "scripts/release/**",
     "scripts/release/check-release-review.py",
     "scripts/release/check-provider-version-sync.py",
     "scripts/release/check-repository-release-policy.py",
