@@ -2,7 +2,6 @@
 set -euo pipefail
 
 root=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)
-version=${CLROOM_RELEASE_VERSION:-0.4.0}
 artifact_dir=${CLROOM_ARTIFACT_DIR:-"$root/target/release-candidate"}
 
 fail() {
@@ -11,7 +10,24 @@ fail() {
 }
 
 cd "$root"
-[[ "$version" == "0.4.0" ]] || fail "VERSION_EXPECTED_0.4.0"
+manifest_version="$(python3 - <<'PY'
+import tomllib
+with open("Cargo.toml", "rb") as handle:
+    print(tomllib.load(handle)["package"]["version"])
+PY
+)"
+version=${CLROOM_RELEASE_VERSION:-$manifest_version}
+lifecycle=${CLROOM_RELEASE_LIFECYCLE:-ACTIVE_CANDIDATE}
+baseline=${CLROOM_RELEASE_BASE_REF:-}
+
+[[ "$version" == "$manifest_version" ]] || fail "VERSION_ENV_MISMATCH"
+[[ -n "$baseline" ]] || fail "PUBLISHED_RELEASE_BASE_REQUIRED"
+python3 scripts/release/resolve-release-lifecycle.py --self-test >/dev/null || fail "RELEASE_LIFECYCLE_SELF_TEST"
+expected_lifecycle="$(python3 scripts/release/resolve-release-lifecycle.py \
+  --candidate-version "$version" \
+  --published-tag "$baseline")" || fail "RELEASE_LIFECYCLE_RESOLUTION"
+[[ "$lifecycle" == "$expected_lifecycle" ]] || fail "RELEASE_LIFECYCLE_MISMATCH"
+
 git diff --check || fail "DIFF_CHECK"
 git diff --quiet || fail "CLEAN_TREE_REQUIRED"
 
@@ -39,7 +55,11 @@ fi
 [[ -x scripts/release/local-release-audit.sh ]] || fail "RELEASE_AUDIT_EXECUTABLE"
 [[ -x scripts/release/local-plugin-activation-smoke.sh ]] || fail "PLUGIN_SMOKE_EXECUTABLE"
 python3 scripts/release/check-release-contract.py --self-test || fail "RELEASE_CONTRACT_SELF_TEST"
-python3 scripts/release/check-release-contract.py || fail "RELEASE_CONTRACT"
+if [[ "$lifecycle" == "ACTIVE_CANDIDATE" ]]; then
+  python3 scripts/release/check-release-contract.py || fail "RELEASE_CONTRACT"
+else
+  printf 'RELEASE_CONTRACT_SKIPPED lifecycle=POST_PUBLISH baseline=%s version=%s\n' "$baseline" "$version"
+fi
 release_workflow=.github/workflows/release.yml
 bash scripts/release/check-attestation-contract.sh "$release_workflow" || fail "RELEASE_ATTESTATION_CONTRACT"
 bash scripts/release/check-provider-canary-contract.sh || fail "PROVIDER_CANARY_CONTRACT"
@@ -77,6 +97,11 @@ if ! command -v cargo-deny >/dev/null 2>&1; then
   fail "SCA_TOOL_NOT_AVAILABLE"
 fi
 cargo deny --config deny.toml --locked check || fail "DEPENDENCY_SCA_REVIEW"
+
+if [[ "$lifecycle" == "POST_PUBLISH" ]]; then
+  printf 'RELEASE_READINESS_PASS lifecycle=POST_PUBLISH version=%s baseline=%s\n' "$version" "$baseline"
+  exit 0
+fi
 
 rm -rf "$artifact_dir"
 mkdir -p "$artifact_dir"
@@ -124,4 +149,4 @@ metadata_dir="$artifact_dir/metadata"
   --builder-id local://clroom/release --output "$metadata_dir" >/tmp/clroom-release-metadata.log
 ./packaging/supply-chain/generate.sh verify --artifact "$artifact" --output "$metadata_dir" >/tmp/clroom-release-metadata-verify.log
 shasum -a 256 "$artifact" "$metadata_dir"/sbom.cdx.json "$metadata_dir"/provenance.intoto.json
-printf 'RELEASE_READINESS_PASS version=%s artifact=%s\n' "$version" "$artifact"
+printf 'RELEASE_READINESS_PASS lifecycle=ACTIVE_CANDIDATE version=%s baseline=%s artifact=%s\n' "$version" "$baseline" "$artifact"

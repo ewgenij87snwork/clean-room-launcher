@@ -89,7 +89,7 @@ else
   sbom="$artifact.sbom.sigstore.json"
   [[ -s "$provenance" && -s "$sbom" ]] || fail "DRAFT_ATTESTATION_BUNDLE_MISSING"
   gh attestation verify "$artifact"     -R y-sor/clean-room-launcher     --bundle "$provenance"     --signer-workflow y-sor/clean-room-launcher/.github/workflows/release.yml     --source-digest "$source_head"     --source-ref "refs/tags/$tag"     --deny-self-hosted-runners >/dev/null || fail "DRAFT_PROVENANCE"
-  gh attestation verify "$artifact"     -R y-sor/clean-room-launcher     --bundle "$sbom"     --signer-workflow y-sor/clean-room-launcher/.github/workflows/release.yml     --source-digest "$source_head"     --source-ref "refs/tags/$tag"     --deny-self-hosted-runners >/dev/null || fail "DRAFT_SBOM_ATTESTATION"
+  gh attestation verify "$artifact"     -R y-sor/clean-room-launcher     --bundle "$sbom"     --predicate-type https://cyclonedx.org/bom     --signer-workflow y-sor/clean-room-launcher/.github/workflows/release.yml     --source-digest "$source_head"     --source-ref "refs/tags/$tag"     --deny-self-hosted-runners >/dev/null || fail "DRAFT_SBOM_ATTESTATION"
 fi
 
 python3 packaging/verify-artifact.py "$artifact" >/dev/null || fail "ARTIFACT_METADATA"

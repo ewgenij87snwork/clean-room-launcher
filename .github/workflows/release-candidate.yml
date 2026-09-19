@@ -19,6 +19,35 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
           persist-credentials: false
+      - name: Resolve published release lifecycle
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          candidate_version="$(python3 - <<'PY'
+          import tomllib
+          with open("Cargo.toml", "rb") as handle:
+              print(tomllib.load(handle)["package"]["version"])
+          PY
+          )"
+          release_json="$(gh api "repos/$GITHUB_REPOSITORY/releases/latest")"
+          latest_tag="$(jq -r .tag_name <<<"$release_json")"
+          test -n "$latest_tag"
+          test "$(jq -r .draft <<<"$release_json")" = false
+          test "$(jq -r .prerelease <<<"$release_json")" = false
+          test "$(jq -r .immutable <<<"$release_json")" = true
+          lifecycle="$(python3 scripts/release/resolve-release-lifecycle.py \
+            --candidate-version "$candidate_version" \
+            --published-tag "$latest_tag")"
+          if ! git rev-parse --verify "refs/tags/$latest_tag^{commit}" >/dev/null 2>&1; then
+            git fetch --no-tags origin "refs/tags/$latest_tag:refs/tags/$latest_tag"
+          fi
+          git rev-parse --verify "refs/tags/$latest_tag^{commit}" >/dev/null
+          echo "CLROOM_RELEASE_VERSION=$candidate_version" >> "$GITHUB_ENV"
+          echo "CLROOM_RELEASE_BASE_REF=$latest_tag" >> "$GITHUB_ENV"
+          echo "CLROOM_RELEASE_LIFECYCLE=$lifecycle" >> "$GITHUB_ENV"
+          printf 'RELEASE_LIFECYCLE=%s version=%s baseline=%s\n' "$lifecycle" "$candidate_version" "$latest_tag"
       - name: Prove release attestation contract fails closed
         shell: bash
         run: |
@@ -85,10 +114,17 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          if [[ "$CLROOM_RELEASE_LIFECYCLE" == "POST_PUBLISH" ]]; then
+            echo "PROVIDER_CANARY_SKIPPED lifecycle=POST_PUBLISH"
+            exit 0
+          fi
+          [[ "$CLROOM_RELEASE_LIFECYCLE" == "ACTIVE_CANDIDATE" ]] || {
+            echo "invalid release lifecycle: $CLROOM_RELEASE_LIFECYCLE" >&2
+            exit 1
+          }
           ./scripts/release/provision-provider-canaries.sh "$RUNNER_TEMP/clroom-providers" "$GITHUB_ENV"
           echo "CLROOM_QUALIFICATION_EVIDENCE_DIR=$RUNNER_TEMP/clroom-qualification" >> "$GITHUB_ENV"
       - name: Run canonical fail-closed gate
         env:
-          CLROOM_RELEASE_VERSION: 0.4.0
           GITHUB_TOKEN: ${{ github.token }}
         run: scripts/release/readiness.sh

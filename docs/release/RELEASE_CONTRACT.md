@@ -27,7 +27,16 @@ removed. Changing source, docs, workflows, packaging, tests, scripts, file
 modes, symlinks, dispositions, near-misses, product outcome, contract-evolution
 decision, or capability gates therefore requires a fresh review seal.
 
-Release readiness and the tag workflow both run the same contract check.
+Release-candidate readiness has two explicit lifecycle states. When the manifest
+version still equals the latest immutable published stable release, readiness is
+in `POST_PUBLISH`: historical review evidence is left untouched, governance,
+negative-contract, regression, installer, and supply-chain checks still run, and
+candidate-only whole-delta/artifact qualification is skipped. Once the manifest
+version advances beyond that published release, readiness enters
+`ACTIVE_CANDIDATE`: the full whole-delta release contract is required against
+the latest published stable baseline, including a new versioned review snapshot
+and candidate artifact/provider qualification. The tag workflow always runs the
+full contract check for the exact tagged candidate.
 
 ## Contract evolution review
 
@@ -90,13 +99,18 @@ For the full local test/build/artifact pass:
 scripts/release/local-release-audit.sh --full
 ```
 
-The summary prints the authoritative published baseline, the complete commit
-list, every changed file and its release domain, the contract-evolution
-decision, artifact capability gates, and the dependency/version diff.
+For an `ACTIVE_CANDIDATE`, the summary prints the authoritative published
+baseline, the complete commit list, every changed file and its release domain,
+the contract-evolution decision, artifact capability gates, and the
+dependency/version diff. Full mode additionally runs the public-boundary check,
+installer self-test, all locked tests, builds a candidate archive, verifies its
+metadata, and prints its SHA-256.
 
-The full mode additionally runs the public-boundary check, installer self-test,
-all locked tests, builds a candidate archive, verifies its metadata, and prints
-its SHA-256.
+For `POST_PUBLISH`, the same historical review snapshot is not rewritten or
+reapplied as if it covered new bytes. The audit binds to the immutable published
+baseline, reports the dependency/version delta, and full mode runs the local
+regression/security checks but skips candidate-only artifact construction until
+the manifest advances to a new release version.
 
 Local audit complements GitHub CI and real-provider/draft-artifact evidence; it
 does not grant merge, tag, or publish permission.
