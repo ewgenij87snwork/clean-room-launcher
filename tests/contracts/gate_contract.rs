@@ -187,9 +187,17 @@ fn release_contract_binds_latest_stable_annotated_tags_and_inference_free_local_
     assert!(tag_push.contains("REMOTE_TAG_ALREADY_EXISTS"));
     assert!(tag_push.contains("RELEASE_TAG_PUSH_RECONCILED"));
     assert!(tag_push.contains("TAG_PUSH_OUTCOME_UNKNOWN"));
-    assert!(tag_push.contains(
-        "check-repository-release-policy.py --mode strict"
-    ));
+    assert!(tag_push.contains("REMOTE_MAIN_MOVED_ACTION_TIME"));
+    assert!(tag_push.contains("REMOTE_TAG_APPEARED_ACTION_TIME"));
+    assert!(tag_push.contains("CODEX_PROVIDER_BYTES_DRIFT_ACTION_TIME"));
+    assert!(tag_push.contains("CLAUDE_PROVIDER_BYTES_DRIFT_ACTION_TIME"));
+    assert!(
+        tag_push
+            .matches("check-repository-release-policy.py --mode strict")
+            .count()
+            >= 2,
+        "tag policy must be refreshed immediately before the irreversible push"
+    );
     assert!(candidate.contains(
         "check-repository-release-policy.py --mode visible"
     ));
@@ -203,6 +211,9 @@ fn release_contract_binds_latest_stable_annotated_tags_and_inference_free_local_
     assert!(repo_policy.contains("protective-tag-ruleset-missing"));
     assert!(smoke.contains("--source-digest \"$source_head\""));
     assert!(smoke.contains("--source-ref \"refs/tags/$tag\""));
+    assert!(smoke.contains("\"draft_release_state\""));
+    assert!(smoke.contains("\"assets_sha256\""));
+    assert!(smoke.contains("\"release_body_sha256\""));
     assert!(smoke.contains("[[ \"$codex_tui_rc\" -eq 0 ]] || fail \"CODEX_TUI_EXIT\""));
     assert!(smoke.contains("[[ \"$claude_clean_tui_rc\" -eq 0 ]] || fail \"CLAUDE_CLEAN_TUI_EXIT\""));
     assert!(smoke.contains("[[ \"$claude_tui_rc\" -eq 0 ]] || fail \"CLAUDE_SELECTED_TUI_EXIT\""));
@@ -210,6 +221,12 @@ fn release_contract_binds_latest_stable_annotated_tags_and_inference_free_local_
     assert!(publish.contains("RELEASE_PUBLISH_RECONCILED"));
     assert!(publish.contains("PUBLISH_OUTCOME_UNKNOWN"));
     assert!(publish.contains("PUBLISH_NOT_DELIVERED"));
+    assert!(publish.contains("provider-bytes-drift"));
+    assert!(publish.contains("release-body-drift"));
+    assert!(publish.contains("api-asset-drift"));
+    assert!(publish.contains("DRAFT_CHECKSUMS_ACTION_TIME"));
+    assert!(publish.contains("DRAFT_PROVENANCE_ACTION_TIME"));
+    assert!(publish.contains("IMMUTABLE_RELEASE_POLICY_UNVERIFIED_ACTION_TIME"));
 }
 
 #[test]
