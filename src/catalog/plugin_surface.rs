@@ -30,6 +30,7 @@ pub struct PluginComponent {
 pub struct PluginSurface {
     pub declared: Vec<PluginComponent>,
     pub effective: Vec<PluginComponent>,
+    pub plugin_name: Option<String>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -52,6 +53,10 @@ pub fn inspect_plugin_surface(
 
 fn inspect_codex(root: &Path) -> Result<PluginSurface, PluginSurfaceError> {
     let (_manifest_path, manifest) = codex_manifest(root)?;
+    let plugin_name = manifest
+        .get("name")
+        .and_then(Value::as_str)
+        .map(str::to_owned);
     let mut declared = BTreeSet::new();
     let mut effective = BTreeSet::new();
 
@@ -91,12 +96,16 @@ fn inspect_codex(root: &Path) -> Result<PluginSurface, PluginSurfaceError> {
     add_mcp_components(root, manifest.get("mcpServers"), &mut declared, &mut effective);
     add_app_components(root, manifest.get("apps"), &mut declared, &mut effective);
 
-    Ok(surface(declared, effective))
+    Ok(surface(declared, effective, plugin_name))
 }
 
 fn inspect_claude(root: &Path) -> Result<PluginSurface, PluginSurfaceError> {
-    let manifest_path = root.join(".claude-plugin/plugin.json");
-    let manifest = read_json(&manifest_path, MAX_MANIFEST_BYTES)?;
+    let manifest = claude_manifest(root)?;
+    let plugin_name = manifest
+        .get("name")
+        .and_then(Value::as_str)
+        .expect("validated Claude manifest must contain a name")
+        .to_owned();
     let mut declared = BTreeSet::new();
     let mut effective = BTreeSet::new();
 
@@ -105,14 +114,14 @@ fn inspect_claude(root: &Path) -> Result<PluginSurface, PluginSurfaceError> {
         effective.insert(skill);
     }
     add_root_skill(root, &manifest, &mut declared, &mut effective);
-    add_flat_markdown_components(
+    add_recursive_markdown_components(
         root,
         "./commands",
-        ResourceKind::Skill,
+        ResourceKind::Command,
         &mut declared,
         &mut effective,
     );
-    add_flat_markdown_components(
+    add_recursive_markdown_components(
         root,
         "./agents",
         ResourceKind::Agent,
@@ -145,6 +154,7 @@ fn inspect_claude(root: &Path) -> Result<PluginSurface, PluginSurfaceError> {
     // itself meaningful even when this bounded inventory does not enumerate the
     // custom file's contents.
     for (field, kind) in [
+        ("commands", ResourceKind::Command),
         ("agents", ResourceKind::Agent),
         ("hooks", ResourceKind::HookSet),
         ("mcpServers", ResourceKind::McpServer),
@@ -201,7 +211,46 @@ fn inspect_claude(root: &Path) -> Result<PluginSurface, PluginSurfaceError> {
         effective.insert(component);
     }
 
-    Ok(surface(declared, effective))
+    Ok(surface(declared, effective, Some(plugin_name)))
+}
+
+fn claude_manifest(root: &Path) -> Result<Value, PluginSurfaceError> {
+    let manifest_path = root.join(".claude-plugin/plugin.json");
+    let manifest = read_json(&manifest_path, MAX_MANIFEST_BYTES)?;
+    let Some(object) = manifest.as_object() else {
+        return Err(PluginSurfaceError::InvalidManifest);
+    };
+    let Some(name) = object.get("name").and_then(Value::as_str) else {
+        return Err(PluginSurfaceError::InvalidManifest);
+    };
+    if !valid_claude_plugin_name(name) {
+        return Err(PluginSurfaceError::InvalidManifest);
+    }
+    Ok(manifest)
+}
+
+fn valid_claude_plugin_name(value: &str) -> bool {
+    if value.is_empty() || value.len() > 256 {
+        return false;
+    }
+    let mut segments = value.split('-');
+    let Some(first) = segments.next() else {
+        return false;
+    };
+    if first.is_empty()
+        || !first.as_bytes()[0].is_ascii_lowercase()
+        || !first
+            .bytes()
+            .all(|byte| byte.is_ascii_lowercase() || byte.is_ascii_digit())
+    {
+        return false;
+    }
+    segments.all(|segment| {
+        !segment.is_empty()
+            && segment
+                .bytes()
+                .all(|byte| byte.is_ascii_lowercase() || byte.is_ascii_digit())
+    })
 }
 
 fn codex_manifest(root: &Path) -> Result<(PathBuf, Value), PluginSurfaceError> {
@@ -338,7 +387,7 @@ fn add_root_skill(
     effective.insert(skill);
 }
 
-fn add_flat_markdown_components(
+fn add_recursive_markdown_components(
     root: &Path,
     relative: &str,
     kind: ResourceKind,
@@ -348,22 +397,98 @@ fn add_flat_markdown_components(
     let Some(directory) = resolve_relative(root, relative) else {
         return;
     };
-    let Ok(entries) = fs::read_dir(directory) else {
+    let mut visited = 0usize;
+    collect_markdown_components(
+        root,
+        &directory,
+        &directory,
+        kind,
+        declared,
+        effective,
+        &mut visited,
+        0,
+    );
+}
+
+fn collect_markdown_components(
+    plugin_root: &Path,
+    component_root: &Path,
+    directory: &Path,
+    kind: ResourceKind,
+    declared: &mut BTreeSet<PluginComponent>,
+    effective: &mut BTreeSet<PluginComponent>,
+    visited: &mut usize,
+    depth: usize,
+) {
+    if *visited >= MAX_SKILL_ENTRIES || depth > 6 {
+        let item = component(kind, "inventory-overflow");
+        declared.insert(item.clone());
+        effective.insert(item);
+        return;
+    }
+    let Some(directory) = canonical_nonsymlink_directory(directory) else {
+        let item = component(kind, "symlink-or-invalid-directory");
+        declared.insert(item.clone());
+        effective.insert(item);
+        return;
+    };
+    if !directory.starts_with(plugin_root) {
+        let item = component(kind, "path-escape");
+        declared.insert(item.clone());
+        effective.insert(item);
+        return;
+    }
+    let Ok(entries) = fs::read_dir(&directory) else {
+        let item = component(kind, "unreadable-directory");
+        declared.insert(item.clone());
+        effective.insert(item);
         return;
     };
     for entry in entries.flatten() {
-        let path = entry.path();
-        if !entry.file_type().is_ok_and(|file_type| file_type.is_file())
-            || path.extension().and_then(|value| value.to_str()) != Some("md")
-        {
-            continue;
+        *visited += 1;
+        if *visited >= MAX_SKILL_ENTRIES {
+            let item = component(kind, "inventory-overflow");
+            declared.insert(item.clone());
+            effective.insert(item);
+            return;
         }
-        let Some(id) = path.file_stem().and_then(|value| value.to_str()) else {
+        let path = entry.path();
+        let Ok(file_type) = entry.file_type() else {
+            let item = component(kind, "unreadable-entry");
+            declared.insert(item.clone());
+            effective.insert(item);
             continue;
         };
-        if !valid_public_id(id) {
+        if file_type.is_symlink() {
+            let item = component(kind, "symlink-entry");
+            declared.insert(item.clone());
+            effective.insert(item);
             continue;
         }
+        if file_type.is_dir() {
+            collect_markdown_components(
+                plugin_root,
+                component_root,
+                &path,
+                kind,
+                declared,
+                effective,
+                visited,
+                depth + 1,
+            );
+            continue;
+        }
+        if !file_type.is_file() || path.extension().and_then(|value| value.to_str()) != Some("md") {
+            continue;
+        }
+        let id = path
+            .strip_prefix(component_root)
+            .ok()
+            .and_then(|relative| relative.to_str())
+            .and_then(|value| value.strip_suffix(".md"))
+            .filter(|value| valid_public_id(value))
+            .or_else(|| path.file_stem().and_then(|value| value.to_str()))
+            .unwrap_or("markdown-component");
         let item = component(kind, id);
         declared.insert(item.clone());
         effective.insert(item);
@@ -578,10 +703,12 @@ fn component(kind: ResourceKind, id: &str) -> PluginComponent {
 fn surface(
     declared: BTreeSet<PluginComponent>,
     effective: BTreeSet<PluginComponent>,
+    plugin_name: Option<String>,
 ) -> PluginSurface {
     PluginSurface {
         declared: declared.into_iter().collect(),
         effective: effective.into_iter().collect(),
+        plugin_name,
     }
 }
 
@@ -616,7 +743,8 @@ mod tests {
         fs::create_dir_all(root.join(".claude-plugin")).unwrap();
         fs::create_dir_all(root.join("skills/brainstorming")).unwrap();
         fs::create_dir_all(root.join("hooks")).unwrap();
-        fs::create_dir_all(root.join("agents")).unwrap();
+        fs::create_dir_all(root.join("agents/review")).unwrap();
+        fs::create_dir_all(root.join("commands/tools")).unwrap();
         fs::write(root.join("skills/brainstorming/SKILL.md"), "fixture\n").unwrap();
         fs::write(
             root.join(".codex-plugin/plugin.json"),
@@ -633,7 +761,8 @@ mod tests {
             r#"{"hooks":{"PostToolUse":[{"hooks":[{"type":"command","command":"fixture"}]}]}}"#,
         )
         .unwrap();
-        fs::write(root.join("agents/reviewer.md"), "fixture\n").unwrap();
+        fs::write(root.join("agents/review/security.md"), "fixture\n").unwrap();
+        fs::write(root.join("commands/tools/inspect.md"), "fixture\n").unwrap();
         fs::write(root.join(".lsp.json"), r#"{"rust":{"command":"rust-analyzer"}}"#).unwrap();
         root
     }
@@ -671,7 +800,16 @@ mod tests {
             ResourceKind::HookSet,
             "PostToolUse"
         ));
-        assert!(has(&claude.effective, ResourceKind::Agent, "reviewer"));
+        assert!(has(
+            &claude.effective,
+            ResourceKind::Agent,
+            "review/security"
+        ));
+        assert!(has(
+            &claude.effective,
+            ResourceKind::Command,
+            "tools/inspect"
+        ));
         assert!(has(&claude.effective, ResourceKind::LspServer, "rust"));
         assert!(claude
             .effective
@@ -685,6 +823,21 @@ mod tests {
             .effective
             .iter()
             .any(|item| matches!(item.kind.as_str(), "mcp" | "app")));
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn claude_manifest_requires_valid_provider_name() {
+        let root = fixture();
+        fs::write(
+            root.join(".claude-plugin/plugin.json"),
+            r#"{"name":"Bad_Name"}"#,
+        )
+        .unwrap();
+        assert_eq!(
+            inspect_plugin_surface(ProviderPluginSemantics::Claude, &root),
+            Err(super::PluginSurfaceError::InvalidManifest)
+        );
         let _ = fs::remove_dir_all(root);
     }
 
