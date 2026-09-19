@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "contract_version": "1.0.0",
+  "description": "Public technical release-delta contract. Strategic/Owner control stays outside the public repository.",
+  "allowed_dispositions": [
+    "CONTRACT_EXPAND",
+    "COVERED",
+    "NOT_APPLICABLE",
+    "FOLLOW_UP"
+  ],
+  "domains": {
+    "ci": {
+      "trigger": "ci_workflow_changed"
+    },
+    "dependencies": {
+      "trigger": "dependency_graph_changed"
+    },
+    "provider_runtime": {
+      "trigger": "runtime_or_provider_behavior_changed"
+    },
+    "runtime": {
+      "trigger": "runtime_or_provider_behavior_changed"
+    },
+    "release_distribution": {
+      "trigger": "release_or_distribution_changed"
+    },
+    "public_claims": {
+      "trigger": "public_claims_changed"
+    },
+    "verification": {
+      "trigger": "verification_surface_changed"
+    }
+  },
+  "path_rules": [
+    {
+      "domain": "ci",
+      "patterns": [
+        ".github/workflows/**"
+      ]
+    },
+    {
+      "domain": "release_distribution",
+      "patterns": [
+        "scripts/release/**",
+        "packaging/**",
+        "install.sh",
+        "release/**"
+      ]
+    },
+    {
+      "domain": "dependencies",
+      "patterns": [
+        "Cargo.toml",
+        "Cargo.lock",
+        "deny.toml"
+      ]
+    },
+    {
+      "domain": "provider_runtime",
+      "patterns": [
+        "src/adapters/**"
+      ]
+    },
+    {
+      "domain": "runtime",
+      "patterns": [
+        "src/catalog/**",
+        "src/cli/**",
+        "src/bin/**",
+        "src/lib.rs",
+        "src/main.rs"
+      ]
+    },
+    {
+      "domain": "verification",
+      "patterns": [
+        "tests/**",
+        "fixtures/**",
+        "fuzz/**"
+      ]
+    },
+    {
+      "domain": "public_claims",
+      "patterns": [
+        "README.md",
+        "SECURITY.md",
+        "GOVERNANCE.md",
+        "CONTRIBUTING.md",
+        "CHANGELOG.md",
+        "docs/**"
+      ]
+    }
+  ],
+  "global_triggers": [
+    {
+      "id": "contract_self_change",
+      "patterns": [
+        "release/technical-release-contract.json",
+        "scripts/release/check-release-delta.py"
+      ],
+      "rationale": "Changing the release contract requires an explicit disposition in the release review."
+    }
+  ]
+}
