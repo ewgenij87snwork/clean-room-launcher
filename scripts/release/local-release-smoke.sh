@@ -384,7 +384,7 @@ mkdir -p "$evidence_dir"
 short_head=${source_head:0:12}
 evidence="$evidence_dir/${phase}-v${release_version}-${short_head}.json"
 
-python3 -   "$evidence" "$phase" "$release_version" "$source_head" "$artifact_sha"   "$codex_version" "$claude_version" "$plugin_id" "$clean_rc" "$selected_rc"   "$codex_tui_rc" "$claude_tui_rc" "$tag" <<'PY'
+python3 -   "$evidence" "$phase" "$release_version" "$source_head" "$artifact_sha"   "$codex_version" "$claude_version" "$plugin_id" "$clean_rc" "$selected_rc"   "$codex_tui_rc" "$claude_clean_tui_rc" "$claude_tui_rc" "$tag" <<'PY'
 import datetime
 import json
 import sys
