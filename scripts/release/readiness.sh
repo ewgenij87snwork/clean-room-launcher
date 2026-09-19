@@ -15,23 +15,35 @@ cd "$root"
 git diff --check || fail "DIFF_CHECK"
 git diff --quiet || fail "CLEAN_TREE_REQUIRED"
 [[ -n ${CLROOM_RELEASE_BASE_REF:-} ]] || fail "PUBLISHED_RELEASE_BASE_REQUIRED"
-review_manifest="release/reviews/v${version}.json"
-[[ -f "$review_manifest" ]] || fail "RELEASE_REVIEW_MANIFEST_REQUIRED"
+audit_mode=${CLROOM_RELEASE_DELTA_AUDIT:-required}
 python3 scripts/release/audit-release-delta.py --self-test || fail "RELEASE_DELTA_AUDIT_SELF_TEST"
 rm -rf target/release-governance
 mkdir -p target/release-governance
-python3 scripts/release/audit-release-delta.py \
-  --contract packaging/release-contract.json \
-  --review "$review_manifest" \
-  --base-ref "$CLROOM_RELEASE_BASE_REF" \
-  --head-ref HEAD \
-  --version "$version" \
-  --output-json target/release-governance/release-delta.json \
-  --output-markdown target/release-governance/release-delta.md \
-  || fail "RELEASE_DELTA_AUDIT"
-if [[ -n ${GITHUB_STEP_SUMMARY:-} ]]; then
-  cat target/release-governance/release-delta.md >> "$GITHUB_STEP_SUMMARY"
-fi
+case "$audit_mode" in
+  required)
+    review_manifest="release/reviews/v${version}.json"
+    [[ -f "$review_manifest" ]] || fail "RELEASE_REVIEW_MANIFEST_REQUIRED"
+    python3 scripts/release/audit-release-delta.py \
+      --contract packaging/release-contract.json \
+      --review "$review_manifest" \
+      --base-ref "$CLROOM_RELEASE_BASE_REF" \
+      --head-ref HEAD \
+      --version "$version" \
+      --output-json target/release-governance/release-delta.json \
+      --output-markdown target/release-governance/release-delta.md \
+      || fail "RELEASE_DELTA_AUDIT"
+    if [[ -n ${GITHUB_STEP_SUMMARY:-} ]]; then
+      cat target/release-governance/release-delta.md >> "$GITHUB_STEP_SUMMARY"
+    fi
+    ;;
+  skip_same_published_version)
+    [[ "$CLROOM_RELEASE_BASE_REF" == "v$version" ]] || fail "RELEASE_DELTA_SKIP_VERSION_MISMATCH"
+    printf 'RELEASE_DELTA_AUDIT_SKIPPED published_version=%s\n' "$version"
+    ;;
+  *)
+    fail "RELEASE_DELTA_AUDIT_MODE"
+    ;;
+esac
 
 legacy_upper=$(printf '%s%s' TASK SEAL)
 legacy_lower=$(printf '%s%s' task seal)
