@@ -5,7 +5,7 @@ usage() {
   cat <<'EOF'
 usage: scripts/release/local-release-review.sh [--full] [--head REF]
 
-Read-only release review helper for a local CLROOM checkout.
+Local release review helper for a CLROOM checkout.
 
 Default:
   - resolves the latest published GitHub Release
@@ -118,7 +118,10 @@ if [[ "$full" == true ]]; then
   }
   echo
   echo "=== FULL LOCAL VERIFICATION ==="
-  rustup target add aarch64-apple-darwin
+  rustup target list --installed | grep -Fxq aarch64-apple-darwin || {
+    echo "LOCAL_RELEASE_REVIEW_BLOCKED:RUST_TARGET_MISSING:aarch64-apple-darwin" >&2
+    exit 1
+  }
   cargo test --locked --all-targets --target aarch64-apple-darwin
   sh install.sh --self-test
   git diff --check "$base_tag..$head_ref"
