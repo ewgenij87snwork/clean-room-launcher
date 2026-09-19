@@ -84,6 +84,24 @@ CONTRACT_PATTERNS = (
 )
 
 
+MACHINE_EVIDENCE = {
+    "artifact-binding",
+    "attestation",
+    "dependency-sca",
+    "full-regression",
+    "real-provider",
+    "whole-release-review",
+}
+
+SEMANTIC_EVIDENCE = {
+    "contract-evolution-review",
+    "public-truth-review",
+    "security-review",
+    "strategic-fit-review",
+}
+
+KNOWN_EVIDENCE = MACHINE_EVIDENCE | SEMANTIC_EVIDENCE
+
 ALWAYS_EVIDENCE = {
     "contract-evolution-review",
     "strategic-fit-review",
@@ -197,6 +215,10 @@ def main() -> None:
     if not isinstance(evidence_raw, list) or not all(isinstance(x, str) for x in evidence_raw):
         fail("required-evidence")
     evidence = set(evidence_raw)
+    unknown_evidence = evidence - KNOWN_EVIDENCE
+    if unknown_evidence:
+        fail("unknown-evidence:" + ",".join(sorted(unknown_evidence)))
+
     required = set(ALWAYS_EVIDENCE)
     if "runtime" in computed:
         required.add("full-regression")
