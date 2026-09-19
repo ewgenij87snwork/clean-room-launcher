@@ -232,8 +232,12 @@ scripts/release/push-release-tag.sh vX.Y.Z <exact-accepted-main-sha>
 
 The helper rechecks exact local/remote `main`, remote tag absence, active
 repository tag policy, package/changelog identity, and creates and validates the
-annotated tag locally before its single remote push. A safe exact local tag may
-be reused after a transient push failure; any mismatch fails closed.
+annotated tag locally before its single remote push. If the push transport
+fails, the helper reconciles the remote tag object and peeled commit before
+reporting failure or success; it never blindly repeats an irreversible
+protected-tag creation. A safe exact local tag may be reused only after
+authoritative reconciliation shows the remote tag was not created; any mismatch
+fails closed.
 
 Tag identity is version-first: `vX.Y.Z`.
 
@@ -270,7 +274,11 @@ and the bytes that would be published.
 
 ## 8. Publish gate
 
-Publishing is a separate Owner action after Draft verification.
+Publishing is a separate Owner action after Draft verification. A failed or
+timed-out publish request is reconciled against authoritative GitHub Release
+state before any retry; exact published state is accepted as delivered, exact
+unchanged Draft state requires a fresh action-time gate for a later retry, and
+any other outcome stops as ambiguous.
 
 Before publish verify:
 
