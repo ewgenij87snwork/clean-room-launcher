@@ -41,8 +41,8 @@ source_head=$(gh api "repos/y-sor/clean-room-launcher/commits/$tag" --jq .sha)
 short_head=${source_head:0:12}
 evidence="target/release-evidence/draft-v${version}-${short_head}.json"
 [[ -f "$evidence" ]] || fail "DRAFT_SMOKE_EVIDENCE_MISSING"
-gh release view "$tag" --json body > "$tmp/public-release.json" \
-  || fail "PUBLIC_RELEASE_BODY"
+gh api "repos/y-sor/clean-room-launcher/releases/tags/$tag" > "$tmp/public-release.json" \
+  || fail "PUBLIC_RELEASE_STATE"
 [[ "$release_tag" == "$tag" ]] || fail "PUBLIC_RELEASE_TAG_MISMATCH"
 [[ "$release_title" == "$tag — Clean Room Launcher" ]] || fail "PUBLIC_RELEASE_TITLE_MISMATCH"
 [[ "$release_draft" == false ]] || fail "PUBLIC_RELEASE_STILL_DRAFT"
@@ -84,16 +84,30 @@ if not isinstance(expected_body, str) or not isinstance(expected_assets, dict):
     raise SystemExit("state")
 
 release = json.loads(pathlib.Path(release_path).read_text(encoding="utf-8"))
+if release.get("draft") is not False or release.get("immutable") is not True:
+    raise SystemExit("release-state")
 body = release.get("body")
 if not isinstance(body, str):
     raise SystemExit("body")
 if hashlib.sha256(body.encode("utf-8")).hexdigest() != expected_body:
     raise SystemExit("body-drift")
 
+api_assets = release.get("assets")
+if not isinstance(api_assets, list) or len(api_assets) != len(expected_assets):
+    raise SystemExit("api-asset-count")
+api_digests = {}
+for item in api_assets:
+    name = item.get("name")
+    digest = item.get("digest")
+    if not isinstance(name, str) or not isinstance(digest, str) or not digest.startswith("sha256:"):
+        raise SystemExit("api-asset-digest")
+    api_digests[name] = digest.removeprefix("sha256:")
+if api_digests != expected_assets:
+    raise SystemExit("api-asset-drift")
+
 root = pathlib.Path(assets_dir)
-names = set(expected_assets)
 actual = {}
-for name in names:
+for name in expected_assets:
     path = root / name
     if not path.is_file():
         raise SystemExit("missing-asset:" + name)
