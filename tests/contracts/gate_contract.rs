@@ -165,6 +165,17 @@ fn release_contract_binds_latest_stable_annotated_tags_and_inference_free_local_
     assert!(post_publish.contains("sh \"$latest_installer\""));
     assert!(post_publish.contains("--source-digest \"$source_head\""));
     assert!(post_publish.contains("--source-ref \"refs/tags/$tag\""));
+
+    let tag_push = std::fs::read_to_string("scripts/release/push-release-tag.sh").unwrap();
+    let repo_policy =
+        std::fs::read_to_string("scripts/release/check-repository-release-policy.py").unwrap();
+    assert!(tag_push.contains("git cat-file -t \"refs/tags/$tag\""));
+    assert!(tag_push.contains("git push origin \"refs/tags/$tag:refs/tags/$tag\""));
+    assert!(tag_push.contains("REMOTE_TAG_ALREADY_EXISTS"));
+    assert!(tag_push.contains("python3 scripts/release/check-repository-release-policy.py"));
+    assert!(repo_policy.contains("refs/tags/v*"));
+    assert!(repo_policy.contains("{\"update\", \"deletion\"}.issubset(rule_types)"));
+    assert!(repo_policy.contains("not bypass"));
     assert!(smoke.contains("--source-digest \"$source_head\""));
     assert!(smoke.contains("--source-ref \"refs/tags/$tag\""));
     assert!(smoke.contains("[[ \"$codex_tui_rc\" -eq 0 ]] || fail \"CODEX_TUI_EXIT\""));
