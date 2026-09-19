@@ -15,8 +15,8 @@ permalink: /limitations.html
   provider-native plugin per launch. Other provider tuples fail closed for this
   activation path.
 - The initial v0.4 whole-plugin qualification accepts only bundles whose
-  observed effective surface is skill-only. Bundles exposing hooks, MCP
-  servers, agents, LSP servers, background monitors, plugin executables, or
+  observed effective surface is skill-only. Bundles exposing slash commands,
+  hooks, MCP servers, agents, LSP servers, background monitors, plugin executables, or
   plugin settings fail closed. This avoids reopening ambient `~/.claude`
   state that those components may depend on.
 - Component-level filtering, Codex plugin activation, standalone MCP resource
