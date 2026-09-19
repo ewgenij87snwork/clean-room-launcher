@@ -64,6 +64,11 @@ def main():
             raise SystemExit("RELEASE_CONTRACT_SELF_TEST_FAIL")
         if classify(["totally-new-root.bin"],contract)[1] != ["totally-new-root.bin"]:
             raise SystemExit("RELEASE_CONTRACT_SELF_TEST_FAIL_UNKNOWN")
+        assurance = contract["release_assurance_only_patterns"]
+        if any(matches("src/cli/mod.rs", pattern) for pattern in assurance):
+            raise SystemExit("RELEASE_CONTRACT_SELF_TEST_FAIL_ASSURANCE_TOO_BROAD")
+        if not any(matches("scripts/release/check-release-contract.py", pattern) for pattern in assurance):
+            raise SystemExit("RELEASE_CONTRACT_SELF_TEST_FAIL_ASSURANCE_MISSING")
         print("RELEASE_CONTRACT_SELF_TEST_PASS")
         return
 
@@ -96,14 +101,15 @@ def main():
 
     changed_domains=sorted({d for ds in classified.values() for d in ds})
     dispositions=review.get("domain_dispositions",{})
-    allowed=set(contract["allowed_dispositions"])
+    domain_allowed=set(contract["domain_satisfying_dispositions"])
+    near_miss_allowed=set(contract["near_miss_dispositions"])
     for domain in changed_domains:
         item=dispositions.get(domain)
-        if not item or item.get("decision") not in allowed or not item.get("evidence"):
+        if not item or item.get("decision") not in domain_allowed or not item.get("evidence"):
             raise SystemExit(f"RELEASE_CONTRACT_BLOCKED:DOMAIN_DISPOSITION:{domain}")
 
     for item in review.get("near_misses",[]):
-        if item.get("decision") not in allowed:
+        if item.get("decision") not in near_miss_allowed:
             raise SystemExit("RELEASE_CONTRACT_BLOCKED:NEAR_MISS_DISPOSITION")
         if item.get("decision")=="CONTRACT_EXPAND" and not item.get("durable_control"):
             raise SystemExit("RELEASE_CONTRACT_BLOCKED:NEAR_MISS_CONTROL")
