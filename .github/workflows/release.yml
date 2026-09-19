@@ -26,6 +26,10 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
+      - name: Verify whole-release contract
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 scripts/release/check-release-contract.py --report
       - name: Bind tag, version, changelog, and action-time default branch
         id: release
         shell: bash
