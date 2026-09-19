@@ -44,12 +44,14 @@ Semantic Versioning after the first public release.
   revalidates the exact active install root around launch, reopens only that
   root read-only, refuses overlapping raw `--plugin-dir`/`--plugin-url`
   activation, and leaves persistent Claude configuration unchanged.
-- Activation qualification inventories Claude's documented plugin surface and
-  fails closed unless the effective bundle is skill-only. Slash-command, hook,
-  MCP, agent, LSP, monitor, executable, and settings surfaces remain
-  unqualified rather than widening the clean `~/.claude` boundary. Nested
-  command/agent paths and manifest identity are included in that fail-closed
-  check, and qualification is revalidated immediately around launch.
+- Activation inventory follows Claude provider-visible plugin surfaces, while
+  v0.4.0 activation remains deliberately narrower: a matching plugin manifest
+  identity plus only the default one-level `skills/<name>/SKILL.md` layout is
+  qualified. Manifestless/root-single-skill/custom-skill-path bundles and
+  slash-command, hook, MCP, agent, LSP, monitor, executable, or settings
+  surfaces remain unqualified. Nested non-skill paths and identity are included
+  in the fail-closed check, and qualification is revalidated immediately around
+  launch.
 - Updated the shipped `cap-std` / `cap-primitives` dependency from `4.0.2`
   to `4.0.3`, incorporating the upstream fix for
   `GHSA-hp8f-xmx4-4qrg` affecting trailing-slash symlink containment on
