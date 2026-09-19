@@ -2,22 +2,101 @@
   "schema_version": "clroom.release-review.v1",
   "release": "v0.4.0",
   "baseline_release": "v0.3.1",
-  "reviewed_through_commit": "28f576113948ea354c5d91576db885f5f1823980",
+  "reviewed_through_commit": "3694eb90d06274b027d31b128281843ed98715a9",
   "domain_dispositions": {
-    "runtime": {"decision":"CONTRACT_EXPAND","evidence":["Claude whole-plugin activation is bounded by exact provider tuple, fail-closed inventory, negative tests, and exact-provider E2E before release."]},
-    "tests": {"decision":"COVERED","evidence":["Full locked tests, focused negative tests, fuzz smoke, and release-readiness checks are required."]},
-    "dependencies": {"decision":"CONTRACT_EXPAND","evidence":["cap-std/cap-primitives 4.0.3 delta is lockfile-pinned and covered by Dependency Review plus cargo-deny."]},
-    "ci": {"decision":"COVERED","evidence":["Pinned Actions changes are reviewed by whole-release delta, CodeQL, public-boundary and release workflows."]},
-    "release": {"decision":"CONTRACT_EXPAND","evidence":["v0.4.0 version identity, artifact qualification, SBOM/provenance and draft-only release workflow are machine gated."]},
-    "public_claims": {"decision":"COVERED","evidence":["README/docs/SECURITY/changelog are reviewed against implementation and publication state; false release claims block acceptance."]}
+    "runtime": {
+      "decision": "CONTRACT_EXPAND",
+      "evidence": [
+        "Claude whole-plugin activation is bounded by exact provider tuple, fail-closed inventory, negative tests, and exact-provider E2E before release."
+      ]
+    },
+    "tests": {
+      "decision": "COVERED",
+      "evidence": [
+        "Full locked tests, focused negative tests, fuzz smoke, and release-readiness checks are required."
+      ]
+    },
+    "dependencies": {
+      "decision": "CONTRACT_EXPAND",
+      "evidence": [
+        "cap-std/cap-primitives 4.0.3 delta is lockfile-pinned and covered by Dependency Review plus cargo-deny."
+      ]
+    },
+    "ci": {
+      "decision": "COVERED",
+      "evidence": [
+        "Pinned Actions changes are reviewed by whole-release delta, CodeQL, public-boundary and release workflows."
+      ]
+    },
+    "release": {
+      "decision": "CONTRACT_EXPAND",
+      "evidence": [
+        "v0.4.0 version identity, artifact qualification, SBOM/provenance and draft-only release workflow are machine gated."
+      ]
+    },
+    "public_claims": {
+      "decision": "COVERED",
+      "evidence": [
+        "README/docs/SECURITY/changelog are reviewed against implementation and publication state; false release claims block acceptance."
+      ]
+    }
   },
   "near_misses": [
-    {"id":"plugin-loaded-is-not-plugin-works","decision":"CONTRACT_EXPAND","durable_control":"Provider plugin activation now fails closed on unqualified component surfaces; release requires behavior-specific exact-provider evidence."},
-    {"id":"clean-vs-activation-version-coupling","decision":"CONTRACT_EXPAND","durable_control":"Clean-launch and plugin-activation exact qualification tuples are separate and regression-tested."},
-    {"id":"release-date-drift","decision":"CONTRACT_EXPAND","durable_control":"Release identity/date is checked again at the action-time tag boundary; changelog date must match the actual release action date."},
-    {"id":"release-review-only-looked-at-last-pr","decision":"CONTRACT_EXPAND","durable_control":"This contract binds every release to the authoritative latest published stable release and classifies the whole delta fail-closed."}
+    {
+      "id": "plugin-loaded-is-not-plugin-works",
+      "decision": "CONTRACT_EXPAND",
+      "durable_control": "Provider plugin activation now fails closed on unqualified component surfaces; release requires behavior-specific exact-provider evidence."
+    },
+    {
+      "id": "clean-vs-activation-version-coupling",
+      "decision": "CONTRACT_EXPAND",
+      "durable_control": "Clean-launch and plugin-activation exact qualification tuples are separate and regression-tested."
+    },
+    {
+      "id": "release-date-drift",
+      "decision": "CONTRACT_EXPAND",
+      "durable_control": "Release identity/date is checked again at the action-time tag boundary; changelog date must match the actual release action date."
+    },
+    {
+      "id": "release-review-only-looked-at-last-pr",
+      "decision": "CONTRACT_EXPAND",
+      "durable_control": "This contract binds every release to the authoritative latest published stable release and classifies the whole delta fail-closed."
+    },
+    {
+      "id": "semantic-review-tail-could-change-release-gates",
+      "decision": "CONTRACT_EXPAND",
+      "durable_control": "Semantic review is sealed to a SHA-256 digest of every tracked mode/type/blob/path except the review declaration itself; any later code/docs/workflow/release-script drift fails closed."
+    },
+    {
+      "id": "provider-qualified-sibling-build-not-shipped-archive",
+      "decision": "CONTRACT_EXPAND",
+      "durable_control": "Tag workflow extracts the exact release archive and runs real-provider qualification against the archived clroom-codex and clroom-claude binaries."
+    },
+    {
+      "id": "sbom-attestation-exported-without-explicit-bundle-verify",
+      "decision": "CONTRACT_EXPAND",
+      "durable_control": "Tag workflow explicitly verifies the exported SBOM attestation bundle against the exact archive before Draft Release creation."
+    }
   ],
   "artifact_capability_gates": [
-    {"id":"claude-skill-only-plugin-activation","phase":"DRAFT_ARTIFACT_PRE_PUBLISH","requirement":"Run exact downloaded v0.4.0 archive on macOS Apple Silicon with Claude Code 2.1.273 and an already-installed qualified skill-only plugin; prove clean absence, selected presence, no newly admitted sibling, no plugin errors, and unchanged persistent provider config."}
-  ]
+    {
+      "id": "claude-skill-only-plugin-activation",
+      "phase": "DRAFT_ARTIFACT_PRE_PUBLISH",
+      "requirement": "Run exact downloaded v0.4.0 archive on macOS Apple Silicon with Claude Code 2.1.273 and an already-installed qualified skill-only plugin; prove clean absence, selected presence, no newly admitted sibling, no plugin errors, and unchanged persistent provider config."
+    }
+  ],
+  "reviewed_content_digest": "9be85d8a0875681720d91aad5f78bc690fa487410602cc579e15d40a748ef3b8",
+  "product_outcome": "Ship the bounded Claude skill-only whole-plugin activation and the post-v0.3.1 security/maintenance delta without widening CLROOM trust boundaries or weakening the existing clean-launch contract.",
+  "contract_evolution_review": {
+    "decision": "EXPAND",
+    "rationale": "v0.4.0 review exposed repeated gaps where existing CI could pass while release-wide semantic scope, exact shipped bytes, or an exported attestation bundle were not independently bound. These are recurring release failure modes and are promoted to deterministic gates.",
+    "promoted_controls": [
+      "whole-release delta classification from the latest published stable immutable release",
+      "exact tracked-content semantic review digest excluding only the review declaration",
+      "mandatory per-release contract-evolution decision with durable controls",
+      "real-provider qualification against binaries extracted from the exact release archive",
+      "explicit verification of the exported SBOM attestation bundle",
+      "local whole-release summary/full audit command"
+    ]
+  }
 }
