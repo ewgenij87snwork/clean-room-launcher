@@ -33,14 +33,22 @@ expected=(
   "install.sh"
   "sbom.cdx.json"
 )
-mapfile -t actual < <(jq -r '.assets[].name' <<<"$json" | sort)
-mapfile -t wanted < <(printf "%s\n" "${expected[@]}" | sort)
-[[ "${actual[*]}" == "${wanted[*]}" ]] || {
+actual_assets=$(mktemp "${TMPDIR:-/tmp}/clroom-assets-actual.XXXXXX")
+wanted_assets=$(mktemp "${TMPDIR:-/tmp}/clroom-assets-wanted.XXXXXX")
+cleanup_asset_lists() { rm -f -- "$actual_assets" "$wanted_assets"; }
+trap cleanup_asset_lists EXIT HUP INT TERM
+jq -r '.assets[].name' <<<"$json" | sort >"$actual_assets"
+printf "%s\n" "${expected[@]}" | sort >"$wanted_assets"
+if ! cmp -s "$actual_assets" "$wanted_assets"; then
   echo "PUBLISHED_RELEASE_VERIFY_BLOCKED:ASSET_SET_MISMATCH" >&2
-  printf "expected: %s\n" "${wanted[*]}" >&2
-  printf "actual:   %s\n" "${actual[*]}" >&2
+  echo "expected:" >&2
+  cat "$wanted_assets" >&2
+  echo "actual:" >&2
+  cat "$actual_assets" >&2
   exit 1
-}
+fi
+rm -f -- "$actual_assets" "$wanted_assets"
+trap - EXIT HUP INT TERM
 
 tmp=$(mktemp -d "${TMPDIR:-/tmp}/clroom-published-release.XXXXXX")
 trap 'rm -rf -- "$tmp"' EXIT HUP INT TERM
