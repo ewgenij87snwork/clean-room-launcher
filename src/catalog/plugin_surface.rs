@@ -115,7 +115,7 @@ fn inspect_claude(root: &Path) -> Result<PluginSurface, PluginSurfaceError> {
     let mut declared = BTreeSet::new();
     let mut effective = BTreeSet::new();
 
-    let default_skills = claude_skill_components(root);
+    let (default_skills, default_skills_complete) = claude_skill_components(root);
     for skill in &default_skills {
         declared.insert(skill.clone());
         effective.insert(skill.clone());
@@ -247,6 +247,7 @@ fn inspect_claude(root: &Path) -> Result<PluginSurface, PluginSurfaceError> {
 
     let activation_eligible = plugin_name.is_some()
         && !custom_skills
+        && default_skills_complete
         && !default_skills.is_empty()
         && effective
             .iter()
@@ -431,53 +432,98 @@ fn hook_events_from_value(value: &Value) -> Vec<String> {
         .collect()
 }
 
-fn claude_skill_components(root: &Path) -> Vec<PluginComponent> {
+fn claude_skill_components(root: &Path) -> (Vec<PluginComponent>, bool) {
     let skill_root = root.join("skills");
-    let Ok(metadata) = fs::symlink_metadata(&skill_root) else {
-        return Vec::new();
+    let metadata = match fs::symlink_metadata(&skill_root) {
+        Ok(metadata) => metadata,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+            return (Vec::new(), true);
+        }
+        Err(_) => return (Vec::new(), false),
     };
     if metadata.file_type().is_symlink() || !metadata.is_dir() {
-        return Vec::new();
+        return (Vec::new(), false);
     }
     let Ok(entries) = fs::read_dir(&skill_root) else {
-        return Vec::new();
+        return (Vec::new(), false);
     };
 
     let mut names = BTreeSet::new();
     let mut visited = 0usize;
-    for entry in entries.flatten() {
+    let mut complete = true;
+    for entry_result in entries {
         visited += 1;
         if visited > MAX_SKILL_ENTRIES {
+            complete = false;
             break;
         }
-        let Ok(file_type) = entry.file_type() else {
-            continue;
+        let entry = match entry_result {
+            Ok(entry) => entry,
+            Err(_) => {
+                complete = false;
+                continue;
+            }
         };
-        if file_type.is_symlink() || !file_type.is_dir() {
+        let file_type = match entry.file_type() {
+            Ok(file_type) => file_type,
+            Err(_) => {
+                complete = false;
+                continue;
+            }
+        };
+        if file_type.is_symlink() {
+            complete = false;
+            continue;
+        }
+        if !file_type.is_dir() {
             continue;
         }
         let directory = entry.path();
         let Some(directory) = canonical_nonsymlink_directory(&directory) else {
+            complete = false;
             continue;
         };
         if !directory.starts_with(root) {
+            complete = false;
             continue;
         }
-        if safe_regular_file(&directory.join("SKILL.md"), MAX_COMPONENT_FILE_BYTES).is_none() {
+
+        let skill_file = directory.join("SKILL.md");
+        let skill_metadata = match fs::symlink_metadata(&skill_file) {
+            Ok(metadata) => metadata,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => continue,
+            Err(_) => {
+                complete = false;
+                continue;
+            }
+        };
+        if skill_metadata.file_type().is_symlink()
+            || !skill_metadata.is_file()
+            || skill_metadata.len() > MAX_COMPONENT_FILE_BYTES
+            || fs::read(&skill_file).is_err()
+        {
+            complete = false;
             continue;
         }
+
         let Some(name) = entry.file_name().to_str().map(str::to_owned) else {
+            complete = false;
             continue;
         };
         if valid_public_id(&name) {
             names.insert(name);
+        } else {
+            complete = false;
         }
     }
 
-    names
-        .into_iter()
-        .map(|name| component(ResourceKind::Skill, &name))
-        .collect()
+    (
+        names
+            .into_iter()
+            .map(|name| component(ResourceKind::Skill, &name))
+            .collect(),
+        complete,
+    )
 }
 
 fn add_recursive_markdown_components(
@@ -563,7 +609,7 @@ fn collect_markdown_components(
         effective.insert(item);
         return;
     };
-    for entry in entries.flatten() {
+    for entry_result in entries {
         *visited += 1;
         if *visited >= MAX_SKILL_ENTRIES {
             let item = component(kind, "inventory-overflow");
@@ -571,6 +617,15 @@ fn collect_markdown_components(
             effective.insert(item);
             return;
         }
+        let entry = match entry_result {
+            Ok(entry) => entry,
+            Err(_) => {
+                let item = component(kind, "unreadable-entry");
+                declared.insert(item.clone());
+                effective.insert(item);
+                continue;
+            }
+        };
         let path = entry.path();
         let Ok(file_type) = entry.file_type() else {
             let item = component(kind, "unreadable-entry");
@@ -1015,6 +1070,42 @@ mod tests {
             .any(|component| component.kind == ResourceKind::Skill));
 
         let _ = fs::remove_dir_all(root);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn claude_symlinked_skill_entry_makes_activation_ineligible() {
+        use std::os::unix::fs::symlink;
+
+        let root = fixture();
+        fs::remove_dir_all(root.join("hooks")).unwrap();
+        fs::remove_dir_all(root.join("agents")).unwrap();
+        fs::remove_dir_all(root.join("commands")).unwrap();
+        fs::remove_file(root.join(".lsp.json")).unwrap();
+        fs::write(
+            root.join(".claude-plugin/plugin.json"),
+            r#"{"name":"superpowers","version":"6.3.0"}"#,
+        )
+        .unwrap();
+
+        let external = root.parent().unwrap().join(format!(
+            "clroom-external-skill-{}",
+            SEQUENCE.fetch_add(1, Ordering::Relaxed)
+        ));
+        let _ = fs::remove_dir_all(&external);
+        fs::create_dir_all(&external).unwrap();
+        fs::write(external.join("SKILL.md"), "external\n").unwrap();
+        symlink(&external, root.join("skills/external")).unwrap();
+
+        let claude = inspect_plugin_surface(ProviderPluginSemantics::Claude, &root).unwrap();
+        assert!(claude
+            .effective
+            .iter()
+            .any(|component| component.kind == ResourceKind::Skill));
+        assert!(!claude.activation_eligible);
+
+        let _ = fs::remove_dir_all(root);
+        let _ = fs::remove_dir_all(external);
     }
 
     #[cfg(unix)]
