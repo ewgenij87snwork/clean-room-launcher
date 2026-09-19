@@ -114,10 +114,21 @@ claude_platform_archive=$(pack_and_verify \
   'anthropic-ai-claude-code-darwin-arm64-2.1.272.tgz' \
   'l3CI1gPSCGkWNbAnX66SbDF4uFBecCCLu9FLN43JSbMMds5cb6tjOTBMSTr1ydZRZALW9AC/PYabtQOgXIbK5Q==')
 
+claude_plugin_archive=$(pack_and_verify \
+  '@anthropic-ai/claude-code@2.1.273' \
+  'anthropic-ai-claude-code-2.1.273.tgz' \
+  'ym42/WNRf6H43FQdIPigvzzTW0DeQ1CPqrTdYnAlkWVGj8x8NaysCE0TU148mb3lpny5yo1/94+7dQK5USmBEQ==')
+claude_plugin_platform_archive=$(pack_and_verify \
+  '@anthropic-ai/claude-code-darwin-arm64@2.1.273' \
+  'anthropic-ai-claude-code-darwin-arm64-2.1.273.tgz' \
+  't4P6JivTVJXsxfPATL4L9IZUR0Aar7O436MWkgWWvhvXDvLjd/oCdTTPkgK+Xj80gB+Nq/hyXD/9svLACa5ZSg==')
+
 safe_extract "$codex_archive" "$provider_root/codex"
 safe_extract "$codex_platform_archive" "$provider_root/codex-platform"
 safe_extract "$claude_archive" "$provider_root/claude"
 safe_extract "$claude_platform_archive" "$provider_root/claude-platform"
+safe_extract "$claude_plugin_archive" "$provider_root/claude-plugin"
+safe_extract "$claude_plugin_platform_archive" "$provider_root/claude-plugin-platform"
 
 codex_root="$provider_root/codex/package"
 claude_root="$provider_root/claude/package"
@@ -136,7 +147,10 @@ claude_bin=$(resolve_bin "$claude_root" claude) || fail "CLAUDE_BIN_INVALID"
 claude_platform_root="$provider_root/claude-platform/package"
 claude_native="$claude_platform_root/claude"
 [[ -f "$claude_native" ]] || fail "CLAUDE_NATIVE_MISSING"
-chmod 0755 "$codex_bin" "$claude_bin" "$claude_native"
+claude_plugin_platform_root="$provider_root/claude-plugin-platform/package"
+claude_plugin_native="$claude_plugin_platform_root/claude"
+[[ -f "$claude_plugin_native" ]] || fail "CLAUDE_PLUGIN_NATIVE_MISSING"
+chmod 0755 "$codex_bin" "$claude_bin" "$claude_native" "$claude_plugin_native"
 
 # The wrapper package normally materializes its optional native package during
 # postinstall. Release qualification must not run install scripts, so use the
@@ -149,12 +163,20 @@ cp "$claude_native" "$claude_canary"
 chmod 0755 "$claude_canary"
 cmp -s "$claude_native" "$claude_canary" || fail "CLAUDE_CANARY_COPY_MISMATCH"
 
+mkdir -p "$provider_root/plugin-bin"
+claude_plugin_canary="$provider_root/plugin-bin/claude"
+cp "$claude_plugin_native" "$claude_plugin_canary"
+chmod 0755 "$claude_plugin_canary"
+cmp -s "$claude_plugin_native" "$claude_plugin_canary" || fail "CLAUDE_PLUGIN_CANARY_COPY_MISMATCH"
+
 [[ -x "$codex_native" ]] || fail "CODEX_NATIVE_NOT_EXECUTABLE"
 [[ -x "$codex_bin" ]] || fail "CODEX_BIN_NOT_EXECUTABLE"
 [[ -x "$claude_bin" ]] || fail "CLAUDE_BIN_NOT_EXECUTABLE"
 [[ -x "$claude_native" ]] || fail "CLAUDE_NATIVE_NOT_EXECUTABLE"
 [[ -x "$claude_canary" ]] || fail "CLAUDE_CANARY_NOT_EXECUTABLE"
+[[ -x "$claude_plugin_canary" ]] || fail "CLAUDE_PLUGIN_CANARY_NOT_EXECUTABLE"
 [[ -f "$env_file" || -e "$env_file" ]] || :
 printf 'CLROOM_PROVIDER_CODEX=%s\n' "$codex_native" >> "$env_file"
 printf 'CLROOM_PROVIDER_CLAUDE=%s\n' "$claude_canary" >> "$env_file"
-printf 'PROVIDER_CANARY_PASS codex=0.154.0 claude=2.1.272\n'
+printf 'CLROOM_PROVIDER_CLAUDE_PLUGIN=%s\n' "$claude_plugin_canary" >> "$env_file"
+printf 'PROVIDER_CANARY_PASS codex=0.154.0 claude=2.1.272 claude_plugin=2.1.273\n'
