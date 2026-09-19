@@ -33,9 +33,13 @@ jobs:
           set -euo pipefail
           tag="$GITHUB_REF_NAME"
           version="${tag#v}"
-          tag_date=$(git for-each-ref --format='%(creatordate:short)' "refs/tags/$tag")
+          test "$(git cat-file -t "refs/tags/$tag")" = tag || {
+            echo "release tag must be an annotated tag" >&2
+            exit 1
+          }
+          tag_date=$(git for-each-ref --format='%(taggerdate:short)' "refs/tags/$tag")
           test -n "$tag_date" || {
-            echo "could not resolve tag creator date" >&2
+            echo "could not resolve annotated tagger date" >&2
             exit 1
           }
           python3 - "$tag" "$version" "$tag_date" <<'PY'
@@ -64,6 +68,12 @@ jobs:
             exit 1
           }
           python3 scripts/release/check-provider-version-sync.py
+          latest=$(GH_TOKEN="$GITHUB_TOKEN" gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq .tag_name)
+          test -n "$latest" || {
+            echo "could not resolve latest published stable release" >&2
+            exit 1
+          }
+          python3 scripts/release/check-release-review.py --base-tag "$latest" --candidate HEAD
           default_ref=$(git ls-remote --symref origin HEAD | awk '$1 == "ref:" && $3 == "HEAD" {print $2}')
           test -n "$default_ref" || {
             echo "could not resolve the repository default branch" >&2
