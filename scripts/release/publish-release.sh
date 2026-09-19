@@ -26,6 +26,9 @@ done
 gh auth status >/dev/null 2>&1 || fail "GH_AUTH_REQUIRED"
 
 python3 scripts/release/check-repository-release-policy.py >/dev/null || fail "REPOSITORY_TAG_POLICY"
+immutable_enabled=$(gh api "repos/y-sor/clean-room-launcher/immutable-releases" --jq .enabled 2>/dev/null) \
+  || fail "IMMUTABLE_RELEASE_POLICY_UNVERIFIED"
+[[ "$immutable_enabled" == true ]] || fail "IMMUTABLE_RELEASE_POLICY_DISABLED"
 
 remote_source=$(gh api "repos/y-sor/clean-room-launcher/commits/$tag" --jq .sha)
 [[ "$remote_source" == "$expected_source" ]] || {
