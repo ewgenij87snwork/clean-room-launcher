@@ -163,6 +163,13 @@ fn release_contract_binds_latest_stable_annotated_tags_and_inference_free_local_
     assert!(post_publish.contains("releases/latest/download/install.sh"));
     assert!(post_publish.contains("LATEST_INSTALLER_BYTES_MISMATCH"));
     assert!(post_publish.contains("sh \"$latest_installer\""));
+    assert!(post_publish.contains("--source-digest \"$source_head\""));
+    assert!(post_publish.contains("--source-ref \"refs/tags/$tag\""));
+    assert!(smoke.contains("--source-digest \"$source_head\""));
+    assert!(smoke.contains("--source-ref \"refs/tags/$tag\""));
+    assert!(smoke.contains("[[ \"$codex_tui_rc\" -eq 0 ]] || fail \"CODEX_TUI_EXIT\""));
+    assert!(smoke.contains("[[ \"$claude_clean_tui_rc\" -eq 0 ]] || fail \"CLAUDE_CLEAN_TUI_EXIT\""));
+    assert!(smoke.contains("[[ \"$claude_tui_rc\" -eq 0 ]] || fail \"CLAUDE_SELECTED_TUI_EXIT\""));
 }
 
 #[test]
