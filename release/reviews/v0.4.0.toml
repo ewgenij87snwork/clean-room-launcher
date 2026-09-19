@@ -1,0 +1,54 @@
+schema_version = 1
+version = "0.4.0"
+base_tag = "v0.3.1"
+release_date = "2026-09-19"
+strategic_scope = "Bounded Claude whole-plugin selective restore for exactly qualified skill-only bundles, preserving clean-by-default behavior and the v0.4.x sequencing contract."
+
+change_classes = [
+  "runtime",
+  "security_boundary",
+  "tests",
+  "dependency",
+  "ci",
+  "release_pipeline",
+  "packaging",
+  "public_claims",
+  "package_identity"
+]
+
+capabilities = ["claude_plugin_activation"]
+
+contract_evolution = [
+  "EXTEND_CONTRACT:published-release-delta-v1",
+  "EXTEND_CONTRACT:release-date-utc-v1",
+  "EXTEND_CONTRACT:behavior-specific-provider-evidence-v1",
+  "EXTEND_CONTRACT:claude-plugin-surface-fail-closed-v1",
+  "ALREADY_COVERED:artifact-sbom-provenance-v1"
+]
+
+pre_tag_evidence = [
+  "focused_tests",
+  "full_tests",
+  "security_negative_tests",
+  "dependency_review",
+  "dependency_sca",
+  "ci",
+  "release_readiness",
+  "artifact_verification",
+  "installer_self_test",
+  "claim_review",
+  "public_boundary",
+  "version_identity",
+  "claude_2_1_273_inventory_e2e",
+  "claude_2_1_273_selected_load_e2e",
+  "interactive_tui_smoke",
+  "surface_fail_closed_negatives"
+]
+
+post_tag_required_evidence = [
+  "draft_artifact_checksums",
+  "draft_artifact_provenance",
+  "draft_artifact_sbom",
+  "draft_install_smoke",
+  "draft_artifact_claude_2_1_273_e2e"
+]
