@@ -70,6 +70,7 @@ jobs:
             exit 1
           }
           python3 scripts/release/check-provider-version-sync.py
+          python3 scripts/release/check-repository-release-policy.py
           latest=$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq .tag_name)
           test -n "$latest" || {
             echo "could not resolve latest published stable release" >&2
