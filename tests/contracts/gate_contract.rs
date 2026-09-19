@@ -211,6 +211,43 @@ fn release_contract_binds_latest_stable_annotated_tags_and_inference_free_local_
 }
 
 #[test]
+fn declared_machine_evidence_is_bound_to_executable_release_gates() {
+    let review: serde_json::Value =
+        serde_json::from_str(&std::fs::read_to_string("release/review.json").unwrap()).unwrap();
+    let required = review["required_evidence"].as_array().unwrap();
+    let required = required
+        .iter()
+        .filter_map(|value| value.as_str())
+        .collect::<std::collections::BTreeSet<_>>();
+
+    let checker = std::fs::read_to_string("scripts/release/check-release-review.py").unwrap();
+    let readiness = std::fs::read_to_string("scripts/release/readiness.sh").unwrap();
+    let candidate = std::fs::read_to_string(".github/workflows/release-candidate.yml").unwrap();
+    let release = std::fs::read_to_string(".github/workflows/release.yml").unwrap();
+
+    for token in [
+        "artifact-binding",
+        "attestation",
+        "dependency-sca",
+        "full-regression",
+        "real-provider",
+        "whole-release-review",
+    ] {
+        assert!(required.contains(token), "missing machine evidence declaration: {token}");
+        assert!(checker.contains(&format!("\"{token}\"")), "checker must recognize {token}");
+    }
+
+    assert!(readiness.contains("cargo test --locked --all-targets"));
+    assert!(readiness.contains("cargo deny --config deny.toml --locked check"));
+    assert!(readiness.contains("packaging/verify-artifact.py"));
+    assert!(readiness.contains("candidate_dir=\"$archive_root/bin\""));
+    assert!(readiness.contains("scripts/release/qualify-real-provider.sh"));
+    assert!(readiness.contains("scripts/release/check-attestation-contract.sh"));
+    assert!(candidate.contains("python3 scripts/release/check-release-review.py"));
+    assert!(release.contains("actions/attest@"));
+}
+
+#[test]
 fn whole_release_review_is_fail_closed_and_declared() {
     let checker = std::fs::read_to_string("scripts/release/check-release-review.py").unwrap();
     let declaration: serde_json::Value =
