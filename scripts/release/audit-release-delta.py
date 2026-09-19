@@ -74,6 +74,28 @@ def required_gates(classified: list[ClassifiedFile], contract: dict) -> list[str
     return sorted(gates)
 
 
+def phase_gates(gates: list[str], contract: dict) -> dict[str, list[str]]:
+    phases = contract.get("gate_phases")
+    if not isinstance(phases, dict) or not phases:
+        raise AuditError("release contract has no gate phases")
+    assigned: dict[str, str] = {}
+    for phase, values in phases.items():
+        if not isinstance(values, list):
+            raise AuditError(f"gate phase {phase} is not a list")
+        for gate in values:
+            if gate in assigned:
+                raise AuditError(f"gate {gate} assigned to multiple phases")
+            assigned[gate] = phase
+    missing = sorted(set(gates) - set(assigned))
+    if missing:
+        raise AuditError(f"required gates have no promotion phase: {missing}")
+    return {
+        phase: sorted(gate for gate in gates if assigned.get(gate) == phase)
+        for phase in phases
+        if any(assigned.get(gate) == phase for gate in gates)
+    }
+
+
 def self_test() -> int:
     contract = {
         "always_required_gates": ["always"],
@@ -84,7 +106,14 @@ def self_test() -> int:
     }
     classified = classify(["src/main.rs", "README.md"], contract)
     assert {c for item in classified for c in item.classes} == {"runtime", "docs"}
-    assert required_gates(classified, contract) == ["always", "claims", "tests"]
+    contract["gate_phases"] = {
+        "pre_tag": ["always", "claims", "tests"],
+    }
+    gates = required_gates(classified, contract)
+    assert gates == ["always", "claims", "tests"]
+    assert phase_gates(gates, contract) == {
+        "pre_tag": ["always", "claims", "tests"],
+    }
     try:
         classify(["brand-new-surface/file"], contract)
     except AuditError as exc:
@@ -146,6 +175,7 @@ def main() -> int:
     classified = classify(paths, contract)
     classes = sorted({item for entry in classified for item in entry.classes})
     gates = required_gates(classified, contract)
+    gates_by_phase = phase_gates(gates, contract)
 
     expected_classes = sorted(review.get("reviewed_change_classes", []))
     expected_gates = sorted(review.get("reviewed_required_gates", []))
@@ -187,6 +217,7 @@ def main() -> int:
         "file_count": len(paths),
         "change_classes": classes,
         "required_gates": gates,
+        "required_gates_by_phase": gates_by_phase,
         "files": [
             {"path": entry.path, "classes": list(entry.classes)}
             for entry in classified
@@ -220,8 +251,12 @@ def main() -> int:
         "",
     ]
     markdown.extend(f"- `{item}`" for item in classes)
-    markdown.extend(["", "## Required gates", ""])
-    markdown.extend(f"- `{item}`" for item in gates)
+    markdown.extend(["", "## Required gates by promotion phase", ""])
+    for phase, values in gates_by_phase.items():
+        markdown.append(f"### {phase}")
+        markdown.append("")
+        markdown.extend(f"- `{item}`" for item in values)
+        markdown.append("")
     markdown.extend(["", "## Commits", ""])
     markdown.extend(f"- `{item['sha'][:12]}` {item['subject']}" for item in commits)
     markdown.extend(["", "## Files", ""])
