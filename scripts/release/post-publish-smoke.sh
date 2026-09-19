@@ -30,6 +30,14 @@ cleanup() {
 trap cleanup EXIT HUP INT TERM
 
 latest_url=$(curl --proto '=https' --tlsv1.2 -fsSL -o /dev/null -w '%{url_effective}' "$repo_url/releases/latest")
+release_title=$(gh release view "$tag" --json name,isDraft,isPrerelease,tagName --jq '.name')
+release_tag=$(gh release view "$tag" --json tagName --jq '.tagName')
+release_draft=$(gh release view "$tag" --json isDraft --jq '.isDraft')
+release_prerelease=$(gh release view "$tag" --json isPrerelease --jq '.isPrerelease')
+[[ "$release_tag" == "$tag" ]] || fail "PUBLIC_RELEASE_TAG_MISMATCH"
+[[ "$release_title" == "$tag — Clean Room Launcher" ]] || fail "PUBLIC_RELEASE_TITLE_MISMATCH"
+[[ "$release_draft" == false ]] || fail "PUBLIC_RELEASE_STILL_DRAFT"
+[[ "$release_prerelease" == false ]] || fail "PUBLIC_RELEASE_UNEXPECTED_PRERELEASE"
 [[ "$latest_url" == "$repo_url/releases/tag/$tag" ]] || {
   printf 'LATEST_URL=%s\nEXPECTED=%s\n' "$latest_url" "$repo_url/releases/tag/$tag" >&2
   fail "LATEST_RELEASE_MISMATCH"
