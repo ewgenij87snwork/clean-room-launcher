@@ -22,7 +22,7 @@ done
   echo "DRAFT_PLUGIN_E2E_BLOCKED:MACOS_ARM64_REQUIRED" >&2
   exit 1
 }
-for cmd in gh python3 claude shasum tar; do
+for cmd in gh git python3 claude shasum tar; do
   command -v "$cmd" >/dev/null 2>&1 || { echo "DRAFT_PLUGIN_E2E_BLOCKED:MISSING_$cmd" >&2; exit 1; }
 done
 
@@ -36,6 +36,22 @@ tmp=$(mktemp -d "${TMPDIR:-/tmp}/clroom-draft-plugin-e2e.XXXXXX")
 trap 'rm -rf -- "$tmp"' EXIT HUP INT TERM
 repo=y-sor/clean-room-launcher
 artifact="clean-room-launcher-${tag}-aarch64-apple-darwin.tar.gz"
+
+release_meta="$(gh api "repos/$repo/releases/tags/$tag")"
+python3 - "$tag" "$release_meta" <<'PY'
+import json, sys
+tag, raw = sys.argv[1:]
+release = json.loads(raw)
+if release.get("tag_name") != tag:
+    raise SystemExit("DRAFT_PLUGIN_E2E_BLOCKED:RELEASE_TAG_MISMATCH")
+if release.get("draft") is not True:
+    raise SystemExit("DRAFT_PLUGIN_E2E_BLOCKED:RELEASE_NOT_DRAFT")
+if release.get("name") != f"{tag} — Clean Room Launcher":
+    raise SystemExit("DRAFT_PLUGIN_E2E_BLOCKED:RELEASE_TITLE_MISMATCH")
+PY
+
+git fetch --quiet --force origin "refs/tags/$tag:refs/tags/$tag"
+tag_commit="$(git rev-parse "$tag^{commit}")"
 
 gh release download "$tag" -R "$repo" --dir "$tmp" --pattern "$artifact" --pattern SHA256SUMS --clobber
 (
@@ -67,6 +83,25 @@ with tarfile.open(archive, "r:gz") as handle:
         if candidate != root and root not in candidate.parents:
             raise SystemExit("archive path escapes extraction root")
     handle.extractall(root)
+PY
+
+python3 packaging/verify-artifact.py "$tmp/$artifact"
+
+python3 - "$tmp/$artifact" "$tag_commit" "${tag#v}" <<'PY'
+import sys, tarfile
+archive, expected_commit, expected_version = sys.argv[1:]
+with tarfile.open(archive, "r:gz") as handle:
+    versions = [m for m in handle.getmembers() if m.isfile() and m.name.endswith("/VERSION")]
+    if len(versions) != 1:
+        raise SystemExit("DRAFT_PLUGIN_E2E_BLOCKED:VERSION_MEMBER")
+    body = handle.extractfile(versions[0]).read().decode("utf-8")
+fields = dict(line.split("=", 1) for line in body.splitlines() if "=" in line)
+if fields.get("source_commit") != expected_commit:
+    raise SystemExit("DRAFT_PLUGIN_E2E_BLOCKED:SOURCE_COMMIT_MISMATCH")
+if fields.get("version") != expected_version:
+    raise SystemExit("DRAFT_PLUGIN_E2E_BLOCKED:VERSION_MISMATCH")
+if fields.get("qualification") != "CANDIDATE":
+    raise SystemExit("DRAFT_PLUGIN_E2E_BLOCKED:QUALIFICATION_STATE")
 PY
 
 bin=$(find "$tmp/extract" -type f -path "*/bin/clroom" -print -quit)
