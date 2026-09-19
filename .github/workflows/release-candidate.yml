@@ -37,11 +37,9 @@ jobs:
           test "$(jq -r .draft <<<"$release_json")" = false
           test "$(jq -r .prerelease <<<"$release_json")" = false
           test "$(jq -r .immutable <<<"$release_json")" = true
-          published_version="${latest_tag#v}"
-          lifecycle=ACTIVE_CANDIDATE
-          if [[ "$candidate_version" == "$published_version" ]]; then
-            lifecycle=POST_PUBLISH
-          fi
+          lifecycle="$(python3 scripts/release/resolve-release-lifecycle.py \
+            --candidate-version "$candidate_version" \
+            --published-tag "$latest_tag")"
           if ! git rev-parse --verify "refs/tags/$latest_tag^{commit}" >/dev/null 2>&1; then
             git fetch --no-tags origin "refs/tags/$latest_tag:refs/tags/$latest_tag"
           fi
