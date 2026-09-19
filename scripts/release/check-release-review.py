@@ -71,6 +71,8 @@ CONTRACT_PATTERNS = (
     "docs/release/RELEASE_CONTRACT.md",
     "scripts/release/check-release-review.py",
     "scripts/release/check-provider-version-sync.py",
+    "scripts/release/check-repository-release-policy.py",
+    "scripts/release/push-release-tag.sh",
     "scripts/release/local-release-smoke.sh",
     "scripts/release/post-publish-smoke.sh",
     "scripts/release/qualify-real-provider.sh",
