@@ -45,6 +45,9 @@ source_head=$(gh api "repos/y-sor/clean-room-launcher/commits/$tag" --jq .sha)
   fail "LATEST_RELEASE_MISMATCH"
 }
 
+gh release verify "$tag" -R y-sor/clean-room-launcher >/dev/null \
+  || fail "PUBLIC_RELEASE_ATTESTATION"
+
 for name in   "$artifact"   SHA256SUMS   sbom.cdx.json   install.sh   "$artifact.provenance.sigstore.json"   "$artifact.sbom.sigstore.json"; do
   curl --proto '=https' --tlsv1.2 -fsSL --retry 3     "$base_url/$name" -o "$tmp/$name" || fail "DOWNLOAD_FAILED:$name"
 done
