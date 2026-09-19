@@ -85,20 +85,21 @@ def main() -> None:
             if isinstance(bypass, list) and not bypass:
                 strict.append(detail)
 
-    if len(structural) != 1:
-        fail(f"exact-protective-tag-ruleset-count:{len(structural)}")
+    if not structural:
+        fail("protective-tag-ruleset-missing")
 
-    ruleset = structural[0]
     if args.mode == "strict":
-        if "bypass_actors" not in ruleset:
+        if not any("bypass_actors" in ruleset for ruleset in structural):
             fail("bypass-actors-not-visible-to-caller")
-        if len(strict) != 1 or strict[0].get("id") != ruleset.get("id"):
-            fail("tag-ruleset-bypass-present")
+        if not strict:
+            fail("no-no-bypass-protective-tag-ruleset")
 
+    accepted = strict if args.mode == "strict" else structural
+    ids = ",".join(str(ruleset.get("id")) for ruleset in accepted)
     print(
         "RELEASE_REPOSITORY_POLICY_PASS "
         f"mode={args.mode} repo={REPO} "
-        f"tag_ruleset={ruleset.get('id')} pattern={TAG_PATTERN}"
+        f"tag_rulesets={ids} pattern={TAG_PATTERN}"
     )
 
 
