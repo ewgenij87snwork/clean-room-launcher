@@ -103,16 +103,48 @@ if auto.get("model_prompt_sent") is not False or human.get("model_prompt_sent") 
 PY
 
 # Publication is intentionally the last state-changing command after every guard above.
-gh release edit "$tag" --draft=false --latest --verify-tag >/dev/null || fail "PUBLISH_ACTION"
+# If the transport fails after GitHub commits publication, reconcile before any retry:
+# immutable publication is not safely replayable by assumption.
+set +e
+gh release edit "$tag" --draft=false --latest --verify-tag >/dev/null
+publish_rc=$?
+set -e
 
-after=$(gh release view "$tag" --json isDraft,isImmutable,isPrerelease,tagName,name)
+set +e
+after=$(gh release view "$tag" --json isDraft,isImmutable,isPrerelease,tagName,name 2>/dev/null)
+readback_rc=$?
+set -e
+[[ "$readback_rc" -eq 0 && -n "$after" ]] || fail "PUBLISH_OUTCOME_UNKNOWN"
+
 after_draft=$(python3 -c 'import json,sys; print(str(json.load(sys.stdin)["isDraft"]).lower())' <<<"$after")
 after_immutable=$(python3 -c 'import json,sys; print(str(json.load(sys.stdin)["isImmutable"]).lower())' <<<"$after")
+after_prerelease=$(python3 -c 'import json,sys; print(str(json.load(sys.stdin)["isPrerelease"]).lower())' <<<"$after")
 after_tag=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["tagName"])' <<<"$after")
 after_title=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["name"])' <<<"$after")
-[[ "$after_draft" == false ]] || fail "PUBLISH_NOT_VISIBLE"
-[[ "$after_immutable" == true ]] || fail "PUBLISHED_RELEASE_NOT_IMMUTABLE"
-[[ "$after_tag" == "$tag" ]] || fail "PUBLISHED_TAG_MISMATCH"
-[[ "$after_title" == "$tag — Clean Room Launcher" ]] || fail "PUBLISHED_TITLE_MISMATCH"
 
-printf 'RELEASE_PUBLISH_PASS tag=%s source=%s artifact_sha256=%s immutable=true\n' "$tag" "$expected_source" "$current_sha"
+if [[ "$after_draft" == false ]]; then
+  [[ "$after_immutable" == true ]] || fail "PUBLISHED_RELEASE_NOT_IMMUTABLE"
+  [[ "$after_prerelease" == false ]] || fail "PUBLISHED_RELEASE_UNEXPECTED_PRERELEASE"
+  [[ "$after_tag" == "$tag" ]] || fail "PUBLISHED_TAG_MISMATCH"
+  [[ "$after_title" == "$tag — Clean Room Launcher" ]] || fail "PUBLISHED_TITLE_MISMATCH"
+  if [[ "$publish_rc" -ne 0 ]]; then
+    printf 'RELEASE_PUBLISH_RECONCILED tag=%s source=%s artifact_sha256=%s immutable=true\n' \
+      "$tag" "$expected_source" "$current_sha"
+  else
+    printf 'RELEASE_PUBLISH_PASS tag=%s source=%s artifact_sha256=%s immutable=true\n' \
+      "$tag" "$expected_source" "$current_sha"
+  fi
+  exit 0
+fi
+
+# The authoritative state is still the exact pre-action Draft. A future explicit
+# publish attempt may retry after a fresh Owner/action-time gate; this invocation
+# does not retry automatically.
+[[ "$after_draft" == true && "$after_immutable" == false && "$after_prerelease" == false ]] \
+  || fail "PUBLISH_OUTCOME_UNKNOWN"
+[[ "$after_tag" == "$tag" && "$after_title" == "$tag — Clean Room Launcher" ]] \
+  || fail "PUBLISH_OUTCOME_UNKNOWN"
+if [[ "$publish_rc" -ne 0 ]]; then
+  fail "PUBLISH_NOT_DELIVERED"
+fi
+fail "PUBLISH_OUTCOME_UNKNOWN"
