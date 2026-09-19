@@ -15,8 +15,10 @@ fail() {
 tag=$1
 [[ "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || fail "STABLE_TAG_REQUIRED"
 version=${tag#v}
+root=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)
+cd "$root"
 
-for command_name in curl shasum tar gh; do
+for command_name in curl shasum tar gh python3; do
   command -v "$command_name" >/dev/null 2>&1 || fail "COMMAND_MISSING:$command_name"
 done
 
@@ -36,6 +38,11 @@ release_draft=$(gh release view "$tag" --json isDraft --jq '.isDraft')
 release_prerelease=$(gh release view "$tag" --json isPrerelease --jq '.isPrerelease')
 source_head=$(gh api "repos/y-sor/clean-room-launcher/commits/$tag" --jq .sha)
 [[ "$source_head" =~ ^[0-9a-f]{40}$ ]] || fail "PUBLIC_TAG_SOURCE_UNKNOWN"
+short_head=${source_head:0:12}
+evidence="target/release-evidence/draft-v${version}-${short_head}.json"
+[[ -f "$evidence" ]] || fail "DRAFT_SMOKE_EVIDENCE_MISSING"
+gh release view "$tag" --json body > "$tmp/public-release.json" \
+  || fail "PUBLIC_RELEASE_BODY"
 [[ "$release_tag" == "$tag" ]] || fail "PUBLIC_RELEASE_TAG_MISMATCH"
 [[ "$release_title" == "$tag — Clean Room Launcher" ]] || fail "PUBLIC_RELEASE_TITLE_MISMATCH"
 [[ "$release_draft" == false ]] || fail "PUBLIC_RELEASE_STILL_DRAFT"
@@ -56,6 +63,44 @@ done
   cd "$tmp"
   shasum -a 256 -c SHA256SUMS
 ) >/dev/null || fail "PUBLIC_CHECKSUMS"
+
+python3 - "$evidence" "$tag" "$source_head" "$tmp/public-release.json" "$tmp" <<'PY' \
+  || fail "PUBLIC_RELEASE_DRIFT_FROM_ACCEPTED_DRAFT"
+import hashlib
+import json
+import pathlib
+import sys
+
+evidence_path, tag, source, release_path, assets_dir = sys.argv[1:]
+record = json.loads(pathlib.Path(evidence_path).read_text(encoding="utf-8"))
+if record.get("phase") != "draft" or record.get("result") != "PASS":
+    raise SystemExit("evidence")
+if record.get("release_tag") != tag or record.get("source_head") != source:
+    raise SystemExit("identity")
+state = record.get("draft_release_state") or {}
+expected_body = state.get("release_body_sha256")
+expected_assets = state.get("assets_sha256")
+if not isinstance(expected_body, str) or not isinstance(expected_assets, dict):
+    raise SystemExit("state")
+
+release = json.loads(pathlib.Path(release_path).read_text(encoding="utf-8"))
+body = release.get("body")
+if not isinstance(body, str):
+    raise SystemExit("body")
+if hashlib.sha256(body.encode("utf-8")).hexdigest() != expected_body:
+    raise SystemExit("body-drift")
+
+root = pathlib.Path(assets_dir)
+names = set(expected_assets)
+actual = {}
+for name in names:
+    path = root / name
+    if not path.is_file():
+        raise SystemExit("missing-asset:" + name)
+    actual[name] = hashlib.sha256(path.read_bytes()).hexdigest()
+if actual != expected_assets:
+    raise SystemExit("asset-drift")
+PY
 
 gh attestation verify "$tmp/$artifact"   -R y-sor/clean-room-launcher   --bundle "$tmp/$artifact.provenance.sigstore.json"   --signer-workflow y-sor/clean-room-launcher/.github/workflows/release.yml   --source-digest "$source_head"   --source-ref "refs/tags/$tag"   --deny-self-hosted-runners >/dev/null || fail "PUBLIC_PROVENANCE"
 gh attestation verify "$tmp/$artifact"   -R y-sor/clean-room-launcher   --bundle "$tmp/$artifact.sbom.sigstore.json"   --signer-workflow y-sor/clean-room-launcher/.github/workflows/release.yml   --source-digest "$source_head"   --source-ref "refs/tags/$tag"   --deny-self-hosted-runners >/dev/null || fail "PUBLIC_SBOM_ATTESTATION"
