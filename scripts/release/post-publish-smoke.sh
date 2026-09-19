@@ -62,9 +62,16 @@ archive_root=$(find "$extract" -mindepth 1 -maxdepth 1 -type d -print -quit)
 [[ -n "$archive_root" ]] || fail "ARCHIVE_ROOT"
 grep -Fqx "version=$version" "$archive_root/VERSION" || fail "ARCHIVE_VERSION"
 
+latest_installer="$tmp/latest-install.sh"
+curl --proto '=https' --tlsv1.2 -fsSL --retry 3 \
+  "$repo_url/releases/latest/download/install.sh" -o "$latest_installer" \
+  || fail "LATEST_INSTALLER_DOWNLOAD"
+cmp -s "$latest_installer" "$tmp/install.sh" || fail "LATEST_INSTALLER_BYTES_MISMATCH"
+chmod 0755 "$latest_installer"
+
 install_home="$tmp/install-home"
 mkdir -p "$install_home"
-HOME="$install_home" PATH="$PATH" sh "$tmp/install.sh" >/dev/null || fail "PUBLIC_INSTALLER"
+HOME="$install_home" PATH="$PATH" sh "$latest_installer" >/dev/null || fail "PUBLIC_INSTALLER"
 installed="$install_home/.local/bin/clroom"
 [[ -x "$installed" ]] || fail "INSTALLED_BINARY_MISSING"
 
