@@ -167,44 +167,40 @@ def main() -> None:
     base_sha = run("git", "rev-parse", f"{args.base_tag}^{{commit}}").strip()
     candidate_sha = run("git", "rev-parse", f"{args.candidate}^{{commit}}").strip()
 
-    reviewed_through = review.get("reviewed_through_commit")
+    reviewed_digest = review.get("reviewed_content_digest")
     if (
-        not isinstance(reviewed_through, str)
-        or len(reviewed_through) != 40
-        or any(ch not in "0123456789abcdef" for ch in reviewed_through)
+        not isinstance(reviewed_digest, str)
+        or len(reviewed_digest) != 64
+        or any(ch not in "0123456789abcdef" for ch in reviewed_digest)
     ):
-        fail("reviewed-through-commit")
-    reviewed_sha = run("git", "rev-parse", f"{reviewed_through}^{{commit}}").strip()
-    if reviewed_sha != reviewed_through:
-        fail("reviewed-through-resolution")
-    for label, older, newer in (
-        ("published-base-to-review", base_sha, reviewed_sha),
-        ("review-to-candidate", reviewed_sha, candidate_sha),
-    ):
-        relation = subprocess.run(
-            ["git", "merge-base", "--is-ancestor", older, newer],
-            cwd=ROOT,
-            check=False,
-        )
-        if relation.returncode != 0:
-            fail(f"{label}:not-ancestor")
+        fail("reviewed-content-digest")
 
-    post_review_changed = [
-        line.strip()
-        for line in run(
-            "git",
-            "diff",
-            "--name-only",
-            "--no-renames",
-            f"{reviewed_sha}..{candidate_sha}",
-        ).splitlines()
-        if line.strip()
-    ]
-    unexpected_post_review = sorted(
-        path for path in post_review_changed if path != "release/review.json"
-    )
-    if unexpected_post_review:
-        fail("post-review-drift:" + ",".join(unexpected_post_review))
+    tree = subprocess.run(
+        ["git", "ls-tree", "-r", "-z", candidate_sha],
+        cwd=ROOT,
+        check=True,
+        stdout=subprocess.PIPE,
+    ).stdout
+    digest = hashlib.sha256()
+    for record in tree.split(b"\0"):
+        if not record:
+            continue
+        try:
+            metadata, path = record.split(b"\t", 1)
+        except ValueError:
+            fail("review-content-tree-record")
+        if path == b"release/review.json":
+            continue
+        digest.update(metadata)
+        digest.update(b"\t")
+        digest.update(path)
+        digest.update(b"\0")
+    candidate_review_digest = digest.hexdigest()
+    if candidate_review_digest != reviewed_digest:
+        fail(
+            "review-content-drift:"
+            f"declared={reviewed_digest}:actual={candidate_review_digest}"
+        )
 
     ancestor = subprocess.run(
         ["git", "merge-base", "--is-ancestor", base_sha, candidate_sha],
@@ -304,7 +300,7 @@ def main() -> None:
     commit_count = run("git", "rev-list", "--count", f"{base_sha}..{candidate_sha}").strip()
     print(f"RELEASE_REVIEW_PASS base={args.base_tag} base_sha={base_sha}")
     print(f"CANDIDATE_SHA={candidate_sha}")
-    print(f"REVIEWED_THROUGH_SHA={reviewed_sha}")
+    print(f"REVIEWED_CONTENT_DIGEST={candidate_review_digest}")
     print(f"COMMITS={commit_count}")
     print(f"CHANGED_FILES={len(changed)}")
     print("CHANGE_CLASSES=" + ",".join(sorted(computed)))
