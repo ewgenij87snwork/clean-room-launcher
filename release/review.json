@@ -43,7 +43,8 @@
       "semantic review seal bound to an exact reviewed-through source checkpoint",
       "action-time remote-main, tag-absence, no-bypass tag-policy, provider-version, and provider-byte revalidation immediately before protected tag push",
       "Draft smoke sealing of release-notes body plus SHA-256 digests for all six mutable release assets",
-      "action-time Draft body, asset-digest, provider-byte, tag-source, and immutable-policy revalidation immediately before publication"
+      "action-time Draft body, asset-digest, provider-byte, tag-source, and immutable-policy revalidation immediately before publication",
+      "post-publication binding of release-notes body and exact immutable asset-set digests to accepted Draft-smoke evidence"
     ]
   }
 }
