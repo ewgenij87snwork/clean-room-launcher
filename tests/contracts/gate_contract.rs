@@ -128,11 +128,22 @@ fn tag_push_revalidates_mutable_remote_state_at_action_time() {
     let action_time = source
         .find("# Mutable remote release state is refreshed immediately before the irreversible push.")
         .expect("tag helper must have an explicit action-time refresh boundary");
+    let provider_evidence = source
+        .find("evidence_claude_version=$(python3 - \"$evidence\"")
+        .expect("action-time provider evidence must be loaded");
+    let provider_version = source
+        .find("CLAUDE_PROVIDER_DRIFT_ACTION_TIME")
+        .expect("provider version must be revalidated");
+    let provider_bytes = source
+        .find("CLAUDE_PROVIDER_BYTES_DRIFT_ACTION_TIME")
+        .expect("provider bytes must be revalidated");
     let push = source
-        .rfind("git push origin \"refs/tags/$tag\"")
+        .find("git push origin \"refs/tags/$tag\"")
         .expect("tag helper must push the protected tag");
+    let reconciliation = source
+        .find("TAG_PUSH_BLOCKED:REMOTE_TARGET_NOT_RECONCILED")
+        .expect("tag push must reconcile the remote result");
 
-    assert!(action_time < push, "action-time guards must precede the irreversible push");
     assert_eq!(
         source.matches("git push origin \"refs/tags/$tag\"").count(),
         1,
@@ -143,9 +154,31 @@ fn tag_push_revalidates_mutable_remote_state_at_action_time() {
         1,
         "tag push reconciliation must exist only after the actual push"
     );
+    assert!(
+        action_time < provider_evidence
+            && provider_evidence < provider_version
+            && provider_version < provider_bytes
+            && provider_bytes < push
+            && push < reconciliation,
+        "all action-time provider checks must finish before the single push; reconciliation must follow it"
+    );
 
-    let provider_evidence = source[action_time..]
-        .find("IFS=
+    let guard = &source[action_time..push];
+    for required in [
+        "git fetch --quiet origin main",
+        "MAIN_DRIFT_ACTION_TIME",
+        "LOCAL_HEAD_DRIFT_ACTION_TIME",
+        "ensure_remote_tag_absent ACTION_TIME",
+        "verify_tag_ruleset",
+        "check-release-contract.py --report",
+        "RELEASE_CONTRACT_ACTION_TIME",
+        "CLAUDE_PROVIDER_DRIFT_ACTION_TIME",
+        "CLAUDE_PROVIDER_BYTES_DRIFT_ACTION_TIME",
+    ] {
+        assert!(guard.contains(required), "missing action-time tag guard: {required}");
+    }
+}
+
 #[test]
 fn release_candidate_models_post_publish_and_active_candidate_lifecycle() {
     let workflow = std::fs::read_to_string(".github/workflows/release-candidate.yml").unwrap();
