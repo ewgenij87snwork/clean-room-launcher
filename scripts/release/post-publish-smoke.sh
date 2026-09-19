@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  echo "usage: $0 vX.Y.Z" >&2
+  exit 2
+}
+
+fail() {
+  printf 'POST_PUBLISH_SMOKE_BLOCKED:%s\n' "$1" >&2
+  exit "${2:-1}"
+}
+
+[[ $# -eq 1 ]] || usage
+tag=$1
+[[ "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || fail "STABLE_TAG_REQUIRED"
+version=${tag#v}
+
+for command_name in curl shasum tar gh; do
+  command -v "$command_name" >/dev/null 2>&1 || fail "COMMAND_MISSING:$command_name"
+done
+
+repo_url="https://github.com/y-sor/clean-room-launcher"
+base_url="$repo_url/releases/download/$tag"
+artifact="clean-room-launcher-$tag-aarch64-apple-darwin.tar.gz"
+tmp=$(mktemp -d "${TMPDIR:-/tmp}/clroom-post-publish.XXXXXX")
+cleanup() {
+  rm -rf -- "$tmp"
+}
+trap cleanup EXIT HUP INT TERM
+
+latest_url=$(curl --proto '=https' --tlsv1.2 -fsSL -o /dev/null -w '%{url_effective}' "$repo_url/releases/latest")
+[[ "$latest_url" == "$repo_url/releases/tag/$tag" ]] || {
+  printf 'LATEST_URL=%s\nEXPECTED=%s\n' "$latest_url" "$repo_url/releases/tag/$tag" >&2
+  fail "LATEST_RELEASE_MISMATCH"
+}
+
+for name in   "$artifact"   SHA256SUMS   sbom.cdx.json   install.sh   "$artifact.provenance.sigstore.json"   "$artifact.sbom.sigstore.json"; do
+  curl --proto '=https' --tlsv1.2 -fsSL --retry 3     "$base_url/$name" -o "$tmp/$name" || fail "DOWNLOAD_FAILED:$name"
+done
+
+(
+  cd "$tmp"
+  shasum -a 256 -c SHA256SUMS
+) >/dev/null || fail "PUBLIC_CHECKSUMS"
+
+gh attestation verify "$tmp/$artifact"   -R y-sor/clean-room-launcher   --bundle "$tmp/$artifact.provenance.sigstore.json"   --signer-workflow y-sor/clean-room-launcher/.github/workflows/release.yml   --deny-self-hosted-runners >/dev/null || fail "PUBLIC_PROVENANCE"
+
+extract="$tmp/extracted"
+mkdir -p "$extract"
+tar -xzf "$tmp/$artifact" -C "$extract"
+archive_root=$(find "$extract" -mindepth 1 -maxdepth 1 -type d -print -quit)
+[[ -n "$archive_root" ]] || fail "ARCHIVE_ROOT"
+grep -Fqx "version=$version" "$archive_root/VERSION" || fail "ARCHIVE_VERSION"
+
+install_home="$tmp/install-home"
+mkdir -p "$install_home"
+HOME="$install_home" PATH="$PATH" sh "$tmp/install.sh" >/dev/null || fail "PUBLIC_INSTALLER"
+installed="$install_home/.local/bin/clroom"
+[[ -x "$installed" ]] || fail "INSTALLED_BINARY_MISSING"
+
+reported=$("$installed" --version 2>&1 | grep -Eo '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+[[ "$reported" == "$version" ]] || {
+  printf 'INSTALLED_VERSION=%s EXPECTED=%s\n' "$reported" "$version" >&2
+  fail "INSTALLED_VERSION_MISMATCH"
+}
+
+"$installed" --help >/dev/null || fail "INSTALLED_HELP"
+HOME="$install_home" PATH="$PATH" "$installed" codex --version >/dev/null || fail "INSTALLED_CODEX_VERSION_PATH"
+HOME="$install_home" PATH="$PATH" "$installed" claude --version >/dev/null || fail "INSTALLED_CLAUDE_VERSION_PATH"
+
+public_sha=$(shasum -a 256 "$tmp/$artifact" | awk '{print $1}')
+printf 'POST_PUBLISH_SMOKE=PASS tag=%s artifact_sha256=%s\n' "$tag" "$public_sha"
