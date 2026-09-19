@@ -162,6 +162,8 @@ fn release_contract_binds_latest_stable_annotated_tags_and_inference_free_local_
         std::fs::read_to_string("scripts/release/post-publish-smoke.sh").unwrap();
     assert!(post_publish.contains("releases/latest/download/install.sh"));
     assert!(post_publish.contains("LATEST_INSTALLER_BYTES_MISMATCH"));
+    assert!(post_publish.contains("gh release verify \"$tag\""));
+    assert!(post_publish.contains("PUBLIC_RELEASE_ATTESTATION"));
     assert!(post_publish.contains("sh \"$latest_installer\""));
     assert!(post_publish.contains("--source-digest \"$source_head\""));
     assert!(post_publish.contains("--source-ref \"refs/tags/$tag\""));
