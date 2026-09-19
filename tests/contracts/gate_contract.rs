@@ -183,10 +183,19 @@ fn release_contract_binds_latest_stable_annotated_tags_and_inference_free_local_
     assert!(tag_push.contains("git cat-file -t \"refs/tags/$tag\""));
     assert!(tag_push.contains("git push origin \"refs/tags/$tag:refs/tags/$tag\""));
     assert!(tag_push.contains("REMOTE_TAG_ALREADY_EXISTS"));
-    assert!(tag_push.contains("python3 scripts/release/check-repository-release-policy.py"));
+    assert!(tag_push.contains(
+        "check-repository-release-policy.py --mode strict"
+    ));
+    assert!(candidate.contains(
+        "check-repository-release-policy.py --mode visible"
+    ));
+    assert!(release.contains(
+        "check-repository-release-policy.py --mode visible"
+    ));
     assert!(repo_policy.contains("refs/tags/v*"));
     assert!(repo_policy.contains("{\"update\", \"deletion\"}.issubset(rule_types)"));
-    assert!(repo_policy.contains("not bypass"));
+    assert!(repo_policy.contains("bypass-actors-not-visible-to-caller"));
+    assert!(repo_policy.contains("tag-ruleset-bypass-present"));
     assert!(smoke.contains("--source-digest \"$source_head\""));
     assert!(smoke.contains("--source-ref \"refs/tags/$tag\""));
     assert!(smoke.contains("[[ \"$codex_tui_rc\" -eq 0 ]] || fail \"CODEX_TUI_EXIT\""));
