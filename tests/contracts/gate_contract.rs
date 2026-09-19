@@ -169,6 +169,15 @@ fn release_contract_binds_latest_stable_annotated_tags_and_inference_free_local_
     let tag_push = std::fs::read_to_string("scripts/release/push-release-tag.sh").unwrap();
     let repo_policy =
         std::fs::read_to_string("scripts/release/check-repository-release-policy.py").unwrap();
+    assert!(
+        std::fs::metadata("scripts/release/push-release-tag.sh")
+            .unwrap()
+            .permissions()
+            .mode()
+            & 0o111
+            != 0,
+        "tag push helper must be executable before it is documented as a direct command"
+    );
     assert!(tag_push.contains("git cat-file -t \"refs/tags/$tag\""));
     assert!(tag_push.contains("git push origin \"refs/tags/$tag:refs/tags/$tag\""));
     assert!(tag_push.contains("REMOTE_TAG_ALREADY_EXISTS"));
