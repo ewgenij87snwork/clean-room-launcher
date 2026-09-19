@@ -41,8 +41,13 @@ command -v gh >/dev/null 2>&1 || {
   echo "TAG_GATE_BLOCKED:GH_REQUIRED_FOR_RULESET_CHECK" >&2
   exit 74
 }
-gh api repos/y-sor/clean-room-launcher/rulesets > /tmp/clroom-tag-rulesets.json
-python3 - /tmp/clroom-tag-rulesets.json <<'PY'
+ruleset_tmp=$(mktemp "${TMPDIR:-/tmp}/clroom-tag-rulesets.XXXXXX")
+cleanup_ruleset_tmp() {
+  rm -f -- "$ruleset_tmp"
+}
+trap cleanup_ruleset_tmp EXIT HUP INT TERM
+gh api repos/y-sor/clean-room-launcher/rulesets > "$ruleset_tmp"
+python3 - "$ruleset_tmp" <<'PY'
 import json, subprocess, sys
 
 rulesets = json.load(open(sys.argv[1], encoding="utf-8"))
@@ -74,7 +79,8 @@ if not ok:
     raise SystemExit("TAG_GATE_BLOCKED:TAG_RULESET_WEAKENED")
 print("TAG_RULESET_PASS")
 PY
-rm -f /tmp/clroom-tag-rulesets.json
+cleanup_ruleset_tmp
+trap - EXIT HUP INT TERM
 
 python3 scripts/release/check-release-contract.py --report
 
@@ -104,7 +110,8 @@ required = {
     "selected_plugin_errors": 0,
     "persistent_config_unchanged": True,
     "interactive_selected_tui_confirmed": True,
-    "model_prompt_sent": False,
+    "automated_probe_prompt_supplied": True,
+    "interactive_no_model_prompt_confirmed": True,
 }
 for key, value in required.items():
     if record.get(key) != value:

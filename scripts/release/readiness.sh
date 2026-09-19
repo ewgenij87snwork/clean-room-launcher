@@ -36,6 +36,8 @@ else
 fi
 
 ./scripts/check-public-boundary.sh --root "$root" || fail "PUBLIC_BOUNDARY"
+[[ -x scripts/release/local-release-audit.sh ]] || fail "RELEASE_AUDIT_EXECUTABLE"
+[[ -x scripts/release/local-plugin-activation-smoke.sh ]] || fail "PLUGIN_SMOKE_EXECUTABLE"
 python3 scripts/release/check-release-contract.py --self-test || fail "RELEASE_CONTRACT_SELF_TEST"
 python3 scripts/release/check-release-contract.py || fail "RELEASE_CONTRACT"
 release_workflow=.github/workflows/release.yml

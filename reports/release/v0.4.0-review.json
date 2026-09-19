@@ -31,7 +31,7 @@
     "release": {
       "decision": "CONTRACT_EXPAND",
       "evidence": [
-        "v0.4.0 version identity, artifact qualification, SBOM/provenance and draft-only release workflow are machine gated."
+        "v0.4.0 version identity, artifact qualification, SBOM/provenance, draft-only release workflow, executable local release helpers, and truthful pre-tag smoke evidence are machine gated."
       ]
     },
     "public_claims": {
@@ -101,6 +101,16 @@
       "id": "plugin-qualified-at-plan-time-can-drift-before-launch",
       "decision": "CONTRACT_EXPAND",
       "durable_control": "Activation re-runs install-root, manifest identity, component-surface, selection, and qualification inspection immediately before launch; nested, symlinked, unreadable, identity-mismatched, or newly introduced non-skill surfaces fail closed with regression coverage."
+    },
+    {
+      "id": "documented-release-helper-not-executable",
+      "decision": "CONTRACT_EXPAND",
+      "durable_control": "Release readiness now requires executable mode on the documented direct-run local release audit and plugin activation smoke helpers, so mode drift fails before merge/tag."
+    },
+    {
+      "id": "release-smoke-evidence-overstated-no-prompt",
+      "decision": "CONTRACT_EXPAND",
+      "durable_control": "Smoke evidence distinguishes the fixed automated sentinel prompt from the separately confirmed no-prompt interactive TUI check; the tag gate validates those truthful fields instead of asserting that no prompt was supplied anywhere."
     }
   ],
   "artifact_capability_gates": [
@@ -130,7 +140,9 @@
       "exact accepted-main plugin capability smoke evidence required before protected tag creation",
       "rename-safe whole-release path classification that evaluates both old and new paths",
       "negative release workflow contract test forbidding provider qualification against sibling build outputs",
-      "action-time plugin install-root, manifest-identity, component-surface and qualification revalidation with fail-closed drift tests"
+      "action-time plugin install-root, manifest-identity, component-surface and qualification revalidation with fail-closed drift tests",
+      "executable-mode readiness checks for documented direct-run release audit and plugin smoke helpers",
+      "truthful smoke evidence separating automated sentinel-prompt probes from manual no-prompt TUI confirmation"
     ]
   }
 }

@@ -70,8 +70,10 @@ scripts/release/local-plugin-activation-smoke.sh draft --tag vX.Y.Z --plugin-id 
 ```
 
 The smoke never installs, updates, enables, disables, or downgrades Claude or a
-plugin. Provider inference success is not required: qualification is based on
-startup `system/init` evidence before any billing/model response.
+plugin. Automated clean/selected probes use a fixed sentinel print-mode prompt
+only to expose startup `system/init` evidence; model response content and
+success are ignored. The pre-tag interactive TUI check sends no model prompt and
+requires explicit confirmation before its evidence is accepted.
 
 ## Local audit
 
