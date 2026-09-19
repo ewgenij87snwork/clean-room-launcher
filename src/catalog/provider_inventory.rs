@@ -155,19 +155,24 @@ pub fn inspect_plugin_with_home(
         ),
     };
 
-    let (declared_components, effective_components, manifest_name) = root
-        .as_deref()
-        .map(|root| inspect_plugin_surface(provider.plugin_semantics(), root))
-        .map(|result| match result {
-            Ok(surface) => (surface.declared, surface.effective, surface.plugin_name),
-            Err(error) => {
-                let blocker = plugin_surface_error_code(error).to_owned();
-                reason_code = plugin_surface_error_code(error);
-                conflicts.push(blocker);
-                (Vec::new(), Vec::new(), None)
-            }
-        })
-        .unwrap_or_default();
+    let (declared_components, effective_components, manifest_name, activation_surface_eligible) =
+        root.as_deref()
+            .map(|root| inspect_plugin_surface(provider.plugin_semantics(), root))
+            .map(|result| match result {
+                Ok(surface) => (
+                    surface.declared,
+                    surface.effective,
+                    surface.plugin_name,
+                    surface.activation_eligible,
+                ),
+                Err(error) => {
+                    let blocker = plugin_surface_error_code(error).to_owned();
+                    reason_code = plugin_surface_error_code(error);
+                    conflicts.push(blocker);
+                    (Vec::new(), Vec::new(), None, false)
+                }
+            })
+            .unwrap_or_default();
 
     let expected_plugin_name = plugin_id.rsplit_once('@').map(|(name, _)| name);
     let activation_identity_qualified = provider != Provider::Claude
@@ -182,7 +187,8 @@ pub fn inspect_plugin_with_home(
         conflicts.push(reason_code.to_owned());
     }
 
-    let activation_surface_qualified = !effective_components.is_empty()
+    let activation_surface_qualified = activation_surface_eligible
+        && !effective_components.is_empty()
         && effective_components
             .iter()
             .all(|component| component.kind == ResourceKind::Skill);
@@ -370,6 +376,58 @@ mod tests {
                 .iter()
                 .any(|reason| reason == "PROVIDER_TUPLE_NOT_QUALIFIED")
         );
+
+        let _ = fs::remove_dir_all(home.parent().unwrap());
+    }
+
+    #[test]
+    fn manifestless_claude_plugin_surface_is_observed_but_not_selectable() {
+        let (home, plugin) = fixture();
+        fs::remove_file(plugin.join(".claude-plugin/plugin.json")).unwrap();
+
+        let inventory = inspect_plugin(
+            Provider::Claude,
+            &home,
+            None,
+            "superpowers@example",
+            true,
+        );
+
+        assert!(inventory
+            .effective_components
+            .iter()
+            .any(|component| component.kind == ResourceKind::Skill));
+        assert_eq!(inventory.entry.selection, SelectionState::NotSelectable);
+        assert_eq!(inventory.entry.qualification, QualificationState::Unqualified);
+        assert!(inventory
+            .conflicts
+            .iter()
+            .any(|reason| reason == "PLUGIN_IDENTITY_MISMATCH"));
+
+        let _ = fs::remove_dir_all(home.parent().unwrap());
+    }
+
+    #[test]
+    fn root_skill_surface_is_observed_but_not_activation_qualified() {
+        let (home, plugin) = fixture();
+        fs::remove_file(plugin.join(".claude-plugin/plugin.json")).unwrap();
+        fs::remove_dir_all(plugin.join("skills")).unwrap();
+        fs::write(plugin.join("SKILL.md"), "fixture\n").unwrap();
+
+        let inventory = inspect_plugin(
+            Provider::Claude,
+            &home,
+            None,
+            "superpowers@example",
+            true,
+        );
+
+        assert!(inventory
+            .effective_components
+            .iter()
+            .any(|component| component.kind == ResourceKind::Skill));
+        assert_eq!(inventory.entry.selection, SelectionState::NotSelectable);
+        assert_eq!(inventory.entry.qualification, QualificationState::Unqualified);
 
         let _ = fs::remove_dir_all(home.parent().unwrap());
     }
