@@ -99,13 +99,18 @@ For the full local test/build/artifact pass:
 scripts/release/local-release-audit.sh --full
 ```
 
-The summary prints the authoritative published baseline, the complete commit
-list, every changed file and its release domain, the contract-evolution
-decision, artifact capability gates, and the dependency/version diff.
+For an `ACTIVE_CANDIDATE`, the summary prints the authoritative published
+baseline, the complete commit list, every changed file and its release domain,
+the contract-evolution decision, artifact capability gates, and the
+dependency/version diff. Full mode additionally runs the public-boundary check,
+installer self-test, all locked tests, builds a candidate archive, verifies its
+metadata, and prints its SHA-256.
 
-The full mode additionally runs the public-boundary check, installer self-test,
-all locked tests, builds a candidate archive, verifies its metadata, and prints
-its SHA-256.
+For `POST_PUBLISH`, the same historical review snapshot is not rewritten or
+reapplied as if it covered new bytes. The audit binds to the immutable published
+baseline, reports the dependency/version delta, and full mode runs the local
+regression/security checks but skips candidate-only artifact construction until
+the manifest advances to a new release version.
 
 Local audit complements GitHub CI and real-provider/draft-artifact evidence; it
 does not grant merge, tag, or publish permission.
