@@ -106,6 +106,7 @@ if [[ -n ${CLROOM_PROVIDER_CODEX:-} && -n ${CLROOM_PROVIDER_CLAUDE:-} && -n ${CL
   rm -rf "$qualification_extract"
 fi
 python3 packaging/verify-artifact.py "$artifact" || fail "ARTIFACT_METADATA"
+scripts/release/check-claude-plugin-artifact.sh "$artifact" || fail "CLAUDE_PLUGIN_ARTIFACT"
 if [[ -n ${CLROOM_QUALIFICATION_EVIDENCE_DIR:-} ]]; then
   for provider in codex claude; do
     evidence="$CLROOM_QUALIFICATION_EVIDENCE_DIR/$provider.json"
