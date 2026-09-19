@@ -6,10 +6,9 @@ permalink: /robots.txt
 #
 # Hosting note: the current GitHub Pages site is a project site under
 # /clean-room-launcher/. Standards-compliant crawlers consult /robots.txt at
-# the y-sor.github.io host root, which this project repository cannot control.
-# These directives therefore document the intended crawler policy and are not
-# a substitute for host-root robots.txt. If CLROOM later uses its own host,
-# publish the same policy at that host root.
+# the y-sor.github.io host root. That host-root policy is published from the
+# separate y-sor/y-sor.github.io repository; this project-level file keeps the
+# CLROOM-specific crawler policy and sitemap declaration aligned with it.
 
 User-agent: Googlebot
 Allow: /
