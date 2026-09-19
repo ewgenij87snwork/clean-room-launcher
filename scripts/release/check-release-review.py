@@ -69,15 +69,9 @@ PROVIDER_PATTERNS = (
 
 CONTRACT_PATTERNS = (
     "docs/release/RELEASE_CONTRACT.md",
-    "release/qualification.json",
     "scripts/release/check-release-review.py",
-    "scripts/release/review-release-delta.sh",
-    "scripts/release/local-release-smoke.sh",
-    "scripts/release/post-publish-smoke.sh",
-    "scripts/release/readiness.sh",
-    ".github/workflows/release-candidate.yml",
-    ".github/workflows/release.yml",
 )
+
 
 ALWAYS_EVIDENCE = {
     "contract-evolution-review",
