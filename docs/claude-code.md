@@ -67,8 +67,8 @@ individual files or components.
 
 The initial v0.4.0 qualification is intentionally narrower than Claude's full
 plugin format. The observed effective surface must be skill-only. If inventory
-finds hooks, MCP servers, agents, LSP servers, background monitors, plugin
-executables, or plugin settings, selection fails closed. Real-provider testing
+finds slash commands, hooks, MCP servers, agents, LSP servers, background
+monitors, plugin executables, or plugin settings, selection fails closed. Real-provider testing
 showed why this boundary is necessary: a hook-bearing plugin can load through
 `--plugin-dir` while its hook still depends on provider-global runtime state
 under `~/.claude`, which the clean launch intentionally keeps unavailable.
