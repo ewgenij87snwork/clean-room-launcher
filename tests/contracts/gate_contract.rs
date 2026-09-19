@@ -243,8 +243,29 @@ fn declared_machine_evidence_is_bound_to_executable_release_gates() {
     assert!(readiness.contains("candidate_dir=\"$archive_root/bin\""));
     assert!(readiness.contains("scripts/release/qualify-real-provider.sh"));
     assert!(readiness.contains("scripts/release/check-attestation-contract.sh"));
+    assert!(readiness.contains("scripts/release/check-claude-plugin-artifact.sh"));
+    assert!(release.contains("Exercise Claude plugin capability on exact archive"));
+    assert!(release.contains("scripts/release/check-claude-plugin-artifact.sh"));
     assert!(candidate.contains("python3 scripts/release/check-release-review.py"));
     assert!(release.contains("actions/attest@"));
+
+    let plugin_artifact =
+        std::fs::read_to_string("scripts/release/check-claude-plugin-artifact.sh").unwrap();
+    assert!(plugin_artifact.contains("CLAUDE_PLUGIN_ARTIFACT_PASS"));
+    assert!(plugin_artifact.contains("--plugin-dir"));
+    assert!(plugin_artifact.contains("HOOK_BUNDLE_REACHED_PROVIDER"));
+    assert!(
+        std::fs::metadata("scripts/release/check-claude-plugin-artifact.sh")
+            .unwrap()
+            .permissions()
+            .mode()
+            & 0o111
+            != 0
+    );
+
+    let tag_push = std::fs::read_to_string("scripts/release/push-release-tag.sh").unwrap();
+    assert!(tag_push.contains("CODEX_PROVIDER_DRIFT"));
+    assert!(tag_push.contains("CLAUDE_PLUGIN_PROVIDER_DRIFT"));
 }
 
 #[test]
@@ -274,6 +295,7 @@ fn whole_release_review_is_fail_closed_and_declared() {
         "published-baseline:",
         "contract-evolution-review",
         "contract-change-requires-expansion-review",
+        "\"scripts/release/**\"",
         "scripts/release/local-release-smoke.sh",
         "scripts/release/post-publish-smoke.sh",
         ".github/workflows/release.yml",
